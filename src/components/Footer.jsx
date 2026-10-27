@@ -1,5 +1,5 @@
 import React from 'react';
-import { Phone, Mail, MapPin, ArrowRight } from 'lucide-react';
+import { Phone, Mail, MapPin } from 'lucide-react';
 import Logo from './Logo';
 
 export default function Footer({ setActivePage }) {
@@ -35,9 +35,8 @@ export default function Footer({ setActivePage }) {
                 <button
                   type="button"
                   onClick={() => handleNav('home')}
-                  className="hover:text-amber-400 py-0.5 sm:py-1 transition flex items-center gap-1 cursor-pointer text-slate-300 hover:text-white truncate"
+                  className="hover:text-amber-400 py-0.5 sm:py-1 transition flex items-center cursor-pointer text-slate-300 hover:text-white truncate"
                 >
-                  <ArrowRight className="w-2.5 h-2.5 text-amber-400 shrink-0" />
                   <span>Home</span>
                 </button>
               </li>
@@ -45,9 +44,8 @@ export default function Footer({ setActivePage }) {
                 <button
                   type="button"
                   onClick={() => handleNav('about')}
-                  className="hover:text-amber-400 py-0.5 sm:py-1 transition flex items-center gap-1 cursor-pointer text-slate-300 hover:text-white truncate"
+                  className="hover:text-amber-400 py-0.5 sm:py-1 transition flex items-center cursor-pointer text-slate-300 hover:text-white truncate"
                 >
-                  <ArrowRight className="w-2.5 h-2.5 text-amber-400 shrink-0" />
                   <span>About Us</span>
                 </button>
               </li>
@@ -55,9 +53,8 @@ export default function Footer({ setActivePage }) {
                 <button
                   type="button"
                   onClick={() => handleNav('programs')}
-                  className="hover:text-amber-400 py-0.5 sm:py-1 transition flex items-center gap-1 cursor-pointer text-slate-300 hover:text-white truncate"
+                  className="hover:text-amber-400 py-0.5 sm:py-1 transition flex items-center cursor-pointer text-slate-300 hover:text-white truncate"
                 >
-                  <ArrowRight className="w-2.5 h-2.5 text-amber-400 shrink-0" />
                   <span>Programs</span>
                 </button>
               </li>
@@ -65,9 +62,8 @@ export default function Footer({ setActivePage }) {
                 <button
                   type="button"
                   onClick={() => handleNav('events')}
-                  className="hover:text-amber-400 py-0.5 sm:py-1 transition flex items-center gap-1 cursor-pointer text-slate-300 hover:text-white truncate"
+                  className="hover:text-amber-400 py-0.5 sm:py-1 transition flex items-center cursor-pointer text-slate-300 hover:text-white truncate"
                 >
-                  <ArrowRight className="w-2.5 h-2.5 text-amber-400 shrink-0" />
                   <span>Events</span>
                 </button>
               </li>
@@ -75,9 +71,8 @@ export default function Footer({ setActivePage }) {
                 <button
                   type="button"
                   onClick={() => handleNav('achievements')}
-                  className="hover:text-amber-400 py-0.5 sm:py-1 transition flex items-center gap-1 cursor-pointer text-slate-300 hover:text-white truncate"
+                  className="hover:text-amber-400 py-0.5 sm:py-1 transition flex items-center cursor-pointer text-slate-300 hover:text-white truncate"
                 >
-                  <ArrowRight className="w-2.5 h-2.5 text-amber-400 shrink-0" />
                   <span>Achievements</span>
                 </button>
               </li>
@@ -85,9 +80,8 @@ export default function Footer({ setActivePage }) {
                 <button
                   type="button"
                   onClick={() => handleNav('certificate')}
-                  className="hover:text-amber-400 py-0.5 sm:py-1 transition flex items-center gap-1 cursor-pointer text-slate-300 hover:text-white truncate"
+                  className="hover:text-amber-400 py-0.5 sm:py-1 transition flex items-center cursor-pointer text-slate-300 hover:text-white truncate"
                 >
-                  <ArrowRight className="w-2.5 h-2.5 text-amber-400 shrink-0" />
                   <span>Certificates</span>
                 </button>
               </li>
@@ -95,9 +89,8 @@ export default function Footer({ setActivePage }) {
                 <button
                   type="button"
                   onClick={() => handleNav('contact')}
-                  className="hover:text-amber-400 py-0.5 sm:py-1 transition flex items-center gap-1 cursor-pointer text-slate-300 hover:text-white truncate"
+                  className="hover:text-amber-400 py-0.5 sm:py-1 transition flex items-center cursor-pointer text-slate-300 hover:text-white truncate"
                 >
-                  <ArrowRight className="w-2.5 h-2.5 text-amber-400 shrink-0" />
                   <span>Admission Enquiry</span>
                 </button>
               </li>
@@ -105,9 +98,8 @@ export default function Footer({ setActivePage }) {
                 <button
                   type="button"
                   onClick={() => handleNav('login')}
-                  className="hover:text-amber-400 py-0.5 sm:py-1 transition flex items-center gap-1 cursor-pointer text-slate-300 hover:text-white truncate"
+                  className="hover:text-amber-400 py-0.5 sm:py-1 transition flex items-center cursor-pointer text-slate-300 hover:text-white truncate"
                 >
-                  <ArrowRight className="w-2.5 h-2.5 text-amber-400 shrink-0" />
                   <span>Student Login</span>
                 </button>
               </li>
