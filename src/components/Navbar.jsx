@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, X, User, Award, Phone, Calendar, ArrowRight, Home, Info, BookOpen, Trophy, Sparkles } from 'lucide-react';
+import { Menu, X, User, Phone, ArrowRight } from 'lucide-react';
 import Logo from './Logo';
 
 export default function Navbar({ activePage, setActivePage, sessionUser }) {
@@ -18,13 +18,13 @@ export default function Navbar({ activePage, setActivePage, sessionUser }) {
   }, [mobileMenuOpen]);
 
   const navItems = [
-    { id: 'home', label: 'Home', icon: Home },
-    { id: 'about', label: 'About Us', icon: Info },
-    { id: 'programs', label: 'Programs', icon: BookOpen },
-    { id: 'events', label: 'Events', icon: Calendar },
-    { id: 'achievements', label: 'Achievements', icon: Trophy },
-    { id: 'certificate', label: 'Certificates', icon: Award },
-    { id: 'contact', label: 'Admission Enquiry', icon: Sparkles },
+    { id: 'home', label: 'Home' },
+    { id: 'about', label: 'About Us' },
+    { id: 'programs', label: 'Programs' },
+    { id: 'events', label: 'Events' },
+    { id: 'achievements', label: 'Achievements' },
+    { id: 'certificate', label: 'Certificates' },
+    { id: 'contact', label: 'Admission Enquiry' },
   ];
 
   const handleNavClick = (pageId) => {
@@ -51,7 +51,6 @@ export default function Navbar({ activePage, setActivePage, sessionUser }) {
             <div className="hidden md:flex items-center gap-1 lg:gap-2">
               {navItems.map((item) => {
                 const isActive = activePage === item.id;
-                const Icon = item.icon;
                 return (
                   <button
                     key={item.id}
@@ -62,7 +61,6 @@ export default function Navbar({ activePage, setActivePage, sessionUser }) {
                         : 'text-slate-200 hover:text-white hover:bg-white/10'
                     }`}
                   >
-                    {Icon && <Icon className="w-4 h-4 opacity-80" />}
                     <span>{item.label}</span>
                     {isActive && (
                       <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-amber-400 rounded-full" />
@@ -179,7 +177,6 @@ export default function Navbar({ activePage, setActivePage, sessionUser }) {
             <div className="space-y-1.5 pt-1">
               {navItems.map((item) => {
                 const isActive = activePage === item.id;
-                const Icon = item.icon;
                 return (
                   <button
                     key={item.id}
@@ -191,10 +188,7 @@ export default function Navbar({ activePage, setActivePage, sessionUser }) {
                         : 'text-slate-100 hover:bg-white/10'
                     }`}
                   >
-                    <div className="flex items-center gap-3">
-                      {Icon && <Icon className={`w-5 h-5 ${isActive ? 'text-slate-950' : 'text-amber-400'}`} />}
-                      <span>{item.label}</span>
-                    </div>
+                    <span className="font-extrabold">{item.label}</span>
                     <ArrowRight className={`w-4 h-4 ${isActive ? 'text-slate-950' : 'text-slate-400'}`} />
                   </button>
                 );
