@@ -16,6 +16,13 @@ import annualday2 from "../assets/programs/annualday2.jpg";
 import hardwork from "../assets/programs/hardwork.jpg";
 import excellence from "../assets/programs/excellence.jpg";
 
+import student1 from "../assets/programs/student1.jpg";
+import student2 from "../assets/programs/student2.jpg";
+import student3 from "../assets/programs/student3.jpg";
+import student4 from "../assets/programs/student4.jpg";
+import student5 from "../assets/programs/student5.jpg";
+import student6 from "../assets/programs/student6.jpg";
+
 
 const competitions = [
   {
@@ -59,6 +66,85 @@ const competitions = [
     number: "05",
   },
 ];
+
+
+
+
+const studentAchievements = [
+  {
+    id: 1,
+    name: "Ram",
+    school: "Sacred Heart Nursery & Primary School",
+    achievement: "International Level Abacus Competition",
+    level: "International",
+    award: "International Achievement Award",
+    description:
+      "Recognized for exceptional mental arithmetic skills, accuracy, and concentration.",
+    photo: student1,
+    year: "2026",
+  },
+  {
+    id: 2,
+    name: "Rani",
+    school: "RC Middle School",
+    achievement: "National Level Abacus Competition",
+    level: "National",
+    award: "National Excellence Award",
+    description:
+      "Demonstrated outstanding calculation speed and problem-solving abilities.",
+    photo: student2,
+    year: "2026",
+  },
+  {
+    id: 3,
+    name: "Raji",
+    school: "Amaravathi Matriculation School",
+    achievement: "State Level Abacus Competition",
+    level: "State",
+    award: "State Level Achievement Award",
+    description:
+      "Showcased excellent numerical skills and dedication during the competition.",
+    photo: student3,
+    year: "2026",
+  },
+  {
+    id: 4,
+    name: "Shayam",
+    school: "Muslims Committee School",
+    achievement: "District Level Abacus Competition",
+    level: "District",
+    award: "District Champion",
+    description:
+      "Achieved recognition for accuracy, speed, and consistent practice.",
+    photo: student4,
+    year: "2026",
+  },
+  {
+    id: 5,
+    name: "Sivani",
+    school: "St. Maries Nursery and Primary School",
+    achievement: "National Level Skills Championship",
+    level: "National",
+    award: "Student Excellence Award",
+    description:
+      "Recognized for dedication, confidence, and impressive learning achievements.",
+    photo: student5,
+    year: "2026",
+  },
+  {
+    id: 6,
+    name: "Ranjitha",
+    school: "Sacred Heart Nursery & Primary School",
+    achievement: "District Level Abacus Competition",
+    level: "District",
+    award: "Outstanding Performer",
+    description:
+      "Demonstrated strong concentration and enthusiasm for mental mathematics.",
+    photo: student6,
+    year: "2026",
+  },
+];
+
 
 
 const championships = [
@@ -109,145 +195,12 @@ const schools = [
   },
 ];
 
-const activities = [
-  {
-    number: "01",
-    title: "Prize Distribution",
-    description:
-      "Celebrating the hard work and accomplishments of our students.",
-  },
-  {
-    number: "02",
-    title: "Student Recognition",
-    description:
-      "Appreciating students who demonstrate outstanding skills and dedication.",
-  },
-  {
-    number: "03",
-    title: "Handwriting Activities",
-    description:
-      "Encouraging neat handwriting, presentation, and attention to detail.",
-  },
-  {
-    number: "04",
-    title: "Abacus Activities",
-    description:
-      "Developing concentration, calculation speed, and numerical confidence.",
-  },
-  {
-    number: "05",
-    title: "School-Level Competitions",
-    description:
-      "Providing opportunities for students to demonstrate their learning.",
-  },
-];
-
-const navLinks = [
-  { label: "Home", href: "/" },
-  { label: "About Us", href: "/about" },
-  { label: "School Programs", href: "/school-programs" },
-  { label: "Franchise", href: "/franchise" },
-  { label: "Achievements", href: "/achievements" },
-  { label: "Support", href: "/support" },
-];
-
 function SectionLabel({ children }) {
   return (
     <span className="inline-flex items-center gap-3 text-xs font-bold uppercase tracking-[0.22em] text-amber-600">
       <span className="h-px w-7 bg-amber-500" />
       {children}
     </span>
-  );
-}
-
-function Header() {
-  const [menuOpen, setMenuOpen] = useState(false);
-
-  return (
-    <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur-md">
-      <div className="mx-auto flex max-w-[1440px] items-center justify-between px-4 py-3 sm:px-5 sm:py-4 lg:px-5">
-        <a
-          href="/"
-          className="flex shrink-0 items-center gap-3"
-          aria-label="BSEL home"
-        >
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-950 text-lg font-black text-amber-400 shadow-md">
-            B★
-          </div>
-
-          <div>
-            <p className="text-xl font-black tracking-tight text-blue-950">
-              B★SEL
-            </p>
-            <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-slate-500">
-              Learn · Grow · Achieve
-            </p>
-          </div>
-        </a>
-
-        <nav className="hidden items-center gap-6 lg:flex">
-          {navLinks.map((link) => (
-            <a
-              key={link.label}
-              href={link.href}
-              className={`text-sm font-semibold transition-colors ${link.label === "Achievements"
-                ? "text-amber-600"
-                : "text-slate-600 hover:text-blue-950"
-                }`}
-            >
-              {link.label}
-            </a>
-          ))}
-        </nav>
-
-        <a
-          href="/contact"
-          className="hidden rounded-full bg-blue-950 px-6 py-3 text-sm font-bold text-white transition hover:bg-amber-500 hover:text-blue-950 lg:inline-flex"
-        >
-          Get in Touch
-        </a>
-
-        <button
-          type="button"
-          onClick={() => setMenuOpen(!menuOpen)}
-          className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 text-blue-950 lg:hidden"
-          aria-label={menuOpen ? "Close menu" : "Open menu"}
-          aria-expanded={menuOpen}
-        >
-          <span className="text-2xl leading-none">
-            {menuOpen ? "×" : "☰"}
-          </span>
-        </button>
-      </div>
-
-      {menuOpen && (
-        <nav className="border-t border-slate-100 bg-white px-5 py-4 shadow-lg lg:hidden">
-          <div className="mx-auto flex max-w-[1440px] flex-col">
-            {navLinks.map((link) => (
-              <a
-                key={link.label}
-                href={link.href}
-                onClick={() => setMenuOpen(false)}
-                className={`border-b border-slate-100 py-3 text-sm font-semibold ${link.label === "Achievements"
-                  ? "text-amber-600"
-                  : "text-slate-700"
-                  }`}
-              >
-                {link.label}
-              </a>
-            ))}
-
-            <a
-              href="/contact"
-              onClick={() => setMenuOpen(false)}
-              className="mt-4 rounded-xl bg-blue-950 px-5 py-3 text-center text-sm font-bold text-white"
-            >
-              Get in Touch
-            </a>
-          </div>
-        </nav>
-      )}
-    </header>
   );
 }
 
@@ -336,20 +289,6 @@ function Hero() {
   {/* Bottom Accent */}
   <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-amber-300 via-amber-500 to-transparent" />
 </section>
-  );
-}
-
-function Breadcrumb() {
-  return (
-    <div className="border-b border-slate-100 bg-white">
-      <div className="mx-auto flex max-w-[1440px] flex-wrap items-center gap-2 px-3 py-2.5 text-xs sm:px-4 sm:py-3 sm:text-sm lg:px-5">
-        <a href="/" className="font-medium text-slate-500 hover:text-blue-950">
-          Home
-        </a>
-        <span className="text-slate-300">/</span>
-        <span className="font-bold text-blue-950">Achievements</span>
-      </div>
-    </div>
   );
 }
 
@@ -690,82 +629,128 @@ function AnnualDay() {
   );
 }
 
-// function Activities() {
-//   return (
-//     <section className="bg-[#F8F7F3] py-8 sm:py-10 lg:py-14">
-//       <div className="mx-auto max-w-[1440px] px-3 sm:px-4 lg:px-5">
-//         <div className="mx-auto max-w-2xl text-center">
-//           <SectionLabel>Learning in Action</SectionLabel>
 
-//           <h2 className="mt-3 sm:mt-4 text-2xl font-black leading-tight text-blue-950 sm:text-3xl lg:text-4xl">
-//             Activities That Build Confidence
-//           </h2>
 
-//           <p className="mt-3 sm:mt-4 text-sm leading-6 text-slate-600 sm:text-base sm:leading-8">
-//             Learning experiences that support skill development and help
-//             students celebrate their progress.
-//           </p>
-//         </div>
+function StudentAchievers() {
+  const levelStyles = {
+    International: "bg-purple-100 text-purple-800",
+    National: "bg-blue-100 text-blue-800",
+    State: "bg-amber-100 text-amber-800",
+    District: "bg-slate-100 text-slate-800",
+  };
 
-//         <div className="mt-5 sm:mt-7 grid grid-cols-1 gap-4 sm:mt-10 sm:grid-cols-2 sm:gap-5 lg:mt-12 lg:grid-cols-3">
-//           {activities.map((activity) => (
-//             <article
-//               key={activity.number}
-//               className="rounded-xl border border-slate-200 bg-white p-4 transition duration-300 hover:-translate-y-1 hover:border-amber-300 hover:shadow-lg sm:rounded-2xl sm:p-5 lg:rounded-3xl lg:p-6"
-//             >
-//               <div className="flex items-center justify-between">
-//                 <span className="text-2xl font-black text-amber-500 sm:text-3xl">
-//                   {activity.number}
-//                 </span>
-
-//                 <span className="h-10 w-10 rounded-full border border-amber-200 bg-amber-50" />
-//               </div>
-
-//               <h3 className="mt-4 sm:mt-5 text-lg font-extrabold text-blue-950 sm:text-xl">
-//                 {activity.title}
-//               </h3>
-
-//               <p className="mt-3 text-sm leading-7 text-slate-600">
-//                 {activity.description}
-//               </p>
-//             </article>
-//           ))}
-//         </div>
-//       </div>
-//     </section>
-//   );
-// }
-
-function ContactCTA() {
   return (
-    <section className="bg-white px-3 py-7 sm:px-4 sm:py-10 lg:px-5 lg:py-14">
-      <div className="relative mx-auto max-w-[1440px] overflow-hidden rounded-[2rem] bg-blue-950 px-4 py-6 sm:px-7 sm:py-9 lg:px-10 lg:py-12">
-        <div className="absolute -right-16 -top-20 h-64 w-64 rounded-full border border-white/10" />
-        <div className="absolute -right-4 -top-8 h-44 w-44 rounded-full border border-amber-400/20" />
+    <section
+      id="student-achievers"
+      className="bg-[#F8F7F3] py-8 sm:py-10 lg:py-16"
+    >
+      <div className="mx-auto max-w-[1440px] px-3 sm:px-5 lg:px-8">
+        {/* Section Heading */}
+        <div className="mx-auto max-w-3xl text-center">
+          <SectionLabel>Our Young Achievers</SectionLabel>
 
-        <div className="relative flex flex-col items-start justify-between gap-8 md:flex-row md:items-center">
-          <div className="max-w-2xl">
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-amber-400">
-              Be Part of Our Journey
-            </p>
+          <h2 className="mt-3 text-2xl font-black leading-tight text-blue-950 sm:mt-4 sm:text-4xl lg:text-5xl">
+            Celebrating Student
+            <span className="block text-amber-600">
+              Excellence & Success
+            </span>
+          </h2>
 
-            <h2 className="mt-4 text-2xl font-black leading-tight text-white sm:text-3xl lg:text-5xl">
-              Every Young Mind Deserves to Shine.
-            </h2>
+          <p className="mx-auto mt-3 max-w-2xl text-xs leading-5 text-slate-600 sm:mt-4 sm:text-base sm:leading-8">
+            Meet our talented students who have demonstrated dedication,
+            confidence, and outstanding skills in district, state, national,
+            and international competitions.
+          </p>
+        </div>
 
-            <p className="mt-4 text-sm leading-6 text-blue-100 sm:mt-3 sm:mt-4 sm:text-base sm:leading-8">
-              Connect with B★SEL to learn more about our programs,
-              achievements, and educational opportunities.
-            </p>
-          </div>
+        {/* Student Cards: 2 columns on mobile */}
+        <div className="mt-6 grid grid-cols-2 gap-3 sm:mt-10 sm:gap-5 lg:grid-cols-3 lg:gap-8">
+          {studentAchievements.map((student) => (
+            <article
+              key={student.id}
+              className="group min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-amber-300 hover:shadow-xl sm:rounded-2xl lg:rounded-3xl"
+            >
+              {/* Student Photo */}
+              <div className="relative h-32 overflow-hidden min-[400px]:h-40 sm:h-60 lg:h-72">
+                <img
+                  src={student.photo}
+                  alt={`Photo of ${ student.name } `}
+                  className="h-full w-full object-cover object-top transition duration-500 group-hover:scale-105"
+                  loading="lazy"
+                />
 
-          <a
-            href="/contact"
-            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-amber-400 px-5 py-3 text-xs font-extrabold text-blue-950 transition hover:bg-white sm:gap-3 sm:px-7 sm:py-4 sm:text-sm"
-          >
-            Get in Touch
-            <span aria-hidden="true">→</span>
-          </a>
+                {/* Image Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-blue-950/85 via-blue-950/10 to-transparent" />
+
+                {/* Competition Level */}
+                <span
+                  className={`absolute left - 1.5 top - 1.5 max - w - [calc(100 % -12px)] rounded - full px - 1.5 py - 1 text - [7px] font - extrabold uppercase leading - tight tracking - wide sm: left - 3 sm: top - 3 sm: px - 2.5 sm: py - 1.5 sm: text - [10px] lg: left - 4 lg: top - 4 lg: px - 3 lg: py - 2 lg: text - xs ${
+  levelStyles[student.level] ||
+    "bg-white text-blue-950"
+} `}
+                >
+                  {student.level} Level
+                </span>
+
+                {/* Year */}
+                <span className="absolute bottom-2 right-2 rounded-full border border-white/30 bg-blue-950/80 px-1.5 py-1 text-[8px] font-bold text-white backdrop-blur-sm sm:bottom-3 sm:right-3 sm:px-2.5 sm:text-xs lg:bottom-4 lg:right-4">
+                  {student.year}
+                </span>
+
+                {/* Student Name */}
+                <div className="absolute bottom-2 left-2 right-2 sm:bottom-4 sm:left-4 sm:right-4">
+                  <p className="text-[7px] font-bold uppercase tracking-wide text-amber-300 sm:text-[10px] sm:tracking-wider">
+                    Student Achiever
+                  </p>
+
+                  <h3 className="mt-0.5 break-words text-xs font-black leading-4 text-white min-[400px]:text-sm sm:mt-1 sm:text-xl sm:leading-tight lg:text-2xl">
+                    {student.name}
+                  </h3>
+                </div>
+              </div>
+
+              {/* Achievement Details */}
+              <div className="p-2.5 sm:p-4 lg:p-6">
+                <p className="text-[8px] font-extrabold uppercase tracking-wide text-amber-600 sm:text-[10px] sm:tracking-wider lg:text-xs">
+                  Achievement
+                </p>
+
+                <h4 className="mt-1 break-words text-xs font-extrabold leading-4 text-blue-950 sm:mt-2 sm:text-base sm:leading-5 lg:text-lg lg:leading-6">
+                  {student.achievement}
+                </h4>
+
+                {/* Award */}
+                <div className="mt-2 rounded-lg bg-[#F8F7F3] p-2 sm:mt-4 sm:rounded-xl sm:p-3">
+                  <p className="text-[8px] font-bold uppercase leading-3 tracking-wide text-slate-500 sm:text-[10px] lg:text-xs">
+                    Award / Recognition
+                  </p>
+
+                  <p className="mt-1 break-words text-[10px] font-bold leading-4 text-blue-900 sm:text-sm sm:leading-5">
+                    {student.award}
+                  </p>
+                </div>
+
+                {/* Description */}
+                <p className="mt-2 break-words text-[10px] leading-4 text-slate-600 sm:mt-4 sm:text-sm sm:leading-6">
+                  {student.description}
+                </p>
+
+                {/* School */}
+                <div className="mt-3 border-t border-slate-100 pt-2.5 sm:mt-5 sm:pt-4">
+                  <p className="text-[8px] font-bold uppercase tracking-wide text-slate-500 sm:text-[10px] lg:text-xs">
+                    School
+                  </p>
+
+                  <p className="mt-1 break-words text-[10px] font-semibold leading-4 text-blue-950 sm:text-sm sm:leading-6">
+                    {student.school}
+                  </p>
+                </div>
+
+                {/* Bottom Accent */}
+                <div className="mt-3 h-1 w-8 rounded-full bg-amber-400 transition-all duration-300 group-hover:w-14 sm:mt-5 sm:w-12 sm:group-hover:w-24" />
+              </div>
+            </article>
+          ))}
         </div>
       </div>
     </section>
@@ -780,14 +765,12 @@ export default function AchievementsPage() {
 
       <main>
         <Hero />
-        {/* <Breadcrumb /> */}
         <AchievementIntro />
         <Competitions />
         <Championships />
+        <StudentAchievers />
         <ParticipatingSchools />
         <AnnualDay />
-        {/* <Activities /> */}
-        {/* <ContactCTA /> */}
       </main>
 
     </div>
