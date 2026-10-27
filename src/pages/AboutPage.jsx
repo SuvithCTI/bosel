@@ -131,47 +131,47 @@ export default function AboutPage({ setActivePage }) {
           </span>
         </div>
 
-        <div className="w-full max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-12 relative z-10 py-4 lg:py-8 my-auto">
-          <div className="max-w-4xl mx-auto text-center space-y-3 sm:space-y-4 lg:space-y-5">
+        <div className="w-full max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-12 relative z-10 py-6 lg:py-12 my-auto">
+          <div className="max-w-4xl mx-auto text-center space-y-6 sm:space-y-8 lg:space-y-9">
             
 
             {/* Main Heading as Specified */}
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black font-heading text-[#0F2B5C] tracking-tight leading-[1.14]">
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black font-heading text-[#0F2B5C] tracking-tight leading-[1.2] sm:leading-[1.25]">
               Board of Skills and{' '}
               <span className="font-serif italic text-amber-500 block sm:inline">
                 Educational Learning
               </span>
             </h1>
 
-            {/* Content Specified in Section 1 */}
-            <p className="text-sm sm:text-base lg:text-lg text-slate-800 font-semibold leading-relaxed max-w-3xl mx-auto">
+            {/* Content Specified in Section 1 - Generous Line Spacing & Readable Size */}
+            <p className="text-base sm:text-lg lg:text-xl text-slate-800 font-semibold leading-loose sm:leading-[2.1] lg:leading-[2.2] max-w-3xl lg:max-w-4xl mx-auto">
               B⭐SEL is an education-focused organization dedicated to developing students' academic, creative, and digital skills. Through structured programs, practical activities, expert instruction, and continuous practice, we create meaningful learning opportunities that help students build confidence and essential life skills.
             </p>
 
-            {/* Quick Feature Badges */}
-            <div className="pt-2 flex flex-wrap items-center justify-center gap-2 sm:gap-3 text-xs">
-              <span className="inline-flex items-center gap-1.5 bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-lg text-slate-800 font-bold">
+            {/* Quick Feature Badges with Balanced Padding */}
+            <div className="pt-3 sm:pt-4 flex flex-wrap items-center justify-center gap-3 sm:gap-4 text-xs sm:text-sm">
+              <span className="inline-flex items-center gap-2 bg-slate-100/90 border border-slate-200/90 px-3.5 sm:px-4 py-2 rounded-xl text-slate-800 font-bold shadow-xs">
                 <span className="text-emerald-600">●</span> Structured Programs
               </span>
-              <span className="inline-flex items-center gap-1.5 bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-lg text-slate-800 font-bold">
+              <span className="inline-flex items-center gap-2 bg-slate-100/90 border border-slate-200/90 px-3.5 sm:px-4 py-2 rounded-xl text-slate-800 font-bold shadow-xs">
                 <span className="text-amber-500">★</span> Expert Instruction
               </span>
-              <span className="inline-flex items-center gap-1.5 bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-lg text-slate-800 font-bold">
+              <span className="inline-flex items-center gap-2 bg-slate-100/90 border border-slate-200/90 px-3.5 sm:px-4 py-2 rounded-xl text-slate-800 font-bold shadow-xs">
                 <span className="text-sky-600">■</span> Continuous Practice
               </span>
             </div>
 
             {/* Quick Action Button */}
-            <div className="pt-2 flex items-center justify-center gap-3">
+            <div className="pt-3 sm:pt-4 flex items-center justify-center gap-3">
               <button
                 onClick={() => {
                   const el = document.getElementById('what-we-do');
                   if (el) el.scrollIntoView({ behavior: 'smooth' });
                 }}
-                className="px-6 py-2.5 rounded-full bg-[#0F2B5C] hover:bg-[#163B7A] text-white text-xs sm:text-sm font-bold transition shadow-sm hover:shadow flex items-center gap-1.5 cursor-pointer"
+                className="px-7 sm:px-9 py-3 sm:py-3.5 rounded-full bg-[#0F2B5C] hover:bg-[#163B7A] text-white text-sm sm:text-base font-bold transition shadow-md hover:shadow-lg flex items-center gap-2 cursor-pointer hover:gap-3"
               >
                 <span>Explore What We Do</span>
-                <ArrowRight className="w-3.5 h-3.5 text-amber-400" />
+                <ArrowRight className="w-4 h-4 text-amber-400" />
               </button>
             </div>
 

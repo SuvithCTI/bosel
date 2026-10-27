@@ -113,7 +113,7 @@ export default function HomePage({ setActivePage, onSelectProgram }) {
                   Explore Your Potential
                 </h2>
                 <p className="text-xs sm:text-sm md:text-base text-slate-700 mt-1 max-w-2xl font-semibold">
-                  Discover six structured programs designed to develop cognitive speed, fine art mastery, and lifelong confidence.
+                  Discover our premier structured programs designed to develop cognitive speed, fine art mastery, and lifelong confidence.
                 </p>
               </div>
               <span className="text-[11px] sm:text-xs text-slate-900 font-extrabold bg-slate-100 px-3 py-1.5 rounded-full self-start md:self-auto border border-slate-300">
@@ -121,46 +121,70 @@ export default function HomePage({ setActivePage, onSelectProgram }) {
               </span>
             </div>
 
-            {/* Grid of 6 Programs (2 Columns on Mobile View) */}
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-6 mt-6">
-              {PROGRAMS_DATA.map((prog) => (
+            {/* Scoped CSS for Card Glitter Border */}
+            <style>{`
+              @keyframes glitterBorder {
+                0% {
+                  background-position: 0% 50%;
+                }
+                50% {
+                  background-position: 100% 50%;
+                }
+                100% {
+                  background-position: 0% 50%;
+                }
+              }
+            `}</style>
+
+            {/* Grid of 3 Programs with Glitter Shimmer Border */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 mt-8">
+              {PROGRAMS_DATA.slice(0, 3).map((prog) => (
                 <div
                   key={prog.id}
                   onClick={() => onSelectProgram(prog)}
-                  className="group relative bg-white hover:bg-slate-50/70 rounded-xl sm:rounded-2xl border border-slate-200 sm:border-2 hover:border-sky-500 hover:shadow-xl active:scale-[0.98] transition-all duration-200 cursor-pointer overflow-hidden flex flex-col text-left"
+                  className="relative p-[3px] rounded-2xl sm:rounded-3xl cursor-pointer group transition-all duration-300 hover:-translate-y-2"
+                  style={{
+                    background: 'linear-gradient(135deg, #f59e0b, #fef08a, #38bdf8, #ffffff, #fbbf24, #f59e0b)',
+                    backgroundSize: '300% 300%',
+                    animation: 'glitterBorder 4s ease infinite',
+                    boxShadow: '0 0 16px rgba(245, 158, 11, 0.35), 0 8px 24px rgba(0, 0, 0, 0.08)'
+                  }}
                 >
-                  {/* Course Photography Container */}
-                  <div className="relative aspect-[3/2] w-full overflow-hidden bg-slate-100">
-                    <img
-                      src={prog.image}
-                      alt={prog.name}
-                      className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
-                      loading="lazy"
-                    />
-                  </div>
-
-                  {/* Program Card Body */}
-                  <div className="p-2.5 sm:p-5 flex-1 flex flex-col justify-between space-y-1.5 sm:space-y-3">
-                    <div>
-                      <div className="flex items-center justify-between gap-1">
-                        <h3 className="font-black text-xs sm:text-xl text-black font-heading group-hover:text-sky-700 transition truncate">
-                          {prog.name}
-                        </h3>
-                        <span className="text-[10px] sm:text-xs font-black text-sky-800 shrink-0 group-hover:translate-x-0.5 transition-transform">
-                          Details →
-                        </span>
-                      </div>
-
-                      <p className="text-[10px] sm:text-sm text-slate-800 mt-1 sm:mt-2 leading-tight sm:leading-relaxed font-semibold line-clamp-2 sm:line-clamp-none">
-                        {prog.tagline}
-                      </p>
+                  {/* Card Inner Content */}
+                  <div className="relative bg-white rounded-[13px] sm:rounded-[21px] overflow-hidden flex flex-col text-left h-full group-hover:bg-slate-50/70 transition-colors">
+                    {/* Course Photography Container */}
+                    <div className="relative aspect-[3/2] w-full overflow-hidden bg-slate-100">
+                      <img
+                        src={prog.image}
+                        alt={prog.name}
+                        className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
+                        loading="lazy"
+                      />
                     </div>
 
-                    {/* Footer Details */}
-                    <div className="pt-1.5 sm:pt-2 border-t border-slate-100 sm:border-slate-200 flex items-center justify-between text-[10px] sm:text-xs text-slate-900 font-bold">
-                      <span className="text-slate-900 truncate">
-                        {prog.levels}
-                      </span>
+                    {/* Program Card Body */}
+                    <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-2 sm:space-y-3">
+                      <div>
+                        <div className="flex items-center justify-between gap-1">
+                          <h3 className="font-black text-base sm:text-xl text-black font-heading group-hover:text-sky-700 transition truncate">
+                            {prog.name}
+                          </h3>
+                          <span className="text-xs font-black text-sky-800 shrink-0 group-hover:translate-x-1 transition-transform">
+                            Details →
+                          </span>
+                        </div>
+
+                        <p className="text-xs sm:text-sm text-slate-800 mt-1.5 leading-relaxed font-semibold">
+                          {prog.tagline}
+                        </p>
+                      </div>
+
+                      {/* Footer Details */}
+                      <div className="pt-2 border-t border-slate-100 sm:border-slate-200 flex items-center justify-between text-xs text-slate-900 font-bold">
+                        <span className="text-slate-900 truncate">
+                          {prog.levels}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -332,62 +356,62 @@ export default function HomePage({ setActivePage, onSelectProgram }) {
           </div>
 
           {/* 2 Columns on Mobile View, 4 Columns on Large Screens */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-6">
-            {/* Card 1: ISO Certified Standard */}
-            <div className="bg-white p-3.5 sm:p-7 rounded-xl sm:rounded-2xl border border-slate-200 sm:border-2 hover:border-sky-500 hover:shadow-xl transition-all duration-300 flex flex-col justify-between">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+            {/* Card 1: ISO Certified Standard (Sky/Blue) */}
+            <div className="bg-sky-50/80 hover:bg-sky-50 p-4 sm:p-7 rounded-xl sm:rounded-2xl border-2 border-sky-200/90 hover:border-sky-400 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
               <div>
                 <div className="mb-2.5 sm:mb-4">
                   <IsoShieldIcon className="w-10 h-10 sm:w-14 sm:h-14" />
                 </div>
-                <h3 className="font-black text-black text-xs sm:text-lg mb-1 sm:mb-1.5 font-heading">
+                <h3 className="font-black text-slate-950 text-xs sm:text-lg mb-1 sm:mb-1.5 font-heading">
                   ISO Certified Standard
                 </h3>
-                <p className="text-[10px] sm:text-sm text-slate-700 leading-snug sm:leading-relaxed font-semibold">
+                <p className="text-[10px] sm:text-sm text-slate-800 leading-snug sm:leading-relaxed font-semibold">
                   Standardized curriculum vetted by veteran educators, adhering to strict pedagogical benchmarks.
                 </p>
               </div>
             </div>
 
-            {/* Card 2: Recognized Certificates */}
-            <div className="bg-white p-3.5 sm:p-7 rounded-xl sm:rounded-2xl border border-slate-200 sm:border-2 hover:border-amber-500 hover:shadow-xl transition-all duration-300 flex flex-col justify-between">
+            {/* Card 2: Recognized Certificates (Amber/Gold) */}
+            <div className="bg-amber-50/80 hover:bg-amber-50 p-4 sm:p-7 rounded-xl sm:rounded-2xl border-2 border-amber-200/90 hover:border-amber-400 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
               <div>
                 <div className="mb-2.5 sm:mb-4">
                   <CertificateMedalIcon className="w-10 h-10 sm:w-14 sm:h-14" />
                 </div>
-                <h3 className="font-black text-black text-xs sm:text-lg mb-1 sm:mb-1.5 font-heading">
+                <h3 className="font-black text-slate-950 text-xs sm:text-lg mb-1 sm:mb-1.5 font-heading">
                   Recognized Certificates
                 </h3>
-                <p className="text-[10px] sm:text-sm text-slate-700 leading-snug sm:leading-relaxed font-semibold">
+                <p className="text-[10px] sm:text-sm text-slate-800 leading-snug sm:leading-relaxed font-semibold">
                   Govt. recognized skill grades and Olympiad medals that enrich students' academic portfolios.
                 </p>
               </div>
             </div>
 
-            {/* Card 3: Zero-Cost School Tie-Up */}
-            <div className="bg-white p-3.5 sm:p-7 rounded-xl sm:rounded-2xl border border-slate-200 sm:border-2 hover:border-emerald-500 hover:shadow-xl transition-all duration-300 flex flex-col justify-between">
+            {/* Card 3: Zero-Cost School Tie-Up (Emerald/Green) */}
+            <div className="bg-emerald-50/80 hover:bg-emerald-50 p-4 sm:p-7 rounded-xl sm:rounded-2xl border-2 border-emerald-200/90 hover:border-emerald-400 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
               <div>
                 <div className="mb-2.5 sm:mb-4">
                   <SchoolPartnershipIcon className="w-10 h-10 sm:w-14 sm:h-14" />
                 </div>
-                <h3 className="font-black text-black text-xs sm:text-lg mb-1 sm:mb-1.5 font-heading">
+                <h3 className="font-black text-slate-950 text-xs sm:text-lg mb-1 sm:mb-1.5 font-heading">
                   Zero-Cost School Tie-Up
                 </h3>
-                <p className="text-[10px] sm:text-sm text-slate-700 leading-snug sm:leading-relaxed font-semibold">
+                <p className="text-[10px] sm:text-sm text-slate-800 leading-snug sm:leading-relaxed font-semibold">
                   Turnkey integration for schools with certified master trainers and study kit supply.
                 </p>
               </div>
             </div>
 
-            {/* Card 4: Holistic Brain Growth */}
-            <div className="bg-white p-3.5 sm:p-7 rounded-xl sm:rounded-2xl border border-slate-200 sm:border-2 hover:border-purple-500 hover:shadow-xl transition-all duration-300 flex flex-col justify-between">
+            {/* Card 4: Holistic Brain Growth (Purple/Indigo) */}
+            <div className="bg-purple-50/80 hover:bg-purple-50 p-4 sm:p-7 rounded-xl sm:rounded-2xl border-2 border-purple-200/90 hover:border-purple-400 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
               <div>
                 <div className="mb-2.5 sm:mb-4">
                   <BrainGrowthIcon className="w-10 h-10 sm:w-14 sm:h-14" />
                 </div>
-                <h3 className="font-black text-black text-xs sm:text-lg mb-1 sm:mb-1.5 font-heading">
+                <h3 className="font-black text-slate-950 text-xs sm:text-lg mb-1 sm:mb-1.5 font-heading">
                   Holistic Brain Growth
                 </h3>
-                <p className="text-[10px] sm:text-sm text-slate-700 leading-snug sm:leading-relaxed font-semibold">
+                <p className="text-[10px] sm:text-sm text-slate-800 leading-snug sm:leading-relaxed font-semibold">
                   Synchronized development of mathematical logic, artistic creativity, and cultural grace.
                 </p>
               </div>
