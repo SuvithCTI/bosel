@@ -322,7 +322,7 @@ export default function LoginPage({ setActivePage }) {
                     <input
                       type="text"
                       required
-                      placeholder="e.g. BSEL-STU-482910"
+                      placeholder="e.g. BSEL-CBE-9876543211 or admin"
                       value={userId}
                       onChange={(e) => {
                         setUserId(e.target.value);
@@ -341,7 +341,7 @@ export default function LoginPage({ setActivePage }) {
                     </label>
                     <button
                       type="button"
-                      onClick={() => alert('To retrieve your password, please check the credentials generated upon Admission Enquiry or contact our desk at +91 98401 23456.')}
+                      onClick={() => alert('Your password is your registered 10-digit mobile number. Your User ID is in format: BSEL-District-MobileNumber (e.g. BSEL-CBE-9876543211). For assistance, contact +91 98401 23456.')}
                       className="text-[11px] text-sky-800 hover:underline font-bold"
                     >
                       Forgot Password?
@@ -352,7 +352,7 @@ export default function LoginPage({ setActivePage }) {
                     <input
                       type={showPassword ? 'text' : 'password'}
                       required
-                      placeholder="Enter your generated password"
+                      placeholder="Enter mobile number or admin123"
                       value={password}
                       onChange={(e) => {
                         setPassword(e.target.value);

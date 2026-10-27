@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Phone, 
   Mail, 
@@ -15,9 +15,54 @@ import {
   KeyRound,
   ShieldCheck,
   Eye,
-  EyeOff
+  EyeOff,
+  Building2,
+  BookOpen,
+  HelpCircle
 } from 'lucide-react';
 import { registerStudentAccount } from '../utils/authStorage';
+
+const TAMIL_NADU_DISTRICTS = [
+  'Ariyalur',
+  'Chengalpattu',
+  'Chennai',
+  'Coimbatore',
+  'Cuddalore',
+  'Dharmapuri',
+  'Dindigul',
+  'Erode',
+  'Kallakurichi',
+  'Kanchipuram',
+  'Kanyakumari',
+  'Karur',
+  'Krishnagiri',
+  'Madurai',
+  'Mayiladuthurai',
+  'Nagapattinam',
+  'Namakkal',
+  'Nilgiris',
+  'Perambalur',
+  'Pudukkottai',
+  'Ramanathapuram',
+  'Ranipet',
+  'Salem',
+  'Sivaganga',
+  'Tenkasi',
+  'Thanjavur',
+  'Theni',
+  'Thoothukudi',
+  'Tiruchirappalli (Trichy)',
+  'Tirunelveli',
+  'Tirupathur',
+  'Tiruppur',
+  'Tiruvallur',
+  'Tiruvannamalai',
+  'Tiruvarur',
+  'Vellore',
+  'Viluppuram',
+  'Virudhunagar',
+  'Other District / State'
+];
 
 export default function ContactPage({ setActivePage }) {
   const [formData, setFormData] = useState({
@@ -27,6 +72,7 @@ export default function ContactPage({ setActivePage }) {
     phone: '',
     grade: '',
     program: 'Abacus Speed Arithmetic',
+    district: '',
     address: ''
   });
   const [submitted, setSubmitted] = useState(false);
@@ -34,6 +80,24 @@ export default function ContactPage({ setActivePage }) {
   const [copiedField, setCopiedField] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   const [expandedFaq, setExpandedFaq] = useState(null);
+  const [districtDropdownOpen, setDistrictDropdownOpen] = useState(false);
+  const [districtSearch, setDistrictSearch] = useState('');
+  const [districtError, setDistrictError] = useState(false);
+  const districtDropdownRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (districtDropdownRef.current && !districtDropdownRef.current.contains(event.target)) {
+        setDistrictDropdownOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const filteredDistricts = TAMIL_NADU_DISTRICTS.filter((d) =>
+    d.toLowerCase().includes(districtSearch.toLowerCase().trim())
+  );
 
   const handleCopy = (text, fieldName) => {
     if (typeof navigator !== 'undefined' && navigator.clipboard) {
@@ -43,8 +107,32 @@ export default function ContactPage({ setActivePage }) {
     }
   };
 
+  const scrollToEnquiryForm = () => {
+    if (submitted) {
+      setSubmitted(false);
+      setCreatedAccount(null);
+      setDistrictError(false);
+    }
+    const el = document.getElementById('admission-enquiry-form');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const firstInput = el.querySelector('input');
+      if (firstInput) {
+        setTimeout(() => firstInput.focus(), 450);
+      }
+    }
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!formData.district) {
+      setDistrictError(true);
+      if (districtDropdownRef.current) {
+        districtDropdownRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      return;
+    }
+    setDistrictError(false);
     const account = registerStudentAccount(formData);
     setCreatedAccount(account);
     setSubmitted(true);
@@ -137,10 +225,61 @@ export default function ContactPage({ setActivePage }) {
                 </div>
               </div>
             </div>
+
+            {/* Quick Action Buttons in Gap */}
+            <div className="bg-white rounded-2xl p-3 sm:p-4 shadow-sm border border-slate-200">
+              <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
+                {/* 1. Franchise */}
+                <a
+                  href="tel:+919840012345"
+                  title="Franchise (+91 98400 12345)"
+                  aria-label="Franchise"
+                  className="py-3 px-2 rounded-xl bg-amber-50/50 border-2 border-amber-200/80 hover:border-amber-400 hover:bg-amber-400 text-amber-800 hover:text-slate-950 transition flex flex-col items-center justify-center gap-1.5 shadow-2xs hover:shadow-xs cursor-pointer group text-center"
+                >
+                  <Building2 className="w-5 h-5 group-hover:scale-110 transition-transform shrink-0" />
+                  <span className="text-[11px] sm:text-xs font-black tracking-wide leading-none text-slate-800 group-hover:text-slate-950">
+                    Franchise
+                  </span>
+                </a>
+
+                {/* 2. Program */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (setActivePage) {
+                      setActivePage('programs');
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                  }}
+                  title="Programs"
+                  aria-label="Programs"
+                  className="py-3 px-2 rounded-xl bg-sky-50/50 border-2 border-sky-200/80 hover:border-sky-500 hover:bg-sky-600 text-sky-800 hover:text-white transition flex flex-col items-center justify-center gap-1.5 shadow-2xs hover:shadow-xs cursor-pointer group text-center"
+                >
+                  <BookOpen className="w-5 h-5 group-hover:scale-110 transition-transform shrink-0" />
+                  <span className="text-[11px] sm:text-xs font-black tracking-wide leading-none text-slate-800 group-hover:text-white">
+                    Programs
+                  </span>
+                </button>
+
+                {/* 3. Enquiry */}
+                <button
+                  type="button"
+                  onClick={scrollToEnquiryForm}
+                  title="Admission Enquiry"
+                  aria-label="Admission Enquiry"
+                  className="py-3 px-2 rounded-xl bg-emerald-50/50 border-2 border-emerald-200/80 hover:border-emerald-500 hover:bg-emerald-600 text-emerald-800 hover:text-white transition flex flex-col items-center justify-center gap-1.5 shadow-2xs hover:shadow-xs cursor-pointer group text-center"
+                >
+                  <HelpCircle className="w-5 h-5 group-hover:scale-110 transition-transform shrink-0" />
+                  <span className="text-[11px] sm:text-xs font-black tracking-wide leading-none text-slate-800 group-hover:text-white">
+                    Enquiry
+                  </span>
+                </button>
+              </div>
+            </div>
           </div>
 
           {/* Right Column: Admission Enquiry Form */}
-          <div className="lg:col-span-7 bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-slate-200">
+          <div id="admission-enquiry-form" className="lg:col-span-7 bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-slate-200 scroll-mt-24">
             <div className="mb-6">
               <span className="text-xs font-black text-sky-700 uppercase tracking-wider">Student Enrolment</span>
               <h2 className="text-2xl font-black font-heading text-slate-950 mt-1">
@@ -240,7 +379,7 @@ export default function ContactPage({ setActivePage }) {
                     <div className="bg-white/10 backdrop-blur-xs border border-white/20 rounded-xl p-3.5 flex flex-col justify-between">
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-[10px] font-bold uppercase tracking-wider text-sky-200">
-                          Generated Password
+                          Password (Mobile Number)
                         </span>
                         <div className="flex items-center gap-2">
                           <button
@@ -300,6 +439,10 @@ export default function ContactPage({ setActivePage }) {
                       <strong className="text-slate-900 font-bold">{createdAccount.parentName}</strong>
                     </div>
                     <div>
+                      <span className="text-slate-500 block text-[10px]">District</span>
+                      <strong className="text-slate-900 font-bold">{createdAccount.district || 'Not Specified'}</strong>
+                    </div>
+                    <div>
                       <span className="text-slate-500 block text-[10px]">Phone Number</span>
                       <strong className="text-slate-900 font-bold">{createdAccount.phone}</strong>
                     </div>
@@ -328,6 +471,7 @@ export default function ContactPage({ setActivePage }) {
                     onClick={() => {
                       setSubmitted(false);
                       setCreatedAccount(null);
+                      setDistrictError(false);
                       setFormData({
                         name: '',
                         parentName: '',
@@ -335,6 +479,7 @@ export default function ContactPage({ setActivePage }) {
                         phone: '',
                         grade: '',
                         program: 'Abacus Speed Arithmetic',
+                        district: '',
                         address: ''
                       });
                     }}
@@ -452,6 +597,89 @@ export default function ContactPage({ setActivePage }) {
                       <option value="Phonics & Spoken English">Phonics & Spoken English</option>
                       <option value="Vedic Mathematics">Vedic Mathematics</option>
                     </select>
+                  </div>
+                </div>
+
+                {/* District */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="relative" ref={districtDropdownRef}>
+                    <label className="block text-xs font-black text-black mb-1">
+                      District *
+                    </label>
+
+                    {/* Trigger Button */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDistrictDropdownOpen(!districtDropdownOpen);
+                        setDistrictSearch('');
+                        if (districtError) setDistrictError(false);
+                      }}
+                      className={`w-full px-3.5 py-2.5 text-base sm:text-sm font-semibold border-2 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none bg-white text-left flex items-center justify-between transition cursor-pointer ${
+                        districtError ? 'border-rose-500 ring-2 ring-rose-200' : 'border-slate-300'
+                      }`}
+                    >
+                      <span className={formData.district ? 'text-black font-semibold' : 'text-slate-400 font-normal'}>
+                        {formData.district || 'Select District'}
+                      </span>
+                      <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform ${districtDropdownOpen ? 'rotate-180' : ''}`} />
+                    </button>
+
+                    {districtError && (
+                      <p className="text-[11px] font-bold text-rose-600 mt-1 flex items-center gap-1">
+                        Please select a district
+                      </p>
+                    )}
+
+                    {/* Small Compact Dropdown Menu */}
+                    {districtDropdownOpen && (
+                      <div className="absolute z-30 mt-1 w-full bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden animate-in fade-in-50 zoom-in-95 duration-150">
+                        {/* Quick filter search */}
+                        <div className="p-2 border-b border-slate-100 bg-slate-50">
+                          <input
+                            type="text"
+                            placeholder="Type to filter district..."
+                            value={districtSearch}
+                            onChange={(e) => setDistrictSearch(e.target.value)}
+                            onClick={(e) => e.stopPropagation()}
+                            className="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500 bg-white"
+                            autoFocus
+                          />
+                        </div>
+
+                        {/* Scrollable list with small compact max-height */}
+                        <div className="max-h-48 overflow-y-auto p-1 divide-y divide-slate-50">
+                          {filteredDistricts.length > 0 ? (
+                            filteredDistricts.map((dist) => {
+                              const isSelected = formData.district === dist;
+                              return (
+                                <button
+                                  key={dist}
+                                  type="button"
+                                  onClick={() => {
+                                    setFormData({ ...formData, district: dist });
+                                    setDistrictError(false);
+                                    setDistrictDropdownOpen(false);
+                                  }}
+                                  className={`w-full text-left px-3 py-2 text-xs font-semibold rounded-lg transition flex items-center justify-between cursor-pointer ${
+                                    isSelected
+                                      ? 'bg-sky-50 text-sky-900 font-bold'
+                                      : 'text-slate-700 hover:bg-slate-100'
+                                  }`}
+                                >
+                                  <span>{dist}</span>
+                                  {isSelected && <Check className="w-3.5 h-3.5 text-sky-600 shrink-0" />}
+                                </button>
+                              );
+                            })
+                          ) : (
+                            <div className="p-3 text-center text-xs text-slate-400">
+                              No district matching "{districtSearch}"
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 

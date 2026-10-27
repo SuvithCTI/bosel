@@ -82,24 +82,78 @@ export const getRegisteredUsers = () => {
   }
 };
 
+export const DISTRICT_SHORT_CODES = {
+  'Ariyalur': 'ALR',
+  'Chengalpattu': 'CGL',
+  'Chennai': 'CHN',
+  'Coimbatore': 'CBE',
+  'Cuddalore': 'CUD',
+  'Dharmapuri': 'DPI',
+  'Dindigul': 'DGL',
+  'Erode': 'ERD',
+  'Kallakurichi': 'KLK',
+  'Kanchipuram': 'KPM',
+  'Kanyakumari': 'KKI',
+  'Karur': 'KRR',
+  'Krishnagiri': 'KGI',
+  'Madurai': 'MDU',
+  'Mayiladuthurai': 'MYD',
+  'Nagapattinam': 'NGP',
+  'Namakkal': 'NKL',
+  'Nilgiris': 'NLG',
+  'Perambalur': 'PBL',
+  'Pudukkottai': 'PDK',
+  'Ramanathapuram': 'RMD',
+  'Ranipet': 'RPT',
+  'Salem': 'SLM',
+  'Sivaganga': 'SVG',
+  'Tenkasi': 'TSI',
+  'Thanjavur': 'TNJ',
+  'Theni': 'THI',
+  'Thoothukudi': 'TKD',
+  'Tiruchirappalli (Trichy)': 'TRY',
+  'Tirunelveli': 'TNV',
+  'Tirupathur': 'TPT',
+  'Tiruppur': 'TPR',
+  'Tiruvallur': 'TLR',
+  'Tiruvannamalai': 'TVM',
+  'Tiruvarur': 'TVR',
+  'Vellore': 'VLR',
+  'Viluppuram': 'VPM',
+  'Virudhunagar': 'VNR',
+  'Other District / State': 'OTH'
+};
+
+export const getDistrictShortCode = (districtName) => {
+  if (!districtName) return 'TN';
+  if (DISTRICT_SHORT_CODES[districtName]) {
+    return DISTRICT_SHORT_CODES[districtName];
+  }
+  const base = districtName.split('(')[0].trim();
+  if (DISTRICT_SHORT_CODES[base]) {
+    return DISTRICT_SHORT_CODES[base];
+  }
+  return base.replace(/[^A-Za-z]/g, '').slice(0, 3).toUpperCase() || 'TN';
+};
+
 export const registerStudentAccount = (formData) => {
   const users = getRegisteredUsers();
 
-  // Generate unique 6-digit User ID and secure memorable password
-  let randomIdNum;
-  let newUserId;
-  do {
-    randomIdNum = Math.floor(100000 + Math.random() * 900000);
-    newUserId = `BSEL-STU-${randomIdNum}`;
-  } while (users.some((u) => u.userId.toUpperCase() === newUserId.toUpperCase()));
+  // District Short Code & Clean Mobile Number
+  const districtCode = getDistrictShortCode(formData.district);
+  const rawDigits = (formData.phone || '').replace(/\D/g, '');
+  const cleanMobile = rawDigits.length >= 10 ? rawDigits.slice(-10) : (rawDigits || '9876543210');
 
-  const randomPin = Math.floor(1000 + Math.random() * 9000);
-  const newPassword = `Bsel@${randomPin}`;
+  // Format: BSEL-District short form-mobile number
+  const newUserId = `BSEL-${districtCode}-${cleanMobile}`;
+  // Password: their mobile number
+  const newPassword = cleanMobile;
 
   const progCode = (formData.program || 'SKILL')
     .replace(/[^A-Za-z]/g, '')
     .substring(0, 4)
     .toUpperCase();
+  const certSuffix = cleanMobile.slice(-4);
 
   const matchGrade = formData.grade?.match(/Grade\s*(\d+)/i);
   const formattedLevel = matchGrade 
@@ -112,11 +166,12 @@ export const registerStudentAccount = (formData) => {
     studentName: formData.name.trim(),
     parentName: formData.parentName.trim(),
     email: formData.email.trim(),
-    phone: formData.phone.trim(),
+    phone: cleanMobile,
     grade: formData.grade,
     program: formData.program,
+    district: formData.district || '',
     address: formData.address.trim(),
-    institution: formData.address ? `${formData.address.split(',')[0].trim()} Branch` : 'B★SEL Authorized Academy',
+    institution: formData.district ? `B★SEL ${formData.district} Center` : (formData.address ? `${formData.address.split(',')[0].trim()} Branch` : 'B★SEL Authorized Academy'),
     role: 'Student',
     enrolmentDate: new Date().toLocaleDateString('en-GB', {
       day: '2-digit',
@@ -136,12 +191,13 @@ export const registerStudentAccount = (formData) => {
         exam: `${formData.program || 'Skill'} Assessment Entry`,
         score: 'Enrolled & Verified',
         rank: 'Admitted',
-        certificateNo: `BSEL-${progCode}-2026-${randomIdNum.toString().slice(-4)}`
+        certificateNo: `BSEL-${progCode}-2026-${certSuffix}`
       }
     ]
   };
 
-  const updatedUsers = [newUser, ...users];
+  const otherUsers = users.filter((u) => u.userId.toUpperCase() !== newUserId.toUpperCase());
+  const updatedUsers = [newUser, ...otherUsers];
   try {
     localStorage.setItem('bsel_registered_users', JSON.stringify(updatedUsers));
     localStorage.setItem(

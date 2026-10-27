@@ -15,6 +15,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import ProgramModal from './components/ProgramModal';
 import EventRegisterModal from './components/EventRegisterModal';
 import CertificateModal from './components/CertificateModal';
+import FloatingActions from './components/FloatingActions';
 import { getActiveSession, clearActiveSession } from './utils/authStorage';
 
 export default function App() {
@@ -151,6 +152,11 @@ export default function App() {
       {/* Global Footer (Hidden when inside Admin Dashboard) */}
       {activePage !== 'admin' && (
         <Footer setActivePage={setActivePage} />
+      )}
+
+      {/* Floating Action Buttons: WhatsApp & Franchise Enquiry (Bottom Right) */}
+      {activePage !== 'admin' && (
+        <FloatingActions setActivePage={setActivePage} />
       )}
 
       {/* Program Details Modal */}
