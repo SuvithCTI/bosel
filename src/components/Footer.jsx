@@ -32,9 +32,9 @@ export default function Footer({ setActivePage }) {
             </h4>
             <ul className="grid grid-cols-2 md:grid-cols-1 gap-x-2 gap-y-1 sm:space-y-2 text-[11px] sm:text-xs">
               <li>
-                <button 
+                <button
                   type="button"
-                  onClick={() => handleNav('home')} 
+                  onClick={() => handleNav('home')}
                   className="hover:text-amber-400 py-0.5 sm:py-1 transition flex items-center gap-1 cursor-pointer text-slate-300 hover:text-white truncate"
                 >
                   <ArrowRight className="w-2.5 h-2.5 text-amber-400 shrink-0" />
@@ -42,9 +42,29 @@ export default function Footer({ setActivePage }) {
                 </button>
               </li>
               <li>
-                <button 
+                <button
                   type="button"
-                  onClick={() => handleNav('events')} 
+                  onClick={() => handleNav('about')}
+                  className="hover:text-amber-400 py-0.5 sm:py-1 transition flex items-center gap-1 cursor-pointer text-slate-300 hover:text-white truncate"
+                >
+                  <ArrowRight className="w-2.5 h-2.5 text-amber-400 shrink-0" />
+                  <span>About Us</span>
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => handleNav('programs')}
+                  className="hover:text-amber-400 py-0.5 sm:py-1 transition flex items-center gap-1 cursor-pointer text-slate-300 hover:text-white truncate"
+                >
+                  <ArrowRight className="w-2.5 h-2.5 text-amber-400 shrink-0" />
+                  <span>Programs</span>
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => handleNav('events')}
                   className="hover:text-amber-400 py-0.5 sm:py-1 transition flex items-center gap-1 cursor-pointer text-slate-300 hover:text-white truncate"
                 >
                   <ArrowRight className="w-2.5 h-2.5 text-amber-400 shrink-0" />
@@ -52,9 +72,19 @@ export default function Footer({ setActivePage }) {
                 </button>
               </li>
               <li>
-                <button 
+                <button
                   type="button"
-                  onClick={() => handleNav('certificate')} 
+                  onClick={() => handleNav('achievements')}
+                  className="hover:text-amber-400 py-0.5 sm:py-1 transition flex items-center gap-1 cursor-pointer text-slate-300 hover:text-white truncate"
+                >
+                  <ArrowRight className="w-2.5 h-2.5 text-amber-400 shrink-0" />
+                  <span>Achievements</span>
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => handleNav('certificate')}
                   className="hover:text-amber-400 py-0.5 sm:py-1 transition flex items-center gap-1 cursor-pointer text-slate-300 hover:text-white truncate"
                 >
                   <ArrowRight className="w-2.5 h-2.5 text-amber-400 shrink-0" />
@@ -62,19 +92,19 @@ export default function Footer({ setActivePage }) {
                 </button>
               </li>
               <li>
-                <button 
+                <button
                   type="button"
-                  onClick={() => handleNav('contact')} 
+                  onClick={() => handleNav('contact')}
                   className="hover:text-amber-400 py-0.5 sm:py-1 transition flex items-center gap-1 cursor-pointer text-slate-300 hover:text-white truncate"
                 >
                   <ArrowRight className="w-2.5 h-2.5 text-amber-400 shrink-0" />
-                  <span>Admission</span>
+                  <span>Admission Enquiry</span>
                 </button>
               </li>
               <li className="col-span-2 md:col-span-1">
-                <button 
+                <button
                   type="button"
-                  onClick={() => handleNav('login')} 
+                  onClick={() => handleNav('login')}
                   className="hover:text-amber-400 py-0.5 sm:py-1 transition flex items-center gap-1 cursor-pointer text-slate-300 hover:text-white truncate"
                 >
                   <ArrowRight className="w-2.5 h-2.5 text-amber-400 shrink-0" />

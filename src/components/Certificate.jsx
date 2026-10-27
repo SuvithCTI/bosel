@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Upload, Download, Loader2, ZoomIn, ZoomOut, Sparkles } from 'lucide-react';
+import { Upload, Download, Loader2, Sparkles } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, X, User, Award, Phone, Calendar, ArrowRight, Home } from 'lucide-react';
+import { Menu, X, User, Award, Phone, Calendar, ArrowRight, Home, Info, BookOpen, Trophy, Sparkles } from 'lucide-react';
 import Logo from './Logo';
 
 export default function Navbar({ activePage, setActivePage, sessionUser }) {
@@ -19,9 +19,12 @@ export default function Navbar({ activePage, setActivePage, sessionUser }) {
 
   const navItems = [
     { id: 'home', label: 'Home', icon: Home },
+    { id: 'about', label: 'About Us', icon: Info },
+    { id: 'programs', label: 'Programs', icon: BookOpen },
     { id: 'events', label: 'Events', icon: Calendar },
+    { id: 'achievements', label: 'Achievements', icon: Trophy },
     { id: 'certificate', label: 'Certificates', icon: Award },
-    { id: 'contact', label: 'Admission Enquiry', icon: null },
+    { id: 'contact', label: 'Admission Enquiry', icon: Sparkles },
   ];
 
   const handleNavClick = (pageId) => {
@@ -68,24 +71,43 @@ export default function Navbar({ activePage, setActivePage, sessionUser }) {
                 );
               })}
 
-              {/* Login Portal as Symbol */}
-              <button
-                onClick={() => handleNavClick('login')}
-                title="Login Portal"
-                aria-label="Login Portal"
-                className={`ml-2 w-10 h-10 rounded-full transition-all duration-200 flex items-center justify-center shadow-sm relative group cursor-pointer ${
-                  activePage === 'login'
-                    ? 'bg-amber-400 text-slate-950 ring-2 ring-amber-300 shadow-md scale-105'
-                    : 'bg-white/10 hover:bg-white/20 text-white border border-white/20 hover:border-white/40 hover:scale-105'
-                }`}
-              >
-                <User className="w-5 h-5" />
-                <span className="sr-only">Login Portal</span>
-                {/* Tooltip on hover */}
-                <span className="absolute -bottom-9 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-[11px] font-semibold py-1 px-2.5 rounded-md shadow-lg pointer-events-none whitespace-nowrap z-50">
-                  Login Portal
-                </span>
-              </button>
+              {/* Login Portal as Symbol / Active Session Badge */}
+              {sessionUser ? (
+                <button
+                  onClick={() => handleNavClick(sessionUser.role === 'Super Admin' ? 'admin' : 'login')}
+                  title={`Logged in as ${sessionUser.name || sessionUser.studentName}`}
+                  className={`ml-2 px-3 py-1.5 rounded-full transition-all duration-200 flex items-center gap-2 shadow-sm cursor-pointer ${
+                    activePage === 'login' || activePage === 'admin'
+                      ? 'bg-amber-400 text-slate-950 ring-2 ring-amber-300 shadow-md font-black'
+                      : 'bg-white/15 hover:bg-white/25 text-white border border-white/25 font-bold'
+                  }`}
+                >
+                  <div className="w-5 h-5 rounded-full bg-amber-400 text-slate-950 flex items-center justify-center font-black text-[11px]">
+                    {(sessionUser.name || sessionUser.studentName || 'U').charAt(0).toUpperCase()}
+                  </div>
+                  <span className="text-xs max-w-[120px] truncate">
+                    {sessionUser.name || sessionUser.studentName}
+                  </span>
+                </button>
+              ) : (
+                <button
+                  onClick={() => handleNavClick('login')}
+                  title="Login Portal"
+                  aria-label="Login Portal"
+                  className={`ml-2 w-10 h-10 rounded-full transition-all duration-200 flex items-center justify-center shadow-sm relative group cursor-pointer ${
+                    activePage === 'login'
+                      ? 'bg-amber-400 text-slate-950 ring-2 ring-amber-300 shadow-md scale-105'
+                      : 'bg-white/10 hover:bg-white/20 text-white border border-white/20 hover:border-white/40 hover:scale-105'
+                  }`}
+                >
+                  <User className="w-5 h-5" />
+                  <span className="sr-only">Login Portal</span>
+                  {/* Tooltip on hover */}
+                  <span className="absolute -bottom-9 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-[11px] font-semibold py-1 px-2.5 rounded-md shadow-lg pointer-events-none whitespace-nowrap z-50">
+                    Login Portal
+                  </span>
+                </button>
+              )}
             </div>
 
             {/* Mobile Controls: Quick Login & Hamburger Menu */}
@@ -93,16 +115,22 @@ export default function Navbar({ activePage, setActivePage, sessionUser }) {
               {/* Mobile User Login Portal Icon */}
               <button
                 type="button"
-                onClick={() => handleNavClick('login')}
-                title="Login Portal"
+                onClick={() => handleNavClick(sessionUser?.role === 'Super Admin' ? 'admin' : 'login')}
+                title={sessionUser ? `Logged in as ${sessionUser.name || sessionUser.studentName}` : 'Login Portal'}
                 aria-label="Login Portal"
                 className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition active:scale-95 cursor-pointer ${
-                  activePage === 'login'
-                    ? 'bg-amber-400 text-slate-950 ring-2 ring-amber-300 shadow'
+                  activePage === 'login' || activePage === 'admin'
+                    ? 'bg-amber-400 text-slate-950 ring-2 ring-amber-300 shadow font-black text-xs'
+                    : sessionUser
+                    ? 'bg-amber-400 text-slate-950 shadow font-black text-xs'
                     : 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
                 }`}
               >
-                <User className="w-4 h-4 sm:w-5 sm:h-5" />
+                {sessionUser ? (
+                  (sessionUser.name || sessionUser.studentName || 'U').charAt(0).toUpperCase()
+                ) : (
+                  <User className="w-4 h-4 sm:w-5 sm:h-5" />
+                )}
               </button>
 
               {/* Hamburger Button */}

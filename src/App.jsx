@@ -2,7 +2,10 @@ import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import HomePage from './pages/HomePage';
+import AboutPage from './pages/AboutPage';
+import ProgramsPage from './pages/ProgramsPage';
 import EventsPage from './pages/EventsPage';
+import AchievementsPage from './pages/AchievementsPage';
 import ContactPage from './pages/ContactPage';
 import LoginPage from './pages/LoginPage';
 import CertificatePage from './pages/CertificatePage';
@@ -94,10 +97,22 @@ export default function App() {
           />
         )}
 
+        {activePage === 'about' && (
+          <AboutPage />
+        )}
+
+        {activePage === 'programs' && (
+          <ProgramsPage />
+        )}
+
         {activePage === 'events' && (
           <EventsPage 
             onRegisterEvent={handleRegisterEvent}
           />
+        )}
+
+        {activePage === 'achievements' && (
+          <AchievementsPage />
         )}
 
         {activePage === 'certificate' && (
