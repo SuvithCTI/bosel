@@ -9,7 +9,7 @@ export default function ProgramsPage() {
             Academic & Skill Programs
           </span>
           <h1 className="text-3xl md:text-4xl font-black font-heading text-slate-900">
-            Programs
+            Programs By Vinodini 
           </h1>
           <p className="text-slate-500 text-sm max-w-md">
             This page is currently being prepared. Content will be added here soon.
