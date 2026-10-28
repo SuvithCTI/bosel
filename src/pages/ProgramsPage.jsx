@@ -1027,50 +1027,55 @@ export default function ProgramsPage() {
     <div
       key={prog.id}
       onClick={() => setSelectedProgram(prog)}
-      className="relative p-[2.5px] sm:p-[3px] rounded-2xl sm:rounded-3xl cursor-pointer group transition-all duration-300 hover:-translate-y-2 active:scale-[0.99]"
+      className="relative p-[2px] sm:p-[3px] rounded-xl sm:rounded-3xl cursor-pointer group transition-all duration-300 hover:-translate-y-1.5 active:scale-[0.98] flex flex-col h-full"
       style={{
         background: 'linear-gradient(135deg, #f59e0b, #fef08a, #38bdf8, #ffffff, #fbbf24, #f59e0b)',
         backgroundSize: '300% 300%',
         animation: 'glitterBorder 4s ease infinite',
-        boxShadow: '0 0 16px rgba(245, 158, 11, 0.35), 0 8px 24px rgba(0, 0, 0, 0.08)'
+        boxShadow: '0 0 14px rgba(245, 158, 11, 0.25), 0 4px 14px rgba(0, 0, 0, 0.06)'
       }}
       title={`Click to view ${prog.name} syllabus & details`}
     >
       {/* Card Inner Content */}
-      <div className="relative bg-white rounded-[13.5px] sm:rounded-[21px] overflow-hidden flex flex-col text-left h-full group-hover:bg-slate-50/70 transition-colors">
+      <div className="relative bg-white rounded-[10px] sm:rounded-[21px] overflow-hidden flex flex-col text-left h-full group-hover:bg-slate-50/70 transition-colors">
         {/* Course Photography Container */}
-        <div className="relative aspect-[16/10] sm:aspect-[3/2] w-full overflow-hidden bg-slate-100">
+        <div className="relative aspect-[4/3] sm:aspect-[3/2] w-full overflow-hidden bg-slate-100">
           <img
             src={prog.image}
             alt={prog.name}
             className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${prog.imagePosition || 'object-center'}`}
             loading="lazy"
           />
+          {/* Age Group Badge over Photo */}
+          <span className="absolute top-1.5 left-1.5 sm:top-2.5 sm:left-2.5 bg-slate-950/75 backdrop-blur-xs text-white text-[9px] sm:text-[11px] font-bold px-1.5 sm:px-2 py-0.5 rounded-md shadow-xs">
+            {prog.ageGroup}
+          </span>
         </div>
 
         {/* Program Card Body */}
-        <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-2 sm:space-y-3">
+        <div className="p-2.5 sm:p-5 flex-1 flex flex-col justify-between space-y-1 sm:space-y-3">
           <div>
-            <div className="flex items-center justify-between gap-1">
+            <div className="flex items-start justify-between gap-1">
               <h3 
-                className="font-black text-base sm:text-xl text-black font-heading group-hover:text-sky-700 transition truncate"
+                className="font-black text-xs sm:text-lg md:text-xl text-black font-heading group-hover:text-sky-700 transition leading-tight line-clamp-1"
               >
                 {prog.name}
               </h3>
-              <span className="text-xs font-black text-sky-800 shrink-0 group-hover:translate-x-1 transition-transform">
-                Details
-              </span>
             </div>
 
-            <p className="text-xs sm:text-sm text-slate-800 mt-1.5 leading-relaxed font-semibold line-clamp-2">
+            <p className="text-[11px] sm:text-sm text-slate-700 mt-0.5 sm:mt-1.5 leading-snug sm:leading-relaxed font-semibold line-clamp-2">
               {prog.tagline}
             </p>
           </div>
 
           {/* Footer Details */}
-          <div className="pt-2 border-t border-slate-100 sm:border-slate-200 flex items-center justify-between text-xs text-slate-900 font-bold">
-            <span className="text-slate-900 truncate">
-              {prog.levels}
+          <div className="pt-1.5 sm:pt-2 border-t border-slate-100 sm:border-slate-200 flex items-center justify-between text-[10px] sm:text-xs text-slate-900 font-bold">
+            <span className="text-slate-600 truncate max-w-[65%] sm:max-w-none text-[10px] sm:text-xs">
+              {prog.levels.includes('(') ? prog.levels.split('(')[0].trim() : prog.levels}
+            </span>
+            <span className="text-sky-700 text-[10px] sm:text-xs font-black shrink-0 flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform">
+              <span>View</span>
+              <ArrowRight className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5" />
             </span>
           </div>
         </div>
@@ -1199,26 +1204,31 @@ export default function ProgramsPage() {
             COMPACT PROGRAMS PAGE HEADER (NO HERO BG, REDUCED SIZE)
            ========================================================================= */}
         <div className="py-1.5 sm:py-3 text-center max-w-2xl mx-auto space-y-1 sm:space-y-1.5">
+          <div className="inline-flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/30 px-3 py-1 rounded-full text-amber-800 text-[10px] sm:text-xs font-black uppercase tracking-wider mb-1">
+            <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-600" />
+            <span>14 Certified Learning Pathways</span>
+          </div>
+
           {/* Title - Reduced Size with Elegant Typography */}
-          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black font-heading text-[#0F2B5C] tracking-tight leading-tight">
+          <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black font-heading text-[#0F2B5C] tracking-tight leading-tight">
             <span>Academic & </span>
             <span className="italic font-serif text-amber-500">Skill Programs</span>
           </h1>
 
           {/* Description - Compact & Short */}
-          <p className="text-xs sm:text-sm text-slate-600 font-semibold leading-relaxed max-w-xl mx-auto px-1">
+          <p className="text-xs sm:text-sm text-slate-600 font-semibold leading-relaxed max-w-xl mx-auto px-2">
             Explore our 14 structured learning pathways across Skill Development and Digital Technology.
           </p>
         </div>
 
         {/* =========================================================================
-            PROGRAMS SECTION (ALL 8 PROGRAMS WITH DIRECT REGISTER ACTION & SYLLABUS)
+            PROGRAMS SECTION (ALL 14 PROGRAMS WITH DIRECT REGISTER ACTION & SYLLABUS)
            ========================================================================= */}
-        <div id="programs-grid-section" className="bg-white rounded-2xl sm:rounded-3xl p-3.5 sm:p-6 md:p-8 shadow-sm border border-slate-200 text-slate-800 space-y-8 sm:space-y-12">
+        <div id="programs-grid-section" className="bg-white rounded-2xl sm:rounded-3xl p-3 sm:p-6 md:p-8 shadow-sm border border-slate-200 text-slate-800 space-y-6 sm:space-y-12">
           {/* Main Section Header */}
-          <div className="pb-4 sm:pb-6 border-b border-slate-100 flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div className="pb-3.5 sm:pb-6 border-b border-slate-100 flex flex-col md:flex-row md:items-end justify-between gap-3 sm:gap-4">
             <div>
-              <span className="text-[11px] sm:text-xs font-extrabold text-sky-700 tracking-widest uppercase">
+              <span className="text-[10px] sm:text-xs font-extrabold text-sky-700 tracking-widest uppercase">
                 Our Programs
               </span>
               <h2 className="text-base sm:text-lg md:text-xl font-black text-black font-heading tracking-tight mt-0.5">
@@ -1229,21 +1239,21 @@ export default function ProgramsPage() {
               </p>
             </div>
 
-            {/* Quick Navigation Anchor Links */}
-            <div className="flex flex-wrap items-center gap-2">
+            {/* Quick Navigation Anchor Links - 2 balanced columns on mobile */}
+            <div className="grid grid-cols-2 gap-2 w-full sm:w-auto">
               <a
                 href="#skill-development"
-                className="px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-black bg-[#0F2B5C] hover:bg-[#163875] text-white transition shadow-xs cursor-pointer active:scale-95 flex items-center gap-1.5"
+                className="px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl sm:rounded-full text-center text-xs sm:text-sm font-black bg-[#0F2B5C] hover:bg-[#163875] text-white transition shadow-xs cursor-pointer active:scale-95 flex items-center justify-center gap-1 sm:gap-1.5"
               >
-                <span>Skill Development (6)</span>
-                <ArrowRight className="w-3.5 h-3.5 text-amber-400 rotate-90" />
+                <span className="truncate">Skill Dev (6)</span>
+                <ArrowRight className="w-3.5 h-3.5 text-amber-400 rotate-90 shrink-0" />
               </a>
               <a
                 href="#digital-technology"
-                className="px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-black bg-slate-100 hover:bg-slate-200 text-slate-800 transition shadow-xs cursor-pointer active:scale-95 flex items-center gap-1.5"
+                className="px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl sm:rounded-full text-center text-xs sm:text-sm font-black bg-slate-100 hover:bg-slate-200 text-slate-800 transition shadow-xs cursor-pointer active:scale-95 flex items-center justify-center gap-1 sm:gap-1.5 border border-slate-200"
               >
-                <span>Digital & Technology (8)</span>
-                <ArrowRight className="w-3.5 h-3.5 text-sky-700 rotate-90" />
+                <span className="truncate">Digital & Tech (8)</span>
+                <ArrowRight className="w-3.5 h-3.5 text-sky-700 rotate-90 shrink-0" />
               </a>
             </div>
           </div>
@@ -1267,24 +1277,24 @@ export default function ProgramsPage() {
               PART 1: SKILL DEVELOPMENT PROGRAMS (6)
              ========================================================================= */}
           <div id="skill-development" className="scroll-mt-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 mb-4 sm:mb-6 border-b border-amber-100">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-2 pb-2.5 sm:pb-3 mb-3.5 sm:mb-6 border-b border-amber-100">
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="px-2.5 py-0.5 rounded-md bg-amber-100 text-amber-900 text-[10px] sm:text-xs font-black uppercase tracking-wider">
+                  <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 text-[10px] sm:text-xs font-black uppercase tracking-wider">
                     Category 1
                   </span>
-                  <h3 className="text-lg sm:text-2xl font-black text-slate-900 font-heading tracking-tight">
+                  <h3 className="text-base sm:text-2xl font-black text-slate-900 font-heading tracking-tight">
                     Skill Development <span className="text-amber-600 font-bold">({skillPrograms.length})</span>
                   </h3>
                 </div>
-                <p className="text-xs sm:text-sm text-slate-600 mt-1 font-medium">
+                <p className="text-[11px] sm:text-sm text-slate-600 mt-0.5 sm:mt-1 font-medium">
                   Foundational cognitive speed, mental arithmetic, fine arts, reading fluency, and cultural dance.
                 </p>
               </div>
             </div>
 
-            {/* Grid of 6 Skill Programs */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+            {/* Grid of 6 Skill Programs - 2 Col on Mobile */}
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-6 lg:gap-8">
               {skillPrograms.map(renderProgramCard)}
             </div>
           </div>
@@ -1292,105 +1302,96 @@ export default function ProgramsPage() {
           {/* =========================================================================
               PART 2: DIGITAL & TECHNOLOGY PROGRAMS (8)
              ========================================================================= */}
-          <div id="digital-technology" className="scroll-mt-6 pt-6 sm:pt-8 border-t border-slate-200">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 mb-4 sm:mb-6 border-b border-sky-100">
+          <div id="digital-technology" className="scroll-mt-6 pt-5 sm:pt-8 border-t border-slate-200">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-2 pb-2.5 sm:pb-3 mb-3.5 sm:mb-6 border-b border-sky-100">
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="px-2.5 py-0.5 rounded-md bg-sky-100 text-sky-900 text-[10px] sm:text-xs font-black uppercase tracking-wider">
+                  <span className="px-2 py-0.5 rounded-md bg-sky-100 text-sky-900 text-[10px] sm:text-xs font-black uppercase tracking-wider">
                     Category 2
                   </span>
-                  <h3 className="text-lg sm:text-2xl font-black text-slate-900 font-heading tracking-tight">
+                  <h3 className="text-base sm:text-2xl font-black text-slate-900 font-heading tracking-tight">
                     Digital & Technology <span className="text-sky-700 font-bold">({digitalPrograms.length})</span>
                   </h3>
                 </div>
-                <p className="text-xs sm:text-sm text-slate-600 mt-1 font-medium">
+                <p className="text-[11px] sm:text-sm text-slate-600 mt-0.5 sm:mt-1 font-medium">
                   Essential modern computing, office productivity, web development, coding logic, and creative design tools.
                 </p>
               </div>
             </div>
 
-            {/* Grid of 8 Digital Programs */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+            {/* Grid of 8 Digital Programs - 2 Col on Mobile */}
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-6 lg:gap-8">
               {digitalPrograms.map(renderProgramCard)}
             </div>
           </div>
         </div>
 
-        {/* Feature Highlights Grid styled like reference cards (compact size matching previous footprint) */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 pt-2">
+        {/* Feature Highlights Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-4 pt-1 sm:pt-2">
           {/* Card 1: Mint / Green (Structured Syllabus) */}
-          <div className="bg-[#F2FAF6] rounded-xl sm:rounded-2xl p-3.5 sm:p-4 border-2 border-[#86EFAC] shadow-xs flex flex-col justify-between h-full transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
+          <div className="bg-[#F2FAF6] rounded-xl sm:rounded-2xl p-3 sm:p-4 border-2 border-[#86EFAC] shadow-xs flex flex-col justify-between h-full transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
             <div className="flex flex-col flex-1">
-              {/* Icon Container */}
-              <div className="w-8 h-8 rounded-lg bg-white border border-[#6EE7B7] text-[#059669] flex items-center justify-center mb-2.5 shadow-xs">
-                <BookOpen className="w-4 h-4 stroke-[2.2]" />
+              <div className="flex items-center gap-2 mb-1.5 sm:mb-2.5">
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white border border-[#6EE7B7] text-[#059669] flex items-center justify-center shrink-0 shadow-xs">
+                  <BookOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.2]" />
+                </div>
+                <h4 className="text-xs sm:text-base font-black text-slate-900 font-heading tracking-tight">
+                  Standardized Syllabus
+                </h4>
               </div>
 
-              {/* Title */}
-              <h4 className="text-sm sm:text-base font-black text-slate-900 font-heading mb-1 tracking-tight">
-                Standardized Syllabus
-              </h4>
-
-              {/* Description */}
               <p className="text-[11px] sm:text-xs text-slate-700 leading-relaxed font-semibold">
                 Step-by-step grade levels mapped to age cognitive abilities from foundation to mastery.
               </p>
             </div>
 
-            {/* Footer with Divider */}
-            <div className="pt-2 mt-3 border-t border-[#A7F3D0]/80 flex items-center justify-between text-[11px]">
+            <div className="pt-2 mt-2 sm:mt-3 border-t border-[#A7F3D0]/80 flex items-center justify-between text-[10px] sm:text-[11px]">
               <span className="text-[#047857] font-bold">Practical Training</span>
               <CheckCircle2 className="w-3.5 h-3.5 text-[#10B981] shrink-0" />
             </div>
           </div>
 
           {/* Card 2: Warm Amber / Yellow (Recognized Certification) */}
-          <div className="bg-[#FFFDF0] rounded-xl sm:rounded-2xl p-3.5 sm:p-4 border-2 border-[#FDE047] shadow-xs flex flex-col justify-between h-full transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
+          <div className="bg-[#FFFDF0] rounded-xl sm:rounded-2xl p-3 sm:p-4 border-2 border-[#FDE047] shadow-xs flex flex-col justify-between h-full transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
             <div className="flex flex-col flex-1">
-              {/* Icon Container */}
-              <div className="w-8 h-8 rounded-lg bg-white border border-[#FCD34D] text-[#D97706] flex items-center justify-center mb-2.5 shadow-xs">
-                <Award className="w-4 h-4 stroke-[2.2]" />
+              <div className="flex items-center gap-2 mb-1.5 sm:mb-2.5">
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white border border-[#FCD34D] text-[#D97706] flex items-center justify-center shrink-0 shadow-xs">
+                  <Award className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.2]" />
+                </div>
+                <h4 className="text-xs sm:text-base font-black text-slate-900 font-heading tracking-tight">
+                  Recognized Certification
+                </h4>
               </div>
 
-              {/* Title */}
-              <h4 className="text-sm sm:text-base font-black text-slate-900 font-heading mb-1 tracking-tight">
-                Recognized Certification
-              </h4>
-
-              {/* Description */}
               <p className="text-[11px] sm:text-xs text-slate-700 leading-relaxed font-semibold">
                 Official certificates with verifiable QR codes issued upon completing level assessments.
               </p>
             </div>
 
-            {/* Footer with Divider */}
-            <div className="pt-2 mt-3 border-t border-[#FDE047]/80 flex items-center justify-between text-[11px]">
+            <div className="pt-2 mt-2 sm:mt-3 border-t border-[#FDE047]/80 flex items-center justify-between text-[10px] sm:text-[11px]">
               <span className="text-[#B45309] font-bold">Practical Training</span>
               <CheckCircle2 className="w-3.5 h-3.5 text-[#10B981] shrink-0" />
             </div>
           </div>
 
           {/* Card 3: Rose / Pink (Expert Master Trainers) */}
-          <div className="bg-[#FFF5F6] rounded-xl sm:rounded-2xl p-3.5 sm:p-4 border-2 border-[#FDA4AF] shadow-xs flex flex-col justify-between h-full transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
+          <div className="bg-[#FFF5F6] rounded-xl sm:rounded-2xl p-3 sm:p-4 border-2 border-[#FDA4AF] shadow-xs flex flex-col justify-between h-full transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
             <div className="flex flex-col flex-1">
-              {/* Icon Container */}
-              <div className="w-8 h-8 rounded-lg bg-white border border-[#FDA4AF] text-[#E11D48] flex items-center justify-center mb-2.5 shadow-xs">
-                <GraduationCap className="w-4 h-4 stroke-[2.2]" />
+              <div className="flex items-center gap-2 mb-1.5 sm:mb-2.5">
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white border border-[#FDA4AF] text-[#E11D48] flex items-center justify-center shrink-0 shadow-xs">
+                  <GraduationCap className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.2]" />
+                </div>
+                <h4 className="text-xs sm:text-base font-black text-slate-900 font-heading tracking-tight">
+                  Expert Master Trainers
+                </h4>
               </div>
 
-              {/* Title */}
-              <h4 className="text-sm sm:text-base font-black text-slate-900 font-heading mb-1 tracking-tight">
-                Expert Master Trainers
-              </h4>
-
-              {/* Description */}
               <p className="text-[11px] sm:text-xs text-slate-700 leading-relaxed font-semibold">
                 Trained and certified instructors delivering engaging hands-on classroom experiences.
               </p>
             </div>
 
-            {/* Footer with Divider */}
-            <div className="pt-2 mt-3 border-t border-[#FDA4AF]/80 flex items-center justify-between text-[11px]">
+            <div className="pt-2 mt-2 sm:mt-3 border-t border-[#FDA4AF]/80 flex items-center justify-between text-[10px] sm:text-[11px]">
               <span className="text-[#BE123C] font-bold">Practical Training</span>
               <CheckCircle2 className="w-3.5 h-3.5 text-[#10B981] shrink-0" />
             </div>
@@ -1696,9 +1697,9 @@ export default function ProgramsPage() {
                         />
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-2.5">
+                      <div className="grid grid-cols-2 gap-2 sm:gap-2.5">
                         <div>
-                          <label className="block text-xs font-black text-slate-900 mb-1">
+                          <label className="block text-[11px] sm:text-xs font-black text-slate-900 mb-0.5 sm:mb-1 truncate">
                             Date of Birth *
                           </label>
                           <input
@@ -1706,17 +1707,17 @@ export default function ProgramsPage() {
                             required
                             value={regForm.dob}
                             onChange={(e) => setRegForm({...regForm, dob: e.target.value})}
-                            className="w-full h-10 px-3 text-base sm:text-sm text-slate-950 font-semibold border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none bg-white"
+                            className="w-full h-9 sm:h-10 px-2 sm:px-3 text-base sm:text-sm text-slate-950 font-semibold border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none bg-white"
                           />
                         </div>
                         <div>
-                          <label className="block text-xs font-black text-slate-900 mb-1">
+                          <label className="block text-[11px] sm:text-xs font-black text-slate-900 mb-0.5 sm:mb-1 truncate">
                             Starting Level *
                           </label>
                           <select
                             value={regForm.selectedLevel}
                             onChange={(e) => setRegForm({...regForm, selectedLevel: e.target.value})}
-                            className="w-full h-10 px-2.5 text-base sm:text-sm text-slate-950 font-semibold border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none bg-white"
+                            className="w-full h-9 sm:h-10 px-2 sm:px-2.5 text-base sm:text-sm text-slate-950 font-semibold border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none bg-white truncate"
                           >
                             {registeringProgram.curriculum.map((c, i) => (
                               <option key={i} value={typeof c === 'string' ? c.split(':')[0] : c.title.split(':')[0]}>
@@ -1727,9 +1728,9 @@ export default function ProgramsPage() {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-2.5">
+                      <div className="grid grid-cols-2 gap-2 sm:gap-2.5">
                         <div>
-                          <label className="block text-xs font-black text-slate-900 mb-1">
+                          <label className="block text-[11px] sm:text-xs font-black text-slate-900 mb-0.5 sm:mb-1 truncate">
                             Parent / Guardian *
                           </label>
                           <input
@@ -1737,11 +1738,11 @@ export default function ProgramsPage() {
                             required
                             value={regForm.parentName}
                             onChange={(e) => setRegForm({...regForm, parentName: e.target.value})}
-                            className="w-full h-10 px-3 text-base sm:text-sm text-slate-950 font-semibold border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                            className="w-full h-9 sm:h-10 px-2 sm:px-3 text-base sm:text-sm text-slate-950 font-semibold border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none"
                           />
                         </div>
                         <div>
-                          <label className="block text-xs font-black text-slate-900 mb-1">
+                          <label className="block text-[11px] sm:text-xs font-black text-slate-900 mb-0.5 sm:mb-1 truncate">
                             WhatsApp / Mobile *
                           </label>
                           <input
@@ -1749,14 +1750,14 @@ export default function ProgramsPage() {
                             required
                             value={regForm.phone}
                             onChange={(e) => setRegForm({...regForm, phone: e.target.value})}
-                            className="w-full h-10 px-3 text-base sm:text-sm text-slate-950 font-semibold border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                            className="w-full h-9 sm:h-10 px-2 sm:px-3 text-base sm:text-sm text-slate-950 font-semibold border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none"
                           />
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-2.5">
+                      <div className="grid grid-cols-2 gap-2 sm:gap-2.5">
                         <div>
-                          <label className="block text-xs font-black text-slate-900 mb-1">
+                          <label className="block text-[11px] sm:text-xs font-black text-slate-900 mb-0.5 sm:mb-1 truncate">
                             School / Academy *
                           </label>
                           <input
@@ -1764,11 +1765,11 @@ export default function ProgramsPage() {
                             required
                             value={regForm.schoolName}
                             onChange={(e) => setRegForm({...regForm, schoolName: e.target.value})}
-                            className="w-full h-10 px-3 text-base sm:text-sm text-slate-950 font-semibold border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                            className="w-full h-9 sm:h-10 px-2 sm:px-3 text-base sm:text-sm text-slate-950 font-semibold border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none"
                           />
                         </div>
                         <div>
-                          <label className="block text-xs font-black text-slate-900 mb-1">
+                          <label className="block text-[11px] sm:text-xs font-black text-slate-900 mb-0.5 sm:mb-1 truncate">
                             City / Town *
                           </label>
                           <input
@@ -1776,7 +1777,7 @@ export default function ProgramsPage() {
                             required
                             value={regForm.city}
                             onChange={(e) => setRegForm({...regForm, city: e.target.value})}
-                            className="w-full h-10 px-3 text-base sm:text-sm text-slate-950 font-semibold border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                            className="w-full h-9 sm:h-10 px-2 sm:px-3 text-base sm:text-sm text-slate-950 font-semibold border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none"
                           />
                         </div>
                       </div>
