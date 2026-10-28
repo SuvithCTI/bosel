@@ -1,5 +1,5 @@
 import { useState } from "react";
-
+import { Link } from "react-router-dom";
 
 import apj from "../assets/programs/apj.jpg";
 import district from "../assets/programs/districtlevel.jpg";
@@ -9,6 +9,7 @@ import state from "../assets/programs/statelevel.jpg";
 import achievement from "../assets/programs/achievement.jpg";
 import championships1 from "../assets/programs/champ1.jpg";
 import championships2 from "../assets/programs/champ2.jpg";
+import championships3 from "../assets/programs/champ3.jpg"
 
 import annualday1 from "../assets/programs/annualday1.jpg";
 import annualday2 from "../assets/programs/annualday2.jpg";
@@ -24,12 +25,13 @@ import student5 from "../assets/programs/student5.jpg";
 import student6 from "../assets/programs/student6.jpg";
 
 
+
 const competitions = [
   {
     level: "GLOBAL LEVEL",
-    title: "Competition",
+    title: "Thej International Abacus Competition",
     description:
-      "Celebrating students who demonstrate exceptional skills, confidence, and dedication at the global level.",
+      "Our academy and school students participated in this global-level online competition and received 1st, 2nd, 3rd and Merit Awards.",
     image: global,
     number: "01",
   },
@@ -37,7 +39,7 @@ const competitions = [
     level: "NATIONAL LEVEL",
     title: "Redeemer Academy National Abacus Competition",
     description:
-      "Recognizing students for their outstanding mental arithmetic and abacus calculation abilities.",
+      "Our students participated at the national level and achieved top positions and Merit Awards.",
     image: national,
     number: "02",
   },
@@ -45,7 +47,7 @@ const competitions = [
     level: "DISTRICT LEVEL",
     title: "G Max Arasi Abacus District Level Competition",
     description:
-      "Showcasing the talent, accuracy, speed, and concentration of our young abacus learners.",
+      "Our students secured 1st, 2nd and 3rd places, along with Merit Awards, demonstrating their speed, accuracy and mental arithmetic skills.",
     image: district,
     number: "03",
   },
@@ -53,7 +55,7 @@ const competitions = [
     level: "STATE LEVEL",
     title: "G Max Arasi Abacus State Level Competition",
     description:
-      "Encouraging students to challenge themselves and demonstrate their learning achievements.",
+      "Five schools and 180 students participated in the competition, providing students with a platform to demonstrate their speed, accuracy and mental arithmetic skills.",
     image: state,
     number: "04",
   },
@@ -61,11 +63,12 @@ const competitions = [
     level: "SPECIAL RECOGNITION",
     title: "APJ Abdul Kalam Awards",
     description:
-      "Honouring student excellence, dedication, and achievements that inspire future generations.",
+      "Our students received APJ Abdul Kalam Awards in recognition of their achievements and participation in academic and extracurricular activities.",
     image: apj,
     number: "05",
   },
 ];
+
 
 
 
@@ -107,62 +110,73 @@ const studentAchievements = [
     photo: student3,
     year: "2026",
   },
-  {
-    id: 4,
-    name: "Shayam",
-    school: "Muslims Committee School",
-    achievement: "District Level Abacus Competition",
-    level: "District",
-    award: "District Champion",
-    description:
-      "Achieved recognition for accuracy, speed, and consistent practice.",
-    photo: student4,
-    year: "2026",
-  },
-  {
-    id: 5,
-    name: "Sivani",
-    school: "St. Maries Nursery and Primary School",
-    achievement: "National Level Skills Championship",
-    level: "National",
-    award: "Student Excellence Award",
-    description:
-      "Recognized for dedication, confidence, and impressive learning achievements.",
-    photo: student5,
-    year: "2026",
-  },
-  {
-    id: 6,
-    name: "Ranjitha",
-    school: "Sacred Heart Nursery & Primary School",
-    achievement: "District Level Abacus Competition",
-    level: "District",
-    award: "Outstanding Performer",
-    description:
-      "Demonstrated strong concentration and enthusiasm for mental mathematics.",
-    photo: student6,
-    year: "2026",
-  },
+  // {
+  //   id: 4,
+  //   name: "Shayam",
+  //   school: "Muslims Committee School",
+  //   achievement: "District Level Abacus Competition",
+  //   level: "District",
+  //   award: "District Champion",
+  //   description:
+  //     "Achieved recognition for accuracy, speed, and consistent practice.",
+  //   photo: student4,
+  //   year: "2026",
+  // },
+  // {
+  //   id: 5,
+  //   name: "Sivani",
+  //   school: "St. Maries Nursery and Primary School",
+  //   achievement: "National Level Skills Championship",
+  //   level: "National",
+  //   award: "Student Excellence Award",
+  //   description:
+  //     "Recognized for dedication, confidence, and impressive learning achievements.",
+  //   photo: student5,
+  //   year: "2026",
+  // },
+  // {
+  //   id: 6,
+  //   name: "Ranjitha",
+  //   school: "Sacred Heart Nursery & Primary School",
+  //   achievement: "District Level Abacus Competition",
+  //   level: "District",
+  //   award: "Outstanding Performer",
+  //   description:
+  //     "Demonstrated strong concentration and enthusiasm for mental mathematics.",
+  //   photo: student6,
+  //   year: "2026",
+  // },
 ];
 
 
 
 const championships = [
   {
-    title: "4th Grand Skills Championship",
+    title: "B★SEL Grand Skill Championship",
     description:
-      "Sample descriptions of our students showcasing their skills, confidence, and learning achievements.",
-    image:
+      "Sacred Heart Nursery & Primary School.",
+    students: "170+ Students",
+      image:
       championships1,
     tag: "GRAND CHAMPIONSHIP",
   },
   {
-    title: "B★SEL Grand Skill Championship",
+    title: "B★SEL Abacus Skill Championship",
     description:
-      "Sacred Heart Nursery & Primary School",
-    students: "170+ Students",
+      "RC Middle School - Uthumalai",
+    students: "420+ Students",
     image:
       championships2,
+    tag: "STUDENT EXCELLENCE",
+  },
+
+  {
+    title: "B★SEL Abacus Skill Competition",
+    description:
+      "Muslims Committee School - Veeranam",
+    students: "120+ Students",
+    image:
+      championships3,
     tag: "STUDENT EXCELLENCE",
   },
 ];
@@ -257,7 +271,7 @@ function Hero() {
           className="inline-flex w-full items-center justify-center gap-3 rounded-full bg-blue-900 px-7 py-4 text-sm font-extrabold text-white shadow-md transition duration-300 hover:-translate-y-1 hover:bg-blue-950 sm:w-auto sm:text-base"
         >
           Explore Achievements
-          <span aria-hidden="true" className="text-amber-400">→</span>
+          
         </a>
 
         <a
@@ -318,13 +332,7 @@ function AchievementIntro() {
             appreciate their efforts, and motivate them to keep improving.
           </p>
 
-          <a
-            href="#competitions"
-            className="mt-5 sm:mt-7 inline-flex items-center gap-3 font-extrabold text-blue-950 transition hover:text-amber-600"
-          >
-            Discover Our Competitions
-            <span className="text-xl" aria-hidden="true">→</span>
-          </a>
+         
         </div>
 
         <div className="grid grid-cols-2 gap-4">
@@ -437,13 +445,15 @@ function Championships() {
             </h2>
           </div>
 
+
+
           <p className="max-w-md text-sm leading-6 text-blue-100 sm:text-base sm:leading-7 lg:leading-8">
             Recognizing students and schools for their commitment to learning,
             participation, and skill development.
           </p>
         </div>
 
-        <div className="mt-5 grid grid-cols-2 gap-2.5 sm:mt-7 sm:gap-4 lg:mt-9 lg:grid-cols-2 lg:gap-6">
+        <div className="mt-5 grid grid-cols-3 gap-2.5 sm:mt-7 sm:gap-4 lg:mt-9 lg:grid-cols-3 lg:gap-6">
           {championships.map((item, index) => (
             <article
               key={item.title}
@@ -494,7 +504,19 @@ function Championships() {
             </article>
           ))}
         </div>
+         
+        
       </div>
+      <div className="mx-auto max-w-2xl text-center pt-5">
+          <SectionLabel className="pt-5">Our Competition Reach</SectionLabel>
+
+          <h5 className="mt-3 sm:mt-4 text-2xl font-white leading-tight text-white sm:text-3xl lg:text-4xl">
+            700+ Students || 5 Schools || Abacus & Mental Maths
+          </h5>
+
+          
+        </div>
+      
     </section>
   );
 }
@@ -616,13 +638,7 @@ function AnnualDay() {
             ))}
           </div>
 
-          <a
-            href="/contact"
-            className="mt-6 sm:mt-8 inline-flex items-center gap-3 rounded-full bg-blue-950 px-5 py-3 sm:px-7 sm:py-4 text-sm font-bold text-white transition hover:bg-amber-400 hover:text-blue-950"
-          >
-            Contact B★SEL
-            <span aria-hidden="true">→</span>
-          </a>
+         
         </div>
       </div>
     </section>
