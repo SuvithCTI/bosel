@@ -217,25 +217,38 @@ function SectionLabel({ children }) {
   );
 }
 
+
 function Hero() {
-  return ( 
-<section className="relative overflow-hidden bg-white">
-  {/* Background */}
-  <div className="absolute inset-0">
-    <img
-      src={achievement}
-      alt="Students participating in educational activities"
-      className="h-full w-full object-cover opacity-[0.05]"
-    />
-    <div className="absolute inset-0 bg-gradient-to-r from-white via-white/95 to-white/80" />
-  </div>
+  return (
+    <section className="relative overflow-hidden bg-white">
+      {/* Background */}
+      <div className="absolute inset-0">
+        <img
+          src={achievement}
+          alt="Students participating in educational activities"
+          className="h-full w-full object-cover opacity-[0.05]"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-white via-white/95 to-white/80" />
+      </div>
 
-  <div className="relative mx-auto grid max-w-[1440px] items-center gap-8 px-5 py-12 sm:px-8 sm:py-16 lg:grid-cols-[1.2fr_0.8fr] lg:gap-12 lg:px-10 lg:py-20">
-    {/* Left Content */}
-    <div>
-    
+      <div className="relative mx-auto grid max-w-[1440px] items-center gap-8 px-5 py-12 sm:px-8 sm:py-16 lg:grid-cols-[1.2fr_0.8fr] lg:gap-12 lg:px-10 lg:py-20">
 
-          
+        {/* Right Image - First on Mobile */}
+        <div className="relative mx-auto order-first w-full max-w-lg lg:order-none lg:col-start-2 lg:row-start-1 lg:max-w-none">
+          <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full border-2 border-amber-400/50" />
+          <div className="absolute -bottom-4 -left-4 h-28 w-28 rounded-full border-2 border-blue-200" />
+
+          <div className="relative overflow-hidden rounded-[2rem] border border-blue-100 bg-white p-3 shadow-xl">
+            <img
+              src={achievement}
+              alt="Students learning and developing their skills"
+              className="h-[280px] w-full rounded-[1.5rem] object-cover sm:h-[380px] lg:h-[440px]"
+            />
+          </div>
+        </div>
+
+        {/* Left Content - After Image on Mobile */}
+        <div className="lg:col-start-1 lg:row-start-1">
           <h1
             className="max-w-3xl text-5xl font-bold italic leading-[1.05] tracking-tight text-blue-950 sm:text-6xl lg:text-6xl xl:text-7xl"
             style={{
@@ -249,61 +262,47 @@ function Hero() {
               Tells a story
             </span>
           </h1>
-          
 
-      <p className="mt-6 max-w-2xl text-lg font-bold leading-8 text-slate-900 sm:text-xl">
-        Celebrating the dedication, skills, and accomplishments of our
-        students through competitions, championships, and school
-        recognition programs.
-      </p>
+          <p className="mt-6 max-w-2xl text-lg font-bold leading-8 text-slate-900 sm:text-xl">
+            Celebrating the dedication, skills, and accomplishments of our
+            students through competitions, championships, and school
+            recognition programs.
+          </p>
 
-      <p className="mt-5 max-w-2xl text-base leading-8 text-slate-700 sm:text-lg">
-        Empowering school children with fundamental life skills,
-        mathematical speed, artistic flair, and cultural discipline
-        through structured training and national-level competitions.
-      </p>
+          <p className="mt-5 max-w-2xl text-base leading-8 text-slate-700 sm:text-lg">
+            Empowering school children with fundamental life skills,
+            mathematical speed, artistic flair, and cultural discipline
+            through structured training and national-level competitions.
+          </p>
 
-      {/* Buttons */}
-      <div className="mt-8 flex w-full flex-col gap-4 sm:w-auto sm:flex-row sm:flex-wrap">
-        <a
-          href="#competitions"
-          className="inline-flex w-full items-center justify-center gap-3 rounded-full bg-blue-900 px-7 py-4 text-sm font-extrabold text-white shadow-md transition duration-300 hover:-translate-y-1 hover:bg-blue-950 sm:w-auto sm:text-base"
-        >
-          Explore Achievements
-          
-        </a>
+          {/* Buttons */}
+          <div className="mt-8 flex w-full flex-col gap-4 sm:w-auto sm:flex-row sm:flex-wrap">
+            <a
+              href="#competitions"
+              className="inline-flex w-full items-center justify-center gap-3 rounded-full bg-blue-900 px-7 py-4 text-sm font-extrabold text-white shadow-md transition duration-300 hover:-translate-y-1 hover:bg-blue-950 sm:w-auto sm:text-base"
+            >
+              Explore Achievements
+            </a>
 
-        <a
-          href="#schools"
-          className="inline-flex w-full items-center justify-center rounded-full border-2 border-amber-400 bg-amber-400 px-7 py-4 text-sm font-extrabold text-blue-950 shadow-sm transition duration-300 hover:-translate-y-1 hover:bg-amber-300 sm:w-auto sm:text-base"
-        >
-          Participating Schools
-        </a>
+            <a
+              href="#schools"
+              className="inline-flex w-full items-center justify-center rounded-full border-2 border-amber-400 bg-amber-400 px-7 py-4 text-sm font-extrabold text-blue-950 shadow-sm transition duration-300 hover:-translate-y-1 hover:bg-amber-300 sm:w-auto sm:text-base"
+            >
+              Participating Schools
+            </a>
+          </div>
+        </div>
       </div>
-    </div>
 
-    {/* Right Image */}
-    <div className="relative mx-auto w-full max-w-lg lg:max-w-none">
-      <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full border-2 border-amber-400/50" />
-      <div className="absolute -bottom-4 -left-4 h-28 w-28 rounded-full border-2 border-blue-200" />
-
-      <div className="relative overflow-hidden rounded-[2rem] border border-blue-100 bg-white p-3 shadow-xl">
-        <img
-          src={achievement}
-          alt="Students learning and developing their skills"
-          className="h-[280px] w-full rounded-[1.5rem] object-cover sm:h-[380px] lg:h-[440px]"
-        />
-
-        
-      </div>
-    </div>
-  </div>
-
-  {/* Bottom Accent */}
-  <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-amber-300 via-amber-500 to-transparent" />
-</section>
+      {/* Bottom Accent */}
+      <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-amber-300 via-amber-500 to-transparent" />
+    </section>
   );
 }
+
+export default Hero;
+
+
 
 function AchievementIntro() {
   return (
