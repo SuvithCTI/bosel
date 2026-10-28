@@ -88,7 +88,19 @@ export default function ProgramModal({ program, onClose }) {
                     <span className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-[#0F2B5C] !text-white font-black text-xs flex items-center justify-center shrink-0 shadow-sm mt-0.5">
                       {idx + 1}
                     </span>
-                    <span className="font-bold text-slate-900 leading-snug">{level}</span>
+                    <div className="flex-1">
+                      <span className="font-bold text-slate-900 leading-snug">{typeof level === 'string' ? level : level.title}</span>
+                      {typeof level === 'object' && level.topics && (
+                        <ul className="mt-1.5 space-y-1 pl-1 font-normal text-slate-700">
+                          {level.topics.map((t, tIdx) => (
+                            <li key={tIdx} className="flex items-start gap-1.5 text-xs">
+                              <span className="text-sky-600 font-bold shrink-0 mt-0.5">•</span>
+                              <span>{typeof t === 'string' ? t.replace(/^(\d+[\.\)]\s*|Level\s+\d+:\s*)/i, '') : t}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
                   </li>
                 ))}
               </ul>
