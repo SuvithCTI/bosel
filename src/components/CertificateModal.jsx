@@ -99,7 +99,6 @@ export default function CertificateModal({
                   value={studentName}
                   onChange={(e) => setStudentName(e.target.value)}
                   className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white text-xs sm:text-sm focus:ring-1 focus:ring-amber-400 focus:outline-none"
-                  placeholder="e.g. Registered Student Name"
                 />
               </div>
 
@@ -110,7 +109,6 @@ export default function CertificateModal({
                   value={courseName}
                   onChange={(e) => setCourseName(e.target.value)}
                   className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white text-xs sm:text-sm focus:ring-1 focus:ring-amber-400 focus:outline-none"
-                  placeholder="e.g. Abacus, Drawing"
                 />
               </div>
 
@@ -121,7 +119,6 @@ export default function CertificateModal({
                   value={level}
                   onChange={(e) => setLevel(e.target.value)}
                   className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white text-xs sm:text-sm focus:ring-1 focus:ring-amber-400 focus:outline-none"
-                  placeholder="e.g. Level 1"
                 />
               </div>
 

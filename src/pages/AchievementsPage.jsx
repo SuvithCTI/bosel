@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
 
 import apj from "../assets/programs/apj.jpg";
 import district from "../assets/programs/districtlevel.jpg";

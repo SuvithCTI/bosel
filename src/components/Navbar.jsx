@@ -24,7 +24,7 @@ export default function Navbar({ activePage, setActivePage, sessionUser }) {
     { id: 'events', label: 'Events' },
     { id: 'achievements', label: 'Achievements' },
     { id: 'certificate', label: 'Certificates' },
-    { id: 'contact', label: 'Admission Enquiry' },
+    { id: 'contact', label: 'Contact Us' },
   ];
 
   const handleNavClick = (pageId) => {
@@ -69,21 +69,24 @@ export default function Navbar({ activePage, setActivePage, sessionUser }) {
                 );
               })}
 
-              {/* Login Portal as Symbol / Active Session Badge */}
+              {/* Login Profile / Portal Icon */}
               {sessionUser ? (
                 <button
                   onClick={() => handleNavClick(sessionUser.role === 'Super Admin' ? 'admin' : 'login')}
                   title={`Logged in as ${sessionUser.name || sessionUser.studentName}`}
-                  className={`ml-2 px-3 py-1.5 rounded-full transition-all duration-200 flex items-center gap-2 shadow-sm cursor-pointer ${
+                  aria-label={`Profile: ${sessionUser.name || sessionUser.studentName}`}
+                  className={`ml-2 w-10 h-10 rounded-full transition-all duration-200 flex items-center justify-center shadow-sm relative group cursor-pointer font-black text-sm select-none ${
                     activePage === 'login' || activePage === 'admin'
-                      ? 'bg-amber-400 text-slate-950 ring-2 ring-amber-300 shadow-md font-black'
-                      : 'bg-white/15 hover:bg-white/25 text-white border border-white/25 font-bold'
+                      ? 'bg-amber-400 text-slate-950 ring-2 ring-amber-300 shadow-md scale-105'
+                      : 'bg-amber-400 text-slate-950 hover:bg-amber-300 hover:scale-105 ring-2 ring-amber-400/60 shadow'
                   }`}
                 >
-                  <div className="w-5 h-5 rounded-full bg-amber-400 text-slate-950 flex items-center justify-center font-black text-[11px]">
-                    {(sessionUser.name || sessionUser.studentName || 'U').charAt(0).toUpperCase()}
-                  </div>
-                  <span className="text-xs max-w-[120px] truncate">
+                  <span>
+                    {(sessionUser.name || sessionUser.studentName || 'U').trim().charAt(0).toUpperCase()}
+                  </span>
+                  <span className="sr-only">{sessionUser.name || sessionUser.studentName}</span>
+                  {/* Tooltip on hover */}
+                  <span className="absolute -bottom-9 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-[11px] font-semibold py-1 px-2.5 rounded-md shadow-lg pointer-events-none whitespace-nowrap z-50">
                     {sessionUser.name || sessionUser.studentName}
                   </span>
                 </button>
