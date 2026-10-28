@@ -322,7 +322,6 @@ export default function LoginPage({ setActivePage }) {
                     <input
                       type="text"
                       required
-                      placeholder="e.g. BSEL-CBE-9876543211 or admin"
                       value={userId}
                       onChange={(e) => {
                         setUserId(e.target.value);
@@ -352,7 +351,6 @@ export default function LoginPage({ setActivePage }) {
                     <input
                       type={showPassword ? 'text' : 'password'}
                       required
-                      placeholder="Enter mobile number or admin123"
                       value={password}
                       onChange={(e) => {
                         setPassword(e.target.value);
@@ -372,7 +370,7 @@ export default function LoginPage({ setActivePage }) {
                 </div>
 
                 {/* Remember Me */}
-                <div className="flex items-center justify-between text-xs text-slate-900 font-semibold pt-1">
+                <div className="flex items-center text-xs text-slate-900 font-semibold pt-1">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
@@ -382,7 +380,6 @@ export default function LoginPage({ setActivePage }) {
                     />
                     <span>Remember User ID</span>
                   </label>
-                  <span className="text-slate-700 text-[11px] font-bold">256-Bit SSL</span>
                 </div>
 
                 {/* Submit Button */}
@@ -400,7 +397,11 @@ export default function LoginPage({ setActivePage }) {
                 <div className="text-center pt-1 border-t border-slate-100">
                   <button
                     type="button"
-                    onClick={() => setActivePage('contact')}
+                    onClick={() => {
+                      if (typeof window !== 'undefined') {
+                        window.dispatchEvent(new CustomEvent('open_admission_modal'));
+                      }
+                    }}
                     className="text-xs text-sky-800 hover:text-sky-950 font-bold hover:underline"
                   >
                     Don't have login credentials? Submit Admission Enquiry →

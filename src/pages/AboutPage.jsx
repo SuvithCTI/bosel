@@ -2,8 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { 
   Sparkles, 
   Compass, 
-  Target, 
-  ArrowRight, 
+  Target,
   Building2, 
   Award, 
   School, 
@@ -121,7 +120,7 @@ export default function AboutPage({ setActivePage }) {
         {/* Clearly visible decorative background watermark */}
         <div className="absolute inset-0 pointer-events-none flex items-center justify-center select-none overflow-hidden z-0">
           <span 
-            className="text-[130px] sm:text-[200px] lg:text-[260px] xl:text-[300px] font-black uppercase text-slate-300/70 leading-none select-none"
+            className="text-[85px] xs:text-[120px] sm:text-[200px] lg:text-[260px] xl:text-[300px] font-black uppercase text-slate-300/70 leading-none select-none whitespace-nowrap"
             style={{ 
               fontFamily: "'Cinzel', serif",
               letterSpacing: '0.06em'
@@ -136,7 +135,7 @@ export default function AboutPage({ setActivePage }) {
             
 
             {/* Main Heading as Specified */}
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black font-heading text-[#0F2B5C] tracking-tight leading-[1.2] sm:leading-[1.25]">
+            <h1 className="text-2xl xs:text-3xl sm:text-5xl lg:text-6xl font-black font-heading text-[#0F2B5C] tracking-tight leading-[1.2] sm:leading-[1.25]">
               Board of Skills and{' '}
               <span className="font-serif italic text-amber-500 block sm:inline">
                 Educational Learning
@@ -144,7 +143,7 @@ export default function AboutPage({ setActivePage }) {
             </h1>
 
             {/* Content Specified in Section 1 - Generous Line Spacing & Readable Size */}
-            <p className="text-base sm:text-lg lg:text-xl text-slate-800 font-semibold leading-loose sm:leading-[2.1] lg:leading-[2.2] max-w-3xl lg:max-w-4xl mx-auto">
+            <p className="text-sm xs:text-base sm:text-lg lg:text-xl text-slate-800 font-semibold leading-relaxed sm:leading-[2.1] lg:leading-[2.2] max-w-3xl lg:max-w-4xl mx-auto">
               B⭐SEL is an education-focused organization dedicated to developing students' academic, creative, and digital skills. Through structured programs, practical activities, expert instruction, and continuous practice, we create meaningful learning opportunities that help students build confidence and essential life skills.
             </p>
 
@@ -161,20 +160,6 @@ export default function AboutPage({ setActivePage }) {
               </span>
             </div>
 
-            {/* Quick Action Button */}
-            <div className="pt-3 sm:pt-4 flex items-center justify-center gap-3">
-              <button
-                onClick={() => {
-                  const el = document.getElementById('what-we-do');
-                  if (el) el.scrollIntoView({ behavior: 'smooth' });
-                }}
-                className="px-7 sm:px-9 py-3 sm:py-3.5 rounded-full bg-[#0F2B5C] hover:bg-[#163B7A] text-white text-sm sm:text-base font-bold transition shadow-md hover:shadow-lg flex items-center gap-2 cursor-pointer hover:gap-3"
-              >
-                <span>Explore What We Do</span>
-                <ArrowRight className="w-4 h-4 text-amber-400" />
-              </button>
-            </div>
-
           </div>
         </div>
       </section>
@@ -187,9 +172,6 @@ export default function AboutPage({ setActivePage }) {
         <div className="w-full max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-12">
           
           <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-14 space-y-2">
-            <span className="text-xs font-black uppercase tracking-widest text-[#0F2B5C] bg-sky-100 px-3.5 py-1 rounded-full border border-sky-200">
-              Core Offerings
-            </span>
             <h2 className="text-2xl sm:text-4xl md:text-5xl font-black font-heading text-slate-900">
               What We Do
             </h2>
@@ -198,31 +180,31 @@ export default function AboutPage({ setActivePage }) {
             </p>
           </div>
 
-          {/* 5 Clean, Attractive Program Cards Filled with Light Colors */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6 max-w-6xl mx-auto">
+          {/* 5 Clean, Attractive Program Cards Filled with Light Colors - 2 columns on mobile */}
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-2.5 xs:gap-3.5 sm:gap-6 max-w-7xl mx-auto">
             {programs.map((item) => (
               <div 
                 key={item.id}
-                className={`${item.bgClass} p-5 sm:p-6 rounded-2xl border-2 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200 flex flex-col justify-between group`}
+                className={`${item.bgClass} ${item.id === 'bharatanatyam' ? 'hidden sm:flex' : 'flex'} p-3 xs:p-4 sm:p-6 rounded-xl sm:rounded-2xl border-2 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200 flex-col justify-between group`}
               >
-                <div className="space-y-3">
-                  <div className="w-12 h-12 flex items-center justify-center transition-transform group-hover:scale-110">
-                    <ProgramIcon type={item.type} className="w-12 h-12" />
+                <div className="space-y-2 sm:space-y-3">
+                  <div className="w-9 h-9 sm:w-12 sm:h-12 flex items-center justify-center transition-transform group-hover:scale-110">
+                    <ProgramIcon type={item.type} className="w-9 h-9 sm:w-12 sm:h-12" />
                   </div>
-                  <div className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${item.badgeClass}`}>
+                  <div className={`inline-block px-2 sm:px-2.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider border ${item.badgeClass}`}>
                     {item.badge}
                   </div>
-                  <h3 className="text-lg font-black text-slate-900 leading-snug">
+                  <h3 className="text-sm xs:text-base sm:text-lg font-black text-slate-900 leading-snug">
                     {item.title}
                   </h3>
-                  <p className="text-xs sm:text-sm text-slate-800 font-semibold leading-relaxed">
+                  <p className="text-[11px] xs:text-xs sm:text-sm text-slate-800 font-semibold leading-relaxed">
                     {item.desc}
                   </p>
                 </div>
 
-                <div className={`mt-5 pt-3 border-t ${item.footerBorder} flex items-center justify-between text-[11px] font-bold ${item.footerText}`}>
-                  <span>Practical Training</span>
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                <div className={`mt-3 sm:mt-5 pt-2 sm:pt-3 border-t ${item.footerBorder} flex items-center justify-between text-[10px] sm:text-[11px] font-bold ${item.footerText}`}>
+                  <span className="truncate pr-1">Practical Training</span>
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                 </div>
               </div>
             ))}
@@ -253,9 +235,6 @@ export default function AboutPage({ setActivePage }) {
         <div className="w-full max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-12 relative z-10 text-white">
           
           <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-14 space-y-2">
-            <span className="text-xs font-black uppercase tracking-widest text-amber-300 bg-amber-400/20 px-3.5 py-1 rounded-full border border-amber-400/40">
-              Guiding Principles
-            </span>
             <h2 className="text-2xl sm:text-4xl md:text-5xl font-black font-heading text-white">
               Our Vision & Mission
             </h2>
@@ -264,10 +243,10 @@ export default function AboutPage({ setActivePage }) {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 max-w-6xl lg:max-w-7xl mx-auto">
             
             {/* Vision Card - No icons */}
-            <div className="bg-white/95 backdrop-blur-md p-6 sm:p-10 rounded-3xl border-2 border-sky-300 shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-200 relative overflow-hidden flex flex-col justify-between text-slate-900">
+            <div className="bg-white/95 backdrop-blur-md p-5 sm:p-8 md:p-10 rounded-2xl sm:rounded-3xl border-2 border-sky-300 shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-200 relative overflow-hidden flex flex-col justify-between text-slate-900">
               <div className="space-y-3 relative z-10">
                 <div className="text-xs font-black uppercase tracking-wider text-sky-800">
                   Aspirational Horizon
@@ -290,7 +269,7 @@ export default function AboutPage({ setActivePage }) {
             </div>
 
             {/* Mission Card - No icons */}
-            <div className="bg-white/95 backdrop-blur-md p-6 sm:p-10 rounded-3xl border-2 border-amber-300 shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-200 relative overflow-hidden flex flex-col justify-between text-slate-900">
+            <div className="bg-white/95 backdrop-blur-md p-5 sm:p-8 md:p-10 rounded-2xl sm:rounded-3xl border-2 border-amber-300 shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-200 relative overflow-hidden flex flex-col justify-between text-slate-900">
               <div className="space-y-3 relative z-10">
                 <div className="text-xs font-black uppercase tracking-wider text-amber-800">
                   Practical Purpose
@@ -322,12 +301,9 @@ export default function AboutPage({ setActivePage }) {
           5. MEET OUR FOUNDER (PROFILE & 3 STATISTICS HIGHLIGHTS)
          ========================================================================= */}
       <section className="py-12 sm:py-20 bg-slate-50 border-b border-slate-200">
-        <div className="w-full max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-12">
           
           <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-14 space-y-2">
-            <span className="text-xs font-black uppercase tracking-widest text-[#0F2B5C] bg-sky-100 px-3.5 py-1 rounded-full border border-sky-200">
-              Leadership
-            </span>
             <h2 className="text-2xl sm:text-4xl md:text-5xl font-black font-heading text-slate-900">
               Meet Our Founder
             </h2>
@@ -337,14 +313,14 @@ export default function AboutPage({ setActivePage }) {
           </div>
 
           {/* Founder Profile Card */}
-          <div className="bg-white border-2 border-slate-200 rounded-3xl p-6 sm:p-10 md:p-12 shadow-md hover:shadow-xl transition relative overflow-hidden">
+          <div className="max-w-6xl lg:max-w-7xl mx-auto bg-white border-2 border-slate-200 rounded-2xl sm:rounded-3xl p-5 sm:p-8 md:p-12 shadow-md hover:shadow-xl transition relative overflow-hidden">
             <Quote className="absolute top-6 right-6 w-20 h-20 text-slate-100 pointer-events-none" />
 
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center relative z-10">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12 items-center relative z-10">
               
               {/* Profile Image / Badge Column */}
               <div className="md:col-span-5 lg:col-span-4 flex flex-col items-center text-center">
-                <div className="relative w-64 h-64 sm:w-72 sm:h-72 md:w-80 md:h-80 rounded-3xl bg-gradient-to-tr from-[#081d3d] via-[#0F2B5C] to-[#1e4d99] p-2 sm:p-2.5 shadow-2xl border-2 sm:border-3 border-amber-400">
+                <div className="relative w-52 h-52 xs:w-60 xs:h-60 sm:w-72 sm:h-72 md:w-80 md:h-80 mx-auto rounded-2xl sm:rounded-3xl bg-gradient-to-tr from-[#081d3d] via-[#0F2B5C] to-[#1e4d99] p-2 sm:p-2.5 shadow-2xl border-2 sm:border-3 border-amber-400">
                   
                   {/* Founder photo if available, with graceful fallback */}
                   {!imgError ? (
@@ -415,7 +391,7 @@ export default function AboutPage({ setActivePage }) {
                 </div>
 
                 {/* Founder Signoff in Great Vibes */}
-                <div className="pt-2 flex items-center justify-between border-t border-slate-100">
+                <div className="pt-3 sm:pt-4 flex flex-col sm:flex-row items-center sm:items-end justify-between gap-3 border-t border-slate-100 text-center sm:text-left">
                   <div className="space-y-0.5">
                     <div 
                       className="text-3xl sm:text-4xl text-[#0c234b] font-cursive select-none"
@@ -428,7 +404,7 @@ export default function AboutPage({ setActivePage }) {
                     </div>
                   </div>
 
-                  <div className="hidden sm:block px-3 py-1 bg-slate-100 rounded-lg text-slate-700 text-xs font-mono font-bold border border-slate-200">
+                  <div className="px-3 py-1 bg-slate-100 rounded-lg text-slate-700 text-xs font-mono font-bold border border-slate-200">
                     B⭐SEL Directorate
                   </div>
                 </div>
@@ -460,7 +436,7 @@ export default function AboutPage({ setActivePage }) {
                 {founderStats.map((stat, idx) => (
                   <div 
                     key={idx}
-                    className="relative p-[2.5px] rounded-2xl overflow-hidden shadow-[0_0_12px_rgba(245,158,11,0.2)] hover:shadow-[0_0_24px_rgba(245,158,11,0.45)] hover:-translate-y-1 transition-all duration-300 group"
+                    className="relative p-[2.5px] rounded-2xl overflow-hidden shadow-[0_0_12px_rgba(245,158,11,0.2)] hover:shadow-[0_0_24px_rgba(245,158,11,0.45)] hover:-translate-y-1 transition-all duration-300 group [isolation:isolate]"
                   >
                     {/* Rotating shining light beam continuously looping around the border */}
                     <div 

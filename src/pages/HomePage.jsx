@@ -67,7 +67,11 @@ export default function HomePage({ setActivePage, onSelectProgram }) {
                 </button>
 
                 <button
-                  onClick={() => setActivePage('contact')}
+                  onClick={() => {
+                    if (typeof window !== 'undefined') {
+                      window.dispatchEvent(new CustomEvent('open_admission_modal'));
+                    }
+                  }}
                   className="w-full sm:w-auto px-7 py-3.5 rounded-xl sm:rounded-full bg-amber-400 hover:bg-amber-300 active:scale-[0.98] text-slate-950 text-sm sm:text-base font-black transition shadow-md hover:shadow-xl flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <School className="w-4 h-4 text-slate-950" />

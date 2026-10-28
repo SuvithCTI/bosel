@@ -1690,7 +1690,6 @@ export default function ProgramsPage() {
                         <input
                           type="text"
                           required
-                          placeholder="e.g. Aarav Subramanian"
                           value={regForm.studentName}
                           onChange={(e) => setRegForm({...regForm, studentName: e.target.value})}
                           className="w-full h-10 px-3 text-base sm:text-sm text-slate-950 font-semibold border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none"
@@ -1736,7 +1735,6 @@ export default function ProgramsPage() {
                           <input
                             type="text"
                             required
-                            placeholder="e.g. K. Subramanian"
                             value={regForm.parentName}
                             onChange={(e) => setRegForm({...regForm, parentName: e.target.value})}
                             className="w-full h-10 px-3 text-base sm:text-sm text-slate-950 font-semibold border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none"
@@ -1749,7 +1747,6 @@ export default function ProgramsPage() {
                           <input
                             type="tel"
                             required
-                            placeholder="e.g. 98401 23456"
                             value={regForm.phone}
                             onChange={(e) => setRegForm({...regForm, phone: e.target.value})}
                             className="w-full h-10 px-3 text-base sm:text-sm text-slate-950 font-semibold border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none"
@@ -1765,7 +1762,6 @@ export default function ProgramsPage() {
                           <input
                             type="text"
                             required
-                            placeholder="e.g. Vidya Mandir School"
                             value={regForm.schoolName}
                             onChange={(e) => setRegForm({...regForm, schoolName: e.target.value})}
                             className="w-full h-10 px-3 text-base sm:text-sm text-slate-950 font-semibold border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none"
@@ -1778,7 +1774,6 @@ export default function ProgramsPage() {
                           <input
                             type="text"
                             required
-                            placeholder="e.g. Tenkasi / Chennai"
                             value={regForm.city}
                             onChange={(e) => setRegForm({...regForm, city: e.target.value})}
                             className="w-full h-10 px-3 text-base sm:text-sm text-slate-950 font-semibold border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none"
@@ -1792,7 +1787,6 @@ export default function ProgramsPage() {
                         </label>
                         <input
                           type="email"
-                          placeholder="e.g. parent@example.com"
                           value={regForm.email}
                           onChange={(e) => setRegForm({...regForm, email: e.target.value})}
                           className="w-full h-10 px-3 text-base sm:text-sm text-slate-950 font-semibold border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none"
@@ -1927,7 +1921,6 @@ export default function ProgramsPage() {
                           </p>
                           <input
                             type="text"
-                            placeholder="e.g. mobile@upi / yourname@okaxis"
                             value={upiId}
                             onChange={(e) => setUpiId(e.target.value)}
                             className="w-full h-10 px-3 text-center font-mono text-base sm:text-sm border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none bg-white"
@@ -1942,7 +1935,6 @@ export default function ProgramsPage() {
                             <input
                               type="text"
                               maxLength="19"
-                              placeholder="4123 4567 8901 2345"
                               value={cardNumber}
                               onChange={(e) => setCardNumber(e.target.value)}
                               className="w-full h-10 px-3 font-mono text-base sm:text-sm border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none bg-white"
@@ -1954,7 +1946,6 @@ export default function ProgramsPage() {
                               <input
                                 type="text"
                                 maxLength="5"
-                                placeholder="12/28"
                                 value={cardExpiry}
                                 onChange={(e) => setCardExpiry(e.target.value)}
                                 className="w-full h-10 px-3 text-center font-mono text-base sm:text-sm border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none bg-white"
@@ -1965,7 +1956,6 @@ export default function ProgramsPage() {
                               <input
                                 type="password"
                                 maxLength="3"
-                                placeholder="•••"
                                 value={cardCvv}
                                 onChange={(e) => setCardCvv(e.target.value)}
                                 className="w-full h-10 px-3 text-center font-mono text-base sm:text-sm border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none bg-white"
@@ -1976,7 +1966,6 @@ export default function ProgramsPage() {
                             <label className="block text-[11px] font-black text-slate-800 mb-1">Cardholder Name</label>
                             <input
                               type="text"
-                              placeholder="Name printed on card"
                               value={cardName}
                               onChange={(e) => setCardName(e.target.value)}
                               className="w-full h-10 px-3 text-base sm:text-sm border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none bg-white"

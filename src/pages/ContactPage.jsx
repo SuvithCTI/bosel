@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Phone, 
   Mail, 
@@ -8,134 +8,62 @@ import {
   CheckCircle2, 
   ChevronDown, 
   ChevronUp,
-  Copy,
-  Check,
-  ArrowRight,
-  Lock,
-  KeyRound,
-  ShieldCheck,
-  Eye,
-  EyeOff,
   Building2,
-  BookOpen,
-  HelpCircle
+  MessageSquare,
+  Store,
+  GraduationCap
 } from 'lucide-react';
-import { registerStudentAccount } from '../utils/authStorage';
-
-const TAMIL_NADU_DISTRICTS = [
-  'Ariyalur',
-  'Chengalpattu',
-  'Chennai',
-  'Coimbatore',
-  'Cuddalore',
-  'Dharmapuri',
-  'Dindigul',
-  'Erode',
-  'Kallakurichi',
-  'Kanchipuram',
-  'Kanyakumari',
-  'Karur',
-  'Krishnagiri',
-  'Madurai',
-  'Mayiladuthurai',
-  'Nagapattinam',
-  'Namakkal',
-  'Nilgiris',
-  'Perambalur',
-  'Pudukkottai',
-  'Ramanathapuram',
-  'Ranipet',
-  'Salem',
-  'Sivaganga',
-  'Tenkasi',
-  'Thanjavur',
-  'Theni',
-  'Thoothukudi',
-  'Tiruchirappalli (Trichy)',
-  'Tirunelveli',
-  'Tirupathur',
-  'Tiruppur',
-  'Tiruvallur',
-  'Tiruvannamalai',
-  'Tiruvarur',
-  'Vellore',
-  'Viluppuram',
-  'Virudhunagar',
-  'Other District / State'
-];
+import FranchiseModal from '../components/FranchiseModal';
+import AdmissionModal from '../components/AdmissionModal';
 
 export default function ContactPage({ setActivePage }) {
   const [formData, setFormData] = useState({
     name: '',
-    parentName: '',
     email: '',
     phone: '',
-    grade: '',
-    program: 'Abacus Speed Arithmetic',
-    district: '',
-    address: ''
+    subject: 'General Enquiry',
+    message: ''
   });
   const [submitted, setSubmitted] = useState(false);
-  const [createdAccount, setCreatedAccount] = useState(null);
-  const [copiedField, setCopiedField] = useState(null);
-  const [showPassword, setShowPassword] = useState(false);
+  const [refId, setRefId] = useState('');
   const [expandedFaq, setExpandedFaq] = useState(null);
-  const [districtDropdownOpen, setDistrictDropdownOpen] = useState(false);
-  const [districtSearch, setDistrictSearch] = useState('');
-  const [districtError, setDistrictError] = useState(false);
-  const districtDropdownRef = useRef(null);
+  const [showFranchiseModal, setShowFranchiseModal] = useState(false);
+  const [showAdmissionModal, setShowAdmissionModal] = useState(false);
 
   useEffect(() => {
-    function handleClickOutside(event) {
-      if (districtDropdownRef.current && !districtDropdownRef.current.contains(event.target)) {
-        setDistrictDropdownOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
-
-  const filteredDistricts = TAMIL_NADU_DISTRICTS.filter((d) =>
-    d.toLowerCase().includes(districtSearch.toLowerCase().trim())
-  );
-
-  const handleCopy = (text, fieldName) => {
-    if (typeof navigator !== 'undefined' && navigator.clipboard) {
-      navigator.clipboard.writeText(text);
-      setCopiedField(fieldName);
-      setTimeout(() => setCopiedField(null), 2500);
-    }
-  };
-
-  const scrollToEnquiryForm = () => {
-    if (submitted) {
-      setSubmitted(false);
-      setCreatedAccount(null);
-      setDistrictError(false);
-    }
-    const el = document.getElementById('admission-enquiry-form');
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      const firstInput = el.querySelector('input');
-      if (firstInput) {
-        setTimeout(() => firstInput.focus(), 450);
-      }
-    }
-  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formData.district) {
-      setDistrictError(true);
-      if (districtDropdownRef.current) {
-        districtDropdownRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-      return;
+    const newRefId = `BSEL-ENQ-${Math.floor(100000 + Math.random() * 900000)}`;
+    setRefId(newRefId);
+    try {
+      const raw = localStorage.getItem('bsel_general_enquiries') || '[]';
+      const existing = JSON.parse(raw);
+      const enquiry = {
+        refId: newRefId,
+        ...formData,
+        date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+        status: 'New'
+      };
+      localStorage.setItem('bsel_general_enquiries', JSON.stringify([enquiry, ...existing]));
+    } catch {
+      // ignore
     }
-    setDistrictError(false);
-    const account = registerStudentAccount(formData);
-    setCreatedAccount(account);
     setSubmitted(true);
+  };
+
+  const handleReset = () => {
+    setSubmitted(false);
+    setRefId('');
+    setFormData({
+      name: '',
+      email: '',
+      phone: '',
+      subject: 'General Enquiry',
+      message: ''
+    });
   };
 
   const faqs = [
@@ -226,71 +154,53 @@ export default function ContactPage({ setActivePage }) {
               </div>
             </div>
 
-            {/* Quick Action Buttons in Gap */}
+            {/* Quick Action Buttons */}
             <div className="bg-white rounded-2xl p-3 sm:p-4 shadow-sm border border-slate-200">
-              <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
-                {/* 1. Franchise */}
-                <a
-                  href="tel:+919840012345"
-                  title="Franchise (+91 98400 12345)"
-                  aria-label="Franchise"
-                  className="py-3 px-2 rounded-xl bg-amber-50/50 border-2 border-amber-200/80 hover:border-amber-400 hover:bg-amber-400 text-amber-800 hover:text-slate-950 transition flex flex-col items-center justify-center gap-1.5 shadow-2xs hover:shadow-xs cursor-pointer group text-center"
-                >
-                  <Building2 className="w-5 h-5 group-hover:scale-110 transition-transform shrink-0" />
-                  <span className="text-[11px] sm:text-xs font-black tracking-wide leading-none text-slate-800 group-hover:text-slate-950">
-                    Franchise
-                  </span>
-                </a>
-
-                {/* 2. Program */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
+                {/* Franchise Form */}
                 <button
                   type="button"
-                  onClick={() => {
-                    if (setActivePage) {
-                      setActivePage('programs');
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
-                    }
-                  }}
-                  title="Programs"
-                  aria-label="Programs"
-                  className="py-3 px-2 rounded-xl bg-sky-50/50 border-2 border-sky-200/80 hover:border-sky-500 hover:bg-sky-600 text-sky-800 hover:text-white transition flex flex-col items-center justify-center gap-1.5 shadow-2xs hover:shadow-xs cursor-pointer group text-center"
+                  onClick={() => setShowFranchiseModal(true)}
+                  title="Franchise Application Form"
+                  aria-label="Franchise Form"
+                  className="py-3 px-3 rounded-xl bg-amber-50/70 border-2 border-amber-300 hover:border-amber-500 hover:bg-amber-400 text-amber-900 hover:text-slate-950 transition flex items-center justify-center gap-2 shadow-2xs hover:shadow-xs cursor-pointer group text-center w-full"
                 >
-                  <BookOpen className="w-5 h-5 group-hover:scale-110 transition-transform shrink-0" />
-                  <span className="text-[11px] sm:text-xs font-black tracking-wide leading-none text-slate-800 group-hover:text-white">
-                    Programs
+                  <Store className="w-5 h-5 group-hover:scale-110 transition-transform shrink-0 text-amber-700 group-hover:text-slate-950" />
+                  <span className="text-xs sm:text-sm font-black tracking-wide leading-none text-slate-800 group-hover:text-slate-950">
+                    Franchise Form
                   </span>
                 </button>
 
-                {/* 3. Enquiry */}
+                {/* Admission Enquiry */}
                 <button
                   type="button"
-                  onClick={scrollToEnquiryForm}
-                  title="Admission Enquiry"
-                  aria-label="Admission Enquiry"
-                  className="py-3 px-2 rounded-xl bg-emerald-50/50 border-2 border-emerald-200/80 hover:border-emerald-500 hover:bg-emerald-600 text-emerald-800 hover:text-white transition flex flex-col items-center justify-center gap-1.5 shadow-2xs hover:shadow-xs cursor-pointer group text-center"
+                  onClick={() => setShowAdmissionModal(true)}
+                  title="Student Admission Enquiry Form"
+                  aria-label="Admission Enquiry Form"
+                  className="py-3 px-3 rounded-xl bg-sky-50/70 border-2 border-sky-300 hover:border-sky-500 hover:bg-[#0F2B5C] text-sky-900 hover:text-white transition flex items-center justify-center gap-2 shadow-2xs hover:shadow-xs cursor-pointer group text-center w-full"
                 >
-                  <HelpCircle className="w-5 h-5 group-hover:scale-110 transition-transform shrink-0" />
-                  <span className="text-[11px] sm:text-xs font-black tracking-wide leading-none text-slate-800 group-hover:text-white">
-                    Enquiry
+                  <GraduationCap className="w-5 h-5 group-hover:scale-110 transition-transform shrink-0 text-sky-700 group-hover:text-white" />
+                  <span className="text-xs sm:text-sm font-black tracking-wide leading-none text-slate-800 group-hover:text-white">
+                    Admission Enquiry
                   </span>
                 </button>
               </div>
             </div>
           </div>
 
-          {/* Right Column: Admission Enquiry Form */}
-          <div id="admission-enquiry-form" className="lg:col-span-7 bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-slate-200 scroll-mt-24">
+          {/* Right Column: General Enquiry Form */}
+          <div id="general-enquiry-form" className="lg:col-span-7 bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-slate-200 scroll-mt-24">
             <div className="mb-6">
-              <span className="text-xs font-black text-sky-700 uppercase tracking-wider">Student Enrolment</span>
+              <span className="text-xs font-black text-sky-700 uppercase tracking-wider">Get in Touch</span>
               <h2 className="text-2xl font-black font-heading text-slate-950 mt-1">
-                Admission Enquiry
+                General Enquiry
               </h2>
               <p className="text-xs text-slate-900 mt-1 font-semibold">
-                Please fill in the student and parent details below to enquire about admissions, course batches, and center locations.
+                Have questions regarding our academic programs, partner affiliations, state competitions, or center facilities? Send us your message below.
               </p>
             </div>
 
-            {submitted && createdAccount ? (
+            {submitted ? (
               <div className="bg-white border-2 border-emerald-500/40 rounded-2xl p-6 sm:p-8 space-y-6 shadow-lg animate-in fade-in zoom-in-95 duration-200">
                 {/* Status Header */}
                 <div className="text-center space-y-2">
@@ -298,242 +208,86 @@ export default function ContactPage({ setActivePage }) {
                     <CheckCircle2 className="w-10 h-10" />
                   </div>
                   <span className="inline-block text-[11px] font-black uppercase tracking-wider text-emerald-800 bg-emerald-100/80 px-3 py-1 rounded-full">
-                    Enrolment & Admission Enquiry Registered
+                    Enquiry Submitted Successfully
                   </span>
                   <h3 className="text-2xl font-black font-heading text-slate-950">
-                    Student Account Created!
+                    Thank You for Contacting B★SEL!
                   </h3>
-                  <p className="text-xs sm:text-sm text-slate-600 max-w-lg mx-auto">
-                    Admission enquiry for <strong className="text-slate-900 font-extrabold">{createdAccount.studentName}</strong> has been logged. An official login account has been generated for accessing the student portal.
+                  <p className="text-xs sm:text-sm text-slate-700 max-w-lg mx-auto font-medium">
+                    Your enquiry has been registered with Reference ID:{' '}
+                    <strong className="font-mono text-emerald-800 font-bold text-base">{refId}</strong>.
+                    Our academic support team will review your query and get back to you within 24 working hours.
                   </p>
                 </div>
 
-                {/* Important Notice */}
-                <div className="bg-amber-50 border-l-4 border-amber-500 rounded-xl p-4 flex items-start gap-3 text-xs text-amber-900">
-                  <ShieldCheck className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-                  <div>
-                    <strong className="block font-black text-amber-950 text-xs sm:text-sm">Important: Exclusive Login Access</strong>
-                    <span>You can <strong>ONLY log in using this specific User ID and Password</strong>. Please write them down or copy them now to access your results, hall tickets, and e-certificates.</span>
-                  </div>
-                </div>
-
-                {/* Credentials Showcase Box */}
-                <div className="bg-gradient-to-br from-[#0F2B5C] via-[#143B7A] to-[#1E4D99] rounded-2xl p-5 sm:p-6 text-white space-y-4 shadow-md">
-                  <div className="flex items-center justify-between border-b border-white/15 pb-3">
-                    <div className="flex items-center gap-2">
-                      <KeyRound className="w-5 h-5 text-amber-400" />
-                      <span className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-amber-300">
-                        Your Official Portal Credentials
-                      </span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => handleCopy(`User ID: ${createdAccount.userId}\nPassword: ${createdAccount.password}`, 'all')}
-                      className="text-[11px] font-bold px-3 py-1.5 rounded-lg bg-white/15 hover:bg-white/25 text-white flex items-center gap-1.5 transition cursor-pointer"
-                    >
-                      {copiedField === 'all' ? (
-                        <>
-                          <Check className="w-3.5 h-3.5 text-emerald-400" />
-                          <span className="text-emerald-300">Copied Both!</span>
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="w-3.5 h-3.5" />
-                          <span>Copy Both</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                    {/* User ID Box */}
-                    <div className="bg-white/10 backdrop-blur-xs border border-white/20 rounded-xl p-3.5 flex flex-col justify-between">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-sky-200">
-                          Assigned User ID
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => handleCopy(createdAccount.userId, 'id')}
-                          className="text-[11px] font-bold text-amber-300 hover:text-white flex items-center gap-1 transition cursor-pointer"
-                        >
-                          {copiedField === 'id' ? (
-                            <>
-                              <Check className="w-3 h-3 text-emerald-400" />
-                              <span className="text-emerald-300">Copied</span>
-                            </>
-                          ) : (
-                            <>
-                              <Copy className="w-3 h-3" />
-                              <span>Copy</span>
-                            </>
-                          )}
-                        </button>
-                      </div>
-                      <div className="font-mono text-base sm:text-lg font-black text-white tracking-wider">
-                        {createdAccount.userId}
-                      </div>
-                    </div>
-
-                    {/* Password Box */}
-                    <div className="bg-white/10 backdrop-blur-xs border border-white/20 rounded-xl p-3.5 flex flex-col justify-between">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-sky-200">
-                          Password (Mobile Number)
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => setShowPassword(!showPassword)}
-                            className="text-white/70 hover:text-white transition cursor-pointer"
-                            title={showPassword ? 'Hide password' : 'Show password'}
-                          >
-                            {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleCopy(createdAccount.password, 'password')}
-                            className="text-[11px] font-bold text-amber-300 hover:text-white flex items-center gap-1 transition cursor-pointer"
-                          >
-                            {copiedField === 'password' ? (
-                              <>
-                                <Check className="w-3 h-3 text-emerald-400" />
-                                <span className="text-emerald-300">Copied</span>
-                              </>
-                            ) : (
-                              <>
-                                <Copy className="w-3 h-3" />
-                                <span>Copy</span>
-                              </>
-                            )}
-                          </button>
-                        </div>
-                      </div>
-                      <div className="font-mono text-base sm:text-lg font-black text-amber-300 tracking-wider">
-                        {showPassword ? createdAccount.password : '••••••••'}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Enrolment Details Summary */}
-                <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs space-y-2">
-                  <span className="font-bold text-slate-800 uppercase tracking-wider text-[10px] block">
-                    Registered Details Summary
+                {/* Summary Box */}
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs space-y-2.5">
+                  <span className="font-bold text-slate-800 uppercase tracking-wider text-[10px] block border-b border-slate-200 pb-1.5">
+                    Enquiry Details
                   </span>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-slate-700">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-slate-700">
                     <div>
-                      <span className="text-slate-500 block text-[10px]">Student Name</span>
-                      <strong className="text-slate-900 font-bold">{createdAccount.studentName}</strong>
+                      <span className="text-slate-500 block text-[10px]">Name</span>
+                      <strong className="text-slate-900 font-bold">{formData.name}</strong>
                     </div>
                     <div>
-                      <span className="text-slate-500 block text-[10px]">Enrolled Program</span>
-                      <strong className="text-slate-900 font-bold">{createdAccount.program}</strong>
+                      <span className="text-slate-500 block text-[10px]">Subject</span>
+                      <strong className="text-slate-900 font-bold">{formData.subject}</strong>
                     </div>
                     <div>
-                      <span className="text-slate-500 block text-[10px]">Class / Grade</span>
-                      <strong className="text-slate-900 font-bold">{createdAccount.grade}</strong>
-                    </div>
-                    <div>
-                      <span className="text-slate-500 block text-[10px]">Parent's Name</span>
-                      <strong className="text-slate-900 font-bold">{createdAccount.parentName}</strong>
-                    </div>
-                    <div>
-                      <span className="text-slate-500 block text-[10px]">District</span>
-                      <strong className="text-slate-900 font-bold">{createdAccount.district || 'Not Specified'}</strong>
+                      <span className="text-slate-500 block text-[10px]">Email Address</span>
+                      <strong className="text-slate-900 font-bold truncate block">{formData.email}</strong>
                     </div>
                     <div>
                       <span className="text-slate-500 block text-[10px]">Phone Number</span>
-                      <strong className="text-slate-900 font-bold">{createdAccount.phone}</strong>
+                      <strong className="text-slate-900 font-bold">{formData.phone}</strong>
                     </div>
-                    <div>
-                      <span className="text-slate-500 block text-[10px]">Email ID</span>
-                      <strong className="text-slate-900 font-bold truncate block">{createdAccount.email}</strong>
-                    </div>
+                    {formData.message && (
+                      <div className="sm:col-span-2">
+                        <span className="text-slate-500 block text-[10px]">Message</span>
+                        <p className="text-slate-800 font-medium italic mt-0.5">"{formData.message}"</p>
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                {/* Action Buttons */}
-                <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
-                  {setActivePage && (
-                    <button
-                      type="button"
-                      onClick={() => setActivePage('login')}
-                      className="w-full sm:flex-1 py-3 px-5 bg-[#0F2B5C] hover:bg-[#18458F] text-white text-xs sm:text-sm font-black rounded-xl transition flex items-center justify-center gap-2 shadow-md hover:shadow-lg cursor-pointer"
-                    >
-                      <Lock className="w-4 h-4 text-amber-400" />
-                      <span>Proceed to Student Login Portal</span>
-                      <ArrowRight className="w-4 h-4 ml-1" />
-                    </button>
-                  )}
+                <div className="text-center pt-2">
                   <button
                     type="button"
-                    onClick={() => {
-                      setSubmitted(false);
-                      setCreatedAccount(null);
-                      setDistrictError(false);
-                      setFormData({
-                        name: '',
-                        parentName: '',
-                        email: '',
-                        phone: '',
-                        grade: '',
-                        program: 'Abacus Speed Arithmetic',
-                        district: '',
-                        address: ''
-                      });
-                    }}
-                    className="w-full sm:w-auto py-3 px-5 border-2 border-slate-300 text-slate-800 hover:bg-slate-100 text-xs sm:text-sm font-bold rounded-xl transition cursor-pointer"
+                    onClick={handleReset}
+                    className="py-3 px-6 rounded-xl bg-[#0F2B5C] hover:bg-[#18458F] text-white text-xs sm:text-sm font-black transition cursor-pointer shadow-md hover:shadow-lg"
                   >
-                    Submit Another Admission Enquiry
+                    Send Another Message
                   </button>
                 </div>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
-                {/* Name & Parent's Name */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-black text-black mb-1">
-                      Student Name *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. R. Ananya"
-                      value={formData.name}
-                      onChange={(e) => setFormData({...formData, name: e.target.value})}
-                      className="w-full px-3.5 py-2.5 text-base sm:text-sm text-black font-semibold border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-black text-black mb-1">
-                      Parent's Name *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. S. Ramanathan"
-                      value={formData.parentName}
-                      onChange={(e) => setFormData({...formData, parentName: e.target.value})}
-                      className="w-full px-3.5 py-2.5 text-base sm:text-sm text-black font-semibold border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none"
-                    />
-                  </div>
+                {/* Full Name */}
+                <div>
+                  <label className="block text-xs font-black text-black mb-1">
+                    Full Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="w-full px-3.5 py-2.5 text-base sm:text-sm text-black font-semibold border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                  />
                 </div>
 
-                {/* Email ID & Phone Number */}
+                {/* Email Address & Phone Number */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-black text-black mb-1">
-                      Email ID *
+                      Email Address *
                     </label>
                     <input
                       type="email"
                       required
-                      placeholder="e.g. parent@example.com"
                       value={formData.email}
-                      onChange={(e) => setFormData({...formData, email: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                       className="w-full px-3.5 py-2.5 text-base sm:text-sm text-black font-semibold border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none"
                     />
                   </div>
@@ -545,155 +299,44 @@ export default function ContactPage({ setActivePage }) {
                     <input
                       type="tel"
                       required
-                      placeholder="e.g. 98401 23456"
                       value={formData.phone}
-                      onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                       className="w-full px-3.5 py-2.5 text-base sm:text-sm text-black font-semibold border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none"
                     />
                   </div>
                 </div>
 
-                {/* Grade & Program */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-black text-black mb-1">
-                      Grade / Class (Upto 14 Years) *
-                    </label>
-                    <select
-                      required
-                      value={formData.grade}
-                      onChange={(e) => setFormData({...formData, grade: e.target.value})}
-                      className="w-full px-3.5 py-2.5 text-base sm:text-sm text-black font-semibold border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none bg-white"
-                    >
-                      <option value="">Select Grade / Class (Upto 14 Years)</option>
-                      <option value="Kindergarten (Age 3 to 5)">Kindergarten (Pre-KG / LKG / UKG - Age 3 to 5 Years)</option>
-                      <option value="Grade 1 (Age 5 to 6)">Grade 1 (Age 5 to 6 Years)</option>
-                      <option value="Grade 2 (Age 6 to 7)">Grade 2 (Age 6 to 7 Years)</option>
-                      <option value="Grade 3 (Age 7 to 8)">Grade 3 (Age 7 to 8 Years)</option>
-                      <option value="Grade 4 (Age 8 to 9)">Grade 4 (Age 8 to 9 Years)</option>
-                      <option value="Grade 5 (Age 9 to 10)">Grade 5 (Age 9 to 10 Years)</option>
-                      <option value="Grade 6 (Age 10 to 11)">Grade 6 (Age 10 to 11 Years)</option>
-                      <option value="Grade 7 (Age 11 to 12)">Grade 7 (Age 11 to 12 Years)</option>
-                      <option value="Grade 8 (Age 12 to 13)">Grade 8 (Age 12 to 13 Years)</option>
-                      <option value="Grade 9 (Age 13 to 14 - Upto 14 Yrs)">Grade 9 (Age 13 to 14 Years - Upto 14 Yrs)</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-black text-black mb-1">
-                      Program *
-                    </label>
-                    <select
-                      required
-                      value={formData.program}
-                      onChange={(e) => setFormData({...formData, program: e.target.value})}
-                      className="w-full px-3.5 py-2.5 text-base sm:text-sm text-black font-semibold border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none bg-white"
-                    >
-                      <option value="Abacus Speed Arithmetic">Abacus Speed Arithmetic</option>
-                      <option value="Drawing & Fine Arts">Drawing & Fine Arts</option>
-                      <option value="Handwriting Improvement">Handwriting Improvement</option>
-                      <option value="Bharatanatyam Classical Dance">Bharatanatyam Classical Dance</option>
-                      <option value="Western Dance">Western Dance</option>
-                      <option value="Phonics & Spoken English">Phonics & Spoken English</option>
-                      <option value="Vedic Mathematics">Vedic Mathematics</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* District */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="relative" ref={districtDropdownRef}>
-                    <label className="block text-xs font-black text-black mb-1">
-                      District *
-                    </label>
-
-                    {/* Trigger Button */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setDistrictDropdownOpen(!districtDropdownOpen);
-                        setDistrictSearch('');
-                        if (districtError) setDistrictError(false);
-                      }}
-                      className={`w-full px-3.5 py-2.5 text-base sm:text-sm font-semibold border-2 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none bg-white text-left flex items-center justify-between transition cursor-pointer ${
-                        districtError ? 'border-rose-500 ring-2 ring-rose-200' : 'border-slate-300'
-                      }`}
-                    >
-                      <span className={formData.district ? 'text-black font-semibold' : 'text-slate-400 font-normal'}>
-                        {formData.district || 'Select District'}
-                      </span>
-                      <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform ${districtDropdownOpen ? 'rotate-180' : ''}`} />
-                    </button>
-
-                    {districtError && (
-                      <p className="text-[11px] font-bold text-rose-600 mt-1 flex items-center gap-1">
-                        Please select a district
-                      </p>
-                    )}
-
-                    {/* Small Compact Dropdown Menu */}
-                    {districtDropdownOpen && (
-                      <div className="absolute z-30 mt-1 w-full bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden animate-in fade-in-50 zoom-in-95 duration-150">
-                        {/* Quick filter search */}
-                        <div className="p-2 border-b border-slate-100 bg-slate-50">
-                          <input
-                            type="text"
-                            placeholder="Type to filter district..."
-                            value={districtSearch}
-                            onChange={(e) => setDistrictSearch(e.target.value)}
-                            onClick={(e) => e.stopPropagation()}
-                            className="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500 bg-white"
-                            autoFocus
-                          />
-                        </div>
-
-                        {/* Scrollable list with small compact max-height */}
-                        <div className="max-h-48 overflow-y-auto p-1 divide-y divide-slate-50">
-                          {filteredDistricts.length > 0 ? (
-                            filteredDistricts.map((dist) => {
-                              const isSelected = formData.district === dist;
-                              return (
-                                <button
-                                  key={dist}
-                                  type="button"
-                                  onClick={() => {
-                                    setFormData({ ...formData, district: dist });
-                                    setDistrictError(false);
-                                    setDistrictDropdownOpen(false);
-                                  }}
-                                  className={`w-full text-left px-3 py-2 text-xs font-semibold rounded-lg transition flex items-center justify-between cursor-pointer ${
-                                    isSelected
-                                      ? 'bg-sky-50 text-sky-900 font-bold'
-                                      : 'text-slate-700 hover:bg-slate-100'
-                                  }`}
-                                >
-                                  <span>{dist}</span>
-                                  {isSelected && <Check className="w-3.5 h-3.5 text-sky-600 shrink-0" />}
-                                </button>
-                              );
-                            })
-                          ) : (
-                            <div className="p-3 text-center text-xs text-slate-400">
-                              No district matching "{districtSearch}"
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Address */}
+                {/* Subject / Purpose of Enquiry */}
                 <div>
                   <label className="block text-xs font-black text-black mb-1">
-                    Address *
+                    Enquiry Subject *
+                  </label>
+                  <select
+                    required
+                    value={formData.subject}
+                    onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                    className="w-full px-3.5 py-2.5 text-base sm:text-sm text-black font-semibold border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none bg-white"
+                  >
+                    <option value="General Enquiry">General Enquiry</option>
+                    <option value="Courses & Programs">Courses & Program Details (Abacus, Phonics, Art, Handwriting)</option>
+                    <option value="School Affiliation / Tie-Up">School Affiliation & Partnership Tie-Up</option>
+                    <option value="State & National Competitions">Competitions, Hall Tickets & Exam Centers</option>
+                    <option value="Certificate Verification">Certificate Verification & Accreditation</option>
+                    <option value="Franchise & Training Center">Franchise & Learning Center Authorization</option>
+                    <option value="Other Assistance">Other Assistance</option>
+                  </select>
+                </div>
+
+                {/* Message */}
+                <div>
+                  <label className="block text-xs font-black text-black mb-1">
+                    Your Message / Query *
                   </label>
                   <textarea
-                    rows={3}
+                    rows={4}
                     required
-                    placeholder="Enter complete residential address with city, state & pincode..."
-                    value={formData.address}
-                    onChange={(e) => setFormData({...formData, address: e.target.value})}
+                    value={formData.message}
+                    onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                     className="w-full px-3.5 py-2.5 text-base sm:text-sm text-black font-semibold border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none"
                   />
                 </div>
@@ -703,7 +346,7 @@ export default function ContactPage({ setActivePage }) {
                   className="w-full bg-[#0F2B5C] hover:bg-[#18458F] active:scale-[0.99] text-white py-3.5 rounded-xl font-black text-sm transition flex items-center justify-center gap-2 shadow-md hover:shadow-lg cursor-pointer"
                 >
                   <Send className="w-4 h-4" />
-                  <span>Submit Admission Enquiry</span>
+                  <span>Submit General Enquiry</span>
                 </button>
               </form>
             )}
@@ -751,6 +394,19 @@ export default function ContactPage({ setActivePage }) {
         </div>
 
       </div>
+
+      {/* Franchise Enquiry Popup Modal */}
+      <FranchiseModal 
+        isOpen={showFranchiseModal} 
+        onClose={() => setShowFranchiseModal(false)} 
+      />
+
+      {/* Admission Enquiry Popup Modal */}
+      <AdmissionModal 
+        isOpen={showAdmissionModal} 
+        onClose={() => setShowAdmissionModal(false)} 
+        setActivePage={setActivePage}
+      />
     </div>
   );
 }

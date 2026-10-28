@@ -214,7 +214,6 @@ export default function EventRegisterModal({ event, onClose }) {
                     <input
                       type="text"
                       required
-                      placeholder="e.g. Aarav Sharma / Candidate"
                       value={formData.studentName}
                       onChange={(e) => setFormData({...formData, studentName: e.target.value})}
                       className="w-full h-10 sm:h-11 px-3 py-2 text-base sm:text-sm text-slate-950 font-semibold border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none"
@@ -238,7 +237,6 @@ export default function EventRegisterModal({ event, onClose }) {
                     <input
                       type="text"
                       required
-                      placeholder="e.g. R. Subramanian"
                       value={formData.parentName}
                       onChange={(e) => setFormData({...formData, parentName: e.target.value})}
                       className="w-full h-10 sm:h-11 px-3 py-2 text-base sm:text-sm text-slate-950 font-semibold border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none"
@@ -249,7 +247,6 @@ export default function EventRegisterModal({ event, onClose }) {
                     <input
                       type="tel"
                       required
-                      placeholder="e.g. 98401 23456"
                       value={formData.phone}
                       onChange={(e) => setFormData({...formData, phone: e.target.value})}
                       className="w-full h-10 sm:h-11 px-3 py-2 text-base sm:text-sm text-slate-950 font-semibold border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none"
@@ -262,7 +259,6 @@ export default function EventRegisterModal({ event, onClose }) {
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Vidya Mandir School / Academy"
                     value={formData.schoolName}
                     onChange={(e) => setFormData({...formData, schoolName: e.target.value})}
                     className="w-full h-10 sm:h-11 px-3 py-2 text-base sm:text-sm text-slate-950 font-semibold border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none"
@@ -288,7 +284,6 @@ export default function EventRegisterModal({ event, onClose }) {
                     <input
                       type="text"
                       required
-                      placeholder="e.g. Tenkasi / Chennai"
                       value={formData.city}
                       onChange={(e) => setFormData({...formData, city: e.target.value})}
                       className="w-full h-10 sm:h-11 px-3 py-2 text-base sm:text-sm text-slate-950 font-semibold border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none"
@@ -447,7 +442,6 @@ export default function EventRegisterModal({ event, onClose }) {
                     <div className="flex gap-2">
                       <input
                         type="text"
-                        placeholder="yourname@okhdfcbank / mobile@upi"
                         value={upiId}
                         onChange={(e) => setUpiId(e.target.value)}
                         className="flex-1 px-3 py-2 text-sm sm:text-base bg-white border border-slate-300 rounded-xl font-mono focus:ring-2 focus:ring-sky-500 focus:outline-none"
@@ -470,7 +464,6 @@ export default function EventRegisterModal({ event, onClose }) {
                       <label className="block text-xs font-bold text-slate-800 mb-1">Card Number</label>
                       <input
                         type="text"
-                        placeholder="4532 8901 2345 6789"
                         maxLength="19"
                         value={cardNumber}
                         onChange={(e) => setCardNumber(e.target.value)}
@@ -482,7 +475,6 @@ export default function EventRegisterModal({ event, onClose }) {
                         <label className="block text-xs font-bold text-slate-800 mb-1">Expiry (MM/YY)</label>
                         <input
                           type="text"
-                          placeholder="12/28"
                           maxLength="5"
                           value={cardExpiry}
                           onChange={(e) => setCardExpiry(e.target.value)}
@@ -493,7 +485,6 @@ export default function EventRegisterModal({ event, onClose }) {
                         <label className="block text-xs font-bold text-slate-800 mb-1">CVV</label>
                         <input
                           type="password"
-                          placeholder="•••"
                           maxLength="4"
                           value={cardCvv}
                           onChange={(e) => setCardCvv(e.target.value)}
@@ -505,7 +496,6 @@ export default function EventRegisterModal({ event, onClose }) {
                       <label className="block text-xs font-bold text-slate-800 mb-1">Cardholder Name</label>
                       <input
                         type="text"
-                        placeholder="Name as on Card"
                         value={cardName}
                         onChange={(e) => setCardName(e.target.value)}
                         className="w-full px-3 py-2 text-sm sm:text-base bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none"

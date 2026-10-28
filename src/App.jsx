@@ -6,15 +6,15 @@ import AboutPage from './pages/AboutPage';
 import ProgramsPage from './pages/ProgramsPage';
 import EventsPage from './pages/EventsPage';
 import AchievementsPage from './pages/AchievementsPage';
+import FranchisePage from './pages/FranchisePage';
 import ContactPage from './pages/ContactPage';
 import LoginPage from './pages/LoginPage';
 import CertificatePage from './pages/CertificatePage';
-import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
-import TermsPage from './pages/TermsPage';
 import AdminDashboard from './pages/AdminDashboard';
 import ProgramModal from './components/ProgramModal';
 import EventRegisterModal from './components/EventRegisterModal';
 import CertificateModal from './components/CertificateModal';
+import LegalModal from './components/LegalModal';
 import FloatingActions from './components/FloatingActions';
 import { getActiveSession, clearActiveSession } from './utils/authStorage';
 
@@ -31,6 +31,24 @@ export default function App() {
   const [selectedProgram, setSelectedProgram] = useState(null);
   const [selectedEventForRegister, setSelectedEventForRegister] = useState(null);
   const [activeCertificateData, setActiveCertificateData] = useState(null);
+  const [legalModalTab, setLegalModalTab] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const page = params.get('page') || window.location.hash.replace('#', '');
+      if (page === 'privacy' || page === 'terms') return page;
+    }
+    return null;
+  });
+
+  useEffect(() => {
+    if (activePage === 'privacy') {
+      setLegalModalTab('privacy');
+      setActivePage('home');
+    } else if (activePage === 'terms') {
+      setLegalModalTab('terms');
+      setActivePage('home');
+    }
+  }, [activePage]);
 
   useEffect(() => {
     const handleSessionChange = () => {
@@ -99,11 +117,11 @@ export default function App() {
         )}
 
         {activePage === 'about' && (
-          <AboutPage />
+          <AboutPage setActivePage={setActivePage} />
         )}
 
         {activePage === 'programs' && (
-          <ProgramsPage />
+          <ProgramsPage setActivePage={setActivePage} />
         )}
 
         {activePage === 'events' && (
@@ -116,6 +134,10 @@ export default function App() {
           <AchievementsPage />
         )}
 
+        {activePage === 'franchise' && (
+          <FranchisePage setActivePage={setActivePage} />
+        )}
+
         {activePage === 'certificate' && (
           <CertificatePage />
         )}
@@ -126,14 +148,6 @@ export default function App() {
 
         {activePage === 'login' && (
           <LoginPage setActivePage={setActivePage} />
-        )}
-
-        {activePage === 'privacy' && (
-          <PrivacyPolicyPage setActivePage={setActivePage} />
-        )}
-
-        {activePage === 'terms' && (
-          <TermsPage setActivePage={setActivePage} />
         )}
 
         {activePage === 'admin' && (
@@ -151,13 +165,23 @@ export default function App() {
 
       {/* Global Footer (Hidden when inside Admin Dashboard) */}
       {activePage !== 'admin' && (
-        <Footer setActivePage={setActivePage} />
+        <Footer 
+          setActivePage={setActivePage} 
+          onOpenLegal={(tab) => setLegalModalTab(tab)}
+        />
       )}
 
       {/* Floating Action Buttons: WhatsApp & Franchise Enquiry (Bottom Right) */}
       {activePage !== 'admin' && (
         <FloatingActions setActivePage={setActivePage} />
       )}
+
+      {/* Legal Documentation Modal (Privacy Policy & Terms with Tabs) */}
+      <LegalModal
+        isOpen={Boolean(legalModalTab)}
+        initialTab={legalModalTab || 'privacy'}
+        onClose={() => setLegalModalTab(null)}
+      />
 
       {/* Program Details Modal */}
       {selectedProgram && (
