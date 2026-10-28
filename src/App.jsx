@@ -99,11 +99,11 @@ export default function App() {
         )}
 
         {activePage === 'about' && (
-          <AboutPage />
+          <AboutPage setActivePage={setActivePage} />
         )}
 
         {activePage === 'programs' && (
-          <ProgramsPage />
+          <ProgramsPage setActivePage={setActivePage} />
         )}
 
         {activePage === 'events' && (
