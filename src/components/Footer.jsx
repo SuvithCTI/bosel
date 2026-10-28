@@ -100,7 +100,7 @@ export default function Footer({ setActivePage, onOpenLegal }) {
                   onClick={() => handleNav('contact')}
                   className="hover:text-amber-400 py-0.5 sm:py-1 transition flex items-center cursor-pointer text-slate-300 hover:text-white truncate"
                 >
-                  <span>Admission Enquiry</span>
+                  <span>Contact Us</span>
                 </button>
               </li>
               <li className="col-span-2 md:col-span-1">

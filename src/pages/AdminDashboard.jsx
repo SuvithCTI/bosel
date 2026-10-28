@@ -926,7 +926,6 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
               <form onSubmit={handleVerifyCertificate} className="flex gap-2">
                 <input
                   type="text"
-                  placeholder="Enter Certificate No (e.g. BSEL-CERT-2026-90412 or BSEL-STU-784201)..."
                   value={verifyCertInput}
                   onChange={(e) => setVerifyCertInput(e.target.value)}
                   className="flex-1 px-3 py-2 text-xs font-bold bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none"
@@ -1175,7 +1174,6 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Rahul Sharma"
                     value={newStudent.studentName}
                     onChange={(e) => setNewStudent({ ...newStudent, studentName: e.target.value })}
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-black font-semibold"
@@ -1186,7 +1184,6 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                   <input
                     type="text"
                     required
-                    placeholder="e.g. S. Sharma"
                     value={newStudent.parentName}
                     onChange={(e) => setNewStudent({ ...newStudent, parentName: e.target.value })}
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-black font-semibold"
@@ -1216,7 +1213,6 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Grade 4"
                     value={newStudent.grade}
                     onChange={(e) => setNewStudent({ ...newStudent, grade: e.target.value })}
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-black font-semibold"
@@ -1230,7 +1226,6 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                   <input
                     type="tel"
                     required
-                    placeholder="e.g. 98401 23456"
                     value={newStudent.phone}
                     onChange={(e) => setNewStudent({ ...newStudent, phone: e.target.value })}
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-black font-semibold"
@@ -1241,7 +1236,6 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                   <label className="block text-slate-700 mb-1">Parent Email</label>
                   <input
                     type="email"
-                    placeholder="e.g. parent@gmail.com"
                     value={newStudent.email}
                     onChange={(e) => setNewStudent({ ...newStudent, email: e.target.value })}
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-black font-semibold"
@@ -1253,7 +1247,6 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                 <label className="block text-slate-700 mb-1">School / Examination Centre</label>
                 <input
                   type="text"
-                  placeholder="e.g. Vidya Mandir, Chennai"
                   value={newStudent.institution}
                   onChange={(e) => setNewStudent({ ...newStudent, institution: e.target.value })}
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-black font-semibold"
@@ -1409,7 +1402,6 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Master Minds National Speed Math Contest"
                   value={newEvent.eventName}
                   onChange={(e) => setNewEvent({ ...newEvent, eventName: e.target.value })}
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-black font-semibold"
@@ -1438,7 +1430,6 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                   <input
                     type="text"
                     required
-                    placeholder="e.g. ₹450"
                     value={newEvent.fee}
                     onChange={(e) => setNewEvent({ ...newEvent, fee: e.target.value })}
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-black font-semibold"
@@ -1452,7 +1443,6 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                   <input
                     type="text"
                     required
-                    placeholder="e.g. 15 Jan 2027"
                     value={newEvent.date}
                     onChange={(e) => setNewEvent({ ...newEvent, date: e.target.value })}
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-black font-semibold"
@@ -1464,7 +1454,6 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                   <input
                     type="text"
                     required
-                    placeholder="e.g. 05 Jan 2027"
                     value={newEvent.lastDate}
                     onChange={(e) => setNewEvent({ ...newEvent, lastDate: e.target.value })}
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-black font-semibold"
@@ -1477,7 +1466,6 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Kamarajar Arangam, T. Nagar, Chennai"
                   value={newEvent.venue}
                   onChange={(e) => setNewEvent({ ...newEvent, venue: e.target.value })}
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-black font-semibold"
@@ -1488,7 +1476,6 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                 <label className="block text-slate-700 mb-1">Eligibility Criteria</label>
                 <input
                   type="text"
-                  placeholder="e.g. Age 5 to 14 Years (Level 1 to 8)"
                   value={newEvent.eligibility}
                   onChange={(e) => setNewEvent({ ...newEvent, eligibility: e.target.value })}
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-black font-semibold"
@@ -1633,7 +1620,6 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                 <input
                   type="text"
                   required
-                  placeholder="e.g. St. Joseph Senior Secondary School"
                   value={newSchool.name}
                   onChange={(e) => setNewSchool({ ...newSchool, name: e.target.value })}
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-black font-semibold"
@@ -1646,7 +1632,6 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Madurai, Tamil Nadu"
                     value={newSchool.city}
                     onChange={(e) => setNewSchool({ ...newSchool, city: e.target.value })}
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-black font-semibold"
@@ -1658,7 +1643,6 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                   <input
                     type="tel"
                     required
-                    placeholder="e.g. +91 98400 99887"
                     value={newSchool.phone}
                     onChange={(e) => setNewSchool({ ...newSchool, phone: e.target.value })}
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-black font-semibold"
@@ -1671,7 +1655,6 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                   <label className="block text-slate-700 mb-1">Principal / Correspondent</label>
                   <input
                     type="text"
-                    placeholder="e.g. Rev. Fr. Thomas"
                     value={newSchool.principal}
                     onChange={(e) => setNewSchool({ ...newSchool, principal: e.target.value })}
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-black font-semibold"
@@ -1682,7 +1665,6 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                   <label className="block text-slate-700 mb-1">Centre Coordinator</label>
                   <input
                     type="text"
-                    placeholder="e.g. Mrs. Priya Nair"
                     value={newSchool.coordinator}
                     onChange={(e) => setNewSchool({ ...newSchool, coordinator: e.target.value })}
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-black font-semibold"

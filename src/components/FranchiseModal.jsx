@@ -216,7 +216,6 @@ export default function FranchiseModal({ isOpen, onClose }) {
                     <input
                       type="text"
                       required
-                      placeholder="e.g. Ramesh Kumar"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-none transition shadow-2xs text-base sm:text-sm"
@@ -230,7 +229,6 @@ export default function FranchiseModal({ isOpen, onClose }) {
                     <input
                       type="tel"
                       required
-                      placeholder="e.g. 98400 12345"
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                       className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-none transition shadow-2xs text-base sm:text-sm"
@@ -247,7 +245,6 @@ export default function FranchiseModal({ isOpen, onClose }) {
                     <input
                       type="email"
                       required
-                      placeholder="e.g. ramesh@gmail.com"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                       className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-none transition shadow-2xs text-base sm:text-sm"
@@ -261,7 +258,6 @@ export default function FranchiseModal({ isOpen, onClose }) {
                     <input
                       type="text"
                       required
-                      placeholder="e.g. Tenkasi / Chennai"
                       value={formData.city}
                       onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                       className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-none transition shadow-2xs text-base sm:text-sm"
@@ -278,7 +274,6 @@ export default function FranchiseModal({ isOpen, onClose }) {
                     <input
                       type="text"
                       required
-                      placeholder="e.g. Tenkasi District"
                       value={formData.district}
                       onChange={(e) => setFormData({ ...formData, district: e.target.value })}
                       className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-none transition shadow-2xs text-base sm:text-sm"
@@ -292,7 +287,6 @@ export default function FranchiseModal({ isOpen, onClose }) {
                     <input
                       type="text"
                       required
-                      placeholder="e.g. Tamil Nadu"
                       value={formData.state}
                       onChange={(e) => setFormData({ ...formData, state: e.target.value })}
                       className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-none transition shadow-2xs text-base sm:text-sm"
@@ -308,7 +302,6 @@ export default function FranchiseModal({ isOpen, onClose }) {
                     </label>
                     <input
                       type="text"
-                      placeholder="e.g. Teacher, Academy Owner, Tutor"
                       value={formData.profession}
                       onChange={(e) => setFormData({ ...formData, profession: e.target.value })}
                       className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-none transition shadow-2xs text-base sm:text-sm"
@@ -321,7 +314,6 @@ export default function FranchiseModal({ isOpen, onClose }) {
                     </label>
                     <input
                       type="text"
-                      placeholder="e.g. 5+ years teaching, Abacus trainer"
                       value={formData.experience}
                       onChange={(e) => setFormData({ ...formData, experience: e.target.value })}
                       className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-none transition shadow-2xs text-base sm:text-sm"
@@ -395,7 +387,6 @@ export default function FranchiseModal({ isOpen, onClose }) {
                   </label>
                   <textarea
                     rows="2"
-                    placeholder="Tell us about your educational background, current academy, proposed premises, or query..."
                     value={formData.message}
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                     className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-none resize-none transition shadow-2xs text-base sm:text-sm"
