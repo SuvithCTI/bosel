@@ -2,8 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { 
   Sparkles, 
   Compass, 
-  Target, 
-  ArrowRight, 
+  Target,
   Building2, 
   Award, 
   School, 
@@ -159,20 +158,6 @@ export default function AboutPage({ setActivePage }) {
               <span className="inline-flex items-center gap-2 bg-slate-100/90 border border-slate-200/90 px-3.5 sm:px-4 py-2 rounded-xl text-slate-800 font-bold shadow-xs">
                 <span className="text-sky-600">■</span> Continuous Practice
               </span>
-            </div>
-
-            {/* Quick Action Button */}
-            <div className="pt-3 sm:pt-4 flex items-center justify-center gap-3">
-              <button
-                onClick={() => {
-                  const el = document.getElementById('what-we-do');
-                  if (el) el.scrollIntoView({ behavior: 'smooth' });
-                }}
-                className="px-6 sm:px-9 py-2.5 sm:py-3.5 rounded-full bg-[#0F2B5C] hover:bg-[#163B7A] text-white text-sm sm:text-base font-bold transition shadow-md hover:shadow-lg flex items-center justify-center gap-2 cursor-pointer hover:gap-3"
-              >
-                <span>Explore What We Do</span>
-                <ArrowRight className="w-4 h-4 text-amber-400" />
-              </button>
             </div>
 
           </div>

@@ -2,7 +2,7 @@ import React from 'react';
 import { Phone, Mail, MapPin } from 'lucide-react';
 import Logo from './Logo';
 
-export default function Footer({ setActivePage }) {
+export default function Footer({ setActivePage, onOpenLegal }) {
   const handleNav = (pageId) => {
     setActivePage(pageId);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -79,6 +79,15 @@ export default function Footer({ setActivePage }) {
               <li>
                 <button
                   type="button"
+                  onClick={() => handleNav('franchise')}
+                  className="hover:text-amber-400 py-0.5 sm:py-1 transition flex items-center cursor-pointer text-slate-300 hover:text-white truncate"
+                >
+                  <span>Franchise</span>
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
                   onClick={() => handleNav('certificate')}
                   className="hover:text-amber-400 py-0.5 sm:py-1 transition flex items-center cursor-pointer text-slate-300 hover:text-white truncate"
                 >
@@ -139,11 +148,29 @@ export default function Footer({ setActivePage }) {
         <div className="pt-3 sm:pt-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-[10px] sm:text-xs text-slate-400 font-medium text-center sm:text-left">
           <p>© 2026-2027 B★SEL Board. All Rights Reserved.</p>
           <div className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-4">
-            <button type="button" className="hover:text-amber-400 font-bold cursor-pointer transition" onClick={() => handleNav('privacy')}>Privacy</button>
+            <button 
+              type="button" 
+              className="hover:text-amber-400 font-bold cursor-pointer transition" 
+              onClick={() => onOpenLegal ? onOpenLegal('privacy') : handleNav('privacy')}
+            >
+              Privacy
+            </button>
             <span>•</span>
-            <button type="button" className="hover:text-amber-400 font-bold cursor-pointer transition" onClick={() => handleNav('terms')}>Terms</button>
+            <button 
+              type="button" 
+              className="hover:text-amber-400 font-bold cursor-pointer transition" 
+              onClick={() => onOpenLegal ? onOpenLegal('terms') : handleNav('terms')}
+            >
+              Terms
+            </button>
             <span>•</span>
-            <button type="button" className="hover:text-amber-400 font-bold cursor-pointer transition" onClick={() => handleNav('contact')}>Franchise</button>
+            <button 
+              type="button" 
+              className="hover:text-amber-400 font-bold cursor-pointer transition" 
+              onClick={() => handleNav('franchise')}
+            >
+              Franchise
+            </button>
           </div>
         </div>
       </div>
