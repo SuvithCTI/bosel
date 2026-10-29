@@ -45,13 +45,13 @@ export default function LegalModal({ isOpen, onClose, initialTab = 'privacy' }) 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200 overscroll-contain">
       
       {/* Backdrop Click Listener */}
       <div className="absolute inset-0" onClick={onClose} />
 
       {/* Modal Card */}
-      <div className="relative z-10 w-full max-w-4xl max-h-[90vh] bg-white rounded-2xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden border border-slate-200 animate-in zoom-in-95 duration-200">
+      <div className="relative z-10 w-full max-w-4xl max-h-[90vh] bg-white rounded-2xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden border border-slate-200 animate-in zoom-in-95 duration-200 overscroll-contain">
         
         {/* Sticky Header with Title and Close Button */}
         <div className="bg-[#0A1B36] text-white px-5 sm:px-8 py-4 sm:py-5 border-b border-slate-800 flex items-center justify-between shrink-0">
@@ -106,7 +106,7 @@ export default function LegalModal({ isOpen, onClose, initialTab = 'privacy' }) 
         </div>
 
         {/* Scrollable Content Container */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 text-slate-900 selection:bg-amber-400 selection:text-slate-950">
+        <div className="flex-1 overflow-y-auto overscroll-contain p-4 sm:p-8 space-y-6 text-slate-900 selection:bg-amber-400 selection:text-slate-950">
           
           {/* =========================================================================
               TAB 1: PRIVACY POLICY

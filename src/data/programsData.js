@@ -4,6 +4,10 @@ import handwritingImg from '../assets/programs/handwriting.jpg';
 import languageSpeakingImg from '../assets/programs/language-speaking.jpg';
 import athleticsImg from '../assets/programs/athletics.jpg';
 import colourManagementImg from '../assets/programs/colour-management.jpg';
+import pythonImg from '../assets/programs/python.png';
+import aiImg from '../assets/programs/ai.jpg';
+import canvaImg from '../assets/programs/canva.png';
+import computerImg from '../assets/programs/computer.png';
 
 export const PROGRAMS_DATA = [
   {
@@ -176,6 +180,137 @@ export const PROGRAMS_DATA = [
       'Module 1: Primary, secondary & tertiary color wheel fundamentals',
       'Module 2: Tints, shades, color mixing & harmonious contrast pairs',
       'Module 3: Mood psychology in colors & creative compositional palettes'
+    ]
+  }
+];
+
+export const DIGITAL_PROGRAMS_DATA = [
+  {
+    id: 'python-basics',
+    category: 'digital',
+    name: 'Python Basics',
+    fullName: 'PYTHON PROGRAMMING & LOGICAL THINKING',
+    tagline: 'Think Logically, Code Creatively',
+    shortDesc: 'Develop logical thinking, problem-solving skills and foundational programming concepts using Python syntax, control flow, functions, and hands-on coding.',
+    fee: '₹550',
+    feeAmount: 550,
+    themeColor: 'from-amber-500 to-yellow-600',
+    accentColor: 'text-amber-700',
+    bgLight: 'bg-amber-50 border-amber-200',
+    badgeColor: 'bg-amber-100 text-amber-800',
+    iconType: 'python',
+    image: pythonImg,
+    ageGroup: '10+ Years & College',
+    levels: '4 Structured Levels',
+    duration: '3 Months',
+    description: 'Develops logical thinking, problem-solving skills and foundational programming concepts using Python syntax, control flow, functions, and hands-on coding.',
+    outcomes: [
+      'Write clean Python syntax, handle variables, user input, and formatted print output',
+      'Master decision making with If-Else and iterative logic with For & While loops',
+      'Manipulate data structures: Lists, Tuples, Dictionaries, and Custom Functions',
+      'Build interactive terminal applications, number guessing games, and automated solvers'
+    ],
+    curriculum: [
+      'Level 1: Python Fundamentals, Syntax & Variables',
+      'Level 2: Control Structures, If-Else & Loop Iterations',
+      'Level 3: Data Collections (Lists, Tuples, Dicts) & Functions',
+      'Level 4: File Handling, Standard Modules & Mini Projects'
+    ]
+  },
+  {
+    id: 'ai-digital-skills',
+    category: 'digital',
+    name: 'AI & Digital Skills',
+    fullName: 'ARTIFICIAL INTELLIGENCE & PRODUCTIVITY',
+    tagline: 'Explore AI, Understand Tomorrow',
+    shortDesc: 'Introduces artificial intelligence concepts, prompt learning and smart digital tools to accelerate study, creative problem solving, and future readiness.',
+    fee: '₹500',
+    feeAmount: 500,
+    themeColor: 'from-violet-600 to-purple-800',
+    accentColor: 'text-violet-700',
+    bgLight: 'bg-violet-50 border-violet-200',
+    badgeColor: 'bg-violet-100 text-violet-800',
+    iconType: 'ai',
+    image: aiImg,
+    ageGroup: '8+ Years & Students',
+    levels: '4 Future-Ready Levels',
+    duration: '3 Months',
+    description: 'Introduces artificial intelligence concepts, prompt learning and smart digital tools to accelerate study, creative problem solving, and future readiness.',
+    outcomes: [
+      'Understand how AI and machine learning process patterns from real-world data',
+      'Master structured prompt engineering for essay writing, coding, and brainstorming',
+      'Leverage generative AI tools for visual art, speech synthesis, and research summarization',
+      'Cultivate digital ethics, awareness of AI hallucinations, and critical media analysis'
+    ],
+    curriculum: [
+      'Level 1: AI Foundations, Machine Learning & Everyday Tools',
+      'Level 2: Prompt Engineering, Smart Writing & Research Skills',
+      'Level 3: Generative AI for Visual Media, Audio & Learning',
+      'Level 4: AI Ethics, Digital Safety & Future Technology'
+    ]
+  },
+  {
+    id: 'canva-design',
+    category: 'digital',
+    name: 'Canva Graphic Design',
+    fullName: 'CANVA VISUAL DESIGN & BRANDING',
+    tagline: 'Design Anything with Ease',
+    shortDesc: 'Enables easy graphic design for posters, presentations, social media and creative visuals using Canva’s powerful layout and branding capabilities.',
+    fee: '₹450',
+    feeAmount: 450,
+    themeColor: 'from-teal-500 to-emerald-700',
+    accentColor: 'text-teal-700',
+    bgLight: 'bg-teal-50 border-teal-200',
+    badgeColor: 'bg-teal-100 text-teal-800',
+    iconType: 'canva',
+    image: canvaImg,
+    ageGroup: '8+ Years & Creatives',
+    levels: '4 Creative Modules',
+    duration: '3 Months',
+    description: 'Enables easy graphic design for posters, presentations, social media and creative visuals using Canva’s powerful layout and branding capabilities.',
+    outcomes: [
+      'Navigate Canva templates, custom canvas sizing, and font hierarchy',
+      'Create eye-catching banners, posters, and school presentation decks',
+      'Understand color psychology, balance, contrast, and visual alignment',
+      'Export print-ready PDFs, high-res PNGs, and animated social media reels'
+    ],
+    curriculum: [
+      'Module 1: Canva Workspace, Templates & Layout Essentials',
+      'Module 2: Visual Composition, Typography & Color Harmony',
+      'Module 3: Social Media Graphics, Animations & Slide Decks',
+      'Module 4: Branding Kits, Presentation Decks & Print Export'
+    ]
+  },
+  {
+    id: 'computer-fundamentals',
+    category: 'digital',
+    name: 'Computer Fundamentals',
+    fullName: 'COMPUTER HARDWARE & DIGITAL LITERACY',
+    tagline: 'Learn Computers, Build Confidence',
+    shortDesc: 'Builds fundamental digital literacy, safe computer usage and essential operating skills from hardware recognition to touch typing and cyber safety.',
+    fee: '₹450',
+    feeAmount: 450,
+    themeColor: 'from-slate-600 to-gray-800',
+    accentColor: 'text-slate-700',
+    bgLight: 'bg-slate-50 border-slate-200',
+    badgeColor: 'bg-slate-100 text-slate-800',
+    iconType: 'computer',
+    image: computerImg,
+    ageGroup: '6+ Years & Beginners',
+    levels: '4 Structured Levels',
+    duration: '3 Months',
+    description: 'Builds fundamental digital literacy, safe computer usage and essential operating skills from hardware recognition to touch typing and cyber safety.',
+    outcomes: [
+      'Identify internal and external hardware components, storage drives, and ports',
+      'Navigate operating system menus, window controls, and file directory trees',
+      'Develop touch typing speed, posture ergonomics, and keyboard shortcuts',
+      'Safely browse the internet, manage email communication, and prevent digital threats'
+    ],
+    curriculum: [
+      'Level 1: Computer Hardware, Ports & Desktop Basics',
+      'Level 2: Windows OS Navigation & File Management',
+      'Level 3: Safe Internet Browsing & Email Communication',
+      'Level 4: Touch Typing Speed, Cloud Storage & Digital Safety'
     ]
   }
 ];

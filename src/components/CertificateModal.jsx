@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Award, Edit3 } from 'lucide-react';
 import Certificate from './Certificate';
 
@@ -37,12 +37,27 @@ export default function CertificateModal({
 
   const [isEditing, setIsEditing] = useState(false);
 
+  // Lock background scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4">
+    <div 
+      className="fixed inset-0 z-50 overflow-y-auto overscroll-contain bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4"
+      onClick={onClose}
+    >
       <div 
-        className="relative bg-slate-900 rounded-2xl max-w-5xl w-full shadow-2xl overflow-hidden border border-slate-700 animate-in fade-in zoom-in-95 duration-200"
+        className="relative bg-slate-900 rounded-2xl max-w-5xl w-full shadow-2xl overflow-hidden border border-slate-700 animate-in fade-in zoom-in-95 duration-200 overscroll-contain"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
@@ -182,7 +197,7 @@ export default function CertificateModal({
         )}
 
         {/* Modal Scrollable Canvas Body */}
-        <div className="p-2 sm:p-5 max-h-[76vh] overflow-y-auto flex justify-center bg-slate-950/60">
+        <div className="p-2 sm:p-5 max-h-[76vh] overflow-y-auto overscroll-contain flex justify-center bg-slate-950/60">
           <Certificate
             studentName={studentName}
             courseName={courseName}

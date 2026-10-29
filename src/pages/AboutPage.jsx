@@ -143,20 +143,28 @@ export default function AboutPage({ setActivePage }) {
             </h1>
 
             {/* Content Specified in Section 1 - Generous Line Spacing & Readable Size */}
-            <p className="text-sm xs:text-base sm:text-lg lg:text-xl text-slate-800 font-semibold leading-relaxed sm:leading-[2.1] lg:leading-[2.2] max-w-3xl lg:max-w-4xl mx-auto">
-              B⭐SEL is an education-focused organization dedicated to developing students' academic, creative, and digital skills. Through structured programs, practical activities, expert instruction, and continuous practice, we create meaningful learning opportunities that help students build confidence and essential life skills.
-            </p>
+            <div className="space-y-4 sm:space-y-5 max-w-3xl lg:max-w-4xl mx-auto">
+              <p className="text-sm xs:text-base sm:text-lg lg:text-xl text-slate-800 font-semibold leading-relaxed sm:leading-[1.9] lg:leading-[2]">
+                B⭐SEL – Board of Skills and Educational Learning is an education-focused organization dedicated to developing essential academic, creative, and digital skills among learners.
+              </p>
+              <p className="text-sm xs:text-base sm:text-lg lg:text-xl text-slate-800 font-semibold leading-relaxed sm:leading-[1.9] lg:leading-[2]">
+                Through structured programs, practical activities, trained instruction and progressive learning, B⭐SEL aims to create meaningful skill-development opportunities for students.
+              </p>
+            </div>
 
             {/* Quick Feature Badges with Balanced Padding */}
-            <div className="pt-3 sm:pt-4 flex flex-wrap items-center justify-center gap-3 sm:gap-4 text-xs sm:text-sm">
+            <div className="pt-2 sm:pt-3 flex flex-wrap items-center justify-center gap-2.5 sm:gap-3.5 text-xs sm:text-sm">
               <span className="inline-flex items-center gap-2 bg-slate-100/90 border border-slate-200/90 px-3.5 sm:px-4 py-2 rounded-xl text-slate-800 font-bold shadow-xs">
                 <span className="text-emerald-600">●</span> Structured Programs
               </span>
               <span className="inline-flex items-center gap-2 bg-slate-100/90 border border-slate-200/90 px-3.5 sm:px-4 py-2 rounded-xl text-slate-800 font-bold shadow-xs">
-                <span className="text-amber-500">★</span> Expert Instruction
+                <span className="text-sky-600">◆</span> Practical Activities
               </span>
               <span className="inline-flex items-center gap-2 bg-slate-100/90 border border-slate-200/90 px-3.5 sm:px-4 py-2 rounded-xl text-slate-800 font-bold shadow-xs">
-                <span className="text-sky-600">■</span> Continuous Practice
+                <span className="text-amber-500">★</span> Trained Instruction
+              </span>
+              <span className="inline-flex items-center gap-2 bg-slate-100/90 border border-slate-200/90 px-3.5 sm:px-4 py-2 rounded-xl text-slate-800 font-bold shadow-xs">
+                <span className="text-indigo-600">■</span> Progressive Learning
               </span>
             </div>
 
@@ -166,7 +174,87 @@ export default function AboutPage({ setActivePage }) {
 
 
       {/* =========================================================================
-          2. WHAT WE DO (5 PROGRAM CARDS WITH ICONS)
+          2. OUR VISION & OUR MISSION (SEPARATE VISUALLY APPEALING CARDS)
+         ========================================================================= */}
+      <section 
+        className="py-14 sm:py-24 relative overflow-hidden border-b border-slate-200 bg-[#081d3d] text-white"
+        style={{
+          backgroundImage: `url(${visionMissionBg})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundAttachment: 'fixed'
+        }}
+      >
+        {/* Balanced overlay so the classroom learning background is clearly visible */}
+        <div className="absolute inset-0 bg-[#081d3d]/72 backdrop-blur-[1px] pointer-events-none" />
+
+        <div className="w-full max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-12 relative z-10 text-white">
+          
+          <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-14 space-y-2">
+            <h2 className="text-2xl sm:text-4xl md:text-5xl font-black font-heading text-white">
+              Our Vision & Mission
+            </h2>
+            <p className="text-slate-200 text-sm sm:text-base font-semibold">
+              The foundational pillars steering B⭐SEL's commitment to student excellence.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 max-w-6xl lg:max-w-7xl mx-auto">
+            
+            {/* Vision Card - No icons */}
+            <div className="bg-white/95 backdrop-blur-md p-5 sm:p-8 md:p-10 rounded-2xl sm:rounded-3xl border-2 border-sky-300 shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-200 relative overflow-hidden flex flex-col justify-between text-slate-900">
+              <div className="space-y-3 relative z-10">
+                <div className="text-xs font-black uppercase tracking-wider text-sky-800">
+                  Aspirational Horizon
+                </div>
+                <h3 className="text-2xl sm:text-3xl font-black text-slate-900 font-heading">
+                  Our Vision
+                </h3>
+                {/* Vision Content Specified in Section 3 */}
+                <p 
+                  className="text-base sm:text-lg text-slate-800 leading-relaxed font-semibold italic pt-1"
+                  style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                >
+                  "To create confident, capable and skilled learners through quality education and continuous skill development."
+                </p>
+              </div>
+
+              <div className="pt-6 border-t border-sky-100 mt-6 flex items-center text-xs font-bold text-[#0F2B5C]">
+                <span>Nurturing talent, confidence, and self-belief</span>
+              </div>
+            </div>
+
+            {/* Mission Card - No icons */}
+            <div className="bg-white/95 backdrop-blur-md p-5 sm:p-8 md:p-10 rounded-2xl sm:rounded-3xl border-2 border-amber-300 shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-200 relative overflow-hidden flex flex-col justify-between text-slate-900">
+              <div className="space-y-3 relative z-10">
+                <div className="text-xs font-black uppercase tracking-wider text-amber-800">
+                  Practical Purpose
+                </div>
+                <h3 className="text-2xl sm:text-3xl font-black text-slate-900 font-heading">
+                  Our Mission
+                </h3>
+                {/* Mission Content Specified in Section 4 */}
+                <p 
+                  className="text-base sm:text-lg text-slate-800 leading-relaxed font-semibold italic pt-1"
+                  style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                >
+                  "To provide structured and accessible learning programs that support students in academic skills, creativity, technology and practical learning."
+                </p>
+              </div>
+
+              <div className="pt-6 border-t border-amber-100 mt-6 flex items-center text-xs font-bold text-amber-900">
+                <span>Hands-on practice, expert training, and assessment</span>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </section>
+
+
+      {/* =========================================================================
+          3. WHAT WE DO (5 PROGRAM CARDS WITH ICONS)
          ========================================================================= */}
       <section id="what-we-do" className="py-12 sm:py-20 bg-slate-50 border-b border-slate-200">
         <div className="w-full max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-12">
@@ -215,90 +303,7 @@ export default function AboutPage({ setActivePage }) {
 
 
       {/* =========================================================================
-          3 & 4. OUR VISION & OUR MISSION (SEPARATE VISUALLY APPEALING CARDS)
-         ========================================================================= */}
-      {/* =========================================================================
-          3 & 4. OUR VISION & OUR MISSION (SEPARATE VISUALLY APPEALING CARDS)
-         ========================================================================= */}
-      <section 
-        className="py-14 sm:py-24 relative overflow-hidden border-b border-slate-200 bg-[#081d3d] text-white"
-        style={{
-          backgroundImage: `url(${visionMissionBg})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundAttachment: 'fixed'
-        }}
-      >
-        {/* Balanced overlay so the classroom learning background is clearly visible */}
-        <div className="absolute inset-0 bg-[#081d3d]/72 backdrop-blur-[1px] pointer-events-none" />
-
-        <div className="w-full max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-12 relative z-10 text-white">
-          
-          <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-14 space-y-2">
-            <h2 className="text-2xl sm:text-4xl md:text-5xl font-black font-heading text-white">
-              Our Vision & Mission
-            </h2>
-            <p className="text-slate-200 text-sm sm:text-base font-semibold">
-              The foundational pillars steering B⭐SEL's commitment to student excellence.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 max-w-6xl lg:max-w-7xl mx-auto">
-            
-            {/* Vision Card - No icons */}
-            <div className="bg-white/95 backdrop-blur-md p-5 sm:p-8 md:p-10 rounded-2xl sm:rounded-3xl border-2 border-sky-300 shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-200 relative overflow-hidden flex flex-col justify-between text-slate-900">
-              <div className="space-y-3 relative z-10">
-                <div className="text-xs font-black uppercase tracking-wider text-sky-800">
-                  Aspirational Horizon
-                </div>
-                <h3 className="text-2xl sm:text-3xl font-black text-slate-900 font-heading">
-                  Our Vision
-                </h3>
-                {/* Vision Content Specified in Section 3 */}
-                <p 
-                  className="text-base sm:text-lg text-slate-800 leading-relaxed font-semibold italic pt-1"
-                  style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-                >
-                  "To empower every learner with essential skills, confidence, and creativity for a brighter future."
-                </p>
-              </div>
-
-              <div className="pt-6 border-t border-sky-100 mt-6 flex items-center text-xs font-bold text-[#0F2B5C]">
-                <span>Nurturing talent, confidence, and self-belief</span>
-              </div>
-            </div>
-
-            {/* Mission Card - No icons */}
-            <div className="bg-white/95 backdrop-blur-md p-5 sm:p-8 md:p-10 rounded-2xl sm:rounded-3xl border-2 border-amber-300 shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-200 relative overflow-hidden flex flex-col justify-between text-slate-900">
-              <div className="space-y-3 relative z-10">
-                <div className="text-xs font-black uppercase tracking-wider text-amber-800">
-                  Practical Purpose
-                </div>
-                <h3 className="text-2xl sm:text-3xl font-black text-slate-900 font-heading">
-                  Our Mission
-                </h3>
-                {/* Mission Content Specified in Section 4 */}
-                <p 
-                  className="text-base sm:text-lg text-slate-800 leading-relaxed font-semibold italic pt-1"
-                  style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-                >
-                  "To deliver structured, practical, and engaging learning programs through quality training, continuous practice, and meaningful assessment."
-                </p>
-              </div>
-
-              <div className="pt-6 border-t border-amber-100 mt-6 flex items-center text-xs font-bold text-amber-900">
-                <span>Hands-on practice, expert training, and assessment</span>
-              </div>
-            </div>
-
-          </div>
-
-        </div>
-      </section>
-
-
-      {/* =========================================================================
-          5. MEET OUR FOUNDER (PROFILE & 3 STATISTICS HIGHLIGHTS)
+          4. MEET OUR FOUNDER (PROFILE & 3 STATISTICS HIGHLIGHTS)
          ========================================================================= */}
       <section className="py-12 sm:py-20 bg-slate-50 border-b border-slate-200">
         <div className="w-full max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-12">

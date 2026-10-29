@@ -5,7 +5,7 @@ import {
   School,
   Ticket
 } from 'lucide-react';
-import { PROGRAMS_DATA } from '../data/programsData';
+import { PROGRAMS_DATA, DIGITAL_PROGRAMS_DATA } from '../data/programsData';
 import { getStoredEvents } from '../data/eventsData';
 import heroIllustration from '../assets/hero-cropped.png';
 import { 
@@ -75,7 +75,7 @@ export default function HomePage({ setActivePage, onSelectProgram }) {
                   className="w-full sm:w-auto px-7 py-3.5 rounded-xl sm:rounded-full bg-amber-400 hover:bg-amber-300 active:scale-[0.98] text-slate-950 text-sm sm:text-base font-black transition shadow-md hover:shadow-xl flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <School className="w-4 h-4 text-slate-950" />
-                  <span>Admission Enquiry</span>
+                  <span>Admission Form</span>
                 </button>
               </div>
             </div>
@@ -120,9 +120,17 @@ export default function HomePage({ setActivePage, onSelectProgram }) {
                   Discover our premier structured programs designed to develop cognitive speed, fine art mastery, and lifelong confidence.
                 </p>
               </div>
-              <span className="text-[11px] sm:text-xs text-slate-900 font-extrabold bg-slate-100 px-3 py-1.5 rounded-full self-start md:self-auto border border-slate-300">
-                Click any course to inspect syllabus & details
-              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setActivePage('programs');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 text-xs font-black text-sky-800 hover:text-white bg-sky-50 hover:bg-sky-700 border border-sky-300 px-4 py-2.5 sm:py-2 rounded-full self-stretch md:self-auto transition-all cursor-pointer shadow-xs active:scale-95 group"
+              >
+                <span>Explore All 6 Skill Programs</span>
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+              </button>
             </div>
 
             {/* Scoped CSS for Card Glitter Border */}
@@ -193,6 +201,89 @@ export default function HomePage({ setActivePage, onSelectProgram }) {
                   </div>
                 </div>
               ))}
+            </div>
+
+            {/* =========================================================================
+                DIGITAL SKILLS (3 FEATURED MODERN DIGITAL COURSES)
+               ========================================================================= */}
+            <div className="mt-10 sm:mt-14 pt-8 sm:pt-10 border-t border-slate-200/80">
+              {/* Digital Skills Header */}
+              <div className="flex flex-col md:flex-row md:items-end justify-between pb-5 sm:pb-6 border-b border-slate-100 gap-3">
+                <div>
+                  <h3 className="text-2xl sm:text-3xl md:text-4xl font-black text-black font-heading tracking-tight">
+                    Empowering Digital Skills
+                  </h3>
+                  <p className="text-xs sm:text-sm md:text-base text-slate-700 mt-1 max-w-2xl font-semibold">
+                    Equip learners with modern programming logic, intelligent artificial intelligence tools, and creative digital design.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActivePage('programs');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 text-xs font-black text-sky-800 hover:text-white bg-sky-50 hover:bg-sky-700 border border-sky-300 px-4 py-2.5 sm:py-2 rounded-full self-stretch md:self-auto transition-all cursor-pointer shadow-xs active:scale-95 group"
+                >
+                  <span>Explore All 8 Tech Programs</span>
+                  <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                </button>
+              </div>
+
+              {/* Grid of 3 Digital Skills Cards with Glitter Shimmer Border */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 mt-8">
+                {DIGITAL_PROGRAMS_DATA.slice(0, 3).map((prog) => (
+                  <div
+                    key={prog.id}
+                    onClick={() => onSelectProgram(prog)}
+                    className="relative p-[3px] rounded-2xl sm:rounded-3xl cursor-pointer group transition-all duration-300 hover:-translate-y-2"
+                    style={{
+                      background: 'linear-gradient(135deg, #38bdf8, #818cf8, #c084fc, #ffffff, #60a5fa, #38bdf8)',
+                      backgroundSize: '300% 300%',
+                      animation: 'glitterBorder 4s ease infinite',
+                      boxShadow: '0 0 16px rgba(56, 189, 248, 0.35), 0 8px 24px rgba(0, 0, 0, 0.08)'
+                    }}
+                  >
+                    {/* Card Inner Content */}
+                    <div className="relative bg-white rounded-[13px] sm:rounded-[21px] overflow-hidden flex flex-col text-left h-full group-hover:bg-slate-50/70 transition-colors">
+                      {/* Course Photography Container */}
+                      <div className="relative aspect-[3/2] w-full overflow-hidden bg-slate-100">
+                        <img
+                          src={prog.image}
+                          alt={prog.name}
+                          className="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
+                          loading="lazy"
+                        />
+                      </div>
+
+                      {/* Program Card Body */}
+                      <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-2 sm:space-y-3">
+                        <div>
+                          <div className="flex items-center justify-between gap-1">
+                            <h3 className="font-black text-base sm:text-xl text-black font-heading group-hover:text-sky-700 transition truncate">
+                              {prog.name}
+                            </h3>
+                            <span className="text-xs font-black text-sky-800 shrink-0 group-hover:translate-x-1 transition-transform">
+                              Details →
+                            </span>
+                          </div>
+
+                          <p className="text-xs sm:text-sm text-slate-800 mt-1.5 leading-relaxed font-semibold">
+                            {prog.tagline}
+                          </p>
+                        </div>
+
+                        {/* Footer Details */}
+                        <div className="pt-2 border-t border-slate-100 sm:border-slate-200 flex items-center justify-between text-xs text-slate-900 font-bold">
+                          <span className="text-slate-900 truncate">
+                            {prog.levels}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>

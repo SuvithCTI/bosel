@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
+  ChevronLeft,
+  ChevronRight,
   CheckCircle2, 
   ArrowRight, 
   Phone, 
@@ -179,10 +181,145 @@ export default function FranchisePage({ setActivePage }) {
     message: ''
   });
 
+  // 3D Carousel State for What BSEL Provides (Always Auto-Changes every 2s & Manual Controls)
+  const [activeProvideIdx, setActiveProvideIdx] = useState(0);
+  const [isMobileStage, setIsMobileStage] = useState(false);
+  const [touchStartX, setTouchStartX] = useState(null);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobileStage(window.innerWidth < 640);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Automatic transition every 2 seconds continuously without pause
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveProvideIdx((prev) => (prev + 1) % 7);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handlePrevProvide = () => {
+    setActiveProvideIdx((prev) => (prev - 1 + 7) % 7);
+  };
+
+  const handleNextProvide = () => {
+    setActiveProvideIdx((prev) => (prev + 1) % 7);
+  };
+
+  const handleTouchStart = (e) => {
+    if (e.touches && e.touches[0]) {
+      setTouchStartX(e.touches[0].clientX);
+    }
+  };
+
+  const handleTouchEnd = (e) => {
+    if (touchStartX !== null && e.changedTouches && e.changedTouches[0]) {
+      const diff = e.changedTouches[0].clientX - touchStartX;
+      if (diff > 35) {
+        handlePrevProvide();
+      } else if (diff < -35) {
+        handleNextProvide();
+      }
+      setTouchStartX(null);
+    }
+  };
+
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [showFullTerms, setShowFullTerms] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [refId, setRefId] = useState('');
+
+  const bselProvides = [
+    {
+      id: '01',
+      title: 'Structured Curriculum',
+      tag: 'Pillar 01 • Syllabus & Pedagogy',
+      desc: 'Age-appropriate, level-wise syllabus designed to build progressive mastery and strong foundational concepts.',
+      icon: Layers,
+      gradient: 'from-blue-600 via-indigo-600 to-blue-700',
+      iconBg: 'from-blue-600 to-indigo-600 text-white shadow-blue-500/25',
+      badgeColor: 'text-blue-700 bg-blue-50 border-blue-200/70',
+      checkColor: 'text-blue-600',
+      highlights: ['Step-by-Step Syllabus', 'Lesson Planning Modules', 'Standardized Courseware']
+    },
+    {
+      id: '02',
+      title: 'Instructor Training',
+      tag: 'Pillar 02 • Faculty Mastery',
+      desc: 'Comprehensive training masterclasses to equip educators with proven teaching methodologies and classroom management.',
+      icon: GraduationCap,
+      gradient: 'from-emerald-600 via-teal-600 to-emerald-700',
+      iconBg: 'from-emerald-600 to-teal-600 text-white shadow-emerald-500/25',
+      badgeColor: 'text-emerald-700 bg-emerald-50 border-emerald-200/70',
+      checkColor: 'text-emerald-600',
+      highlights: ['Pedagogy Masterclasses', 'Faculty Orientation', 'Trainer Evaluation & Certs']
+    },
+    {
+      id: '03',
+      title: 'Learning Materials',
+      tag: 'Pillar 03 • Kits & Courseware',
+      desc: 'High-quality student workbooks, abacus tools, practice sheets, and complete teacher resource kits dispatched to your centre.',
+      icon: BookOpen,
+      gradient: 'from-amber-500 via-orange-500 to-amber-600',
+      iconBg: 'from-amber-500 to-orange-500 text-white shadow-amber-500/25',
+      badgeColor: 'text-amber-800 bg-amber-50 border-amber-200/70',
+      checkColor: 'text-amber-600',
+      highlights: ['Official Student Books', 'Abacus & Tool Kits', 'Practice Exercise Sheets']
+    },
+    {
+      id: '04',
+      title: 'Academic Guidance',
+      tag: 'Pillar 04 • Continuous Mentoring',
+      desc: 'Continuous academic coordination, student progress tracking, batch scheduling assistance, and expert educator mentoring.',
+      icon: Compass,
+      gradient: 'from-purple-600 via-fuchsia-600 to-purple-700',
+      iconBg: 'from-purple-600 to-fuchsia-600 text-white shadow-purple-500/25',
+      badgeColor: 'text-purple-700 bg-purple-50 border-purple-200/70',
+      checkColor: 'text-purple-600',
+      highlights: ['Dedicated Academic Mentors', 'Batch Schedule Support', 'Teaching Quality Guidance']
+    },
+    {
+      id: '05',
+      title: 'Assessment Support',
+      tag: 'Pillar 05 • Testing & Progress',
+      desc: 'Centralized evaluation frameworks, mock examination papers, level test rubrics, and continuous student benchmark assessments.',
+      icon: ClipboardCheck,
+      gradient: 'from-cyan-600 via-blue-600 to-cyan-700',
+      iconBg: 'from-cyan-600 to-blue-600 text-white shadow-cyan-500/25',
+      badgeColor: 'text-cyan-800 bg-cyan-50 border-cyan-200/70',
+      checkColor: 'text-cyan-600',
+      highlights: ['Level-End Exam Papers', 'Standardized Grading Rubrics', 'Student Progress Reports']
+    },
+    {
+      id: '06',
+      title: 'Certification Support',
+      tag: 'Pillar 06 • Official Credentials',
+      desc: 'Officially recognized, tamper-proof certificates with QR verification codes issued upon successful level completion.',
+      icon: Award,
+      gradient: 'from-rose-600 via-pink-600 to-rose-700',
+      iconBg: 'from-rose-600 to-pink-600 text-white shadow-rose-500/25',
+      badgeColor: 'text-rose-700 bg-rose-50 border-rose-200/70',
+      checkColor: 'text-rose-600',
+      highlights: ['Official B★SEL Credentials', 'Online QR Verification', 'Annual Talent Convocation']
+    },
+    {
+      id: '07',
+      title: 'Promotional Support',
+      tag: 'Pillar 07 • Marketing Collateral',
+      desc: 'Ready-to-print marketing collateral, social media banners, promotional templates, and local admission campaign aids.',
+      icon: Megaphone,
+      gradient: 'from-violet-600 via-indigo-600 to-violet-700',
+      iconBg: 'from-violet-600 to-indigo-600 text-white shadow-violet-500/25',
+      badgeColor: 'text-violet-700 bg-violet-50 border-violet-200/70',
+      checkColor: 'text-violet-600',
+      highlights: ['Social Media Creatives', 'Branded Banner Templates', 'Student Enrollment Aids']
+    }
+  ];
 
   const whoCanPartner = [
     { 
@@ -449,8 +586,195 @@ export default function FranchisePage({ setActivePage }) {
       </section>
 
 
+
       {/* =========================================================================
-          2. WHO CAN BECOME A PARTNER?
+          2. WHAT B⭐SEL PROVIDES (3D AUTOMATIC 7-CARD STAGE: 1 CENTER, 3 LEFT, 3 RIGHT)
+         ========================================================================= */}
+      <section 
+        className="py-10 sm:py-14 lg:py-18 bg-gradient-to-b from-slate-100/90 via-white to-slate-100/70 border-b border-slate-200 relative overflow-hidden select-none"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
+        {/* Ambient atmospheric backdrop lighting */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[380px] bg-gradient-to-tr from-amber-200/25 via-blue-200/25 to-purple-200/25 rounded-full blur-3xl pointer-events-none -z-0" />
+
+        <div className="w-full max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-10 xl:px-12 relative z-10">
+          
+          {/* Header */}
+          <div className="text-center max-w-3xl mx-auto mb-6 sm:mb-9 space-y-2">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black font-heading text-slate-900 tracking-tight">
+              What B<span className="text-amber-500">⭐</span>SEL Provides
+            </h2>
+            
+            <p className="text-slate-600 text-xs sm:text-sm lg:text-base font-medium max-w-2xl mx-auto leading-relaxed px-2">
+              Complete academic, training, and operational support to help you launch, manage, and scale an authorized learning centre.
+            </p>
+          </div>
+
+          {/* 3D Stage Container - Expanded Horizontal Length in PC View with Sleek Compact Height */}
+          <div className="relative w-full max-w-7xl xl:max-w-[1550px] mx-auto h-[350px] sm:h-[370px] lg:h-[350px] flex items-center justify-center overflow-visible">
+            
+            {/* Left & Right Navigation Arrows */}
+            <button
+              type="button"
+              onClick={handlePrevProvide}
+              aria-label="Previous Support Pillar"
+              className="absolute left-0.5 sm:left-3 lg:left-6 z-50 w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-white/95 hover:bg-white text-slate-800 shadow-xl border border-slate-200/90 hover:border-amber-400 flex items-center justify-center transition-all hover:scale-110 active:scale-95 cursor-pointer backdrop-blur-xs"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+
+            <button
+              type="button"
+              onClick={handleNextProvide}
+              aria-label="Next Support Pillar"
+              className="absolute right-0.5 sm:right-3 lg:right-6 z-50 w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-white/95 hover:bg-white text-slate-800 shadow-xl border border-slate-200/90 hover:border-amber-400 flex items-center justify-center transition-all hover:scale-110 active:scale-95 cursor-pointer backdrop-blur-xs"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+
+            {/* Stage: 1 Center Card + 3 Left Cards Backside + 3 Right Cards Backside */}
+            <div 
+              className="relative w-full h-full flex items-center justify-center"
+              style={{ perspective: '1200px', transformStyle: 'preserve-3d' }}
+            >
+              {bselProvides.map((item, idx) => {
+                const IconComp = item.icon;
+                
+                // Calculate relative difference from active center card (-3, -2, -1, 0, 1, 2, 3)
+                const total = bselProvides.length;
+                let diff = (idx - activeProvideIdx) % total;
+                if (diff < -3) diff += total;
+                if (diff > 3) diff -= total;
+
+                const isCenter = diff === 0;
+                const absDiff = Math.abs(diff);
+
+                // Depth-based z-index (Center=40, step 1=30, step 2=20, step 3=10)
+                const zIndex = 40 - absDiff * 10;
+                
+                // Scale factor
+                const scale = 1 - absDiff * (isMobileStage ? 0.08 : 0.11);
+
+                // Opacity factor
+                const opacity = isCenter ? 1 : Math.max(0.25, 1 - absDiff * 0.28);
+
+                // Horizontal translation:
+                // Desktop: diff * 42% (spreads wider horizontally across PC canvas)
+                // Mobile: diff * 20%
+                const transXPercent = diff * (isMobileStage ? 20 : 42);
+                
+                // 3D rotation & depth
+                const rotateYDeg = diff * (isMobileStage ? -8 : -12);
+                const transZPx = -absDiff * (isMobileStage ? 50 : 85);
+
+                return (
+                  <div
+                    key={idx}
+                    onClick={() => {
+                      if (!isCenter) setActiveProvideIdx(idx);
+                    }}
+                    style={{
+                      transform: `translate3d(${transXPercent}%, 0, ${transZPx}px) scale(${scale}) rotateY(${rotateYDeg}deg)`,
+                      zIndex,
+                      opacity,
+                      filter: isCenter ? 'none' : `blur(${absDiff * 0.5}px)`,
+                    }}
+                    className={`absolute w-[calc(100vw-84px)] max-w-[285px] sm:w-[370px] md:w-[460px] lg:w-[520px] xl:w-[560px] rounded-2xl sm:rounded-3xl bg-white border transition-all duration-700 ease-out flex flex-col justify-between overflow-hidden ${
+                      isCenter 
+                        ? 'border-amber-300/80 shadow-[0_16px_40px_-8px_rgba(15,43,92,0.20)] cursor-default' 
+                        : 'border-slate-200/90 shadow-[0_8px_20px_-5px_rgba(0,0,0,0.10)] cursor-pointer hover:opacity-90'
+                    }`}
+                  >
+                    {/* Top Accent Gradient Line */}
+                    <div className={`h-1.5 w-full bg-gradient-to-r ${item.gradient}`} />
+
+                    {/* Card Inner Content - Expanded Width / Sleek Controlled Height */}
+                    <div className="p-4 sm:p-5 lg:p-5 flex flex-col justify-between min-h-[265px] sm:min-h-[285px] lg:min-h-[270px] relative">
+                      
+                      {/* Big Subtle Watermark Number */}
+                      <span className="absolute top-3 right-4 sm:right-6 text-3xl sm:text-5xl font-black text-slate-100 pointer-events-none select-none font-heading">
+                        {item.id}
+                      </span>
+
+                      <div>
+                        {/* Header: Icon Squircle */}
+                        <div className="flex items-center justify-between mb-2.5 relative z-10">
+                          <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-br ${item.iconBg} flex items-center justify-center shadow-md shrink-0 ${isCenter ? 'ring-3 ring-amber-100' : ''}`}>
+                            <IconComp className="w-5 h-5 sm:w-5.5 sm:h-5.5 text-white" />
+                          </div>
+                        </div>
+
+                        {/* Title */}
+                        <h3 className={`text-base sm:text-lg lg:text-xl font-black text-slate-900 leading-snug ${isCenter ? 'text-[#0F2B5C]' : ''}`}>
+                          {item.title}
+                        </h3>
+
+                        {/* Description */}
+                        <p className="text-xs sm:text-[13px] text-slate-600 mt-1 font-medium leading-relaxed max-w-xl">
+                          {item.desc}
+                        </p>
+                      </div>
+
+                      {/* Feature Highlights Pills - Horizontal Flow on Wide Cards */}
+                      <div className="pt-2 sm:pt-2.5 border-t border-slate-100 mt-2.5">
+                        <p className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Key Highlights</p>
+                        <div className="flex flex-wrap gap-1 sm:gap-1.5 lg:gap-2">
+                          {item.highlights.map((hl, hlIdx) => (
+                            <span 
+                              key={hlIdx} 
+                              className={`inline-flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md sm:rounded-lg text-[10px] sm:text-[11px] font-semibold border ${
+                                isCenter 
+                                  ? 'bg-slate-50 text-slate-800 border-slate-200' 
+                                  : 'bg-slate-50/70 text-slate-600 border-slate-100'
+                              }`}
+                            >
+                              <Check className={`w-3 h-3 ${item.checkColor} shrink-0`} />
+                              <span>{hl}</span>
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+          </div>
+
+          {/* Bottom Dot Navigation with Titles & Auto-Rotation Progress Indicator */}
+          <div className="mt-6 flex flex-col items-center justify-center gap-3">
+            <div className="flex items-center justify-center gap-1 sm:gap-2">
+              {bselProvides.map((item, idx) => {
+                const isActive = idx === activeProvideIdx;
+                return (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setActiveProvideIdx(idx)}
+                    aria-label={`Go to ${item.title}`}
+                    className="p-1.5 sm:p-1 cursor-pointer focus:outline-hidden"
+                  >
+                    <span className={`block transition-all duration-300 rounded-full ${
+                      isActive 
+                        ? 'w-7 sm:w-9 h-2 sm:h-2.5 bg-amber-500 shadow-sm' 
+                        : 'w-2 sm:w-2.5 h-2 sm:h-2.5 bg-slate-300 hover:bg-slate-400'
+                    }`} />
+                  </button>
+                );
+              })}
+            </div>
+
+
+          </div>
+
+        </div>
+      </section>
+
+      {/* =========================================================================
+          3. WHO CAN BECOME A PARTNER?
          ========================================================================= */}
       <section className="py-10 sm:py-16 lg:py-20 bg-white border-b border-slate-200">
         <div className="w-full max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-10 xl:px-12">
@@ -504,7 +828,7 @@ export default function FranchisePage({ setActivePage }) {
 
 
       {/* =========================================================================
-          3. PARTNERSHIP MODEL (FULL-WIDTH MULTI-COLOUR CARDS WITH REAL-TIME LOGOS)
+          4. PARTNERSHIP MODEL (FULL-WIDTH MULTI-COLOUR CARDS WITH REAL-TIME LOGOS)
          ========================================================================= */}
       <section className="py-10 sm:py-16 lg:py-24 bg-slate-50/70 border-b border-slate-200">
         <div className="w-full max-w-[1700px] mx-auto px-3 sm:px-6 lg:px-10 xl:px-12">
@@ -682,8 +1006,8 @@ export default function FranchisePage({ setActivePage }) {
                   {/* 12-Field Form - Compact 2-Col on Mobile */}
                   <form onSubmit={handleSubmit} className="space-y-2.5 sm:space-y-3.5 text-xs font-bold">
                     
-                    {/* Full Name & Mobile Number (2-Col on Mobile) */}
-                    <div className="grid grid-cols-2 gap-2 sm:gap-4">
+                    {/* Full Name & Mobile Number (Stacked or 2-Col) */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-4">
                       <div>
                         <label className="block text-slate-800 text-[11px] sm:text-xs font-black mb-0.5 sm:mb-1 truncate">
                           Full Name *
@@ -693,7 +1017,7 @@ export default function FranchisePage({ setActivePage }) {
                           required
                           value={formData.name}
                           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                          className="w-full px-2.5 sm:px-3.5 py-2 sm:py-3 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-hidden transition shadow-2xs text-base sm:text-sm"
+                          className="w-full px-3 py-2.5 sm:py-3 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-hidden transition shadow-2xs text-base sm:text-sm min-h-[44px]"
                         />
                       </div>
 
@@ -706,26 +1030,27 @@ export default function FranchisePage({ setActivePage }) {
                           required
                           value={formData.phone}
                           onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                          className="w-full px-2.5 sm:px-3.5 py-2 sm:py-3 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-hidden transition shadow-2xs text-base sm:text-sm"
+                          className="w-full px-3 py-2.5 sm:py-3 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-hidden transition shadow-2xs text-base sm:text-sm min-h-[44px]"
                         />
                       </div>
                     </div>
 
-                    {/* Email Address & City (2-Col on Mobile) */}
-                    <div className="grid grid-cols-2 gap-2 sm:gap-4">
-                      <div>
-                        <label className="block text-slate-800 text-[11px] sm:text-xs font-black mb-0.5 sm:mb-1 truncate">
-                          Email Address *
-                        </label>
-                        <input
-                          type="email"
-                          required
-                          value={formData.email}
-                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                          className="w-full px-2.5 sm:px-3.5 py-2 sm:py-3 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-hidden transition shadow-2xs text-base sm:text-sm"
-                        />
-                      </div>
+                    {/* Email Address (Full Width on Mobile for easy typing) */}
+                    <div>
+                      <label className="block text-slate-800 text-[11px] sm:text-xs font-black mb-0.5 sm:mb-1">
+                        Email Address *
+                      </label>
+                      <input
+                        type="email"
+                        required
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        className="w-full px-3 py-2.5 sm:py-3 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-hidden transition shadow-2xs text-base sm:text-sm min-h-[44px]"
+                      />
+                    </div>
 
+                    {/* City & District (2-Col on Mobile) */}
+                    <div className="grid grid-cols-2 gap-2 sm:gap-4">
                       <div>
                         <label className="block text-slate-800 text-[11px] sm:text-xs font-black mb-0.5 sm:mb-1 truncate">
                           City *
@@ -735,13 +1060,10 @@ export default function FranchisePage({ setActivePage }) {
                           required
                           value={formData.city}
                           onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                          className="w-full px-2.5 sm:px-3.5 py-2 sm:py-3 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-hidden transition shadow-2xs text-base sm:text-sm"
+                          className="w-full px-2.5 sm:px-3.5 py-2 sm:py-3 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-hidden transition shadow-2xs text-base sm:text-sm min-h-[44px]"
                         />
                       </div>
-                    </div>
 
-                    {/* District & State (2-Col on Mobile) */}
-                    <div className="grid grid-cols-2 gap-2 sm:gap-4">
                       <div>
                         <label className="block text-slate-800 text-[11px] sm:text-xs font-black mb-0.5 sm:mb-1 truncate">
                           District *
@@ -751,9 +1073,10 @@ export default function FranchisePage({ setActivePage }) {
                           required
                           value={formData.district}
                           onChange={(e) => setFormData({ ...formData, district: e.target.value })}
-                          className="w-full px-2.5 sm:px-3.5 py-2 sm:py-3 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-hidden transition shadow-2xs text-base sm:text-sm"
+                          className="w-full px-2.5 sm:px-3.5 py-2 sm:py-3 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-hidden transition shadow-2xs text-base sm:text-sm min-h-[44px]"
                         />
                       </div>
+                    </div>
 
                       <div>
                         <label className="block text-slate-800 text-[11px] sm:text-xs font-black mb-0.5 sm:mb-1 truncate">
@@ -764,10 +1087,9 @@ export default function FranchisePage({ setActivePage }) {
                           required
                           value={formData.state}
                           onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                          className="w-full px-2.5 sm:px-3.5 py-2 sm:py-3 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-hidden transition shadow-2xs text-base sm:text-sm"
+                          className="w-full px-2.5 sm:px-3.5 py-2 sm:py-3 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-hidden transition shadow-2xs text-base sm:text-sm min-h-[44px]"
                         />
                       </div>
-                    </div>
 
                     {/* Current Profession & Experience (2-Col on Mobile) */}
                     <div className="grid grid-cols-2 gap-2 sm:gap-4">

@@ -117,6 +117,19 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
   const [editingEvent, setEditingEvent] = useState(null);
   const [showAddSchoolModal, setShowAddSchoolModal] = useState(false);
 
+  // Lock background scroll when any admin modal is open
+  const hasOpenModal = Boolean(showAddStudentModal || editingStudent || showAddEventModal || editingEvent || showAddSchoolModal);
+  useEffect(() => {
+    if (hasOpenModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [hasOpenModal]);
+
   // Live Certificate Desk State
   const [certData, setCertData] = useState({
     studentName: 'Arjun Subramanian',

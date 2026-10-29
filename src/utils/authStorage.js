@@ -149,7 +149,8 @@ export const registerStudentAccount = (formData) => {
   // Password: their mobile number
   const newPassword = cleanMobile;
 
-  const progCode = (formData.program || 'SKILL')
+  const progName = formData.courseName || formData.program || 'Abacus Speed Arithmetic';
+  const progCode = progName
     .replace(/[^A-Za-z]/g, '')
     .substring(0, 4)
     .toUpperCase();
@@ -160,27 +161,50 @@ export const registerStudentAccount = (formData) => {
     ? `Grade ${matchGrade[1]}` 
     : (formData.grade?.includes('Kindergarten') ? 'Kindergarten' : (formData.grade || 'Level 1'));
 
+  const studentFullName = (formData.studentName || formData.name || '').trim();
+  const studentBranch = formData.branch || (formData.district ? `B★SEL ${formData.district} Center` : 'Tenkasi Main Branch');
+
   const newUser = {
     userId: newUserId,
     password: newPassword,
-    studentName: formData.name.trim(),
-    parentName: formData.parentName.trim(),
-    email: formData.email.trim(),
+    studentName: studentFullName,
+    parentName: (formData.parentName || '').trim(),
+    email: (formData.email || '').trim(),
     phone: cleanMobile,
-    grade: formData.grade,
-    program: formData.program,
+    alternatePhone: (formData.alternatePhone || '').trim(),
+    grade: formData.grade || 'Level 1',
+    program: progName,
+    courseName: progName,
+    branch: studentBranch,
+    dob: formData.dob || '',
+    age: formData.age || '',
+    gender: formData.gender || 'Male',
+    studentPhoto: formData.studentPhoto || null,
+    address: (formData.address || '').trim(),
+    village: (formData.village || '').trim(),
+    city: (formData.city || '').trim(),
     district: formData.district || '',
-    address: formData.address.trim(),
-    institution: formData.district ? `B★SEL ${formData.district} Center` : (formData.address ? `${formData.address.split(',')[0].trim()} Branch` : 'B★SEL Authorized Academy'),
+    pincode: (formData.pincode || '').trim(),
+    aadharNumber: (formData.aadharNumber || '').trim(),
+    feePaymentType: formData.feePaymentType || 'Pay Now',
+    feeAmount: formData.feeAmount || '₹450',
+    paymentMode: formData.paymentMode || 'UPI / QR Code',
+    receiptRefNo: (formData.receiptRefNo || '').trim(),
+    paymentScreenshot: formData.paymentScreenshot || null,
+    institution: studentBranch,
     role: 'Student',
-    enrolmentDate: new Date().toLocaleDateString('en-GB', {
+    enrolmentDate: formData.date ? new Date(formData.date).toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    }) : new Date().toLocaleDateString('en-GB', {
       day: '2-digit',
       month: 'short',
       year: 'numeric'
     }),
     events: [
       {
-        name: `Annual State ${formData.program || 'Skill'} Assessment 2026`,
+        name: `Annual State ${progName} Assessment 2026`,
         date: '28 Nov 2026',
         status: 'Enrolment Confirmed',
         seat: `Hall ${['A', 'B', 'C'][Math.floor(Math.random() * 3)]} / Seat ${Math.floor(10 + Math.random() * 80)}`
@@ -188,7 +212,7 @@ export const registerStudentAccount = (formData) => {
     ],
     results: [
       {
-        exam: `${formData.program || 'Skill'} Assessment Entry`,
+        exam: `${progName} Assessment Entry`,
         score: 'Enrolled & Verified',
         rank: 'Admitted',
         certificateNo: `BSEL-${progCode}-2026-${certSuffix}`

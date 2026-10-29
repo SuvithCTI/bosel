@@ -404,7 +404,7 @@ export default function LoginPage({ setActivePage }) {
                     }}
                     className="text-xs text-sky-800 hover:text-sky-950 font-bold hover:underline"
                   >
-                    Don't have login credentials? Submit Admission Enquiry →
+                    Don't have login credentials? Submit Admission Form →
                   </button>
                 </div>
               )}

@@ -10,10 +10,10 @@ export default function Navbar({ activePage, setActivePage, sessionUser }) {
     if (mobileMenuOpen) {
       document.body.style.overflow = 'hidden';
     } else {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = '';
     }
     return () => {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = '';
     };
   }, [mobileMenuOpen]);
 
@@ -163,7 +163,7 @@ export default function Navbar({ activePage, setActivePage, sessionUser }) {
           />
 
           {/* Drawer Menu Panel */}
-          <div className="relative w-full max-h-[88vh] overflow-y-auto bg-[#0A1D3D] text-white border-b-4 border-amber-400 shadow-2xl z-10 px-4 pt-4 pb-6 space-y-4 animate-in slide-in-from-top duration-200">
+          <div className="relative w-full max-h-[88vh] overflow-y-auto overscroll-contain bg-[#0A1D3D] text-white border-b-4 border-amber-400 shadow-2xl z-10 px-4 pt-4 pb-6 space-y-4 animate-in slide-in-from-top duration-200">
             {/* Top Close bar */}
             <div className="flex items-center justify-between pb-3 border-b border-white/15">
               <Logo size="small" lightText={true} onClick={() => handleNavClick('home')} />

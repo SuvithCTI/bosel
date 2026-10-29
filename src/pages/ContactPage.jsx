@@ -171,17 +171,17 @@ export default function ContactPage({ setActivePage }) {
                   </span>
                 </button>
 
-                {/* Admission Enquiry */}
+                {/* Admission Form */}
                 <button
                   type="button"
                   onClick={() => setShowAdmissionModal(true)}
-                  title="Student Admission Enquiry Form"
-                  aria-label="Admission Enquiry Form"
+                  title="Student Admission Form"
+                  aria-label="Admission Form"
                   className="py-3 px-3 rounded-xl bg-sky-50/70 border-2 border-sky-300 hover:border-sky-500 hover:bg-[#0F2B5C] text-sky-900 hover:text-white transition flex items-center justify-center gap-2 shadow-2xs hover:shadow-xs cursor-pointer group text-center w-full"
                 >
                   <GraduationCap className="w-5 h-5 group-hover:scale-110 transition-transform shrink-0 text-sky-700 group-hover:text-white" />
                   <span className="text-xs sm:text-sm font-black tracking-wide leading-none text-slate-800 group-hover:text-white">
-                    Admission Enquiry
+                    Admission Form
                   </span>
                 </button>
               </div>

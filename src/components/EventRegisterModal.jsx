@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   X, 
   Ticket, 
@@ -59,6 +59,18 @@ export default function EventRegisterModal({ event, onClose }) {
     }).replace(/\//g, '-');
   });
 
+  // Lock background scroll when modal is open
+  useEffect(() => {
+    if (event) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [event]);
+
   if (!event) return null;
 
   // Step 1: Submit Form -> Go to Payment Gateway
@@ -111,9 +123,12 @@ export default function EventRegisterModal({ event, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-sm flex flex-col justify-end sm:justify-center items-center p-0 sm:p-4">
+    <div 
+      className="fixed inset-0 z-50 overflow-y-auto overscroll-contain bg-slate-950/80 backdrop-blur-sm flex flex-col justify-end sm:justify-center items-center p-0 sm:p-4"
+      onClick={onClose}
+    >
       <div 
-        className={`relative bg-white rounded-t-3xl sm:rounded-2xl w-full shadow-2xl flex flex-col max-h-[92vh] sm:max-h-[88vh] overflow-hidden border border-slate-200 animate-in slide-in-from-bottom-4 sm:zoom-in-95 duration-200 ${
+        className={`relative bg-white rounded-t-3xl sm:rounded-2xl w-full shadow-2xl flex flex-col max-h-[92vh] sm:max-h-[88vh] overflow-hidden border border-slate-200 animate-in slide-in-from-bottom-4 sm:zoom-in-95 duration-200 overscroll-contain ${
           currentStep === 'certificate' ? 'max-w-5xl' : currentStep === 'payment' ? 'max-w-2xl' : 'max-w-xl'
         }`}
         onClick={(e) => e.stopPropagation()}
@@ -192,7 +207,7 @@ export default function EventRegisterModal({ event, onClose }) {
         </div>
 
         {/* Scrollable Body Content */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+        <div className="flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6 space-y-4">
 
           {/* =========================================================================
               STEP 1: REGISTRATION FORM

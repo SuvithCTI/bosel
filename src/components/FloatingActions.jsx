@@ -6,9 +6,20 @@ import AdmissionModal from './AdmissionModal';
 export default function FloatingActions({ setActivePage }) {
   const [showFranchiseModal, setShowFranchiseModal] = useState(false);
   const [showAdmissionModal, setShowAdmissionModal] = useState(false);
+  const [admissionProgram, setAdmissionProgram] = useState(null);
+  const [admissionFee, setAdmissionFee] = useState(null);
 
   useEffect(() => {
-    const handleOpen = () => setShowAdmissionModal(true);
+    const handleOpen = (e) => {
+      if (e?.detail?.program) {
+        setAdmissionProgram(e.detail.program);
+        setAdmissionFee(e.detail.fee || null);
+      } else {
+        setAdmissionProgram(null);
+        setAdmissionFee(null);
+      }
+      setShowAdmissionModal(true);
+    };
     window.addEventListener('open_admission_modal', handleOpen);
     return () => window.removeEventListener('open_admission_modal', handleOpen);
   }, []);
@@ -23,11 +34,15 @@ export default function FloatingActions({ setActivePage }) {
     <>
       <div className="fixed bottom-5 right-5 sm:bottom-6 sm:right-6 z-40 flex flex-col items-end gap-3 pointer-events-auto select-none print:hidden">
         
-        {/* 1. Admission Enquiry Circular Icon Button (Above Franchise Form Icon) */}
+        {/* 1. Admission Form Circular Icon Button (Above Franchise Form Icon) */}
         <div className="relative group">
           <button
-            onClick={() => setShowAdmissionModal(true)}
-            aria-label="Student Admission Enquiry"
+            onClick={() => {
+              setAdmissionProgram(null);
+              setAdmissionFee(null);
+              setShowAdmissionModal(true);
+            }}
+            aria-label="Student Admission Form"
             className="flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 bg-[#0F2B5C] hover:bg-[#18458F] text-amber-400 rounded-full shadow-2xl border-2 border-amber-400 hover:border-amber-300 transition-all duration-300 transform hover:scale-110 active:scale-95 cursor-pointer relative"
           >
             <GraduationCap className="w-6 h-6 sm:w-7 sm:h-7" />
@@ -35,7 +50,7 @@ export default function FloatingActions({ setActivePage }) {
 
           {/* Desktop Hover Tooltip */}
           <div className="absolute right-0 -top-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none bg-slate-950 text-white text-[11px] font-bold px-3 py-1 rounded-lg shadow-lg whitespace-nowrap">
-            Admission Enquiry
+            Admission Form
           </div>
         </div>
 
@@ -90,11 +105,13 @@ export default function FloatingActions({ setActivePage }) {
         onClose={() => setShowFranchiseModal(false)} 
       />
 
-      {/* Admission Enquiry Popup Modal */}
+      {/* Official Student Admission Form Modal */}
       <AdmissionModal 
         isOpen={showAdmissionModal} 
         onClose={() => setShowAdmissionModal(false)} 
         setActivePage={setActivePage}
+        initialProgram={admissionProgram}
+        initialFee={admissionFee}
       />
     </>
   );

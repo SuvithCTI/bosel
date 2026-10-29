@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   X, 
   Store, 
@@ -40,6 +40,18 @@ export default function FranchiseModal({ isOpen, onClose }) {
   const [showFullTerms, setShowFullTerms] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [refId, setRefId] = useState('');
+
+  // Lock background scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -95,11 +107,11 @@ export default function FranchiseModal({ isOpen, onClose }) {
 
   return (
     <div 
-      className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-2.5 sm:p-4 select-none"
+      className="fixed inset-0 z-50 overflow-y-auto overscroll-contain bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-2.5 sm:p-4 select-none"
       onClick={onClose}
     >
       <div 
-        className="relative bg-white rounded-2xl sm:rounded-3xl max-w-2xl sm:max-w-3xl w-full shadow-2xl overflow-hidden border border-slate-200 animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[92vh] sm:max-h-[90vh] my-auto"
+        className="relative bg-white rounded-2xl sm:rounded-3xl max-w-2xl sm:max-w-3xl w-full shadow-2xl overflow-hidden border border-slate-200 animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[92vh] sm:max-h-[90vh] my-auto overscroll-contain"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header Banner */}
@@ -131,7 +143,7 @@ export default function FranchiseModal({ isOpen, onClose }) {
         </div>
 
         {/* Scrollable Modal Content */}
-        <div className="p-4 sm:p-6 flex-1 overflow-y-auto space-y-4 sm:space-y-5 text-slate-700">
+        <div className="p-4 sm:p-6 flex-1 overflow-y-auto overscroll-contain space-y-4 sm:space-y-5 text-slate-700">
           {submitted ? (
             <div className="text-center py-6 sm:py-8 space-y-4">
               <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 mx-auto flex items-center justify-center shadow-inner">
