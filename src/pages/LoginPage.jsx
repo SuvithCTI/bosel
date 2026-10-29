@@ -1,424 +1,318 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  User, 
-  Lock, 
-  Eye, 
-  EyeOff, 
-  ArrowRight, 
-  Download, 
-  Award, 
-  LogOut, 
-  Ticket,
-  AlertCircle
+
+import {
+  User,
+  Lock,
+  Eye,
+  EyeOff,
+  ArrowRight,
+  AlertCircle,
 } from 'lucide-react';
+
 import Logo from '../components/Logo';
 import CertificateModal from '../components/CertificateModal';
-import { validateLogin, getActiveSession, setActiveSession, clearActiveSession } from '../utils/authStorage';
+import StudentDashboard from '../components/student/StudentDashboard';
 
-export default function LoginPage({ setActivePage }) {
+import {
+  validateLogin,
+  getActiveSession,
+  setActiveSession,
+  clearActiveSession,
+} from '../utils/authStorage';
+
+// -------------------------------------------------------
+// Student profile storage
+// -------------------------------------------------------
+const getStudentStorageKey = (student) => {
+  const id = student?.userId || student?.id;
+
+  if (!id) {
+    throw new Error('Unable to identify this student account.');
+  }
+
+  return `bsel_student_profile_${String(id).trim().toLowerCase()}`;
+};
+
+const loadSavedProfile = (student) => {
+  try {
+    const key = getStudentStorageKey(student);
+    const saved = localStorage.getItem(key);
+
+    if (saved) {
+      return {
+        ...student,
+        ...JSON.parse(saved),
+
+        // Preserve authenticated account identity.
+        id: student.id || student.userId,
+        userId: student.userId || student.id,
+        role: student.role,
+      };
+    }
+  } catch (error) {
+    console.error(
+      'Unable to load the saved student profile:',
+      error
+    );
+  }
+
+  return student;
+};
+
+// -------------------------------------------------------
+// Normalize student information
+// -------------------------------------------------------
+const normalizeStudent = (user) => {
+  const student = {
+    ...user,
+    name: user.studentName || user.name || 'Student',
+    id: user.userId || user.id,
+    userId: user.userId || user.id,
+
+    course:
+      user.program ||
+      user.course ||
+      'Abacus Speed Math (Level 4) & Fine Arts',
+
+    events: Array.isArray(user.events) ? user.events : [],
+    results: Array.isArray(user.results) ? user.results : [],
+  };
+
+  return loadSavedProfile(student);
+};
+
+// -------------------------------------------------------
+// Login Page
+// -------------------------------------------------------
+export default function LoginPage({
+  setActivePage,
+  onStudentDashboardChange,
+}) {
+  // User ID
   const [userId, setUserId] = useState(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('bsel_remember_user');
-      if (saved) return saved;
+      return localStorage.getItem('bsel_remember_user') || '';
     }
-    return 'admin';
+
+    return '';
   });
-  const [password, setPassword] = useState('admin123');
+
+  // Password and form state
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
-  const [isLoggedIn, setIsLoggedIn] = useState(() => {
-    const session = getActiveSession();
-    return !!session && session.role !== 'Super Admin';
-  });
+
+  // Restore an existing student session.
   const [currentUser, setCurrentUser] = useState(() => {
     const session = getActiveSession();
-    return session && session.role !== 'Super Admin' ? session : null;
+
+    if (!session || session.role === 'Super Admin') {
+      return null;
+    }
+
+    return normalizeStudent(session);
   });
-  const [selectedCertForModal, setSelectedCertForModal] = useState(null);
+
+  const [selectedCertForModal, setSelectedCertForModal] =
+    useState(null);
+
   const [errorMessage, setErrorMessage] = useState('');
 
-  // Keep state in sync if session changes elsewhere
+  const isLoggedIn = Boolean(currentUser);
+
+  // -------------------------------------------------------
+  // Notify App.jsx when the student dashboard is displayed.
+  // Public pages are unaffected because App.jsx also checks
+  // that the current page is "login".
+  // -------------------------------------------------------
+  useEffect(() => {
+    onStudentDashboardChange?.(isLoggedIn);
+  }, [isLoggedIn, onStudentDashboardChange]);
+
+  // -------------------------------------------------------
+  // Synchronize authentication changes
+  // -------------------------------------------------------
   useEffect(() => {
     const syncSession = () => {
       const session = getActiveSession();
+
       if (session && session.role !== 'Super Admin') {
-        setCurrentUser(session);
-        setIsLoggedIn(true);
-      } else if (!session) {
+        setCurrentUser(normalizeStudent(session));
+      } else {
         setCurrentUser(null);
-        setIsLoggedIn(false);
       }
     };
-    window.addEventListener('bsel_session_changed', syncSession);
-    return () => window.removeEventListener('bsel_session_changed', syncSession);
+
+    window.addEventListener(
+      'bsel_session_changed',
+      syncSession
+    );
+
+    return () => {
+      window.removeEventListener(
+        'bsel_session_changed',
+        syncSession
+      );
+    };
   }, []);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  // -------------------------------------------------------
+  // Login
+  // -------------------------------------------------------
+  const handleSubmit = (event) => {
+    event.preventDefault();
     setErrorMessage('');
 
     if (!userId.trim()) {
       setErrorMessage('Please enter your User ID.');
       return;
     }
+
     if (!password.trim()) {
       setErrorMessage('Please enter your Password.');
       return;
     }
 
-    if (rememberMe && typeof window !== 'undefined') {
-      localStorage.setItem('bsel_remember_user', userId);
-    }
+    const result = validateLogin(userId.trim(), password);
 
-    const result = validateLogin(userId, password);
     if (!result.success) {
-      setErrorMessage(result.message);
+      setErrorMessage(
+        result.message || 'Invalid User ID or password.'
+      );
       return;
     }
 
+    // Remember User ID if selected.
+    if (rememberMe) {
+      localStorage.setItem(
+        'bsel_remember_user',
+        userId.trim()
+      );
+    } else {
+      localStorage.removeItem('bsel_remember_user');
+    }
+
+    // Keep the existing Super Admin navigation.
     if (result.user.role === 'Super Admin') {
       setActiveSession(result.user);
       setActivePage('admin');
       return;
     }
 
-    const userData = {
-      ...result.user,
-      name: result.user.studentName || result.user.name,
-      id: result.user.userId || result.user.id,
-      course: result.user.program || result.user.course || 'Abacus Speed Math (Level 4) & Fine Arts',
-      events: result.user.events || [],
-      results: result.user.results || []
-    };
+    // Prepare the student dashboard.
+    const student = normalizeStudent(result.user);
 
-    setActiveSession(userData);
-    setCurrentUser(userData);
-    setIsLoggedIn(true);
-  };
+    setActiveSession(student);
+    setCurrentUser(student);
 
-  const handleLogout = () => {
-    clearActiveSession();
-    setIsLoggedIn(false);
-    setCurrentUser(null);
-    setUserId('');
     setPassword('');
     setErrorMessage('');
   };
 
-  return (
-    <div className="min-h-screen bg-slate-100 py-10 md:py-16 px-4">
-      <div className="max-w-4xl mx-auto">
-        
-        {/* If user is ALREADY logged in, show their portal dashboard */}
-        {isLoggedIn && currentUser ? (
-          <div className="bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden">
-            {/* Dashboard Header Bar */}
-            <div className="bg-gradient-to-r from-[#0F2B5C] to-[#1E4D99] text-white p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 text-amber-400">
-                  <User className="w-8 h-8" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[11px] uppercase font-black px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-950">
-                      {currentUser.role} Portal
-                    </span>
-                    <span className="text-xs text-sky-200 font-mono">ID: {currentUser.id}</span>
-                  </div>
-                  <h2 className="text-xl md:text-2xl font-black font-heading mt-1">
-                    {currentUser.name}
-                  </h2>
-                  <p className="text-xs text-slate-200 mt-0.5">
-                    {currentUser.institution}
-                  </p>
-                </div>
-              </div>
+  // -------------------------------------------------------
+  // Update student profile
+  // -------------------------------------------------------
+  const handleUpdateStudent = (updatedStudent) => {
+    if (!currentUser) {
+      throw new Error('Please log in to update your profile.');
+    }
 
-              <button
-                onClick={handleLogout}
-                className="self-start md:self-auto px-4 py-2 bg-white/15 hover:bg-rose-600 text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 border border-white/20"
-              >
-                <LogOut className="w-3.5 h-3.5" />
-                <span>Logout</span>
-              </button>
-            </div>
+    const studentId = currentUser.userId || currentUser.id;
 
-            <div className="p-6 md:p-8 space-y-6">
-              {/* Active Courses */}
-              <div className="bg-sky-50 border border-sky-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-sky-700">Enrolled Program</span>
-                  <h4 className="font-extrabold text-slate-900 text-sm md:text-base">{currentUser.course}</h4>
-                </div>
-                <span className="text-xs font-semibold px-3 py-1 bg-sky-200/70 text-sky-900 rounded-lg self-start sm:self-auto">
-                  Active Session: 2026-2027
-                </span>
-              </div>
+    if (!studentId) {
+      throw new Error('Unable to identify the student account.');
+    }
 
-              {/* Student Profile Info (if available from admission enrolment) */}
-              {(currentUser.parentName || currentUser.grade || currentUser.phone) && (
-                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 sm:p-5">
-                  <h3 className="text-xs font-black uppercase tracking-wider text-slate-700 mb-3 flex items-center gap-1.5">
-                    <User className="w-3.5 h-3.5 text-sky-700" />
-                    <span>Enrolled Student Profile</span>
-                  </h3>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                    {currentUser.grade && (
-                      <div>
-                        <span className="text-slate-500 block text-[10px]">Class / Grade</span>
-                        <strong className="text-slate-900 font-bold">{currentUser.grade}</strong>
-                      </div>
-                    )}
-                    {currentUser.parentName && (
-                      <div>
-                        <span className="text-slate-500 block text-[10px]">Parent's Name</span>
-                        <strong className="text-slate-900 font-bold">{currentUser.parentName}</strong>
-                      </div>
-                    )}
-                    {currentUser.phone && (
-                      <div>
-                        <span className="text-slate-500 block text-[10px]">Contact Mobile</span>
-                        <strong className="text-slate-900 font-bold">{currentUser.phone}</strong>
-                      </div>
-                    )}
-                    {currentUser.email && (
-                      <div>
-                        <span className="text-slate-500 block text-[10px]">Email Address</span>
-                        <strong className="text-slate-900 font-bold truncate block">{currentUser.email}</strong>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
+    // Preserve account identity and role.
+    const safeUpdatedStudent = {
+      ...currentUser,
+      ...updatedStudent,
 
-              {/* Registered Events & Hall Tickets */}
-              <div>
-                <h3 className="text-base font-extrabold text-slate-900 font-heading mb-3 flex items-center gap-2">
-                  <Ticket className="w-4 h-4 text-sky-600" />
-                  <span>Competition Hall Tickets</span>
-                </h3>
-                <div className="space-y-2.5">
-                  {currentUser.events.map((evt, idx) => (
-                    <div key={idx} className="bg-slate-50 border border-slate-200 p-4 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                      <div>
-                        <h4 className="text-xs md:text-sm font-bold text-slate-900">{evt.name}</h4>
-                        <div className="text-[11px] text-slate-500 mt-0.5 flex items-center gap-2">
-                          <span>Exam Date: <strong className="text-slate-700">{evt.date}</strong></span>
-                          <span>•</span>
-                          <span>Seat Allotment: <strong className="text-slate-700">{evt.seat}</strong></span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800">
-                          {evt.status}
-                        </span>
-                        <button 
-                          onClick={() => alert(`Downloading Hall Ticket for ${evt.name}...`)}
-                          className="px-3 py-1.5 bg-[#0F2B5C] hover:bg-sky-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1 transition"
-                        >
-                          <Download className="w-3 h-3" />
-                          <span>Hall Slip</span>
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+      id: currentUser.id || studentId,
+      userId: currentUser.userId || studentId,
+      role: currentUser.role,
+    };
 
-              {/* Results & Scorecards */}
-              <div>
-                <h3 className="text-base font-extrabold text-slate-900 font-heading mb-3 flex items-center gap-2">
-                  <Award className="w-4 h-4 text-amber-500" />
-                  <span>Certificates & Scorecards</span>
-                </h3>
-                <div className="space-y-2.5">
-                  {currentUser.results.map((res, idx) => (
-                    <div key={idx} className="bg-amber-50/50 border border-amber-200/80 p-4 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                      <div>
-                        <h4 className="text-xs md:text-sm font-bold text-slate-900">{res.exam}</h4>
-                        <div className="text-[11px] text-slate-600 mt-0.5 flex items-center gap-2">
-                          <span>Score: <strong className="text-emerald-700">{res.score}</strong></span>
-                          <span>•</span>
-                          <span>Rank: <strong className="text-amber-800 font-bold">{res.rank}</strong></span>
-                          <span>•</span>
-                          <span>Cert: <span className="font-mono text-slate-600">{res.certificateNo}</span></span>
-                        </div>
-                      </div>
-                      <button 
-                        onClick={() => setSelectedCertForModal({
-                          studentName: currentUser.name,
-                          courseName: 'Abacus',
-                          level: 'Level 4',
-                          grade: 'A+',
-                          certificateNo: res.certificateNo,
-                          centreName: currentUser.institution
-                        })}
-                        className="px-3 py-1.5 bg-amber-400 hover:bg-amber-500 text-slate-950 rounded-lg text-xs font-bold flex items-center gap-1 transition shadow-xs cursor-pointer"
-                      >
-                        <Award className="w-3.5 h-3.5" />
-                        <span>View e-Certificate</span>
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
+    const storageKey = getStudentStorageKey(safeUpdatedStudent);
 
-              {/* Navigation Back */}
-              <div className="pt-4 border-t border-slate-200 flex justify-between items-center text-xs">
-                <button
-                  onClick={() => setActivePage('home')}
-                  className="text-sky-700 font-semibold hover:underline"
-                >
-                  ← Back to Home
-                </button>
-                <button
-                  onClick={handleLogout}
-                  className="text-rose-600 font-semibold hover:underline"
-                >
-                  Sign Out
-                </button>
-              </div>
-            </div>
-          </div>
-        ) : (
-          /* =========================================================================
-              CLEAN LOGIN PAGE (NO SIGNUP - STRICTLY USER ID & PASSWORD)
-             ========================================================================= */
-          <div className="max-w-md mx-auto bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden">
-            {/* Header */}
-            <div className="bg-gradient-to-r from-[#0F2B5C] via-[#143B7A] to-[#1E4D99] text-white p-7 text-center space-y-2">
-              <div className="flex justify-center mb-1">
-                <Logo lightText={true} />
-              </div>
-              <h1 className="text-2xl font-black font-heading text-white">
-                Login Portal
-              </h1>
-              <p className="text-xs text-slate-200">
-                Enter your User ID and password to access your account
-              </p>
-            </div>
+    const editableProfile = {
+      name: safeUpdatedStudent.name,
+      studentName:
+        safeUpdatedStudent.studentName ||
+        safeUpdatedStudent.name,
 
-            <div className="p-7 space-y-5">
-              {/* Error Alert */}
-              {errorMessage && (
-                <div className="bg-rose-50 border-2 border-rose-300 text-rose-900 rounded-xl p-3.5 text-xs flex items-start gap-2.5 animate-in fade-in">
-                  <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
-                  <div className="space-y-0.5">
-                    <strong className="block font-black text-rose-950">Access Denied</strong>
-                    <p className="leading-relaxed">{errorMessage}</p>
-                  </div>
-                </div>
-              )}
+      parentName: safeUpdatedStudent.parentName || '',
+      phone: safeUpdatedStudent.phone || '',
+      email: safeUpdatedStudent.email || '',
+      grade: safeUpdatedStudent.grade || '',
+      institution: safeUpdatedStudent.institution || '',
+    };
 
-              {/* Login Form */}
-              <form onSubmit={handleSubmit} className="space-y-4">
-                {/* User ID Field */}
-                <div>
-                  <label className="block text-xs font-black text-slate-950 uppercase tracking-wider mb-1.5">
-                    User ID
-                  </label>
-                  <div className="relative">
-                    <User className="w-4 h-4 text-slate-700 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                    <input
-                      type="text"
-                      required
-                      value={userId}
-                      onChange={(e) => {
-                        setUserId(e.target.value);
-                        if (errorMessage) setErrorMessage('');
-                      }}
-                      className="w-full pl-10 pr-4 py-2.5 text-base sm:text-sm font-semibold text-slate-950 border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none transition"
-                    />
-                  </div>
-                </div>
+    try {
+      // Save the editable profile locally.
+      localStorage.setItem(
+        storageKey,
+        JSON.stringify(editableProfile)
+      );
 
-                {/* Password Field */}
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-xs font-black text-slate-950 uppercase tracking-wider">
-                      Password
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => alert('Your password is your registered 10-digit mobile number. Your User ID is in format: BSEL-District-MobileNumber (e.g. BSEL-CBE-9876543211). For assistance, contact +91 98401 23456.')}
-                      className="text-[11px] text-sky-800 hover:underline font-bold"
-                    >
-                      Forgot Password?
-                    </button>
-                  </div>
-                  <div className="relative">
-                    <Lock className="w-4 h-4 text-slate-700 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      required
-                      value={password}
-                      onChange={(e) => {
-                        setPassword(e.target.value);
-                        if (errorMessage) setErrorMessage('');
-                      }}
-                      className="w-full pl-10 pr-10 py-2.5 text-base sm:text-sm font-semibold text-slate-950 border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none transition"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-900 cursor-pointer"
-                      aria-label="Toggle password visibility"
-                    >
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
-                </div>
+      // Update the authenticated session.
+      setActiveSession(safeUpdatedStudent);
 
-                {/* Remember Me */}
-                <div className="flex items-center text-xs text-slate-900 font-semibold pt-1">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={rememberMe}
-                      onChange={(e) => setRememberMe(e.target.checked)}
-                      className="rounded text-sky-600 focus:ring-sky-500"
-                    />
-                    <span>Remember User ID</span>
-                  </label>
-                </div>
+      // Refresh the dashboard.
+      setCurrentUser(safeUpdatedStudent);
+    } catch {
+      throw new Error(
+        'Unable to save your profile in this browser. Please try again.'
+      );
+    }
+  };
 
-                {/* Submit Button */}
-                <button
-                  type="submit"
-                  className="w-full bg-[#0F2B5C] hover:bg-[#18458F] text-white py-3 rounded-xl font-bold text-sm transition flex items-center justify-center gap-2 shadow-md hover:shadow-lg cursor-pointer"
-                >
-                  <span>Log In</span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-              </form>
+  // -------------------------------------------------------
+  // Logout
+  // -------------------------------------------------------
+  const handleLogout = () => {
+    clearActiveSession();
 
-              {/* No account link */}
-              {setActivePage && (
-                <div className="text-center pt-1 border-t border-slate-100">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (typeof window !== 'undefined') {
-                        window.dispatchEvent(new CustomEvent('open_admission_modal'));
-                      }
-                    }}
-                    className="text-xs text-sky-800 hover:text-sky-950 font-bold hover:underline"
-                  >
-                    Don't have login credentials? Submit Admission Enquiry →
-                  </button>
-                </div>
-              )}
+    setCurrentUser(null);
+    setPassword('');
+    setErrorMessage('');
+    setSelectedCertForModal(null);
 
-              {/* Assistance Footnote */}
-              <div className="text-center pt-2 text-xs text-slate-500 border-t border-slate-100">
-                <span>Need assistance? Helpline: </span>
-                <strong className="text-slate-700">+91 98401 23456</strong>
-              </div>
-            </div>
-          </div>
-        )}
+    // Preserve remembered User ID when enabled.
+    if (!localStorage.getItem('bsel_remember_user')) {
+      setUserId('');
+    }
 
-        {/* Certificate Modal */}
+    // Notify App.jsx immediately.
+    onStudentDashboardChange?.(false);
+  };
+
+  // -------------------------------------------------------
+  // Forgot password
+  // -------------------------------------------------------
+  const handleForgotPassword = () => {
+    window.alert(
+      'Your password is your registered 10-digit mobile number. ' +
+        'Your User ID follows the format BSEL-District-MobileNumber ' +
+        '(example: BSEL-CBE-9876543211). ' +
+        'For assistance, contact +91 98401 23456.'
+    );
+  };
+
+  // =======================================================
+  // LOGGED-IN STUDENT: DISPLAY DASHBOARD WITHOUT GLOBAL
+  // NAVBAR, FOOTER, OR FLOATING ACTION BUTTONS.
+  // =======================================================
+  if (isLoggedIn && currentUser) {
+    return (
+      <>
+        <StudentDashboard
+          student={currentUser}
+          onLogout={handleLogout}
+          onUpdateStudent={handleUpdateStudent}
+          onViewCertificate={setSelectedCertForModal}
+        />
+
         {selectedCertForModal && (
           <CertificateModal
             isOpen={true}
@@ -426,6 +320,198 @@ export default function LoginPage({ setActivePage }) {
             onClose={() => setSelectedCertForModal(null)}
           />
         )}
+      </>
+    );
+  }
+
+  // =======================================================
+  // LOGGED-OUT STUDENT: DISPLAY LOGIN FORM.
+  // The normal public navbar and footer remain visible.
+  // =======================================================
+  return (
+    <div className="min-h-screen bg-slate-100 px-4 py-10 md:py-16">
+      <div className="mx-auto max-w-md overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl">
+
+        {/* Login Header */}
+        <div className="space-y-3 bg-gradient-to-r from-[#0F2B5C] via-[#143B7A] to-[#1E4D99] p-7 text-center text-white">
+          <div className="mb-2 flex justify-center">
+            <Logo lightText={true} />
+          </div>
+
+          <h1 className="text-2xl font-black">
+            Student Login Portal
+          </h1>
+
+          <p className="text-xs leading-5 text-blue-100">
+            Sign in to access your course, student profile, and notifications.
+          </p>
+        </div>
+
+        <div className="space-y-5 p-6 sm:p-7">
+
+          {/* Login Error */}
+          {errorMessage && (
+            <div
+              role="alert"
+              className="flex items-start gap-2.5 rounded-xl border-2 border-rose-200 bg-rose-50 p-3.5 text-xs text-rose-900"
+            >
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-rose-600" />
+
+              <div>
+                <strong className="mb-1 block font-black">
+                  Login unsuccessful
+                </strong>
+
+                <p className="leading-relaxed">
+                  {errorMessage}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Login Form */}
+          <form
+            onSubmit={handleSubmit}
+            className="space-y-5"
+          >
+
+            {/* User ID */}
+            <div>
+              <label
+                htmlFor="student-user-id"
+                className="mb-2 block text-xs font-black uppercase tracking-wider text-slate-900"
+              >
+                User ID
+              </label>
+
+              <div className="relative">
+                <User className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+
+                <input
+                  id="student-user-id"
+                  type="text"
+                  required
+                  autoComplete="username"
+                  placeholder="Enter your User ID"
+                  value={userId}
+                  onChange={(event) => {
+                    setUserId(event.target.value);
+                    setErrorMessage('');
+                  }}
+                  className="w-full rounded-xl border border-slate-300 py-3 pl-10 pr-4 text-base font-semibold text-slate-950 outline-none transition focus:border-blue-700 focus:ring-2 focus:ring-blue-100 sm:text-sm"
+                />
+              </div>
+            </div>
+
+            {/* Password */}
+            <div>
+              <div className="mb-2 flex items-center justify-between gap-3">
+                <label
+                  htmlFor="student-password"
+                  className="text-xs font-black uppercase tracking-wider text-slate-900"
+                >
+                  Password
+                </label>
+
+                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  className="text-[11px] font-bold text-blue-800 hover:underline"
+                >
+                  Forgot Password?
+                </button>
+              </div>
+
+              <div className="relative">
+                <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+
+                <input
+                  id="student-password"
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  autoComplete="current-password"
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(event) => {
+                    setPassword(event.target.value);
+                    setErrorMessage('');
+                  }}
+                  className="w-full rounded-xl border border-slate-300 py-3 pl-10 pr-11 text-base font-semibold text-slate-950 outline-none transition focus:border-blue-700 focus:ring-2 focus:ring-blue-100 sm:text-sm"
+                />
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setShowPassword((previous) => !previous)
+                  }
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 transition hover:text-blue-950"
+                  aria-label={
+                    showPassword
+                      ? 'Hide password'
+                      : 'Show password'
+                  }
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Remember User ID */}
+            <label className="flex cursor-pointer items-center gap-2 text-xs font-semibold text-slate-700">
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(event) =>
+                  setRememberMe(event.target.checked)
+                }
+                className="h-4 w-4 rounded border-slate-300 text-blue-800 focus:ring-blue-600"
+              />
+
+              Remember User ID
+            </label>
+
+            {/* Submit */}
+            <button
+              type="submit"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#0F2B5C] py-3.5 text-sm font-extrabold text-white shadow-md transition hover:bg-[#18458F] hover:shadow-lg"
+            >
+              Log In
+              <ArrowRight className="h-4 w-4" />
+            </button>
+          </form>
+
+          {/* Admission Enquiry */}
+          {setActivePage && (
+            <div className="border-t border-slate-100 pt-5 text-center">
+              <button
+                type="button"
+                onClick={() => {
+                  window.dispatchEvent(
+                    new CustomEvent('open_admission_modal')
+                  );
+                }}
+                className="text-xs font-bold text-blue-800 hover:text-blue-950 hover:underline"
+              >
+                Don't have login credentials? Submit Admission Enquiry →
+              </button>
+            </div>
+          )}
+
+          {/* Help */}
+          <div className="border-t border-slate-100 pt-4 text-center text-xs text-slate-500">
+            Need assistance? Helpline:{' '}
+            <a
+              href="tel:+919840123456"
+              className="font-extrabold text-slate-800 hover:text-blue-800"
+            >
+              +91 98401 23456
+            </a>
+          </div>
+        </div>
       </div>
     </div>
   );
