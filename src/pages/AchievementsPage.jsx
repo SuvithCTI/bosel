@@ -300,96 +300,100 @@ function Hero() {
   );
 }
 
-
-
-
-
 function AchievementIntro() {
   return (
-    <section className="bg-[#F8F7F3] py-8 sm:py-10 lg:py-14">
-      <div className="mx-auto grid max-w-[1440px] items-center gap-8 px-4 sm:gap-10 sm:px-5 lg:grid-cols-2 lg:gap-10 lg:px-5">
-        <div>
-          <SectionLabel>Our Student Achievements</SectionLabel>
+  
+<section className="bg-[#F8F7F3] py-5 sm:py-10 lg:py-14">
+  <div className="mx-auto grid max-w-[1440px] items-center gap-5 px-3 sm:gap-10 sm:px-5 lg:grid-cols-2 lg:gap-10 lg:px-5">
+    {/* Left Content */}
+    <div>
+      <SectionLabel>Our Student Achievements</SectionLabel>
 
-          <h2 className="mt-3 sm:mt-4 text-2xl font-black leading-tight text-blue-950 sm:text-3xl lg:text-4xl">
-            Hard Work Today.
-            <span className="block text-amber-600">
-              Excellence Tomorrow.
-            </span>
-          </h2>
+      <h2 className="mt-2 text-xl font-black leading-tight text-blue-950 sm:mt-4 sm:text-3xl lg:text-4xl">
+        Hard Work Today.
+        <span className="block text-amber-600">
+          Excellence Tomorrow.
+        </span>
+      </h2>
 
-          <p className="mt-3 sm:mt-4 text-sm leading-6 text-slate-600 sm:text-base sm:leading-7">
-            At B★SEL, every achievement represents dedication, consistent
-            practice, and a willingness to learn. Our students participate in
-            educational competitions and recognition programs that encourage
-            them to build confidence and demonstrate their abilities.
-          </p>
+      <p className="mt-2 text-xs leading-5 text-slate-600 sm:mt-4 sm:text-base sm:leading-7">
+        At B★SEL, every achievement represents dedication, consistent
+        practice, and a willingness to learn. Our students participate in
+        educational competitions and recognition programs that encourage
+        them to build confidence and demonstrate their abilities.
+      </p>
 
-          <p className="mt-4 text-sm leading-6 text-slate-600 sm:text-base sm:leading-8">
-            We celebrate each milestone as an opportunity to inspire students,
-            appreciate their efforts, and motivate them to keep improving.
-          </p>
+      <p className="mt-3 text-xs leading-5 text-slate-600 sm:mt-4 sm:text-base sm:leading-8">
+        We celebrate each milestone as an opportunity to inspire students,
+        appreciate their efforts, and motivate them to keep improving.
+      </p>
+    </div>
 
-         
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div className="overflow-hidden rounded-3xl">
-            <img
-              src={hardwork}
-              alt="Students working together"
-              className="h-36 w-full object-cover sm:h-56 lg:h-64"
-              loading="lazy"
-            />
-          </div>
-
-          <div className="mt-5 overflow-hidden rounded-2xl sm:mt-8 sm:rounded-3xl">
-            <img
-              src={excellence}
-              alt="Teacher supporting students"
-              className="h-36 w-full object-cover sm:h-56 lg:h-64"
-              loading="lazy"
-            />
-          </div>
-
-          <div className="col-span-2 rounded-3xl bg-blue-950 p-4 sm:p-6 lg:p-8">
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-400">
-              The B★SEL Spirit
-            </p>
-            <p className="mt-3 text-lg font-bold leading-7 text-white sm:text-xl sm:leading-8">
-              Every student has the potential to achieve something remarkable.
-            </p>
-          </div>
-        </div>
+    {/* Right Images and Highlight */}
+    <div className="grid grid-cols-2 gap-2.5 sm:gap-4">
+      <div className="overflow-hidden rounded-xl sm:rounded-3xl">
+        <img
+          src={hardwork}
+          alt="Students working together"
+          className="h-28 w-full object-cover sm:h-56 lg:h-64"
+          loading="lazy"
+        />
       </div>
-    </section>
+
+      <div className="mt-3 overflow-hidden rounded-xl sm:mt-8 sm:rounded-3xl">
+        <img
+          src={excellence}
+          alt="Teacher supporting students"
+          className="h-28 w-full object-cover sm:h-56 lg:h-64"
+          loading="lazy"
+        />
+      </div>
+
+      {/* Highlight Box */}
+      <div className="col-span-2 rounded-xl bg-blue-950 p-3 sm:rounded-3xl sm:p-6 lg:p-8">
+        <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-amber-400 sm:text-xs sm:tracking-[0.2em]">
+          The B★SEL Spirit
+        </p>
+
+        <p className="mt-1.5 text-sm font-bold leading-5 text-white sm:mt-3 sm:text-xl sm:leading-8">
+          Every student has the potential to achieve something remarkable.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
   );
 }
 
+
 function Competitions() {
   return (
-    <section id="competitions" className="bg-white py-8 sm:py-10 lg:py-14">
+    <section
+      id="competitions"
+      className="bg-white py-6 sm:py-10 lg:py-14"
+    >
       <div className="mx-auto max-w-[1440px] px-3 sm:px-4 lg:px-5">
         <div className="mx-auto max-w-2xl text-center">
           <SectionLabel>Learning Beyond Classrooms</SectionLabel>
 
-          <h2 className="mt-3 sm:mt-4 text-2xl font-black leading-tight text-blue-950 sm:text-3xl lg:text-4xl">
+          <h2 className="mt-2 text-xl font-black leading-tight text-blue-950 sm:mt-4 sm:text-3xl lg:text-4xl">
             Competitions & Recognition
           </h2>
 
-          <p className="mt-3 sm:mt-4 text-sm leading-6 text-slate-600 sm:text-base sm:leading-8">
+          <p className="mt-2 text-xs leading-5 text-slate-600 sm:mt-4 sm:text-base sm:leading-8">
             Opportunities that encourage students to develop their skills,
             challenge themselves, and celebrate their learning journey.
           </p>
         </div>
 
-        <div className="mt-5 grid grid-cols-2 gap-2.5 sm:mt-7 sm:gap-4 lg:mt-9 lg:grid-cols-3 lg:gap-6">
+        <div className="mt-4 grid grid-cols-2 gap-2.5 sm:mt-7 sm:gap-4 lg:mt-9 lg:grid-cols-3 lg:gap-6">
           {competitions.map((item) => (
             <article
               key={item.number}
-              className="group overflow-hidden rounded-3xl border border-slate-200 bg-white transition duration-300 hover:-translate-y-2 hover:border-amber-300 hover:shadow-xl"
+              className="group overflow-hidden rounded-xl border border-slate-200 bg-white transition duration-300 hover:-translate-y-1 hover:border-amber-300 hover:shadow-xl sm:rounded-3xl sm:hover:-translate-y-2"
             >
-              <div className="relative h-28 overflow-hidden sm:h-44 lg:h-52">
+              {/* Reduced image height on mobile */}
+              <div className="relative h-24 overflow-hidden sm:h-44 lg:h-52">
                 <img
                   src={item.image}
                   alt={item.title}
@@ -399,25 +403,29 @@ function Competitions() {
 
                 <div className="absolute inset-0 bg-gradient-to-t from-blue-950/80 to-transparent" />
 
-                <span className="absolute left-2 top-2 rounded-full bg-amber-400 px-2 py-1 text-[7px] font-black tracking-wide text-blue-950 sm:left-3 sm:top-3 sm:px-2.5 sm:text-[9px] lg:left-4 lg:top-4 lg:px-3 lg:py-2 lg:text-[10px]">
+                {/* Competition level */}
+                <span className="absolute left-1.5 top-1.5 rounded-full bg-amber-400 px-1.5 py-0.5 text-[7px] font-black tracking-wide text-blue-950 sm:left-3 sm:top-3 sm:px-2.5 sm:py-1 sm:text-[9px] lg:left-4 lg:top-4 lg:px-3 lg:py-2 lg:text-[10px]">
                   {item.level}
                 </span>
 
-                <span className="absolute bottom-4 right-5 text-3xl font-black text-white/70 sm:text-4xl">
+                {/* Competition number */}
+                <span className="absolute bottom-1.5 right-2 text-xl font-black text-white/80 sm:bottom-4 sm:right-5 sm:text-4xl">
                   {item.number}
                 </span>
               </div>
 
-              <div className="p-2.5 sm:p-4 lg:p-5">
-                <h3 className="text-xs font-extrabold leading-4 text-blue-950 sm:text-base sm:leading-5 lg:text-lg lg:leading-6">
+              {/* Compact card content */}
+              <div className="p-2 sm:p-4 lg:p-5">
+                <h3 className="text-[11px] font-extrabold leading-[1.15rem] text-blue-950 sm:text-base sm:leading-5 lg:text-lg lg:leading-6">
                   {item.title}
                 </h3>
 
-                <p className="mt-2 text-[10px] leading-4 text-slate-600 sm:mt-3 sm:text-xs sm:leading-5 lg:text-sm lg:leading-6">
+                <p className="mt-1.5 text-[9px] leading-[1.1rem] text-slate-600 sm:mt-3 sm:text-xs sm:leading-5 lg:text-sm lg:leading-6">
                   {item.description}
                 </p>
 
-                <div className="mt-4 sm:mt-5 h-1 w-12 rounded-full bg-amber-400 transition-all duration-300 group-hover:w-20" />
+                {/* Decorative bottom line */}
+                <div className="mt-2.5 h-1 w-8 rounded-full bg-amber-400 transition-all duration-300 group-hover:w-14 sm:mt-5 sm:w-12 sm:group-hover:w-20" />
               </div>
             </article>
           ))}
@@ -426,6 +434,7 @@ function Competitions() {
     </section>
   );
 }
+
 
 function Championships() {
   return (
