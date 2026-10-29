@@ -531,7 +531,7 @@ export default function StudentProfile({
                   Student profile
                 </p>
 
-                <h3 className="mt-1 break-words text-xl font-black sm:text-2xl">
+                <h3 className="mt-1 break-words text-xl text-white font-black sm:text-2xl">
                   {form.name || 'Student Name'}
                 </h3>
 

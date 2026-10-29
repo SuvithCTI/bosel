@@ -625,7 +625,7 @@ export default function StudentDashboard({
                 Student Dashboard
               </span>
 
-              <h2 className="mt-3 text-xl font-white tracking-tight sm:text-3xl lg:text-4xl">
+              <h2 className="mt-3 text-xl text-white font-black tracking-tight sm:text-3xl lg:text-4xl">
                 Welcome back, {displayName.split(' ')[0]}!
               </h2>
 
@@ -645,7 +645,7 @@ export default function StudentDashboard({
                   Registered Program
                 </p>
 
-                <p className="mt-1 break-words text-xs font-bold leading-5 sm:text-sm">
+                <p className="mt-1 break-words text-xs  text-white font-bold leading-5 sm:text-sm">
                   {student?.program ||
                     student?.course ||
                     'Your registered course'}

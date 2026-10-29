@@ -88,7 +88,7 @@ export default function StudentCourse({ student, onViewCertificate }) {
                   Registered Program
                 </span>
 
-                <h3 className="mt-2 sm:mt-3 break-words text-lg sm:text-2xl font-black leading-snug">
+                <h3 className="mt-2 sm:mt-3 break-words text-lg text-white sm:text-2xl font-black leading-snug">
                   {courseName}
                 </h3>
 
