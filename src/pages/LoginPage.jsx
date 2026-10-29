@@ -273,29 +273,10 @@ export default function LoginPage({
   const handleLogout = () => {
     clearActiveSession();
 
-<<<<<<< HEAD
-              {/* No account link */}
-              {setActivePage && (
-                <div className="text-center pt-1 border-t border-slate-100">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (typeof window !== 'undefined') {
-                        window.dispatchEvent(new CustomEvent('open_admission_modal'));
-                      }
-                    }}
-                    className="text-xs text-sky-800 hover:text-sky-950 font-bold hover:underline"
-                  >
-                    Don't have login credentials? Submit Admission Form →
-                  </button>
-                </div>
-              )}
-=======
     setCurrentUser(null);
     setPassword('');
     setErrorMessage('');
     setSelectedCertForModal(null);
->>>>>>> c50edad8cbcf0ffb49865f40e1e8aff9f12df0e6
 
     // Preserve remembered User ID when enabled.
     if (!localStorage.getItem('bsel_remember_user')) {
