@@ -1,7 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 
 import {
-  BookOpen,
   UserRound,
   Bell,
   LogOut,
@@ -13,6 +12,7 @@ import {
   Menu,
   X,
   Award,
+  BookOpen,
 } from 'lucide-react';
 
 import StudentCourse from './StudentCourse';
@@ -53,7 +53,6 @@ export default function StudentDashboard({
 
   const [notifications, setNotifications] = useState([]);
 
-  // Student details
   const displayName =
     student?.name || student?.studentName || 'Student';
 
@@ -72,7 +71,7 @@ export default function StudentDashboard({
     [displayName]
   );
 
-  // Load notifications and listen for changes.
+  // Load notifications.
   useEffect(() => {
     const loadNotifications = () => {
       try {
@@ -149,16 +148,14 @@ export default function StudentDashboard({
     (notification) => !notification.read
   ).length;
 
-  // Main navigation.
   const selectSection = (section) => {
     setActiveSection(section);
-
     setNotificationMenuOpen(false);
     setProfileMenuOpen(false);
     setMobileMenuOpen(false);
   };
 
-  // Open notifications in a popup, similar to My Profile and Certificates.
+  // Notifications open in a modal.
   const openNotifications = () => {
     setNotificationMenuOpen(false);
     setProfileMenuOpen(false);
@@ -170,16 +167,17 @@ export default function StudentDashboard({
     setNotificationPopupOpen(false);
   };
 
-  // Open profile popup.
   const openProfilePopup = () => {
     setProfileMenuOpen(false);
     setNotificationMenuOpen(false);
     setMobileMenuOpen(false);
-
     setProfilePopupOpen(true);
   };
 
-  // Open certificates in a popup, similar to the profile popup.
+  const closeProfilePopup = () => {
+    setProfilePopupOpen(false);
+  };
+
   const openCertificates = () => {
     setProfileMenuOpen(false);
     setNotificationMenuOpen(false);
@@ -191,15 +189,8 @@ export default function StudentDashboard({
     setCertificatePopupOpen(false);
   };
 
-  // Mark a notification as read.
-  const handleNotificationClick = (notification) => {
-    const updatedNotifications = notifications.map(
-      (item) =>
-        item.id === notification.id
-          ? { ...item, read: true }
-          : item
-    );
-
+  // Update a notification's read status.
+  const saveNotifications = (updatedNotifications) => {
     setNotifications(updatedNotifications);
 
     try {
@@ -213,15 +204,24 @@ export default function StudentDashboard({
       );
     } catch (error) {
       console.error(
-        'Unable to update notification:',
+        'Unable to update notifications:',
         error
       );
     }
+  };
 
+  const handleNotificationClick = (notification) => {
+    const updatedNotifications = notifications.map(
+      (item) =>
+        item.id === notification.id
+          ? { ...item, read: true }
+          : item
+    );
+
+    saveNotifications(updatedNotifications);
     openNotifications();
   };
 
-  // Mark all notifications for this student as read.
   const handleMarkAllRead = () => {
     const studentNotificationIds = new Set(
       studentNotifications.map(
@@ -236,26 +236,9 @@ export default function StudentDashboard({
           : notification
     );
 
-    setNotifications(updatedNotifications);
-
-    try {
-      localStorage.setItem(
-        NOTIFICATION_STORAGE_KEY,
-        JSON.stringify(updatedNotifications)
-      );
-
-      window.dispatchEvent(
-        new Event('bsel_notifications_changed')
-      );
-    } catch (error) {
-      console.error(
-        'Unable to mark notifications as read:',
-        error
-      );
-    }
+    saveNotifications(updatedNotifications);
   };
 
-  // Desktop navigation styles.
   const getNavigationClass = (isActive) =>
     `inline-flex shrink-0 items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-bold transition lg:px-4 ${
       isActive
@@ -263,14 +246,8 @@ export default function StudentDashboard({
         : 'text-slate-600 hover:bg-blue-50 hover:text-blue-950'
     }`;
 
-  // Render active page.
   const renderSection = () => {
     switch (activeSection) {
-      case 'notifications':
-        return (
-          <StudentNotifications student={student} />
-        );
-
       case 'course':
       default:
         return (
@@ -282,7 +259,6 @@ export default function StudentDashboard({
     }
   };
 
-  // Render navigation items.
   const renderNavigationItems = (mobile = false) =>
     navigationItems.map((item) => {
       const Icon = item.icon;
@@ -323,14 +299,10 @@ export default function StudentDashboard({
 
   return (
     <div className="min-h-screen overflow-x-clip bg-slate-50">
-
-      {/* ================= HEADER ================= */}
-
+      {/* HEADER */}
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">
         <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-2 px-3 py-3 sm:gap-3 sm:px-6 lg:px-8">
-
           {/* LOGO */}
-
           <div className="flex min-w-0 shrink-0 items-center gap-2.5 sm:gap-3">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white sm:h-11 sm:w-11">
               <img
@@ -352,7 +324,6 @@ export default function StudentDashboard({
           </div>
 
           {/* DESKTOP NAVIGATION */}
-
           <nav
             aria-label="Student navigation"
             className="hidden items-center gap-2 md:flex"
@@ -361,11 +332,7 @@ export default function StudentDashboard({
           </nav>
 
           {/* HEADER ACTIONS */}
-
           <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
-
-            {/* DESKTOP STUDENT DETAILS */}
-
             <div className="hidden border-r border-slate-200 pr-3 text-right lg:block">
               <p className="max-w-36 truncate text-sm font-bold text-slate-900">
                 {displayName}
@@ -376,16 +343,12 @@ export default function StudentDashboard({
               </p>
             </div>
 
-            {/* ================= NOTIFICATIONS ================= */}
-
+            {/* NOTIFICATIONS DROPDOWN */}
             <div className="relative shrink-0">
               <button
                 type="button"
                 onClick={() => {
-                  setNotificationMenuOpen(
-                    (previous) => !previous
-                  );
-
+                  setNotificationMenuOpen((previous) => !previous);
                   setProfileMenuOpen(false);
                   setMobileMenuOpen(false);
                 }}
@@ -401,9 +364,7 @@ export default function StudentDashboard({
 
                 {unreadCount > 0 && (
                   <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-white bg-rose-600 px-1 text-[9px] font-black text-white">
-                    {unreadCount > 99
-                      ? '99+'
-                      : unreadCount}
+                    {unreadCount > 99 ? '99+' : unreadCount}
                   </span>
                 )}
               </button>
@@ -414,15 +375,10 @@ export default function StudentDashboard({
                     type="button"
                     aria-label="Close notification menu"
                     className="fixed inset-0 z-40 cursor-default"
-                    onClick={() =>
-                      setNotificationMenuOpen(false)
-                    }
+                    onClick={() => setNotificationMenuOpen(false)}
                   />
 
                   <div className="fixed right-3 top-[65px] z-50 w-[calc(100vw-24px)] max-w-[380px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl sm:absolute sm:right-0 sm:top-12 sm:w-96">
-
-                    {/* NOTIFICATION HEADING */}
-
                     <div className="flex items-center justify-between gap-3 border-b border-slate-100 bg-slate-50 px-4 py-4">
                       <div>
                         <h3 className="text-sm font-black text-blue-950">
@@ -431,11 +387,7 @@ export default function StudentDashboard({
 
                         <p className="mt-1 text-xs text-slate-500">
                           {unreadCount > 0
-                            ? `${unreadCount} unread notification${
-                                unreadCount === 1
-                                  ? ''
-                                  : 's'
-                              }`
+                            ? `${unreadCount} unread notification${unreadCount === 1 ? '' : 's'}`
                             : 'You are all caught up'}
                         </p>
                       </div>
@@ -445,20 +397,14 @@ export default function StudentDashboard({
                       </div>
                     </div>
 
-                    {/* NOTIFICATION LIST */}
-
                     <div className="max-h-[55vh] overflow-y-auto">
                       {studentNotifications.length > 0 ? (
                         studentNotifications
                           .slice()
                           .sort(
                             (a, b) =>
-                              new Date(
-                                b.createdAt || 0
-                              ).getTime() -
-                              new Date(
-                                a.createdAt || 0
-                              ).getTime()
+                              new Date(b.createdAt || 0).getTime() -
+                              new Date(a.createdAt || 0).getTime()
                           )
                           .slice(0, 5)
                           .map((notification) => (
@@ -466,9 +412,7 @@ export default function StudentDashboard({
                               key={notification.id}
                               type="button"
                               onClick={() =>
-                                handleNotificationClick(
-                                  notification
-                                )
+                                handleNotificationClick(notification)
                               }
                               className={`flex w-full items-start gap-3 border-b border-slate-100 px-4 py-3.5 text-left transition hover:bg-blue-50 ${
                                 !notification.read
@@ -489,8 +433,7 @@ export default function StudentDashboard({
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-start justify-between gap-2">
                                   <p className="text-xs font-extrabold text-slate-900">
-                                    {notification.title ||
-                                      'B★SEL Update'}
+                                    {notification.title || 'B★SEL Update'}
                                   </p>
 
                                   {!notification.read && (
@@ -509,9 +452,7 @@ export default function StudentDashboard({
                                     <Clock className="h-3 w-3" />
 
                                     {Number.isNaN(
-                                      new Date(
-                                        notification.createdAt
-                                      ).getTime()
+                                      new Date(notification.createdAt).getTime()
                                     )
                                       ? ''
                                       : new Date(
@@ -533,14 +474,11 @@ export default function StudentDashboard({
                           </p>
 
                           <p className="mt-1 text-xs leading-5 text-slate-500">
-                            Course updates and announcements
-                            will appear here.
+                            Course updates and announcements will appear here.
                           </p>
                         </div>
                       )}
                     </div>
-
-                    {/* NOTIFICATION ACTIONS */}
 
                     <div className="space-y-1 border-t border-slate-100 p-3">
                       {unreadCount > 0 && (
@@ -568,16 +506,12 @@ export default function StudentDashboard({
               )}
             </div>
 
-            {/* ================= PROFILE DROPDOWN ================= */}
-
+            {/* PROFILE DROPDOWN */}
             <div className="relative shrink-0">
               <button
                 type="button"
                 onClick={() => {
-                  setProfileMenuOpen(
-                    (previous) => !previous
-                  );
-
+                  setProfileMenuOpen((previous) => !previous);
                   setNotificationMenuOpen(false);
                   setMobileMenuOpen(false);
                 }}
@@ -599,30 +533,21 @@ export default function StudentDashboard({
 
                 <ChevronDown
                   className={`h-4 w-4 text-slate-500 transition-transform ${
-                    profileMenuOpen
-                      ? 'rotate-180'
-                      : ''
+                    profileMenuOpen ? 'rotate-180' : ''
                   }`}
                 />
               </button>
 
               {profileMenuOpen && (
                 <>
-                  {/* Close menu when clicking outside */}
-
                   <button
                     type="button"
                     aria-label="Close profile menu"
                     className="fixed inset-0 z-40 cursor-default"
-                    onClick={() =>
-                      setProfileMenuOpen(false)
-                    }
+                    onClick={() => setProfileMenuOpen(false)}
                   />
 
                   <div className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 shadow-xl sm:w-60">
-
-                    {/* STUDENT INFORMATION */}
-
                     <div className="border-b border-slate-100 px-3 py-3">
                       <p className="truncate text-sm font-extrabold text-blue-950">
                         {displayName}
@@ -633,19 +558,14 @@ export default function StudentDashboard({
                       </p>
                     </div>
 
-                    {/* MY PROFILE */}
-
                     <button
                       type="button"
                       onClick={openProfilePopup}
                       className="mt-2 flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-bold text-slate-700 transition hover:bg-blue-50 hover:text-blue-950"
                     >
                       <UserRound className="h-5 w-5 text-blue-800" />
-
                       <span>My Profile</span>
                     </button>
-
-                    {/* CERTIFICATES */}
 
                     <button
                       type="button"
@@ -653,24 +573,20 @@ export default function StudentDashboard({
                       className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-bold text-slate-700 transition hover:bg-amber-50 hover:text-blue-950"
                     >
                       <Award className="h-5 w-5 text-amber-600" />
-
                       <span>Certificates</span>
                     </button>
 
                     <div className="my-1 border-t border-slate-100" />
 
-                    {/* LOGOUT */}
-
                     <button
                       type="button"
                       onClick={() => {
                         setProfileMenuOpen(false);
-                        onLogout();
+                        onLogout?.();
                       }}
                       className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-bold text-rose-600 transition hover:bg-rose-50"
                     >
                       <LogOut className="h-5 w-5" />
-
                       <span>Logout</span>
                     </button>
                   </div>
@@ -678,14 +594,28 @@ export default function StudentDashboard({
               )}
             </div>
 
-            {/* MOBILE HAMBURGER */}
-
-            
+            {/* MOBILE MENU BUTTON */}
+            <button
+              type="button"
+              onClick={() => {
+                setMobileMenuOpen((previous) => !previous);
+                setNotificationMenuOpen(false);
+                setProfileMenuOpen(false);
+              }}
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 text-slate-700 transition hover:bg-blue-50 md:hidden"
+              aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+              aria-expanded={mobileMenuOpen}
+            >
+              {mobileMenuOpen ? (
+                <X className="h-5 w-5" />
+              ) : (
+                <Menu className="h-5 w-5" />
+              )}
+            </button>
           </div>
         </div>
 
-        {/* ================= MOBILE NAVIGATION ================= */}
-
+        {/* MOBILE NAVIGATION */}
         {mobileMenuOpen && (
           <>
             <button
@@ -696,9 +626,6 @@ export default function StudentDashboard({
             />
 
             <div className="absolute left-0 right-0 top-full z-50 border-t border-slate-200 bg-white p-4 shadow-xl md:hidden">
-
-              {/* STUDENT DETAILS */}
-
               <div className="mb-4 flex items-center gap-3 rounded-2xl bg-slate-50 p-3">
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-amber-100 text-sm font-black text-blue-950 ring-2 ring-amber-200">
                   {initials || 'S'}
@@ -719,8 +646,6 @@ export default function StudentDashboard({
                 Student Navigation
               </p>
 
-              {/* MY COURSE */}
-
               <nav
                 aria-label="Mobile student navigation"
                 className="space-y-1.5"
@@ -728,35 +653,24 @@ export default function StudentDashboard({
                 {renderNavigationItems(true)}
               </nav>
 
-              {/* NOTIFICATIONS */}
-
               <button
                 type="button"
                 onClick={openNotifications}
-                className={`mt-2 flex w-full items-center gap-3 rounded-xl px-4 py-3.5 text-left text-sm font-bold transition ${
-                  activeSection === 'notifications'
-                    ? 'bg-blue-950 text-white'
-                    : 'text-slate-700 hover:bg-blue-50 hover:text-blue-950'
-                }`}
+                className="mt-2 flex w-full items-center gap-3 rounded-xl px-4 py-3.5 text-left text-sm font-bold text-slate-700 transition hover:bg-blue-50 hover:text-blue-950"
               >
                 <span className="relative">
                   <Bell className="h-5 w-5" />
 
                   {unreadCount > 0 && (
                     <span className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-600 px-1 text-[9px] font-black text-white">
-                      {unreadCount > 99
-                        ? '99+'
-                        : unreadCount}
+                      {unreadCount > 99 ? '99+' : unreadCount}
                     </span>
                   )}
                 </span>
 
                 <span>Notifications</span>
-
                 <ChevronRight className="ml-auto h-4 w-4" />
               </button>
-
-              {/* PROFILE SHORTCUT */}
 
               <button
                 type="button"
@@ -764,13 +678,9 @@ export default function StudentDashboard({
                 className="mt-2 flex w-full items-center gap-3 rounded-xl px-4 py-3.5 text-left text-sm font-bold text-slate-700 transition hover:bg-blue-50 hover:text-blue-950"
               >
                 <UserRound className="h-5 w-5" />
-
                 <span>My Profile</span>
-
                 <ChevronRight className="ml-auto h-4 w-4" />
               </button>
-
-              {/* CERTIFICATES SHORTCUT */}
 
               <button
                 type="button"
@@ -778,24 +688,19 @@ export default function StudentDashboard({
                 className="mt-1 flex w-full items-center gap-3 rounded-xl px-4 py-3.5 text-left text-sm font-bold text-slate-700 transition hover:bg-amber-50 hover:text-blue-950"
               >
                 <Award className="h-5 w-5 text-amber-600" />
-
                 <span>Certificates</span>
-
                 <ChevronRight className="ml-auto h-4 w-4" />
               </button>
-
-              {/* LOGOUT */}
 
               <button
                 type="button"
                 onClick={() => {
                   setMobileMenuOpen(false);
-                  onLogout();
+                  onLogout?.();
                 }}
                 className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3.5 text-sm font-bold text-rose-700 transition hover:bg-rose-100"
               >
                 <LogOut className="h-4 w-4" />
-
                 Logout
               </button>
             </div>
@@ -803,71 +708,46 @@ export default function StudentDashboard({
         )}
       </header>
 
-      {/* ================= DASHBOARD CONTENT ================= */}
-
+      {/* DASHBOARD CONTENT */}
       <div className="mx-auto max-w-[1600px] px-3 py-4 sm:px-6 sm:py-7 lg:px-8 lg:py-8">
-
-        {/* WELCOME BANNER */}
-
         <section className="relative mb-5 overflow-hidden rounded-2xl bg-gradient-to-r from-[#0F2B5C] via-[#143B7A] to-[#1E4D99] p-4 text-white shadow-lg sm:mb-6 sm:rounded-3xl sm:p-7 lg:p-8">
-
           <div className="pointer-events-none absolute -right-10 -top-20 h-56 w-56 rounded-full border-[30px] border-white/5" />
 
           <div className="pointer-events-none absolute -bottom-24 right-32 h-52 w-52 rounded-full bg-amber-400/10 blur-2xl" />
 
-          <div className="relative flex flex-col justify-between gap-4 md:flex-row md:items-center md:gap-5">
+          <div className="relative">
+            <h2 className="mt-3 text-xl font-black tracking-tight text-white sm:text-3xl lg:text-4xl">
+              Welcome back, {displayName.split(' ')[0]}!
+            </h2>
 
-            <div className="min-w-0">
-             
-
-              <h2 className="mt-3 text-xl font-black tracking-tight text-white sm:text-3xl lg:text-4xl">
-                Welcome back,{' '}
-                {displayName.split(' ')[0]}!
-              </h2>
-
-              <p className="mt-2 max-w-2xl text-xs leading-5 text-blue-100 sm:text-sm sm:leading-6 lg:text-base">
-                Manage your registered course, keep your
-                profile updated, and stay informed about
-                important B★SEL announcements.
-              </p>
-            </div>
-
-            
+            <p className="mt-2 max-w-2xl text-xs leading-5 text-blue-100 sm:text-sm sm:leading-6 lg:text-base">
+              Manage your registered course, keep your profile updated,
+              and stay informed about important B★SEL announcements.
+            </p>
           </div>
         </section>
 
-        {/* ACTIVE PAGE */}
-
-        <main className="min-w-0">
-          {renderSection()}
-        </main>
-
-        {/* FOOTER */}
+        <main className="min-w-0">{renderSection()}</main>
 
         <footer className="mt-6 border-t border-slate-200 py-4 text-center text-[10px] text-slate-500 sm:mt-8 sm:py-5 sm:text-xs">
-          © {new Date().getFullYear()} B★SEL Learning
-          Platform. All rights reserved.
+          © {new Date().getFullYear()} B★SEL Learning Platform. All rights reserved.
         </footer>
       </div>
 
-      {/* ================= MY PROFILE POPUP ================= */}
-
+      {/* MY PROFILE POPUP */}
       {profilePopupOpen && (
         <div
           className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/60 p-3 backdrop-blur-sm sm:p-6"
-          onClick={() => setProfilePopupOpen(false)}
+          onClick={closeProfilePopup}
         >
           <div
             role="dialog"
             aria-modal="true"
             aria-labelledby="student-profile-title"
-            className="relative flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-slate-50 shadow-2xl sm:rounded-3xl"
+            className="relative flex max-h-[85vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-slate-50 shadow-2xl sm:rounded-3xl"
             onClick={(event) => event.stopPropagation()}
           >
-
-            {/* POPUP HEADER */}
-
-            <div className="sticky top-0 z-20 flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-4 sm:px-6">
+            <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-3 sm:px-6">
               <div className="min-w-0">
                 <h2
                   id="student-profile-title"
@@ -883,7 +763,7 @@ export default function StudentDashboard({
 
               <button
                 type="button"
-                onClick={() => setProfilePopupOpen(false)}
+                onClick={closeProfilePopup}
                 className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-600 transition hover:bg-rose-50 hover:text-rose-600"
                 aria-label="Close profile popup"
               >
@@ -891,9 +771,7 @@ export default function StudentDashboard({
               </button>
             </div>
 
-            {/* EXISTING STUDENT PROFILE */}
-
-            <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-6">
+            <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-5">
               <StudentProfile
                 student={student}
                 onUpdateStudent={onUpdateStudent}
@@ -902,113 +780,152 @@ export default function StudentDashboard({
           </div>
         </div>
       )}
+      
+{/* RESULTS & CERTIFICATES POPUP */}
 
-      {/* ================= CERTIFICATES POPUP ================= */}
+{/* RESULTS & CERTIFICATES POPUP */}
+{certificatePopupOpen && (
+  <div
+    className="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden bg-slate-950/70 p-2 backdrop-blur-sm sm:p-4"
+    onClick={closeCertificatesPopup}
+  >
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="student-certificates-title"
+      className="relative flex max-h-[65vh] w-full max-w-5xl flex-col overflow-hidden rounded-xl bg-slate-50 shadow-2xl sm:max-h-[60vh] sm:rounded-2xl"
+      onClick={(event) => event.stopPropagation()}
+    >
+      {/* COMPACT HEADER */}
+      <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-3 py-2 sm:px-5 sm:py-2.5">
+        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-700 sm:h-9 sm:w-9">
+            <Award className="h-4 w-4 sm:h-5 sm:w-5" />
+          </div>
 
-      {certificatePopupOpen && (
-        <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/60 p-3 backdrop-blur-sm sm:p-6"
-          onClick={closeCertificatesPopup}
-        >
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="student-certificates-title"
-            className="relative flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-slate-50 shadow-2xl sm:rounded-3xl"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-4 sm:px-6">
-              <div className="flex min-w-0 items-center gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700 sm:h-12 sm:w-12">
-                  <Award className="h-5 w-5 sm:h-6 sm:w-6" />
-                </div>
-                <div className="min-w-0">
-                  <h2 id="student-certificates-title" className="text-lg font-black text-blue-950 sm:text-xl">
-                    Results & Certificates
-                  </h2>
-                  <p className="mt-1 text-xs text-slate-500 sm:text-sm">
-                    View your published examination results and certificates.
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={closeCertificatesPopup}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-600 transition hover:bg-rose-50 hover:text-rose-600"
-                aria-label="Close certificates popup"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
+          <div className="min-w-0">
+            <h2
+              id="student-certificates-title"
+              className="text-sm font-black text-blue-950 sm:text-base"
+            >
+              Results & Certificates
+            </h2>
 
-            <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-6">
-              {Array.isArray(student?.results) && student.results.length > 0 ? (
-                <div className="space-y-3">
-                  {student.results.map((result, index) => (
-                    <div
-                      key={result.id || `${result.exam || 'result'}-${index}`}
-                      className="flex flex-col gap-3 rounded-xl border border-amber-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:rounded-2xl sm:p-5"
-                    >
-                      <div className="min-w-0 flex-1">
-                        <h3 className="break-words text-sm font-extrabold text-slate-900 sm:text-base">
-                          {result.exam || 'Examination Result'}
-                        </h3>
-                        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-2 text-xs text-slate-600">
-                          <span>Score: <strong className="text-slate-900">{result.score ?? 'Pending'}</strong></span>
-                          <span>Rank: <strong className="text-slate-900">{result.rank ?? 'Pending'}</strong></span>
-                          {result.certificateNo && (
-                            <span>
-                              Certificate:{' '}
-                              <strong className="break-all font-mono text-slate-800">{result.certificateNo}</strong>
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      {result.certificateNo && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            // Close this dashboard popup before opening the certificate viewer.
-                            closeCertificatesPopup();
-
-                            const certificateData = {
-                              studentName: student?.name || student?.studentName || 'Student',
-                              courseName: student?.program || student?.course || 'Abacus Speed Math (Level 4) & Fine Arts',
-                              level: student?.level || 'As per registration',
-                              grade: result.grade || 'A+',
-                              certificateNo: result.certificateNo,
-                              centreName: student?.institution || 'Not specified',
-                            };
-
-                            window.requestAnimationFrame(() => {
-                              onViewCertificate?.(certificateData);
-                            });
-                          }}
-                          className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-amber-400 px-4 py-3 text-xs font-extrabold text-slate-950 transition hover:bg-amber-500 sm:w-auto"
-                        >
-                          <Award className="h-4 w-4" />
-                          View Certificate
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="rounded-2xl border border-dashed border-amber-200 bg-amber-50/50 px-4 py-10 text-center sm:px-6 sm:py-12">
-                  <Award className="mx-auto h-9 w-9 text-amber-500" />
-                  <h3 className="mt-3 text-sm font-extrabold text-slate-800 sm:text-base">Results not published yet</h3>
-                  <p className="mx-auto mt-2 max-w-md text-xs leading-5 text-slate-500 sm:text-sm sm:leading-6">
-                    Your examination results and certificates will appear here after they are published for your registered examinations.
-                  </p>
-                </div>
-              )}
-            </div>
+            <p className="hidden text-[11px] text-slate-500 sm:block">
+              View your published examination results and certificates.
+            </p>
           </div>
         </div>
-      )}
 
-      {/* ================= NOTIFICATIONS POPUP ================= */}
+        <button
+          type="button"
+          onClick={closeCertificatesPopup}
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:bg-rose-50 hover:text-rose-600"
+          aria-label="Close certificates popup"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </div>
 
+      {/* COMPACT SCROLLABLE CONTENT */}
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-2 sm:p-3">
+        {Array.isArray(student?.results) &&
+        student.results.length > 0 ? (
+          <div className="space-y-2">
+            {student.results.map((result, index) => (
+              <div
+                key={result.id || `${result.exam || 'result'}-${index}`}
+                className="flex flex-col gap-2 rounded-xl border border-amber-200 bg-white p-2.5 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:p-3"
+              >
+                <div className="min-w-0 flex-1">
+                  <h3 className="break-words text-sm font-extrabold text-slate-900">
+                    {result.exam || 'Examination Result'}
+                  </h3>
+
+                  <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1.5 text-xs text-slate-600">
+                    <span>
+                      Score:{' '}
+                      <strong className="text-slate-900">
+                        {result.score ?? 'Pending'}
+                      </strong>
+                    </span>
+
+                    <span>
+                      Rank:{' '}
+                      <strong className="text-slate-900">
+                        {result.rank ?? 'Pending'}
+                      </strong>
+                    </span>
+
+                    {result.certificateNo && (
+                      <span className="min-w-0">
+                        Certificate:{' '}
+                        <strong className="break-all font-mono text-slate-800">
+                          {result.certificateNo}
+                        </strong>
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {result.certificateNo && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const certificateData = {
+                        studentName:
+                          student?.name ||
+                          student?.studentName ||
+                          'Student',
+                        courseName:
+                          student?.program ||
+                          student?.course ||
+                          'Abacus Speed Math (Level 4) & Fine Arts',
+                        level:
+                          student?.level || 'As per registration',
+                        grade: result.grade || 'A+',
+                        certificateNo: result.certificateNo,
+                        centreName:
+                          student?.institution || 'Not specified',
+                      };
+
+                      closeCertificatesPopup();
+
+                      window.requestAnimationFrame(() => {
+                        onViewCertificate?.(certificateData);
+                      });
+                    }}
+                    className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-lg bg-amber-400 px-3 py-2 text-xs font-extrabold text-slate-950 transition hover:bg-amber-500 sm:w-auto"
+                  >
+                    <Award className="h-4 w-4" />
+                    View Certificate
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="flex min-h-40 flex-col items-center justify-center rounded-xl border border-dashed border-amber-200 bg-amber-50/50 px-4 py-5 text-center">
+            <Award className="h-7 w-7 text-amber-500" />
+
+            <h3 className="mt-2 text-sm font-extrabold text-slate-800">
+              Results not published yet
+            </h3>
+
+            <p className="mx-auto mt-1.5 max-w-md text-xs leading-5 text-slate-500">
+              Your examination results and certificates will appear here
+              after they are published for your registered examinations.
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+)}
+
+
+
+      {/* NOTIFICATIONS POPUP */}
       {notificationPopupOpen && (
         <div
           className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/60 p-3 backdrop-blur-sm sm:p-6"
@@ -1018,14 +935,15 @@ export default function StudentDashboard({
             role="dialog"
             aria-modal="true"
             aria-labelledby="student-notifications-title"
-            className="relative flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-slate-50 shadow-2xl sm:rounded-3xl"
+            className="relative flex max-h-[85vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-slate-50 shadow-2xl sm:rounded-3xl"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-4 sm:px-6">
+            <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-3 sm:px-6">
               <div className="flex min-w-0 items-center gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-950 sm:h-12 sm:w-12">
-                  <BellRing className="h-5 w-5 sm:h-6 sm:w-6" />
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-950">
+                  <BellRing className="h-5 w-5" />
                 </div>
+
                 <div className="min-w-0">
                   <h2
                     id="student-notifications-title"
@@ -1033,11 +951,13 @@ export default function StudentDashboard({
                   >
                     Notifications
                   </h2>
+
                   <p className="mt-1 text-xs text-slate-500 sm:text-sm">
                     View course updates and important announcements.
                   </p>
                 </div>
               </div>
+
               <button
                 type="button"
                 onClick={closeNotificationsPopup}
@@ -1048,7 +968,7 @@ export default function StudentDashboard({
               </button>
             </div>
 
-            <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-6">
+            <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-5">
               <StudentNotifications student={student} />
             </div>
           </div>
