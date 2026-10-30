@@ -260,7 +260,7 @@ export default function StudentNotifications({ student }) {
           </div>
 
           <div className="min-w-0">
-            <p className="text-xl sm:text-2xl font-black">
+            <p className="text-xl sm:text-2xl text-white font-black">
               {unreadCount} unread
             </p>
 

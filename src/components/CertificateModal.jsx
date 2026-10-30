@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { X, Award, Edit3 } from 'lucide-react';
 import Certificate from './Certificate';
@@ -5,243 +6,341 @@ import Certificate from './Certificate';
 export default function CertificateModal({
   isOpen = true,
   onClose,
-  initialData = {}
+  initialData = {},
 }) {
   const [studentName, setStudentName] = useState(() => {
     if (initialData.studentName) return initialData.studentName;
+
     if (typeof window !== 'undefined') {
       try {
         const saved = localStorage.getItem('bsel_registered_student');
+
         if (saved) {
           const parsed = JSON.parse(saved);
           if (parsed.studentName) return parsed.studentName;
         }
       } catch {
-        // ignore
+        // Ignore invalid localStorage data.
       }
     }
+
     return '';
   });
-  const [courseName, setCourseName] = useState(initialData.courseName || 'Abacus');
-  const [level, setLevel] = useState(initialData.level || 'Level 1');
-  const [grade, setGrade] = useState(initialData.grade || 'A');
+
+  const [courseName, setCourseName] = useState(
+    initialData.courseName || 'Abacus'
+  );
+
+  const [level, setLevel] = useState(
+    initialData.level || 'Level 1'
+  );
+
+  const [grade, setGrade] = useState(
+    initialData.grade || 'A'
+  );
+
   const duration = initialData.duration || '6 Months';
+
   const [registrationNo, setRegistrationNo] = useState(() => {
-    if (initialData.registrationNo) return initialData.registrationNo;
+    if (initialData.registrationNo) {
+      return initialData.registrationNo;
+    }
+
     if (typeof window !== 'undefined') {
       try {
         const saved = localStorage.getItem('bsel_registered_student');
+
         if (saved) {
           const parsed = JSON.parse(saved);
-          if (parsed.registrationNo) return parsed.registrationNo;
+          if (parsed.registrationNo) {
+            return parsed.registrationNo;
+          }
         }
       } catch {
-        // ignore
+       
       }
     }
+
     return 'AB27-001';
   });
-  const certificateNo = initialData.certificateNo || 'BSEL/ABACUS/L1/0007';
-  const [centreName, setCentreName] = useState(initialData.centreName || 'test branch');
+
+  const certificateNo =
+    initialData.certificateNo || 'BSEL/ABACUS/L1/0007';
+
+  const [centreName, setCentreName] = useState(
+    initialData.centreName || 'test branch'
+  );
+
   const centreCode = initialData.centreCode || '546454';
-  const centreAddress = initialData.centreAddress || 'second street, surandai,keelasurandai,tenkasi';
-  const [issueDate, setIssueDate] = useState(initialData.issueDate || '05-10-2026');
-  const [studentPhoto, setStudentPhoto] = useState(initialData.studentPhoto || null);
-  const [certificateType, setCertificateType] = useState(initialData.certificateType || 'COMPETITION');
+
+  const centreAddress =
+    initialData.centreAddress ||
+    'second street, surandai,keelasurandai,tenkasi';
+
+  const [issueDate, setIssueDate] = useState(
+    initialData.issueDate || '05-10-2026'
+  );
+
+  const [studentPhoto, setStudentPhoto] = useState(
+    initialData.studentPhoto || null
+  );
+
+  const [certificateType, setCertificateType] = useState(
+    initialData.certificateType || 'COMPETITION'
+  );
 
   const [isEditing, setIsEditing] = useState(false);
 
-  // Lock background scroll when modal is open
+  // Lock background scrolling while the modal is open.
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
+    if (!isOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
     return () => {
-      document.body.style.overflow = '';
+      document.body.style.overflow = previousOverflow;
     };
   }, [isOpen]);
 
   if (!isOpen) return null;
 
+  const fieldClass =
+    'h-8 w-full rounded-md border border-slate-700 bg-slate-900 px-2 text-xs text-white outline-none transition focus:border-amber-400 focus:ring-1 focus:ring-amber-400';
+
+  const labelClass =
+    'mb-0.5 block text-[9px] font-bold uppercase leading-3 tracking-wide text-slate-400';
+
+  const renderField = (label, control) => (
+    <div className="min-w-0" key={label}>
+      <label className={labelClass}>{label}</label>
+      {control}
+    </div>
+  );
+
   return (
-    <div 
-      className="fixed inset-0 z-50 overflow-y-auto overscroll-contain bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4"
+    <div
+      className="fixed inset-0 z-[200] flex items-center justify-center overflow-hidden bg-slate-950/85 p-2 backdrop-blur-sm sm:p-4"
       onClick={onClose}
     >
-      <div 
-        className="relative bg-slate-900 rounded-2xl max-w-5xl w-full shadow-2xl overflow-hidden border border-slate-700 animate-in fade-in zoom-in-95 duration-200 overscroll-contain"
-        onClick={(e) => e.stopPropagation()}
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Official BSEL Certificate Preview"
+        className="relative flex max-h-[94dvh] w-full max-w-5xl flex-col overflow-hidden rounded-xl border border-slate-700 bg-slate-900 shadow-2xl animate-in fade-in zoom-in-95 duration-200 sm:rounded-2xl"
+        onClick={(event) => event.stopPropagation()}
       >
-        {/* Modal Header */}
-        <div className="bg-[#0b2146] text-white px-3 sm:px-5 py-3 border-b border-amber-500/30">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 min-w-0">
-              <div className="p-1.5 rounded-lg bg-amber-400/10 text-amber-400 shrink-0 border border-amber-400/20">
-                <Award className="w-5 h-5" />
-              </div>
-              <div className="min-w-0">
-                <h3 className="font-black text-sm sm:text-base font-heading text-white truncate">
-                  Official B★SEL Certificate Preview
-                </h3>
-                <p className="text-[11px] text-slate-300 truncate">
-                  Course: <span className="text-amber-300 font-semibold uppercase">{courseName}</span> {studentName && <>| Candidate: <span className="text-amber-300 font-semibold capitalize">{studentName}</span></>}
-                </p>
-              </div>
+        {/* FIXED HEADER */}
+        <div className="flex shrink-0 items-center justify-between gap-2 border-b border-amber-500/30 bg-[#0b2146] px-3 py-2 sm:px-5 sm:py-2.5">
+          <div className="flex min-w-0 items-center gap-2">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-amber-400/20 bg-amber-400/10 text-amber-400 sm:h-9 sm:w-9">
+              <Award className="h-4 w-4 sm:h-5 sm:w-5" />
             </div>
 
-            <div className="flex items-center gap-1.5 shrink-0">
-              <button
-                type="button"
-                onClick={() => setIsEditing(!isEditing)}
-                className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition cursor-pointer active:scale-95 ${
-                  isEditing 
-                    ? 'bg-amber-400 text-slate-950' 
-                    : 'bg-white/10 hover:bg-white/20 text-white'
-                }`}
-              >
-                <Edit3 className="w-3.5 h-3.5" />
-                <span className="hidden xs:inline">{isEditing ? 'Done' : 'Customize'}</span>
-              </button>
+            <div className="min-w-0">
+              <h3 className="truncate text-xs font-black text-white sm:text-base">
+                Official B★SEL Certificate Preview
+              </h3>
 
-              <button
-                type="button"
-                onClick={onClose}
-                className="bg-white/10 hover:bg-white/20 text-white rounded-lg p-1.5 transition cursor-pointer active:scale-95"
-                aria-label="Close"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              <p className="truncate text-[9px] text-slate-300 sm:text-[11px]">
+                Course:{' '}
+                <span className="font-semibold uppercase text-amber-300">
+                  {courseName}
+                </span>
+
+                {studentName && (
+                  <>
+                    {' '}
+                    | Candidate:{' '}
+                    <span className="font-semibold capitalize text-amber-300">
+                      {studentName}
+                    </span>
+                  </>
+                )}
+              </p>
             </div>
+          </div>
+
+          <div className="flex shrink-0 items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => setIsEditing((previous) => !previous)}
+              aria-expanded={isEditing}
+              className={`flex h-8 items-center justify-center gap-1 rounded-lg px-2.5 text-xs font-bold transition active:scale-95 sm:px-3 ${
+                isEditing
+                  ? 'bg-amber-400 text-slate-950'
+                  : 'bg-white/10 text-white hover:bg-white/20'
+              }`}
+            >
+              <Edit3 className="h-3.5 w-3.5" />
+
+              <span>{isEditing ? 'Done' : 'Customize'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10 text-white transition hover:bg-white/20 active:scale-95"
+              aria-label="Close certificate preview"
+            >
+              <X className="h-4 w-4 sm:h-5 sm:w-5" />
+            </button>
           </div>
         </div>
 
-        {/* Customizable Form if user wants to tweak fields */}
+        {/* COMPACT EDITING PANEL */}
         {isEditing && (
-          <div className="bg-slate-800 p-3 sm:p-4 border-b border-slate-700 text-slate-200 text-xs animate-in slide-in-from-top-2">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3">
-              <div>
-                <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Candidate Name</label>
+          <div className="shrink-0 border-b border-slate-700 bg-slate-800 px-3 py-2 text-slate-200 animate-in slide-in-from-top-2 sm:px-4 sm:py-2.5">
+            <div className="grid grid-cols-2 gap-x-2.5 gap-y-2 sm:grid-cols-4 sm:gap-x-3 sm:gap-y-2">
+              {renderField(
+                'Candidate Name',
                 <input
                   type="text"
                   value={studentName}
-                  onChange={(e) => setStudentName(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white text-xs sm:text-sm focus:ring-1 focus:ring-amber-400 focus:outline-none"
+                  onChange={(event) => setStudentName(event.target.value)}
+                  className={fieldClass}
+                  placeholder="Candidate name"
                 />
-              </div>
+              )}
 
-              <div>
-                <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Course / Subject</label>
+              {renderField(
+                'Course / Subject',
                 <input
                   type="text"
                   value={courseName}
-                  onChange={(e) => setCourseName(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white text-xs sm:text-sm focus:ring-1 focus:ring-amber-400 focus:outline-none"
+                  onChange={(event) => setCourseName(event.target.value)}
+                  className={fieldClass}
+                  placeholder="Course name"
                 />
-              </div>
+              )}
 
-              <div>
-                <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Level</label>
+              {renderField(
+                'Level',
                 <input
                   type="text"
                   value={level}
-                  onChange={(e) => setLevel(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white text-xs sm:text-sm focus:ring-1 focus:ring-amber-400 focus:outline-none"
+                  onChange={(event) => setLevel(event.target.value)}
+                  className={fieldClass}
+                  placeholder="Level"
                 />
-              </div>
+              )}
 
-              <div>
-                <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Grade</label>
+              {renderField(
+                'Grade',
                 <select
                   value={grade}
-                  onChange={(e) => setGrade(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white text-xs sm:text-sm focus:ring-1 focus:ring-amber-400 focus:outline-none"
+                  onChange={(event) => setGrade(event.target.value)}
+                  className={fieldClass}
                 >
                   <option value="A+">A+ (Outstanding)</option>
                   <option value="A">A (Distinction)</option>
                   <option value="B">B (Merit)</option>
                   <option value="Passed">Passed</option>
                 </select>
-              </div>
+              )}
 
-              <div>
-                <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Certificate Type</label>
+              {renderField(
+                'Certificate Type',
                 <select
                   value={certificateType}
-                  onChange={(e) => setCertificateType(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white text-xs sm:text-sm focus:ring-1 focus:ring-amber-400 focus:outline-none"
+                  onChange={(event) =>
+                    setCertificateType(event.target.value)
+                  }
+                  className={fieldClass}
                 >
                   <option value="COMPETITION">COMPETITION</option>
                   <option value="COMPLETION">COMPLETION</option>
                 </select>
-              </div>
+              )}
 
-              <div>
-                <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Examination Centre</label>
+              {renderField(
+                'Examination Centre',
                 <input
                   type="text"
                   value={centreName}
-                  onChange={(e) => setCentreName(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white text-xs sm:text-sm focus:ring-1 focus:ring-amber-400 focus:outline-none"
+                  onChange={(event) => setCentreName(event.target.value)}
+                  className={fieldClass}
+                  placeholder="Centre name"
                 />
-              </div>
+              )}
 
-              <div>
-                <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Reg No.</label>
+              {renderField(
+                'Reg No.',
                 <input
                   type="text"
                   value={registrationNo}
-                  onChange={(e) => setRegistrationNo(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white text-xs sm:text-sm focus:ring-1 focus:ring-amber-400 focus:outline-none"
+                  onChange={(event) =>
+                    setRegistrationNo(event.target.value)
+                  }
+                  className={fieldClass}
+                  placeholder="Registration number"
                 />
-              </div>
+              )}
 
-              <div>
-                <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Date of Issue</label>
+              {renderField(
+                'Date of Issue',
                 <input
                   type="text"
                   value={issueDate}
-                  onChange={(e) => setIssueDate(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white text-xs sm:text-sm focus:ring-1 focus:ring-amber-400 focus:outline-none"
+                  onChange={(event) => setIssueDate(event.target.value)}
+                  className={fieldClass}
+                  placeholder="DD-MM-YYYY"
                 />
-              </div>
+              )}
+            </div>
+
+            <div className="mt-2 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setIsEditing(false)}
+                className="rounded-md bg-amber-400 px-3 py-1 text-[10px] font-extrabold text-slate-950 transition hover:bg-amber-300"
+              >
+                Done Editing
+              </button>
             </div>
           </div>
         )}
 
-        {/* Modal Scrollable Canvas Body */}
-        <div className="p-2 sm:p-5 max-h-[76vh] overflow-y-auto overscroll-contain flex justify-center bg-slate-950/60">
-          <Certificate
-            studentName={studentName}
-            courseName={courseName}
-            level={level}
-            grade={grade}
-            duration={duration}
-            registrationNo={registrationNo}
-            certificateNo={certificateNo}
-            centreName={centreName}
-            centreCode={centreCode}
-            centreAddress={centreAddress}
-            issueDate={issueDate}
-            studentPhoto={studentPhoto}
-            certificateType={certificateType}
-            onPhotoUpload={(photo) => setStudentPhoto(photo)}
-            showControls={true}
-          />
+        {/* SCROLLABLE CERTIFICATE PREVIEW */}
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-slate-950/60 p-2 sm:p-3">
+          <div className="flex min-h-full items-start justify-center">
+            <Certificate
+              studentName={studentName}
+              courseName={courseName}
+              level={level}
+              grade={grade}
+              duration={duration}
+              registrationNo={registrationNo}
+              certificateNo={certificateNo}
+              centreName={centreName}
+              centreCode={centreCode}
+              centreAddress={centreAddress}
+              issueDate={issueDate}
+              studentPhoto={studentPhoto}
+              certificateType={certificateType}
+              onPhotoUpload={(photo) => setStudentPhoto(photo)}
+              showControls={true}
+            />
+          </div>
         </div>
 
-        {/* Modal Footer */}
-        <div className="bg-slate-900 px-3 sm:px-5 py-2.5 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-400">
-          <div className="flex items-center gap-1.5 text-[11px] truncate">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
-            <span>Digital ID: <span className="font-mono text-slate-200">{certificateNo}</span></span>
+        {/* FIXED FOOTER */}
+        <div className="flex shrink-0 flex-col items-center justify-between gap-2 border-t border-slate-800 bg-slate-900 px-3 py-2 text-xs text-slate-400 sm:flex-row sm:px-5">
+          <div className="flex max-w-full items-center gap-1.5 text-[10px] sm:text-[11px]">
+            <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500" />
+
+            <span className="truncate">
+              Digital ID:{' '}
+              <span className="font-mono text-slate-200">
+                {certificateNo}
+              </span>
+            </span>
           </div>
 
           <button
             type="button"
             onClick={onClose}
-            className="w-full sm:w-auto px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition font-bold cursor-pointer"
+            className="w-full rounded-lg bg-slate-800 px-4 py-1.5 font-bold text-white transition hover:bg-slate-700 sm:w-auto"
           >
             Close Preview
           </button>

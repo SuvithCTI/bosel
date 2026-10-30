@@ -8,171 +8,169 @@ export default function Footer({ setActivePage, onOpenLegal }) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const linkClass =
+    'py-0.5 transition-colors duration-200 text-slate-300 hover:text-amber-400 cursor-pointer truncate';
+
   return (
-    <footer className="bg-[#0A1B36] text-slate-200 pt-6 sm:pt-16 pb-5 sm:pb-8 border-t-2 sm:border-t-4 border-amber-400">
-      <div className="w-full max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-10">
-        
-        {/* Main Footer Grid: Compact on mobile, spacious on tablet/desktop */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-10 pb-4 sm:pb-12 border-b border-slate-800">
-          
-          {/* Brand Info */}
-          <div className="space-y-2 sm:space-y-4">
+    <footer className="border-t-2 border-amber-400 bg-[#0A1B36] pt-5 pb-3 text-slate-200 sm:pt-7 sm:pb-4">
+      <div className="mx-auto w-full max-w-[1700px] px-4 sm:px-6 lg:px-8">
+
+        {/* Main Footer Content */}
+        <div className="grid grid-cols-1 gap-5 border-b border-slate-700/80 pb-4 sm:gap-6 sm:pb-5 md:grid-cols-3 md:gap-8">
+
+          {/* Brand Information */}
+          <div className="space-y-2">
             <div className="inline-block">
               <Logo size="small" lightText={true} />
             </div>
-            <p className="text-[11px] sm:text-sm text-slate-300 font-normal leading-relaxed line-clamp-2 sm:line-clamp-none">
-              Board of Skills and Educational Learning (B★SEL) is an autonomous educational initiative empowering students with cognitive development, life skills, and competitive excellence.
-            </p>
+
+            <p className="max-w-md text-justify [text-align-last:left] text-[11px] leading-relaxed text-slate-300 sm:text-xs">
+  Board of Skills and Educational Learning (B★SEL) is an autonomous educational initiative empowering students with cognitive development, life skills, and competitive excellence.
+</p>
           </div>
 
-          {/* Quick Links: 2 columns on mobile for compact height, 1 column on desktop */}
+          {/* Quick Links */}
           <div>
-            <h4 className="text-white text-xs sm:text-sm font-bold uppercase tracking-wider mb-2 sm:mb-4 border-l-2 border-amber-400 pl-2">
+            <h4 className="mb-2 border-l-2 border-amber-400 pl-2 text-xs font-bold uppercase tracking-wider text-white sm:text-sm">
               Quick Links
             </h4>
-            <ul className="grid grid-cols-2 md:grid-cols-1 gap-x-2 gap-y-1 sm:space-y-2 text-[11px] sm:text-xs">
+
+            <ul className="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px] sm:text-xs md:grid-cols-1 md:gap-y-1">
               <li>
-                <button
-                  type="button"
-                  onClick={() => handleNav('home')}
-                  className="hover:text-amber-400 py-0.5 sm:py-1 transition flex items-center cursor-pointer text-slate-300 hover:text-white truncate"
-                >
-                  <span>Home</span>
+                <button type="button" onClick={() => handleNav('home')} className={linkClass}>
+                  Home
                 </button>
               </li>
+
               <li>
-                <button
-                  type="button"
-                  onClick={() => handleNav('about')}
-                  className="hover:text-amber-400 py-0.5 sm:py-1 transition flex items-center cursor-pointer text-slate-300 hover:text-white truncate"
-                >
-                  <span>About Us</span>
+                <button type="button" onClick={() => handleNav('about')} className={linkClass}>
+                  About Us
                 </button>
               </li>
+
               <li>
-                <button
-                  type="button"
-                  onClick={() => handleNav('programs')}
-                  className="hover:text-amber-400 py-0.5 sm:py-1 transition flex items-center cursor-pointer text-slate-300 hover:text-white truncate"
-                >
-                  <span>Programs</span>
+                <button type="button" onClick={() => handleNav('programs')} className={linkClass}>
+                  Programs
                 </button>
               </li>
+
               <li>
-                <button
-                  type="button"
-                  onClick={() => handleNav('events')}
-                  className="hover:text-amber-400 py-0.5 sm:py-1 transition flex items-center cursor-pointer text-slate-300 hover:text-white truncate"
-                >
-                  <span>Events</span>
+                <button type="button" onClick={() => handleNav('events')} className={linkClass}>
+                  Events
                 </button>
               </li>
+
               <li>
-                <button
-                  type="button"
-                  onClick={() => handleNav('achievements')}
-                  className="hover:text-amber-400 py-0.5 sm:py-1 transition flex items-center cursor-pointer text-slate-300 hover:text-white truncate"
-                >
-                  <span>Achievements</span>
+                <button type="button" onClick={() => handleNav('achievements')} className={linkClass}>
+                  Achievements
                 </button>
               </li>
+
               <li>
-                <button
-                  type="button"
-                  onClick={() => handleNav('franchise')}
-                  className="hover:text-amber-400 py-0.5 sm:py-1 transition flex items-center cursor-pointer text-slate-300 hover:text-white truncate"
-                >
-                  <span>Franchise</span>
+                <button type="button" onClick={() => handleNav('franchise')} className={linkClass}>
+                  Franchise
                 </button>
               </li>
+
               <li>
-                <button
-                  type="button"
-                  onClick={() => handleNav('certificate')}
-                  className="hover:text-amber-400 py-0.5 sm:py-1 transition flex items-center cursor-pointer text-slate-300 hover:text-white truncate"
-                >
-                  <span>Certificates</span>
+                <button type="button" onClick={() => handleNav('certificate')} className={linkClass}>
+                  Certificates
                 </button>
               </li>
+
               <li>
-                <button
-                  type="button"
-                  onClick={() => handleNav('contact')}
-                  className="hover:text-amber-400 py-0.5 sm:py-1 transition flex items-center cursor-pointer text-slate-300 hover:text-white truncate"
-                >
-                  <span>Contact Us</span>
+                <button type="button" onClick={() => handleNav('contact')} className={linkClass}>
+                  Contact Us
                 </button>
               </li>
+
               <li className="col-span-2 md:col-span-1">
-                <button
-                  type="button"
-                  onClick={() => handleNav('login')}
-                  className="hover:text-amber-400 py-0.5 sm:py-1 transition flex items-center cursor-pointer text-slate-300 hover:text-white truncate"
-                >
-                  <span>Student Login</span>
+                <button type="button" onClick={() => handleNav('login')} className={linkClass}>
+                  Student Login
                 </button>
               </li>
             </ul>
           </div>
 
-          {/* Contact Details */}
+          {/* Secretariat Contact Details */}
           <div>
-            <h4 className="text-white text-xs sm:text-sm font-bold uppercase tracking-wider mb-2 sm:mb-4 border-l-2 border-amber-400 pl-2">
+            <h4 className="mb-2 border-l-2 border-amber-400 pl-2 text-xs font-bold uppercase tracking-wider text-white sm:text-sm">
               Secretariat
             </h4>
-            <ul className="space-y-1.5 sm:space-y-3 text-[11px] sm:text-xs text-slate-200 font-medium">
+
+            <ul className="space-y-2 text-[11px] font-medium text-slate-200 sm:text-xs">
               <li className="flex items-start gap-2">
-                <MapPin className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
-                <span className="line-clamp-2 sm:line-clamp-none">
+                <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-400" />
+                <span>
                   No. 42, Skill Tower, Gandhi Salai, T. Nagar, Chennai - 600017
                 </span>
               </li>
+
               <li className="flex items-center gap-2">
-                <Phone className="w-3.5 h-3.5 text-sky-400 shrink-0" />
-                <a href="tel:+919876543210" className="hover:text-amber-300 transition">+91 9876543210</a>
+                <Phone className="h-3.5 w-3.5 shrink-0 text-sky-400" />
+                <a href="tel:+919876543210" className="transition-colors hover:text-amber-300">
+                  +91 9876543210
+                </a>
               </li>
+
               <li className="flex items-center gap-2">
-                <Mail className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                <a href="mailto:contact@besellearning.org" className="hover:text-amber-300 transition">contact@besellearning.org</a>
+                <Mail className="h-3.5 w-3.5 shrink-0 text-emerald-400" />
+                <a
+                  href="mailto:contact@besellearning.org"
+                  className="break-all transition-colors hover:text-amber-300"
+                >
+                  contact@besellearning.org
+                </a>
               </li>
             </ul>
 
-            <div className="mt-2 sm:mt-3.5 p-2 sm:p-3 bg-slate-800/80 rounded-lg sm:rounded-xl border border-slate-700 text-[10px] sm:text-xs text-slate-300">
-              <span className="text-amber-300 font-bold">Helpline Hours: </span>
+            {/* Helpline Hours */}
+            <div className="mt-3 rounded-lg border border-slate-700 bg-slate-800/70 px-3 py-2 text-[10px] text-slate-300 sm:text-xs">
+              <span className="font-bold text-amber-300">Helpline Hours: </span>
               Mon - Sat: 9:00 AM - 6:30 PM (IST)
             </div>
           </div>
         </div>
 
-        {/* Bottom Credits & Copyright */}
-        <div className="pt-3 sm:pt-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-[10px] sm:text-xs text-slate-400 font-medium text-center sm:text-left">
+        {/* Copyright and Legal Links */}
+        <div className="flex flex-col items-center justify-between gap-2 pt-3 text-center text-[10px] font-medium text-slate-400 sm:flex-row sm:pt-4 sm:text-left sm:text-xs">
           <p>© 2026-2027 B★SEL Board. All Rights Reserved.</p>
-          <div className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-4">
-            <button 
-              type="button" 
-              className="hover:text-amber-400 font-bold cursor-pointer transition" 
-              onClick={() => onOpenLegal ? onOpenLegal('privacy') : handleNav('privacy')}
+
+          <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4">
+            <button
+              type="button"
+              className="font-bold transition-colors hover:text-amber-400"
+              onClick={() =>
+                onOpenLegal ? onOpenLegal('privacy') : handleNav('privacy')
+              }
             >
               Privacy
             </button>
-            <span>•</span>
-            <button 
-              type="button" 
-              className="hover:text-amber-400 font-bold cursor-pointer transition" 
-              onClick={() => onOpenLegal ? onOpenLegal('terms') : handleNav('terms')}
+
+            <span className="text-slate-600">•</span>
+
+            <button
+              type="button"
+              className="font-bold transition-colors hover:text-amber-400"
+              onClick={() =>
+                onOpenLegal ? onOpenLegal('terms') : handleNav('terms')
+              }
             >
               Terms
             </button>
-            <span>•</span>
-            <button 
-              type="button" 
-              className="hover:text-amber-400 font-bold cursor-pointer transition" 
+
+            <span className="text-slate-600">•</span>
+
+            <button
+              type="button"
+              className="font-bold transition-colors hover:text-amber-400"
               onClick={() => handleNav('franchise')}
             >
               Franchise
             </button>
           </div>
         </div>
+
       </div>
     </footer>
   );

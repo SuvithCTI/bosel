@@ -338,7 +338,7 @@ export default function LoginPage({
             <Logo lightText={true} />
           </div>
 
-          <h1 className="text-2xl font-black">
+          <h1 className="text-2xl font-white text-white">
             Student Login Portal
           </h1>
 

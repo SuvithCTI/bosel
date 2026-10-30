@@ -506,9 +506,7 @@ function Championships() {
                   {item.tag}
                 </span>
 
-                <div className="absolute bottom-2 left-2 flex h-7 w-7 items-center justify-center rounded-lg border border-white/30 bg-blue-950/70 text-xs font-black text-amber-400 backdrop-blur sm:bottom-3 sm:left-3 sm:h-10 sm:w-10 sm:rounded-xl sm:text-base lg:bottom-5 lg:left-5 lg:h-14 lg:w-14 lg:rounded-2xl lg:text-2xl">
-                  {index === 0 ? "04" : "★"}
-                </div>
+                
               </div>
 
               <div className="p-2.5 sm:p-4 lg:p-6">
