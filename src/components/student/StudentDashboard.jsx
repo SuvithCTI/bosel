@@ -20,7 +20,7 @@ import StudentProfile from './StudentProfile';
 import StudentNotifications from './StudentNotifications';
 
 const navigationItems = [
-  { id: 'course', label: 'My Course', icon: BookOpen },
+ 
 ];
 
 const NOTIFICATION_STORAGE_KEY = 'bsel_notifications';
@@ -43,6 +43,9 @@ export default function StudentDashboard({
     useState(false);
 
   const [certificatePopupOpen, setCertificatePopupOpen] =
+    useState(false);
+
+  const [notificationPopupOpen, setNotificationPopupOpen] =
     useState(false);
 
   const [mobileMenuOpen, setMobileMenuOpen] =
@@ -155,13 +158,16 @@ export default function StudentDashboard({
     setMobileMenuOpen(false);
   };
 
-  // Open notifications.
+  // Open notifications in a popup, similar to My Profile and Certificates.
   const openNotifications = () => {
-    setActiveSection('notifications');
-
     setNotificationMenuOpen(false);
     setProfileMenuOpen(false);
     setMobileMenuOpen(false);
+    setNotificationPopupOpen(true);
+  };
+
+  const closeNotificationsPopup = () => {
+    setNotificationPopupOpen(false);
   };
 
   // Open profile popup.
@@ -839,11 +845,7 @@ export default function StudentDashboard({
           <div className="relative flex flex-col justify-between gap-4 md:flex-row md:items-center md:gap-5">
 
             <div className="min-w-0">
-              <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-300">
-                <BookOpen className="h-3.5 w-3.5" />
-
-                Student Dashboard
-              </span>
+             
 
               <h2 className="mt-3 text-xl font-black tracking-tight text-white sm:text-3xl lg:text-4xl">
                 Welcome back,{' '}
@@ -857,25 +859,7 @@ export default function StudentDashboard({
               </p>
             </div>
 
-            {/* REGISTERED PROGRAM */}
-
-            <div className="flex min-w-0 items-center gap-3 rounded-xl border border-white/15 bg-white/10 p-3 backdrop-blur-sm sm:rounded-2xl sm:p-4 md:max-w-[300px] md:shrink-0">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-400 text-blue-950 sm:h-11 sm:w-11">
-                <BookOpen className="h-5 w-5" />
-              </div>
-
-              <div className="min-w-0">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-blue-200">
-                  Registered Program
-                </p>
-
-                <p className="mt-1 break-words text-xs font-bold leading-5 text-white sm:text-sm">
-                  {student?.program ||
-                    student?.course ||
-                    'Your registered course'}
-                </p>
-              </div>
-            </div>
+            
           </div>
         </section>
 
@@ -1010,16 +994,23 @@ export default function StudentDashboard({
                       {result.certificateNo && (
                         <button
                           type="button"
-                          onClick={() =>
-                            onViewCertificate?.({
+                          onClick={() => {
+                            // Close this dashboard popup before opening the certificate viewer.
+                            closeCertificatesPopup();
+
+                            const certificateData = {
                               studentName: student?.name || student?.studentName || 'Student',
                               courseName: student?.program || student?.course || 'Abacus Speed Math (Level 4) & Fine Arts',
                               level: student?.level || 'As per registration',
                               grade: result.grade || 'A+',
                               certificateNo: result.certificateNo,
                               centreName: student?.institution || 'Not specified',
-                            })
-                          }
+                            };
+
+                            window.requestAnimationFrame(() => {
+                              onViewCertificate?.(certificateData);
+                            });
+                          }}
                           className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-amber-400 px-4 py-3 text-xs font-extrabold text-slate-950 transition hover:bg-amber-500 sm:w-auto"
                         >
                           <Award className="h-4 w-4" />
@@ -1038,6 +1029,54 @@ export default function StudentDashboard({
                   </p>
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================= NOTIFICATIONS POPUP ================= */}
+
+      {notificationPopupOpen && (
+        <div
+          className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/60 p-3 backdrop-blur-sm sm:p-6"
+          onClick={closeNotificationsPopup}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="student-notifications-title"
+            className="relative flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-slate-50 shadow-2xl sm:rounded-3xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-4 sm:px-6">
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-950 sm:h-12 sm:w-12">
+                  <BellRing className="h-5 w-5 sm:h-6 sm:w-6" />
+                </div>
+                <div className="min-w-0">
+                  <h2
+                    id="student-notifications-title"
+                    className="text-lg font-black text-blue-950 sm:text-xl"
+                  >
+                    Notifications
+                  </h2>
+                  <p className="mt-1 text-xs text-slate-500 sm:text-sm">
+                    View course updates and important announcements.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={closeNotificationsPopup}
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-600 transition hover:bg-rose-50 hover:text-rose-600"
+                aria-label="Close notifications popup"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-6">
+              <StudentNotifications student={student} />
             </div>
           </div>
         </div>

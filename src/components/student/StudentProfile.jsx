@@ -555,20 +555,20 @@ export default function StudentProfile({
             <div className="grid grid-cols-2 gap-3 sm:min-w-64">
               <div className="rounded-xl border border-white/10 bg-white/10 p-3">
                 <GraduationCap className="h-5 w-5 text-amber-300" />
-                <p className="mt-2 text-[10px] text-blue-100">
+                <p className="mt-2 text-[10px] text-white text-blue-100">
                   Course
                 </p>
-                <p className="mt-1 break-words text-sm font-bold">
+                <p className="mt-1 break-words text-white text-sm font-bold">
                   {displayValue(form.courseName)}
                 </p>
               </div>
 
               <div className="rounded-xl border border-white/10 bg-white/10 p-3">
                 <School className="h-5 w-5 text-amber-300" />
-                <p className="mt-2 text-[10px] text-blue-100">
+                <p className="mt-2 text-[10px] text-white text-blue-100">
                   Course Level
                 </p>
-                <p className="mt-1 break-words text-sm font-bold">
+                <p className="mt-1 break-words text-white text-sm font-bold">
                   {displayValue(form.courseLevel)}
                 </p>
               </div>

@@ -109,9 +109,7 @@ export default function StudentCourse({
               </div>
 
               <div className="min-w-0">
-                <span className="inline-flex rounded-full bg-white/10 px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider text-amber-300 sm:px-3 sm:text-[10px]">
-                  Registered Program
-                </span>
+                
 
                 <h3 className="mt-2 break-words text-lg font-black leading-snug text-white sm:mt-3 sm:text-2xl">
                   {courseName}
@@ -123,10 +121,7 @@ export default function StudentCourse({
               </div>
             </div>
 
-            <span className="inline-flex w-fit shrink-0 items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-extrabold text-emerald-800 sm:gap-1.5 sm:px-3 sm:py-1.5 sm:text-xs">
-              <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              {registrationStatus}
-            </span>
+            
           </div>
         </div>
 
