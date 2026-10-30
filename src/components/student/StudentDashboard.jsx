@@ -1,4 +1,3 @@
-
 import React, { useMemo, useState, useEffect } from 'react';
 
 import {
@@ -7,11 +6,13 @@ import {
   Bell,
   LogOut,
   ChevronRight,
+  ChevronDown,
   CheckCheck,
   BellRing,
   Clock,
   Menu,
   X,
+  Award,
 } from 'lucide-react';
 
 import StudentCourse from './StudentCourse';
@@ -20,7 +21,6 @@ import StudentNotifications from './StudentNotifications';
 
 const navigationItems = [
   { id: 'course', label: 'My Course', icon: BookOpen },
-  { id: 'profile', label: 'My Profile', icon: UserRound },
 ];
 
 const NOTIFICATION_STORAGE_KEY = 'bsel_notifications';
@@ -32,10 +32,25 @@ export default function StudentDashboard({
   onViewCertificate,
 }) {
   const [activeSection, setActiveSection] = useState('course');
-  const [notificationMenuOpen, setNotificationMenuOpen] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const [notificationMenuOpen, setNotificationMenuOpen] =
+    useState(false);
+
+  const [profileMenuOpen, setProfileMenuOpen] =
+    useState(false);
+
+  const [profilePopupOpen, setProfilePopupOpen] =
+    useState(false);
+
+  const [certificatePopupOpen, setCertificatePopupOpen] =
+    useState(false);
+
+  const [mobileMenuOpen, setMobileMenuOpen] =
+    useState(false);
+
   const [notifications, setNotifications] = useState([]);
 
+  // Student details
   const displayName =
     student?.name || student?.studentName || 'Student';
 
@@ -64,9 +79,15 @@ export default function StudentDashboard({
 
         const parsed = saved ? JSON.parse(saved) : [];
 
-        setNotifications(Array.isArray(parsed) ? parsed : []);
+        setNotifications(
+          Array.isArray(parsed) ? parsed : []
+        );
       } catch (error) {
-        console.error('Unable to load notifications:', error);
+        console.error(
+          'Unable to load notifications:',
+          error
+        );
+
         setNotifications([]);
       }
     };
@@ -74,13 +95,18 @@ export default function StudentDashboard({
     loadNotifications();
 
     window.addEventListener('storage', loadNotifications);
+
     window.addEventListener(
       'bsel_notifications_changed',
       loadNotifications
     );
 
     return () => {
-      window.removeEventListener('storage', loadNotifications);
+      window.removeEventListener(
+        'storage',
+        loadNotifications
+      );
+
       window.removeEventListener(
         'bsel_notifications_changed',
         loadNotifications
@@ -108,8 +134,10 @@ export default function StudentDashboard({
       ).toLowerCase();
 
       return (
-        (!targetUserId || targetUserId === currentStudentId) &&
-        (!targetCourse || targetCourse === currentCourse)
+        (!targetUserId ||
+          targetUserId === currentStudentId) &&
+        (!targetCourse ||
+          targetCourse === currentCourse)
       );
     });
   }, [notifications, student]);
@@ -118,25 +146,52 @@ export default function StudentDashboard({
     (notification) => !notification.read
   ).length;
 
-  // Navigation.
+  // Main navigation.
   const selectSection = (section) => {
     setActiveSection(section);
+
     setNotificationMenuOpen(false);
+    setProfileMenuOpen(false);
     setMobileMenuOpen(false);
   };
 
+  // Open notifications.
   const openNotifications = () => {
     setActiveSection('notifications');
+
+    setNotificationMenuOpen(false);
+    setProfileMenuOpen(false);
+    setMobileMenuOpen(false);
+  };
+
+  // Open profile popup.
+  const openProfilePopup = () => {
+    setProfileMenuOpen(false);
     setNotificationMenuOpen(false);
     setMobileMenuOpen(false);
+
+    setProfilePopupOpen(true);
+  };
+
+  // Open certificates in a popup, similar to the profile popup.
+  const openCertificates = () => {
+    setProfileMenuOpen(false);
+    setNotificationMenuOpen(false);
+    setMobileMenuOpen(false);
+    setCertificatePopupOpen(true);
+  };
+
+  const closeCertificatesPopup = () => {
+    setCertificatePopupOpen(false);
   };
 
   // Mark a notification as read.
   const handleNotificationClick = (notification) => {
-    const updatedNotifications = notifications.map((item) =>
-      item.id === notification.id
-        ? { ...item, read: true }
-        : item
+    const updatedNotifications = notifications.map(
+      (item) =>
+        item.id === notification.id
+          ? { ...item, read: true }
+          : item
     );
 
     setNotifications(updatedNotifications);
@@ -151,7 +206,10 @@ export default function StudentDashboard({
         new Event('bsel_notifications_changed')
       );
     } catch (error) {
-      console.error('Unable to update notification:', error);
+      console.error(
+        'Unable to update notification:',
+        error
+      );
     }
 
     openNotifications();
@@ -160,13 +218,16 @@ export default function StudentDashboard({
   // Mark all notifications for this student as read.
   const handleMarkAllRead = () => {
     const studentNotificationIds = new Set(
-      studentNotifications.map((notification) => notification.id)
+      studentNotifications.map(
+        (notification) => notification.id
+      )
     );
 
-    const updatedNotifications = notifications.map((notification) =>
-      studentNotificationIds.has(notification.id)
-        ? { ...notification, read: true }
-        : notification
+    const updatedNotifications = notifications.map(
+      (notification) =>
+        studentNotificationIds.has(notification.id)
+          ? { ...notification, read: true }
+          : notification
     );
 
     setNotifications(updatedNotifications);
@@ -188,7 +249,7 @@ export default function StudentDashboard({
     }
   };
 
-  // Desktop navigation styling.
+  // Desktop navigation styles.
   const getNavigationClass = (isActive) =>
     `inline-flex shrink-0 items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-bold transition lg:px-4 ${
       isActive
@@ -196,19 +257,13 @@ export default function StudentDashboard({
         : 'text-slate-600 hover:bg-blue-50 hover:text-blue-950'
     }`;
 
-  // Render the selected page.
+  // Render active page.
   const renderSection = () => {
     switch (activeSection) {
-      case 'profile':
-        return (
-          <StudentProfile
-            student={student}
-            onUpdateStudent={onUpdateStudent}
-          />
-        );
-
       case 'notifications':
-        return <StudentNotifications student={student} />;
+        return (
+          <StudentNotifications student={student} />
+        );
 
       case 'course':
       default:
@@ -221,7 +276,7 @@ export default function StudentDashboard({
     }
   };
 
-  // Reusable navigation items for desktop and mobile.
+  // Render navigation items.
   const renderNavigationItems = (mobile = false) =>
     navigationItems.map((item) => {
       const Icon = item.icon;
@@ -246,9 +301,7 @@ export default function StudentDashboard({
           <Icon
             className={`h-5 w-5 shrink-0 ${
               isActive
-                ? mobile
-                  ? 'text-amber-400'
-                  : 'text-amber-400'
+                ? 'text-amber-400'
                 : 'text-slate-400'
             }`}
           />
@@ -265,11 +318,13 @@ export default function StudentDashboard({
   return (
     <div className="min-h-screen overflow-x-clip bg-slate-50">
 
-      {/* HEADER */}
-      <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">
-        <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-3 px-3 py-3 sm:px-6 lg:px-8">
+      {/* ================= HEADER ================= */}
 
-          {/* Logo */}
+      <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">
+        <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-2 px-3 py-3 sm:gap-3 sm:px-6 lg:px-8">
+
+          {/* LOGO */}
+
           <div className="flex min-w-0 shrink-0 items-center gap-2.5 sm:gap-3">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white sm:h-11 sm:w-11">
               <img
@@ -291,6 +346,7 @@ export default function StudentDashboard({
           </div>
 
           {/* DESKTOP NAVIGATION */}
+
           <nav
             aria-label="Student navigation"
             className="hidden items-center gap-2 md:flex"
@@ -298,10 +354,12 @@ export default function StudentDashboard({
             {renderNavigationItems()}
           </nav>
 
-          {/* Student details and actions */}
+          {/* HEADER ACTIONS */}
+
           <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
 
-            {/* Student details - desktop */}
+            {/* DESKTOP STUDENT DETAILS */}
+
             <div className="hidden border-r border-slate-200 pr-3 text-right lg:block">
               <p className="max-w-36 truncate text-sm font-bold text-slate-900">
                 {displayName}
@@ -312,23 +370,17 @@ export default function StudentDashboard({
               </p>
             </div>
 
-            {/* Profile avatar */}
-            <button
-              type="button"
-              onClick={() => selectSection('profile')}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-100 text-xs font-black text-blue-950 ring-2 ring-amber-200 sm:h-10 sm:w-10 sm:text-sm"
-              title="View student profile"
-              aria-label="View student profile"
-            >
-              {initials || 'S'}
-            </button>
+            {/* ================= NOTIFICATIONS ================= */}
 
-            {/* Notifications */}
             <div className="relative shrink-0">
               <button
                 type="button"
                 onClick={() => {
-                  setNotificationMenuOpen((previous) => !previous);
+                  setNotificationMenuOpen(
+                    (previous) => !previous
+                  );
+
+                  setProfileMenuOpen(false);
                   setMobileMenuOpen(false);
                 }}
                 className={`relative flex h-9 w-9 items-center justify-center rounded-xl border transition sm:h-10 sm:w-10 ${
@@ -343,7 +395,9 @@ export default function StudentDashboard({
 
                 {unreadCount > 0 && (
                   <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-white bg-rose-600 px-1 text-[9px] font-black text-white">
-                    {unreadCount > 99 ? '99+' : unreadCount}
+                    {unreadCount > 99
+                      ? '99+'
+                      : unreadCount}
                   </span>
                 )}
               </button>
@@ -354,12 +408,15 @@ export default function StudentDashboard({
                     type="button"
                     aria-label="Close notification menu"
                     className="fixed inset-0 z-40 cursor-default"
-                    onClick={() => setNotificationMenuOpen(false)}
+                    onClick={() =>
+                      setNotificationMenuOpen(false)
+                    }
                   />
 
                   <div className="fixed right-3 top-[65px] z-50 w-[calc(100vw-24px)] max-w-[380px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl sm:absolute sm:right-0 sm:top-12 sm:w-96">
 
-                    {/* Notification heading */}
+                    {/* NOTIFICATION HEADING */}
+
                     <div className="flex items-center justify-between gap-3 border-b border-slate-100 bg-slate-50 px-4 py-4">
                       <div>
                         <h3 className="text-sm font-black text-blue-950">
@@ -369,7 +426,9 @@ export default function StudentDashboard({
                         <p className="mt-1 text-xs text-slate-500">
                           {unreadCount > 0
                             ? `${unreadCount} unread notification${
-                                unreadCount === 1 ? '' : 's'
+                                unreadCount === 1
+                                  ? ''
+                                  : 's'
                               }`
                             : 'You are all caught up'}
                         </p>
@@ -380,15 +439,20 @@ export default function StudentDashboard({
                       </div>
                     </div>
 
-                    {/* Notification list */}
+                    {/* NOTIFICATION LIST */}
+
                     <div className="max-h-[55vh] overflow-y-auto">
                       {studentNotifications.length > 0 ? (
                         studentNotifications
                           .slice()
                           .sort(
                             (a, b) =>
-                              new Date(b.createdAt || 0).getTime() -
-                              new Date(a.createdAt || 0).getTime()
+                              new Date(
+                                b.createdAt || 0
+                              ).getTime() -
+                              new Date(
+                                a.createdAt || 0
+                              ).getTime()
                           )
                           .slice(0, 5)
                           .map((notification) => (
@@ -396,7 +460,9 @@ export default function StudentDashboard({
                               key={notification.id}
                               type="button"
                               onClick={() =>
-                                handleNotificationClick(notification)
+                                handleNotificationClick(
+                                  notification
+                                )
                               }
                               className={`flex w-full items-start gap-3 border-b border-slate-100 px-4 py-3.5 text-left transition hover:bg-blue-50 ${
                                 !notification.read
@@ -417,7 +483,8 @@ export default function StudentDashboard({
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-start justify-between gap-2">
                                   <p className="text-xs font-extrabold text-slate-900">
-                                    {notification.title || 'B★SEL Update'}
+                                    {notification.title ||
+                                      'B★SEL Update'}
                                   </p>
 
                                   {!notification.read && (
@@ -460,13 +527,15 @@ export default function StudentDashboard({
                           </p>
 
                           <p className="mt-1 text-xs leading-5 text-slate-500">
-                            Course updates and announcements will appear here.
+                            Course updates and announcements
+                            will appear here.
                           </p>
                         </div>
                       )}
                     </div>
 
-                    {/* Notification actions */}
+                    {/* NOTIFICATION ACTIONS */}
+
                     <div className="space-y-1 border-t border-slate-100 p-3">
                       {unreadCount > 0 && (
                         <button
@@ -493,31 +562,138 @@ export default function StudentDashboard({
               )}
             </div>
 
-            {/* Logout - desktop and tablet */}
-            <button
-              type="button"
-              onClick={onLogout}
-              className="hidden h-10 shrink-0 items-center justify-center gap-2 rounded-xl border border-slate-200 px-3 text-sm font-bold text-slate-700 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700 sm:inline-flex"
-              aria-label="Logout"
-              title="Logout"
-            >
-              <LogOut className="h-4 w-4" />
-              {/* <span>Logout</span> */}
-            </button>
+            {/* ================= PROFILE DROPDOWN ================= */}
+
+            <div className="relative shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  setProfileMenuOpen(
+                    (previous) => !previous
+                  );
+
+                  setNotificationMenuOpen(false);
+                  setMobileMenuOpen(false);
+                }}
+                className={`flex items-center gap-1.5 rounded-xl border px-1.5 py-1.5 transition sm:gap-2 sm:px-3 ${
+                  profileMenuOpen
+                    ? 'border-blue-200 bg-blue-50'
+                    : 'border-slate-200 bg-white hover:bg-blue-50'
+                }`}
+                aria-label="Open profile menu"
+                aria-expanded={profileMenuOpen}
+              >
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-100 text-xs font-black text-blue-950 ring-2 ring-amber-200 sm:h-9 sm:w-9">
+                  {initials || 'S'}
+                </div>
+
+                <span className="hidden text-sm font-bold text-blue-950 sm:block">
+                  Profile
+                </span>
+
+                <ChevronDown
+                  className={`h-4 w-4 text-slate-500 transition-transform ${
+                    profileMenuOpen
+                      ? 'rotate-180'
+                      : ''
+                  }`}
+                />
+              </button>
+
+              {profileMenuOpen && (
+                <>
+                  {/* Close menu when clicking outside */}
+
+                  <button
+                    type="button"
+                    aria-label="Close profile menu"
+                    className="fixed inset-0 z-40 cursor-default"
+                    onClick={() =>
+                      setProfileMenuOpen(false)
+                    }
+                  />
+
+                  <div className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 shadow-xl sm:w-60">
+
+                    {/* STUDENT INFORMATION */}
+
+                    <div className="border-b border-slate-100 px-3 py-3">
+                      <p className="truncate text-sm font-extrabold text-blue-950">
+                        {displayName}
+                      </p>
+
+                      <p className="mt-1 truncate text-xs text-slate-500">
+                        Student ID: {studentId}
+                      </p>
+                    </div>
+
+                    {/* MY PROFILE */}
+
+                    <button
+                      type="button"
+                      onClick={openProfilePopup}
+                      className="mt-2 flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-bold text-slate-700 transition hover:bg-blue-50 hover:text-blue-950"
+                    >
+                      <UserRound className="h-5 w-5 text-blue-800" />
+
+                      <span>My Profile</span>
+                    </button>
+
+                    {/* CERTIFICATES */}
+
+                    <button
+                      type="button"
+                      onClick={openCertificates}
+                      className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-bold text-slate-700 transition hover:bg-amber-50 hover:text-blue-950"
+                    >
+                      <Award className="h-5 w-5 text-amber-600" />
+
+                      <span>Certificates</span>
+                    </button>
+
+                    <div className="my-1 border-t border-slate-100" />
+
+                    {/* LOGOUT */}
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setProfileMenuOpen(false);
+                        onLogout();
+                      }}
+                      className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-bold text-rose-600 transition hover:bg-rose-50"
+                    >
+                      <LogOut className="h-5 w-5" />
+
+                      <span>Logout</span>
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
 
             {/* MOBILE HAMBURGER */}
+
             <button
               type="button"
               onClick={() => {
-                setMobileMenuOpen((previous) => !previous);
+                setMobileMenuOpen(
+                  (previous) => !previous
+                );
+
                 setNotificationMenuOpen(false);
+                setProfileMenuOpen(false);
               }}
               className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border transition md:hidden sm:h-10 sm:w-10 ${
                 mobileMenuOpen
                   ? 'border-blue-200 bg-blue-50 text-blue-950'
                   : 'border-slate-200 bg-white text-slate-700 hover:bg-blue-50'
               }`}
-              aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+              aria-label={
+                mobileMenuOpen
+                  ? 'Close menu'
+                  : 'Open menu'
+              }
               aria-expanded={mobileMenuOpen}
             >
               {mobileMenuOpen ? (
@@ -529,7 +705,8 @@ export default function StudentDashboard({
           </div>
         </div>
 
-        {/* MOBILE HAMBURGER MENU */}
+        {/* ================= MOBILE NAVIGATION ================= */}
+
         {mobileMenuOpen && (
           <>
             <button
@@ -540,7 +717,9 @@ export default function StudentDashboard({
             />
 
             <div className="absolute left-0 right-0 top-full z-50 border-t border-slate-200 bg-white p-4 shadow-xl md:hidden">
-              {/* Student details */}
+
+              {/* STUDENT DETAILS */}
+
               <div className="mb-4 flex items-center gap-3 rounded-2xl bg-slate-50 p-3">
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-amber-100 text-sm font-black text-blue-950 ring-2 ring-amber-200">
                   {initials || 'S'}
@@ -561,6 +740,8 @@ export default function StudentDashboard({
                 Student Navigation
               </p>
 
+              {/* MY COURSE */}
+
               <nav
                 aria-label="Mobile student navigation"
                 className="space-y-1.5"
@@ -568,7 +749,8 @@ export default function StudentDashboard({
                 {renderNavigationItems(true)}
               </nav>
 
-              {/* Notifications shortcut */}
+              {/* NOTIFICATIONS */}
+
               <button
                 type="button"
                 onClick={openNotifications}
@@ -580,9 +762,12 @@ export default function StudentDashboard({
               >
                 <span className="relative">
                   <Bell className="h-5 w-5" />
+
                   {unreadCount > 0 && (
                     <span className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-600 px-1 text-[9px] font-black text-white">
-                      {unreadCount > 99 ? '99+' : unreadCount}
+                      {unreadCount > 99
+                        ? '99+'
+                        : unreadCount}
                     </span>
                   )}
                 </span>
@@ -592,16 +777,46 @@ export default function StudentDashboard({
                 <ChevronRight className="ml-auto h-4 w-4" />
               </button>
 
-              {/* Mobile logout */}
+              {/* PROFILE SHORTCUT */}
+
+              <button
+                type="button"
+                onClick={openProfilePopup}
+                className="mt-2 flex w-full items-center gap-3 rounded-xl px-4 py-3.5 text-left text-sm font-bold text-slate-700 transition hover:bg-blue-50 hover:text-blue-950"
+              >
+                <UserRound className="h-5 w-5" />
+
+                <span>My Profile</span>
+
+                <ChevronRight className="ml-auto h-4 w-4" />
+              </button>
+
+              {/* CERTIFICATES SHORTCUT */}
+
+              <button
+                type="button"
+                onClick={openCertificates}
+                className="mt-1 flex w-full items-center gap-3 rounded-xl px-4 py-3.5 text-left text-sm font-bold text-slate-700 transition hover:bg-amber-50 hover:text-blue-950"
+              >
+                <Award className="h-5 w-5 text-amber-600" />
+
+                <span>Certificates</span>
+
+                <ChevronRight className="ml-auto h-4 w-4" />
+              </button>
+
+              {/* LOGOUT */}
+
               <button
                 type="button"
                 onClick={() => {
                   setMobileMenuOpen(false);
                   onLogout();
                 }}
-                className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3.5 text-sm font-bold text-rose-700 transition hover:bg-rose-100"
+                className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3.5 text-sm font-bold text-rose-700 transition hover:bg-rose-100"
               >
                 <LogOut className="h-4 w-4" />
+
                 Logout
               </button>
             </div>
@@ -609,31 +824,40 @@ export default function StudentDashboard({
         )}
       </header>
 
-      {/* DASHBOARD CONTENT */}
+      {/* ================= DASHBOARD CONTENT ================= */}
+
       <div className="mx-auto max-w-[1600px] px-3 py-4 sm:px-6 sm:py-7 lg:px-8 lg:py-8">
 
-        {/* Welcome banner */}
+        {/* WELCOME BANNER */}
+
         <section className="relative mb-5 overflow-hidden rounded-2xl bg-gradient-to-r from-[#0F2B5C] via-[#143B7A] to-[#1E4D99] p-4 text-white shadow-lg sm:mb-6 sm:rounded-3xl sm:p-7 lg:p-8">
+
           <div className="pointer-events-none absolute -right-10 -top-20 h-56 w-56 rounded-full border-[30px] border-white/5" />
 
           <div className="pointer-events-none absolute -bottom-24 right-32 h-52 w-52 rounded-full bg-amber-400/10 blur-2xl" />
 
           <div className="relative flex flex-col justify-between gap-4 md:flex-row md:items-center md:gap-5">
+
             <div className="min-w-0">
               <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-300">
                 <BookOpen className="h-3.5 w-3.5" />
+
                 Student Dashboard
               </span>
 
-              <h2 className="mt-3 text-xl text-white font-black tracking-tight sm:text-3xl lg:text-4xl">
-                Welcome back, {displayName.split(' ')[0]}!
+              <h2 className="mt-3 text-xl font-black tracking-tight text-white sm:text-3xl lg:text-4xl">
+                Welcome back,{' '}
+                {displayName.split(' ')[0]}!
               </h2>
 
               <p className="mt-2 max-w-2xl text-xs leading-5 text-blue-100 sm:text-sm sm:leading-6 lg:text-base">
-                Manage your registered course, keep your profile updated,
-                and stay informed about important B★SEL announcements.
+                Manage your registered course, keep your
+                profile updated, and stay informed about
+                important B★SEL announcements.
               </p>
             </div>
+
+            {/* REGISTERED PROGRAM */}
 
             <div className="flex min-w-0 items-center gap-3 rounded-xl border border-white/15 bg-white/10 p-3 backdrop-blur-sm sm:rounded-2xl sm:p-4 md:max-w-[300px] md:shrink-0">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-400 text-blue-950 sm:h-11 sm:w-11">
@@ -645,7 +869,7 @@ export default function StudentDashboard({
                   Registered Program
                 </p>
 
-                <p className="mt-1 break-words text-xs  text-white font-bold leading-5 sm:text-sm">
+                <p className="mt-1 break-words text-xs font-bold leading-5 text-white sm:text-sm">
                   {student?.program ||
                     student?.course ||
                     'Your registered course'}
@@ -655,17 +879,169 @@ export default function StudentDashboard({
           </div>
         </section>
 
-        {/* ACTIVE CONTENT */}
+        {/* ACTIVE PAGE */}
+
         <main className="min-w-0">
           {renderSection()}
         </main>
 
         {/* FOOTER */}
+
         <footer className="mt-6 border-t border-slate-200 py-4 text-center text-[10px] text-slate-500 sm:mt-8 sm:py-5 sm:text-xs">
-          © {new Date().getFullYear()} B★SEL Learning Platform.
-          All rights reserved.
+          © {new Date().getFullYear()} B★SEL Learning
+          Platform. All rights reserved.
         </footer>
       </div>
+
+      {/* ================= MY PROFILE POPUP ================= */}
+
+      {profilePopupOpen && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/60 p-3 backdrop-blur-sm sm:p-6"
+          onClick={() => setProfilePopupOpen(false)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="student-profile-title"
+            className="relative flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-slate-50 shadow-2xl sm:rounded-3xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+
+            {/* POPUP HEADER */}
+
+            <div className="sticky top-0 z-20 flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-4 sm:px-6">
+              <div className="min-w-0">
+                <h2
+                  id="student-profile-title"
+                  className="text-lg font-black text-blue-950 sm:text-xl"
+                >
+                  My Profile
+                </h2>
+
+                <p className="mt-1 text-xs text-slate-500 sm:text-sm">
+                  View and update your student information.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setProfilePopupOpen(false)}
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-600 transition hover:bg-rose-50 hover:text-rose-600"
+                aria-label="Close profile popup"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* EXISTING STUDENT PROFILE */}
+
+            <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-6">
+              <StudentProfile
+                student={student}
+                onUpdateStudent={onUpdateStudent}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================= CERTIFICATES POPUP ================= */}
+
+      {certificatePopupOpen && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/60 p-3 backdrop-blur-sm sm:p-6"
+          onClick={closeCertificatesPopup}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="student-certificates-title"
+            className="relative flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-slate-50 shadow-2xl sm:rounded-3xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-4 sm:px-6">
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700 sm:h-12 sm:w-12">
+                  <Award className="h-5 w-5 sm:h-6 sm:w-6" />
+                </div>
+                <div className="min-w-0">
+                  <h2 id="student-certificates-title" className="text-lg font-black text-blue-950 sm:text-xl">
+                    Results & Certificates
+                  </h2>
+                  <p className="mt-1 text-xs text-slate-500 sm:text-sm">
+                    View your published examination results and certificates.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={closeCertificatesPopup}
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-600 transition hover:bg-rose-50 hover:text-rose-600"
+                aria-label="Close certificates popup"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-6">
+              {Array.isArray(student?.results) && student.results.length > 0 ? (
+                <div className="space-y-3">
+                  {student.results.map((result, index) => (
+                    <div
+                      key={result.id || `${result.exam || 'result'}-${index}`}
+                      className="flex flex-col gap-3 rounded-xl border border-amber-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:rounded-2xl sm:p-5"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <h3 className="break-words text-sm font-extrabold text-slate-900 sm:text-base">
+                          {result.exam || 'Examination Result'}
+                        </h3>
+                        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-2 text-xs text-slate-600">
+                          <span>Score: <strong className="text-slate-900">{result.score ?? 'Pending'}</strong></span>
+                          <span>Rank: <strong className="text-slate-900">{result.rank ?? 'Pending'}</strong></span>
+                          {result.certificateNo && (
+                            <span>
+                              Certificate:{' '}
+                              <strong className="break-all font-mono text-slate-800">{result.certificateNo}</strong>
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      {result.certificateNo && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            onViewCertificate?.({
+                              studentName: student?.name || student?.studentName || 'Student',
+                              courseName: student?.program || student?.course || 'Abacus Speed Math (Level 4) & Fine Arts',
+                              level: student?.level || 'As per registration',
+                              grade: result.grade || 'A+',
+                              certificateNo: result.certificateNo,
+                              centreName: student?.institution || 'Not specified',
+                            })
+                          }
+                          className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-amber-400 px-4 py-3 text-xs font-extrabold text-slate-950 transition hover:bg-amber-500 sm:w-auto"
+                        >
+                          <Award className="h-4 w-4" />
+                          View Certificate
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-dashed border-amber-200 bg-amber-50/50 px-4 py-10 text-center sm:px-6 sm:py-12">
+                  <Award className="mx-auto h-9 w-9 text-amber-500" />
+                  <h3 className="mt-3 text-sm font-extrabold text-slate-800 sm:text-base">Results not published yet</h3>
+                  <p className="mx-auto mt-2 max-w-md text-xs leading-5 text-slate-500 sm:text-sm sm:leading-6">
+                    Your examination results and certificates will appear here after they are published for your registered examinations.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
