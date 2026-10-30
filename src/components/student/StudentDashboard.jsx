@@ -680,34 +680,7 @@ export default function StudentDashboard({
 
             {/* MOBILE HAMBURGER */}
 
-            <button
-              type="button"
-              onClick={() => {
-                setMobileMenuOpen(
-                  (previous) => !previous
-                );
-
-                setNotificationMenuOpen(false);
-                setProfileMenuOpen(false);
-              }}
-              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border transition md:hidden sm:h-10 sm:w-10 ${
-                mobileMenuOpen
-                  ? 'border-blue-200 bg-blue-50 text-blue-950'
-                  : 'border-slate-200 bg-white text-slate-700 hover:bg-blue-50'
-              }`}
-              aria-label={
-                mobileMenuOpen
-                  ? 'Close menu'
-                  : 'Open menu'
-              }
-              aria-expanded={mobileMenuOpen}
-            >
-              {mobileMenuOpen ? (
-                <X className="h-5 w-5" />
-              ) : (
-                <Menu className="h-5 w-5" />
-              )}
-            </button>
+            
           </div>
         </div>
 
