@@ -35,6 +35,8 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { registerStudentAccount, generateRegisterNumber } from '../utils/authStorage';
+import { getStoredCourses } from '../data/coursesData';
+import { getStoredSchools } from '../data/schoolsData';
 
 const TAMIL_NADU_DISTRICTS = [
   'Ariyalur',

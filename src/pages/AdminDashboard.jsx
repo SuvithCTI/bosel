@@ -72,6 +72,12 @@ import {
   updatePaymentStatus,
   deletePayment
 } from '../data/paymentsData';
+import {
+  getStoredSchools,
+  saveStoredSchools,
+  addStoredSchool,
+  deleteStoredSchool
+} from '../data/schoolsData';
 
 // Student Photo Assets
 import student1Img from '../assets/programs/student1.jpg';
