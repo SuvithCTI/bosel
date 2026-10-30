@@ -106,7 +106,7 @@ export default function LoginPage({
   const [currentUser, setCurrentUser] = useState(() => {
     const session = getActiveSession();
 
-    if (!session || session.role === 'Super Admin') {
+    if (!session || session.role === 'Super Admin' || session.role === 'Branch Head') {
       return null;
     }
 
@@ -136,7 +136,7 @@ export default function LoginPage({
     const syncSession = () => {
       const session = getActiveSession();
 
-      if (session && session.role !== 'Super Admin') {
+      if (session && session.role !== 'Super Admin' && session.role !== 'Branch Head') {
         setCurrentUser(normalizeStudent(session));
       } else {
         setCurrentUser(null);
@@ -193,7 +193,7 @@ export default function LoginPage({
     }
 
     // Keep the existing Super Admin navigation.
-    if (result.user.role === 'Super Admin') {
+    if (result.user.role === 'Super Admin' || result.user.role === 'Branch Head') {
       setActiveSession(result.user);
       setActivePage('admin');
       return;
@@ -473,6 +473,46 @@ export default function LoginPage({
 
               Remember User ID
             </label>
+
+            {/* Quick Demo Credentials Pill for Evaluators */}
+            <div className="rounded-xl bg-slate-50 p-3 border border-slate-200 text-xs">
+              <span className="font-bold text-slate-700 block mb-1.5 uppercase text-[10px] tracking-wider">⚡ Quick Demo Portals:</span>
+              <div className="flex flex-wrap gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUserId('admin');
+                    setPassword('admin123');
+                    setErrorMessage('');
+                  }}
+                  className="px-2.5 py-1 bg-[#0F2B5C] text-white hover:bg-[#18458F] font-bold rounded-lg text-[11px] transition"
+                >
+                  👑 Super Admin
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUserId('branch.tenkasi');
+                    setPassword('branch123');
+                    setErrorMessage('');
+                  }}
+                  className="px-2.5 py-1 bg-amber-500 text-slate-950 hover:bg-amber-400 font-bold rounded-lg text-[11px] transition"
+                >
+                  🏢 Branch Head (Tenkasi)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUserId('BSEL-STU-784201');
+                    setPassword('besel2026');
+                    setErrorMessage('');
+                  }}
+                  className="px-2.5 py-1 bg-slate-200 text-slate-800 hover:bg-slate-300 font-bold rounded-lg text-[11px] transition"
+                >
+                  🎓 Student
+                </button>
+              </div>
+            </div>
 
             {/* Submit */}
             <button

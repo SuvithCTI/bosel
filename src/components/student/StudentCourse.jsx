@@ -287,6 +287,7 @@ export default function StudentCourse({ student, onViewCertificate }) {
                         courseName,
                         level,
                         grade: result.grade || 'A+',
+                        registrationNo: student?.registerNumber || student?.registrationNo || student?.userId,
                         certificateNo: result.certificateNo,
                         centreName: institution,
                       })

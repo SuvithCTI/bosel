@@ -73,7 +73,7 @@ export default function Navbar({ activePage, setActivePage, sessionUser }) {
               {/* Login Profile / Portal Icon */}
               {sessionUser ? (
                 <button
-                  onClick={() => handleNavClick(sessionUser.role === 'Super Admin' ? 'admin' : 'login')}
+                  onClick={() => handleNavClick((sessionUser.role === 'Super Admin' || sessionUser.role === 'Branch Head') ? 'admin' : 'login')}
                   title={`Logged in as ${sessionUser.name || sessionUser.studentName}`}
                   aria-label={`Profile: ${sessionUser.name || sessionUser.studentName}`}
                   className={`ml-2 w-10 h-10 rounded-full transition-all duration-200 flex items-center justify-center shadow-sm relative group cursor-pointer font-black text-sm select-none ${
@@ -117,7 +117,7 @@ export default function Navbar({ activePage, setActivePage, sessionUser }) {
               {/* Mobile User Login Portal Icon */}
               <button
                 type="button"
-                onClick={() => handleNavClick(sessionUser?.role === 'Super Admin' ? 'admin' : 'login')}
+                onClick={() => handleNavClick((sessionUser?.role === 'Super Admin' || sessionUser?.role === 'Branch Head') ? 'admin' : 'login')}
                 title={sessionUser ? `Logged in as ${sessionUser.name || sessionUser.studentName}` : 'Login Portal'}
                 aria-label="Login Portal"
                 className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition active:scale-95 cursor-pointer ${

@@ -1,4 +1,21 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { 
+  Trophy, 
+  Plus, 
+  Trash2, 
+  X, 
+  Upload, 
+  CheckCircle2, 
+  Sparkles,
+  Award,
+  ArrowRight
+} from "lucide-react";
+import { getActiveSession } from "../utils/authStorage";
+import { 
+  getStoredAchievements, 
+  addStoredAchievement, 
+  deleteStoredAchievement 
+} from "../data/achievementsData";
 
 import apj from "../assets/programs/apj.jpg";
 import district from "../assets/programs/districtlevel.jpg";
@@ -22,6 +39,15 @@ import student3 from "../assets/programs/student3.jpg";
 import student4 from "../assets/programs/student4.jpg";
 import student5 from "../assets/programs/student5.jpg";
 import student6 from "../assets/programs/student6.jpg";
+
+export const PRESET_STUDENT_PHOTOS = [
+  { id: 'student1', label: 'Student Photo 1', img: student1 },
+  { id: 'student2', label: 'Student Photo 2', img: student2 },
+  { id: 'student3', label: 'Student Photo 3', img: student3 },
+  { id: 'student4', label: 'Student Photo 4', img: student4 },
+  { id: 'student5', label: 'Student Photo 5', img: student5 },
+  { id: 'student6', label: 'Student Photo 6', img: student6 },
+];
 
 
 
@@ -654,18 +680,18 @@ function AnnualDay() {
 
 
 
-function StudentAchievers() {
+function StudentAchievers({ achievements, isSuperAdmin, onOpenAddModal, onDeleteAchievement }) {
   const levelStyles = {
-    International: "bg-purple-100 text-purple-800",
-    National: "bg-blue-100 text-blue-800",
-    State: "bg-amber-100 text-amber-800",
-    District: "bg-slate-100 text-slate-800",
+    International: "bg-purple-100 text-purple-800 border-purple-200",
+    National: "bg-blue-100 text-blue-800 border-blue-200",
+    State: "bg-amber-100 text-amber-800 border-amber-200",
+    District: "bg-emerald-100 text-emerald-800 border-emerald-200",
   };
 
   return (
     <section
       id="student-achievers"
-      className="bg-[#F8F7F3] py-8 sm:py-10 lg:py-16"
+      className="bg-[#F8F7F3] py-8 sm:py-12 lg:py-20 scroll-mt-20"
     >
       <div className="mx-auto max-w-[1440px] px-3 sm:px-5 lg:px-8">
         {/* Section Heading */}
@@ -684,45 +710,94 @@ function StudentAchievers() {
             confidence, and outstanding skills in district, state, national,
             and international competitions.
           </p>
+
+          {/* Super Admin In-Page Control Button */}
+          {isSuperAdmin && (
+            <div className="mt-5 sm:mt-6 inline-flex flex-wrap items-center justify-center gap-3">
+              <button
+                type="button"
+                onClick={onOpenAddModal}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-amber-500 hover:bg-amber-400 text-blue-950 font-black text-xs sm:text-sm shadow-md hover:shadow-lg transition cursor-pointer transform hover:-translate-y-0.5"
+              >
+                <Plus className="w-4 h-4 stroke-[3]" />
+                <span>+ Add New Student Achievement</span>
+              </button>
+              <span className="text-[11px] font-bold text-slate-500 bg-white px-3 py-1.5 rounded-full border border-slate-200">
+                👑 Super Admin Authoring Active
+              </span>
+            </div>
+          )}
         </div>
+
+        {/* Empty State */}
+        {(!achievements || achievements.length === 0) && (
+          <div className="mt-10 max-w-md mx-auto text-center p-8 bg-white rounded-3xl border border-dashed border-slate-300">
+            <Trophy className="w-12 h-12 text-amber-400 mx-auto mb-3" />
+            <h3 className="text-base font-bold text-slate-800">No achievements recorded yet</h3>
+            <p className="text-xs text-slate-500 mt-1">Achievements published by Super Admin will appear here.</p>
+            {isSuperAdmin && (
+              <button
+                type="button"
+                onClick={onOpenAddModal}
+                className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-400 text-blue-950 font-black text-xs cursor-pointer"
+              >
+                <Plus className="w-4 h-4" /> Add First Achievement
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Student Cards: 2 columns on mobile */}
         <div className="mt-6 grid grid-cols-2 gap-3 sm:mt-10 sm:gap-5 lg:grid-cols-3 lg:gap-8">
-          {studentAchievements.map((student) => (
+          {(achievements || []).map((student) => (
             <article
               key={student.id}
-              className="group min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-amber-300 hover:shadow-xl sm:rounded-2xl lg:rounded-3xl"
+              className="group relative min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-amber-300 hover:shadow-xl sm:rounded-2xl lg:rounded-3xl flex flex-col justify-between"
             >
               {/* Student Photo */}
-              <div className="relative h-32 overflow-hidden min-[400px]:h-40 sm:h-60 lg:h-72">
+              <div className="relative h-36 overflow-hidden min-[400px]:h-44 sm:h-60 lg:h-72 bg-slate-900">
                 <img
                   src={student.photo}
-                  alt={`Photo of ${ student.name } `}
+                  alt={`Photo of ${student.name}`}
                   className="h-full w-full object-cover object-top transition duration-500 group-hover:scale-105"
                   loading="lazy"
                 />
 
                 {/* Image Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-blue-950/85 via-blue-950/10 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-blue-950/90 via-blue-950/20 to-transparent" />
 
                 {/* Competition Level */}
                 <span
-                  className={`absolute left - 1.5 top - 1.5 max - w - [calc(100 % -12px)] rounded - full px - 1.5 py - 1 text - [7px] font - extrabold uppercase leading - tight tracking - wide sm: left - 3 sm: top - 3 sm: px - 2.5 sm: py - 1.5 sm: text - [10px] lg: left - 4 lg: top - 4 lg: px - 3 lg: py - 2 lg: text - xs ${
-  levelStyles[student.level] ||
-    "bg-white text-blue-950"
-} `}
+                  className={`absolute left-1.5 top-1.5 max-w-[calc(100%-48px)] rounded-full px-2 py-0.5 text-[8px] font-extrabold uppercase tracking-wide border shadow-xs sm:left-3 sm:top-3 sm:px-2.5 sm:py-1 sm:text-[10px] lg:left-4 lg:top-4 lg:px-3 lg:py-1.5 lg:text-xs ${
+                    levelStyles[student.level] || "bg-white text-blue-950 border-slate-200"
+                  }`}
                 >
                   {student.level} Level
                 </span>
 
+                {/* Super Admin Delete Action */}
+                {isSuperAdmin && (
+                  <button
+                    type="button"
+                    title={`Delete achievement for ${student.name}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDeleteAchievement(student.id, student.name);
+                    }}
+                    className="absolute top-1.5 right-1.5 sm:top-3 sm:right-3 z-10 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-red-600 hover:bg-red-700 text-white flex items-center justify-center shadow-lg transition transform hover:scale-110 cursor-pointer"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  </button>
+                )}
+
                 {/* Year */}
-                <span className="absolute bottom-2 right-2 rounded-full border border-white/30 bg-blue-950/80 px-1.5 py-1 text-[8px] font-bold text-white backdrop-blur-sm sm:bottom-3 sm:right-3 sm:px-2.5 sm:text-xs lg:bottom-4 lg:right-4">
-                  {student.year}
+                <span className="absolute bottom-2 right-2 rounded-full border border-white/30 bg-blue-950/80 px-2 py-0.5 text-[8px] font-bold text-white backdrop-blur-sm sm:bottom-3 sm:right-3 sm:px-2.5 sm:text-xs lg:bottom-4 lg:right-4">
+                  {student.year || '2026'}
                 </span>
 
                 {/* Student Name */}
-                <div className="absolute bottom-2 left-2 right-2 sm:bottom-4 sm:left-4 sm:right-4">
-                  <p className="text-[7px] font-bold uppercase tracking-wide text-amber-300 sm:text-[10px] sm:tracking-wider">
+                <div className="absolute bottom-2 left-2 right-12 sm:bottom-4 sm:left-4 sm:right-16">
+                  <p className="text-[8px] font-bold uppercase tracking-wide text-amber-300 sm:text-[10px] sm:tracking-wider">
                     Student Achiever
                   </p>
 
@@ -733,44 +808,48 @@ function StudentAchievers() {
               </div>
 
               {/* Achievement Details */}
-              <div className="p-2.5 sm:p-4 lg:p-6">
-                <p className="text-[8px] font-extrabold uppercase tracking-wide text-amber-600 sm:text-[10px] sm:tracking-wider lg:text-xs">
-                  Achievement
-                </p>
-
-                <h4 className="mt-1 break-words text-xs font-extrabold leading-4 text-blue-950 sm:mt-2 sm:text-base sm:leading-5 lg:text-lg lg:leading-6">
-                  {student.achievement}
-                </h4>
-
-                {/* Award */}
-                <div className="mt-2 rounded-lg bg-[#F8F7F3] p-2 sm:mt-4 sm:rounded-xl sm:p-3">
-                  <p className="text-[8px] font-bold uppercase leading-3 tracking-wide text-slate-500 sm:text-[10px] lg:text-xs">
-                    Award / Recognition
+              <div className="p-2.5 sm:p-4 lg:p-6 flex-1 flex flex-col justify-between">
+                <div>
+                  <p className="text-[8px] font-extrabold uppercase tracking-wide text-amber-600 sm:text-[10px] sm:tracking-wider lg:text-xs">
+                    Achievement
                   </p>
 
-                  <p className="mt-1 break-words text-[10px] font-bold leading-4 text-blue-900 sm:text-sm sm:leading-5">
-                    {student.award}
-                  </p>
-                </div>
+                  <h4 className="mt-1 break-words text-xs font-extrabold leading-4 text-blue-950 sm:mt-2 sm:text-base sm:leading-5 lg:text-lg lg:leading-6">
+                    {student.achievement}
+                  </h4>
 
-                {/* Description */}
-                <p className="mt-2 break-words text-[10px] leading-4 text-slate-600 sm:mt-4 sm:text-sm sm:leading-6">
-                  {student.description}
-                </p>
+                  {/* Award */}
+                  <div className="mt-2 rounded-lg bg-[#F8F7F3] p-2 sm:mt-4 sm:rounded-xl sm:p-3">
+                    <p className="text-[8px] font-bold uppercase leading-3 tracking-wide text-slate-500 sm:text-[10px] lg:text-xs">
+                      Award / Recognition
+                    </p>
 
-                {/* School */}
-                <div className="mt-3 border-t border-slate-100 pt-2.5 sm:mt-5 sm:pt-4">
-                  <p className="text-[8px] font-bold uppercase tracking-wide text-slate-500 sm:text-[10px] lg:text-xs">
-                    School
-                  </p>
+                    <p className="mt-1 break-words text-[10px] font-bold leading-4 text-blue-900 sm:text-sm sm:leading-5">
+                      {student.award}
+                    </p>
+                  </div>
 
-                  <p className="mt-1 break-words text-[10px] font-semibold leading-4 text-blue-950 sm:text-sm sm:leading-6">
-                    {student.school}
+                  {/* Description */}
+                  <p className="mt-2 break-words text-[10px] leading-4 text-slate-600 sm:mt-4 sm:text-sm sm:leading-6">
+                    {student.description}
                   </p>
                 </div>
 
-                {/* Bottom Accent */}
-                <div className="mt-3 h-1 w-8 rounded-full bg-amber-400 transition-all duration-300 group-hover:w-14 sm:mt-5 sm:w-12 sm:group-hover:w-24" />
+                <div>
+                  {/* School */}
+                  <div className="mt-3 border-t border-slate-100 pt-2.5 sm:mt-5 sm:pt-4">
+                    <p className="text-[8px] font-bold uppercase tracking-wide text-slate-500 sm:text-[10px] lg:text-xs">
+                      School / Academy
+                    </p>
+
+                    <p className="mt-1 break-words text-[10px] font-semibold leading-4 text-blue-950 sm:text-sm sm:leading-6">
+                      {student.school}
+                    </p>
+                  </div>
+
+                  {/* Bottom Accent */}
+                  <div className="mt-3 h-1 w-8 rounded-full bg-amber-400 transition-all duration-300 group-hover:w-14 sm:mt-5 sm:w-12 sm:group-hover:w-24" />
+                </div>
               </div>
             </article>
           ))}
@@ -780,22 +859,423 @@ function StudentAchievers() {
   );
 }
 
+export default function AchievementsPage({ setActivePage }) {
+  const [achievements, setAchievements] = useState(() => getStoredAchievements());
+  const [session, setSession] = useState(() => getActiveSession());
+  const isSuperAdmin = session?.role === 'Super Admin';
 
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [toastMsg, setToastMsg] = useState('');
 
-export default function AchievementsPage() {
+  // Form state
+  const [form, setForm] = useState({
+    name: '',
+    school: '',
+    achievement: '',
+    level: 'State',
+    award: '',
+    year: '2026',
+    description: '',
+    photo: student1
+  });
+  const [photoMode, setPhotoMode] = useState('preset'); // 'preset' | 'upload'
+  const [uploadedPhotoPreview, setUploadedPhotoPreview] = useState('');
+
+  // Listen for storage changes
+  useEffect(() => {
+    const handleUpdate = () => {
+      setAchievements(getStoredAchievements());
+      setSession(getActiveSession());
+    };
+    window.addEventListener('bsel_achievements_updated', handleUpdate);
+    window.addEventListener('storage', handleUpdate);
+    return () => {
+      window.removeEventListener('bsel_achievements_updated', handleUpdate);
+      window.removeEventListener('storage', handleUpdate);
+    };
+  }, []);
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        alert("Please choose an image under 2MB.");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        setUploadedPhotoPreview(reader.result);
+        setForm(prev => ({ ...prev, photo: reader.result }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!form.name.trim() || !form.achievement.trim()) {
+      alert("Please provide the Student Name and Achievement Title.");
+      return;
+    }
+
+    const finalPhoto = photoMode === 'upload' && uploadedPhotoPreview
+      ? uploadedPhotoPreview
+      : (form.photo || student1);
+
+    addStoredAchievement({
+      name: form.name.trim(),
+      school: form.school.trim() || 'B★SEL Academy',
+      achievement: form.achievement.trim(),
+      level: form.level || 'State',
+      award: form.award.trim() || 'Merit Achievement Award',
+      year: form.year.trim() || '2026',
+      description: form.description.trim() || 'Recognized for outstanding dedication, accuracy, and performance in competition.',
+      photo: finalPhoto
+    });
+
+    setIsAddModalOpen(false);
+    setForm({
+      name: '',
+      school: '',
+      achievement: '',
+      level: 'State',
+      award: '',
+      year: '2026',
+      description: '',
+      photo: student1
+    });
+    setUploadedPhotoPreview('');
+    setToastMsg(`🎉 Achievement for ${form.name.trim()} published live to website!`);
+    setTimeout(() => setToastMsg(''), 4500);
+
+    // Scroll to achievers
+    setTimeout(() => {
+      const el = document.getElementById('student-achievers');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
+  };
+
+  const handleDelete = (id, name) => {
+    if (window.confirm(`Are you sure you want to remove the achievement for "${name}" from the website?`)) {
+      deleteStoredAchievement(id);
+      setToastMsg(`Achievement for ${name} removed.`);
+      setTimeout(() => setToastMsg(''), 3500);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-white font-sans text-slate-900">
+      {/* Toast Notification */}
+      {toastMsg && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-blue-950 text-white shadow-2xl border border-amber-400 text-xs sm:text-sm font-bold animate-bounce">
+          <CheckCircle2 className="w-5 h-5 text-amber-400 shrink-0" />
+          <span>{toastMsg}</span>
+        </div>
+      )}
+
+      {/* Top Super Admin Live Editor Bar */}
+      {isSuperAdmin && (
+        <aside aria-label="Super Administrator Toolbar" className="sticky top-0 z-30 bg-gradient-to-r from-blue-950 via-slate-900 to-blue-950 text-white border-b-2 border-amber-400 shadow-md px-3 sm:px-6 py-2.5">
+          <div className="max-w-[1440px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-2.5">
+            <div className="flex items-center gap-2.5">
+              <span className="w-8 h-8 rounded-lg bg-amber-400 text-blue-950 font-black flex items-center justify-center text-sm shadow-sm shrink-0">
+                👑
+              </span>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs font-black uppercase tracking-wider text-amber-400">
+                    Super Administrator Mode
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-[10px] font-bold">
+                    Website Live Editor
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-300 hidden md:block">
+                  You are authorized to publish student achievements directly to this public page.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+              <button
+                type="button"
+                onClick={() => setIsAddModalOpen(true)}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-blue-950 font-black text-xs shadow-md transition cursor-pointer"
+              >
+                <Plus className="w-4 h-4 stroke-[3]" />
+                <span>+ Add Achievement</span>
+              </button>
+
+              {setActivePage && (
+                <button
+                  type="button"
+                  onClick={() => setActivePage('admin')}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs border border-white/20 transition cursor-pointer"
+                >
+                  <span>Admin Dashboard</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+          </div>
+        </aside>
+      )}
 
       <main>
         <Hero />
         <AchievementIntro />
         <Competitions />
         <Championships />
-        <StudentAchievers />
+        <StudentAchievers 
+          achievements={achievements}
+          isSuperAdmin={isSuperAdmin}
+          onOpenAddModal={() => setIsAddModalOpen(true)}
+          onDeleteAchievement={handleDelete}
+        />
         <ParticipatingSchools />
         <AnnualDay />
       </main>
 
+      {/* Add Achievement Modal */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-sm overflow-y-auto">
+          <div className="relative w-full max-w-xl bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden my-6">
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-blue-950 to-slate-900 text-white p-5 sm:p-6 flex items-start justify-between border-b border-amber-400/30">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-400 text-blue-950 font-black flex items-center justify-center text-lg shrink-0 shadow-sm">
+                  🏆
+                </div>
+                <div>
+                  <h3 className="text-base sm:text-lg font-black text-white">
+                    Add Student Achievement
+                  </h3>
+                  <p className="text-xs text-amber-300 font-medium mt-0.5">
+                    Will appear immediately on the public website
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAddModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Modal Body Form */}
+            <form onSubmit={handleSubmit} className="p-5 sm:p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+              {/* Student Name */}
+              <div>
+                <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-1">
+                  Student Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Ramkumar K."
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 font-semibold"
+                />
+              </div>
+
+              {/* School / Academy */}
+              <div>
+                <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-1">
+                  School / Centre Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Sacred Heart Nursery & Primary School, Panagudi"
+                  value={form.school}
+                  onChange={(e) => setForm({ ...form, school: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+                />
+              </div>
+
+              {/* Achievement Title */}
+              <div>
+                <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-1">
+                  Achievement Title *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. International Level Abacus Champion"
+                  value={form.achievement}
+                  onChange={(e) => setForm({ ...form, achievement: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 font-semibold"
+                />
+              </div>
+
+              {/* Grid: Level, Award, Year */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-1">
+                    Level
+                  </label>
+                  <select
+                    value={form.level}
+                    onChange={(e) => setForm({ ...form, level: e.target.value })}
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white"
+                  >
+                    <option value="International">International</option>
+                    <option value="National">National</option>
+                    <option value="State">State</option>
+                    <option value="District">District</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-1">
+                    Year
+                  </label>
+                  <input
+                    type="text"
+                    value={form.year}
+                    onChange={(e) => setForm({ ...form, year: e.target.value })}
+                    placeholder="2026"
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-amber-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-1">
+                    Award Title
+                  </label>
+                  <input
+                    type="text"
+                    value={form.award}
+                    onChange={(e) => setForm({ ...form, award: e.target.value })}
+                    placeholder="e.g. Gold Medal & Trophy"
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-amber-400"
+                  />
+                </div>
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-1">
+                  Description / Performance Highlight
+                </label>
+                <textarea
+                  rows={2}
+                  value={form.description}
+                  onChange={(e) => setForm({ ...form, description: e.target.value })}
+                  placeholder="e.g. Recognized for exceptional mental arithmetic speed, accuracy, and concentration."
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-amber-400"
+                />
+              </div>
+
+              {/* Photo Selector */}
+              <div>
+                <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-2">
+                  Student Photo
+                </label>
+
+                {/* Photo mode toggle */}
+                <div className="flex items-center gap-2 mb-3">
+                  <button
+                    type="button"
+                    onClick={() => setPhotoMode('preset')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition ${
+                      photoMode === 'preset'
+                        ? 'bg-blue-950 text-white'
+                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                    }`}
+                  >
+                    Preset Avatars
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPhotoMode('upload')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition ${
+                      photoMode === 'upload'
+                        ? 'bg-blue-950 text-white'
+                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                    }`}
+                  >
+                    Upload Photo
+                  </button>
+                </div>
+
+                {photoMode === 'preset' ? (
+                  <div className="grid grid-cols-6 gap-2">
+                    {PRESET_STUDENT_PHOTOS.map((preset) => (
+                      <button
+                        type="button"
+                        key={preset.id}
+                        onClick={() => setForm({ ...form, photo: preset.img })}
+                        className={`relative rounded-xl overflow-hidden aspect-square border-2 transition cursor-pointer ${
+                          form.photo === preset.img
+                            ? 'border-amber-500 ring-2 ring-amber-400'
+                            : 'border-slate-200 hover:border-slate-400'
+                        }`}
+                      >
+                        <img
+                          src={preset.img}
+                          alt={preset.label}
+                          className="w-full h-full object-cover object-top"
+                        />
+                        {form.photo === preset.img && (
+                          <div className="absolute inset-0 bg-amber-500/30 flex items-center justify-center font-bold text-blue-950">
+                            ✓
+                          </div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-4">
+                    <label className="flex-1 flex flex-col items-center justify-center px-4 py-3 border-2 border-dashed border-slate-300 rounded-xl hover:border-amber-400 cursor-pointer bg-slate-50 transition">
+                      <Upload className="w-5 h-5 text-slate-400 mb-1" />
+                      <span className="text-xs font-bold text-slate-700">Choose Student Image</span>
+                      <span className="text-[10px] text-slate-400">JPG, PNG up to 2MB</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileUpload}
+                        className="hidden"
+                      />
+                    </label>
+
+                    {uploadedPhotoPreview && (
+                      <div className="w-16 h-16 rounded-xl overflow-hidden border-2 border-amber-400 shrink-0">
+                        <img
+                          src={uploadedPhotoPreview}
+                          alt="Preview"
+                          className="w-full h-full object-cover object-top"
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Submit / Cancel */}
+              <div className="pt-3 border-t border-slate-200 flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsAddModalOpen(false)}
+                  className="px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-blue-950 font-black text-xs shadow-md transition cursor-pointer"
+                >
+                  <Trophy className="w-4 h-4" />
+                  <span>Publish to Website</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

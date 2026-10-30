@@ -63,7 +63,6 @@ export default function HomePage({ setActivePage, onSelectProgram }) {
                   className="w-full sm:w-auto px-7 py-3.5 rounded-xl sm:rounded-full bg-[#0F2B5C] hover:bg-[#163B7A] active:scale-[0.98] text-white text-sm sm:text-base font-black transition shadow-md hover:shadow-xl border border-sky-400/30 flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <span>Explore Programs</span>
-                  <ArrowRight className="w-4 h-4 text-amber-400" />
                 </button>
 
                 <button

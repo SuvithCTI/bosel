@@ -26,7 +26,21 @@ export default function CertificateModal({
   const [level, setLevel] = useState(initialData.level || 'Level 1');
   const [grade, setGrade] = useState(initialData.grade || 'A');
   const duration = initialData.duration || '6 Months';
-  const [registrationNo, setRegistrationNo] = useState(initialData.registrationNo || 'BSEL-REG-849201');
+  const [registrationNo, setRegistrationNo] = useState(() => {
+    if (initialData.registrationNo) return initialData.registrationNo;
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('bsel_registered_student');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed.registrationNo) return parsed.registrationNo;
+        }
+      } catch {
+        // ignore
+      }
+    }
+    return 'AB27-001';
+  });
   const certificateNo = initialData.certificateNo || 'BSEL/ABACUS/L1/0007';
   const [centreName, setCentreName] = useState(initialData.centreName || 'test branch');
   const centreCode = initialData.centreCode || '546454';

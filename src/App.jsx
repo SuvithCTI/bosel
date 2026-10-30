@@ -63,7 +63,8 @@ export default function App() {
       return (
         activePage === 'login' &&
         Boolean(session) &&
-        session.role !== 'Super Admin'
+        session.role !== 'Super Admin' &&
+        session.role !== 'Branch Head'
       );
     });
 
@@ -123,7 +124,7 @@ export default function App() {
       setSessionUser(session);
 
       // If the student session is cleared, restore the public layout.
-      if (!session || session.role === 'Super Admin') {
+      if (!session || session.role === 'Super Admin' || session.role === 'Branch Head') {
         setIsStudentDashboardOpen(false);
       }
     };
@@ -185,7 +186,7 @@ export default function App() {
         level: 'Level 1',
         grade: 'A',
         duration: '6 Months',
-        registrationNo: 'BSEL-REG-849201',
+        registrationNo: 'AB27-001',
         certificateNo: 'BSEL/ABACUS/L1/0007',
         centreName: 'test branch',
         centreCode: '546454',
@@ -242,7 +243,7 @@ export default function App() {
         )}
 
         {activePage === 'achievements' && (
-          <AchievementsPage />
+          <AchievementsPage setActivePage={setActivePage} />
         )}
 
         {activePage === 'franchise' && (

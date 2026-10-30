@@ -34,7 +34,7 @@ import {
   RefreshCw,
   AlertCircle
 } from 'lucide-react';
-import { registerStudentAccount } from '../utils/authStorage';
+import { registerStudentAccount, generateRegisterNumber } from '../utils/authStorage';
 
 const TAMIL_NADU_DISTRICTS = [
   'Ariyalur',
@@ -116,10 +116,12 @@ export default function AdmissionModal({
   initialProgram = null,
   initialFee = null
 }) {
+  const initialCourse = initialProgram || 'Abacus Speed Arithmetic';
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0], // 1. Date
-    branch: 'Tenkasi Main Branch (Head Office)', // 2. Branch
-    courseName: initialProgram || 'Abacus Speed Arithmetic', // 4. Course Name [non-editable]
+    registerNumber: generateRegisterNumber(initialCourse), // 2. Register number [non-editable]
+    branch: 'Tenkasi Main Branch (Head Office)', // 3. Branch
+    courseName: initialCourse, // 4. Course Name [non-editable]
     studentName: '', // 7. Student name
     dob: '', // 8. Date of Birth
     age: '', // 9. Age
@@ -175,6 +177,7 @@ export default function AdmissionModal({
       setFormData(prev => ({
         ...prev,
         courseName: initialProgram,
+        registerNumber: generateRegisterNumber(initialProgram),
         feeAmount: initialFee || prev.feeAmount || '₹450'
       }));
       setIsCourseLocked(true);
@@ -440,10 +443,12 @@ export default function AdmissionModal({
     setPaymentGatewayTxn('');
     setCardDetails({ number: '', expiry: '', cvv: '', name: '' });
     setCopiedUpi(false);
+    const resetCourse = initialProgram || 'Abacus Speed Arithmetic';
     setFormData({
       date: new Date().toISOString().split('T')[0],
+      registerNumber: generateRegisterNumber(resetCourse),
       branch: 'Tenkasi Main Branch (Head Office)',
-      courseName: initialProgram || 'Abacus Speed Arithmetic',
+      courseName: resetCourse,
       studentName: '',
       dob: '',
       age: '',
@@ -598,14 +603,23 @@ export default function AdmissionModal({
                     </div>
                   </div>
                   <div className="text-right">
-                    <span className="text-[10px] font-mono font-bold bg-sky-100 text-sky-900 px-2 py-0.5 rounded block">
-                      {createdAccount.userId}
+                    <span className="text-[10px] font-mono font-black bg-amber-100 text-amber-900 px-2 py-0.5 rounded border border-amber-300 block">
+                      Reg: {createdAccount.registerNumber || formData.registerNumber}
+                    </span>
+                    <span className="text-[10px] font-mono font-bold bg-sky-100 text-sky-900 px-2 py-0.5 rounded block mt-1">
+                      ID: {createdAccount.userId}
                     </span>
                     <span className="text-[9px] text-slate-500 font-semibold block mt-0.5">Date: {formData.date}</span>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <span className="text-slate-500 text-[10px] block">Register Number:</span>
+                    <strong className="text-amber-900 font-mono font-black truncate block">
+                      {createdAccount.registerNumber || formData.registerNumber}
+                    </strong>
+                  </div>
                   <div>
                     <span className="text-slate-500 text-[10px] block">Course Enrolled:</span>
                     <strong className="text-slate-900 font-bold truncate block">{formData.courseName}</strong>
@@ -810,7 +824,14 @@ export default function AdmissionModal({
                   ) : (
                     <select
                       value={formData.courseName}
-                      onChange={(e) => setFormData({ ...formData, courseName: e.target.value })}
+                      onChange={(e) => {
+                        const newProg = e.target.value;
+                        setFormData({ 
+                          ...formData, 
+                          courseName: newProg,
+                          registerNumber: generateRegisterNumber(newProg)
+                        });
+                      }}
                       className="w-full px-2.5 sm:px-3 py-2 bg-white border-2 border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-black text-base sm:text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none shadow-2xs"
                     >
                       {BSEL_PROGRAMS.map((prog, i) => (
