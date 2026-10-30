@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { PROGRAMS_DATA, DIGITAL_PROGRAMS_DATA } from '../data/programsData';
 import { getStoredEvents } from '../data/eventsData';
+import { getStoredCourses } from '../data/coursesData';
 import heroIllustration from '../assets/hero-cropped.png';
 import { 
   IsoShieldIcon, 
@@ -17,12 +18,32 @@ import {
 
 export default function HomePage({ setActivePage, onSelectProgram }) {
   const [eventsList, setEventsList] = useState(() => getStoredEvents());
+  const [coursesList, setCoursesList] = useState(() => getStoredCourses());
 
   useEffect(() => {
-    const handleUpdate = () => setEventsList(getStoredEvents());
-    window.addEventListener('bsel_events_updated', handleUpdate);
-    return () => window.removeEventListener('bsel_events_updated', handleUpdate);
+    const handleEventsUpdate = () => setEventsList(getStoredEvents());
+    const handleCoursesUpdate = () => setCoursesList(getStoredCourses());
+
+    window.addEventListener('bsel_events_updated', handleEventsUpdate);
+    window.addEventListener('bsel_courses_updated', handleCoursesUpdate);
+    window.addEventListener('storage', handleEventsUpdate);
+    window.addEventListener('storage', handleCoursesUpdate);
+
+    return () => {
+      window.removeEventListener('bsel_events_updated', handleEventsUpdate);
+      window.removeEventListener('bsel_courses_updated', handleCoursesUpdate);
+      window.removeEventListener('storage', handleEventsUpdate);
+      window.removeEventListener('storage', handleCoursesUpdate);
+    };
   }, []);
+
+  const isSkill = (p) => {
+    const cat = (p.category || '').toLowerCase();
+    return cat === 'skill' || cat.includes('skill') || cat.includes('art') || cat.includes('creative') || cat.includes('language');
+  };
+
+  const skillPrograms = coursesList.filter(p => isSkill(p));
+  const digitalPrograms = coursesList.filter(p => !isSkill(p));
 
   const filteredEvents = eventsList;
 
@@ -149,7 +170,7 @@ export default function HomePage({ setActivePage, onSelectProgram }) {
 
             {/* Grid of 3 Programs with Glitter Shimmer Border */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 mt-8">
-              {PROGRAMS_DATA.slice(0, 3).map((prog) => (
+              {(skillPrograms.length > 0 ? skillPrograms : PROGRAMS_DATA).slice(0, 3).map((prog) => (
                 <div
                   key={prog.id}
                   onClick={() => onSelectProgram(prog)}
@@ -231,7 +252,7 @@ export default function HomePage({ setActivePage, onSelectProgram }) {
 
               {/* Grid of 3 Digital Skills Cards with Glitter Shimmer Border */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 mt-8">
-                {DIGITAL_PROGRAMS_DATA.slice(0, 3).map((prog) => (
+                {(digitalPrograms.length > 0 ? digitalPrograms : DIGITAL_PROGRAMS_DATA).slice(0, 3).map((prog) => (
                   <div
                     key={prog.id}
                     onClick={() => onSelectProgram(prog)}

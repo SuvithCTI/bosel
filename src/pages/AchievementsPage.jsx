@@ -1,3 +1,4 @@
+import { getStoredSchools } from "../data/schoolsData";
 import { useState, useEffect } from "react";
 import { 
   Trophy, 
@@ -553,6 +554,18 @@ function Championships() {
 }
 
 function ParticipatingSchools() {
+  const [schoolsList, setSchoolsList] = useState(() => getStoredSchools());
+
+  useEffect(() => {
+    const handleUpdate = () => setSchoolsList(getStoredSchools());
+    window.addEventListener('bsel_schools_updated', handleUpdate);
+    window.addEventListener('storage', handleUpdate);
+    return () => {
+      window.removeEventListener('bsel_schools_updated', handleUpdate);
+      window.removeEventListener('storage', handleUpdate);
+    };
+  }, []);
+
   return (
     <section id="schools" className="bg-[#F8F7F3] py-8 sm:py-10 lg:py-14">
       <div className="mx-auto max-w-[1440px] px-3 sm:px-4 lg:px-5">
@@ -570,13 +583,13 @@ function ParticipatingSchools() {
         </div>
 
         <div className="mt-5 sm:mt-7 grid grid-cols-1 gap-3 sm:mt-10 sm:grid-cols-2 sm:gap-4 md:mt-12">
-          {schools.map((school) => (
+          {schoolsList.map((school, index) => (
             <div
-              key={school.number}
+              key={school.code || school.name || index}
               className="group flex min-w-0 items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 transition duration-300 hover:border-amber-300 hover:shadow-lg sm:gap-4 sm:rounded-2xl sm:p-5"
             >
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-950 text-[10px] font-black text-amber-400 transition group-hover:bg-amber-400 group-hover:text-blue-950 sm:h-11 sm:w-11 sm:rounded-xl sm:text-xs lg:h-14 lg:w-14 lg:rounded-2xl lg:text-sm">
-                {school.number}
+                {String(index + 1).padStart(2, '0')}
               </div>
 
               <div className="min-w-0 flex-1">
@@ -584,14 +597,12 @@ function ParticipatingSchools() {
                   {school.name}
                 </h3>
 
-                {school.location && (
-                  <p className="mt-2 text-sm text-slate-500">
-                    {school.location}
+                {(school.city || school.location || school.branchName) && (
+                  <p className="mt-1 text-xs text-slate-500">
+                    {school.city || school.location || school.branchName}
                   </p>
                 )}
               </div>
-
-             
             </div>
           ))}
         </div>

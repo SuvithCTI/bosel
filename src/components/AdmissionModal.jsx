@@ -116,7 +116,27 @@ export default function AdmissionModal({
   initialProgram = null,
   initialFee = null
 }) {
-  const initialCourse = initialProgram || 'Abacus Speed Arithmetic';
+  const [coursesList, setCoursesList] = useState(() => getStoredCourses());
+  const [schoolsList, setSchoolsList] = useState(() => getStoredSchools());
+
+  useEffect(() => {
+    const handleCourses = () => setCoursesList(getStoredCourses());
+    const handleSchools = () => setSchoolsList(getStoredSchools());
+    window.addEventListener('bsel_courses_updated', handleCourses);
+    window.addEventListener('bsel_schools_updated', handleSchools);
+    return () => {
+      window.removeEventListener('bsel_courses_updated', handleCourses);
+      window.removeEventListener('bsel_schools_updated', handleSchools);
+    };
+  }, []);
+
+  const dynamicProgramNames = coursesList.map(c => c.fullName || c.name);
+  const availablePrograms = dynamicProgramNames.length > 0 ? dynamicProgramNames : BSEL_PROGRAMS;
+
+  const dynamicBranchNames = schoolsList.map(s => s.branchName || s.name);
+  const availableBranches = dynamicBranchNames.length > 0 ? dynamicBranchNames : BSEL_BRANCHES;
+
+  const initialCourse = initialProgram || availablePrograms[0] || 'Abacus Speed Arithmetic';
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0], // 1. Date
     registerNumber: generateRegisterNumber(initialCourse), // 2. Register number [non-editable]
@@ -797,7 +817,7 @@ export default function AdmissionModal({
                       onChange={(e) => setFormData({ ...formData, branch: e.target.value })}
                       className="w-full px-2 sm:px-3 py-2 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-sky-500 focus:outline-none text-base sm:text-sm shadow-2xs truncate"
                     >
-                      {BSEL_BRANCHES.map((b, i) => (
+                      {availableBranches.map((b, i) => (
                         <option key={i} value={b}>{b}</option>
                       ))}
                     </select>
@@ -826,15 +846,18 @@ export default function AdmissionModal({
                       value={formData.courseName}
                       onChange={(e) => {
                         const newProg = e.target.value;
+                        const matched = coursesList.find(c => c.fullName === newProg || c.name === newProg || c.id === newProg);
+                        const newFee = matched ? (matched.fee || '₹450') : formData.feeAmount;
                         setFormData({ 
                           ...formData, 
                           courseName: newProg,
+                          feeAmount: newFee,
                           registerNumber: generateRegisterNumber(newProg)
                         });
                       }}
                       className="w-full px-2.5 sm:px-3 py-2 bg-white border-2 border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-black text-base sm:text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none shadow-2xs"
                     >
-                      {BSEL_PROGRAMS.map((prog, i) => (
+                      {availablePrograms.map((prog, i) => (
                         <option key={i} value={prog}>{prog}</option>
                       ))}
                     </select>

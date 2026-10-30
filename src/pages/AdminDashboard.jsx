@@ -223,17 +223,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
   const [coursesList, setCoursesList] = useState(() => getStoredCourses());
   const [franchiseList, setFranchiseList] = useState(() => getStoredFranchiseLeads());
   const [paymentsList, setPaymentsList] = useState(() => getStoredPayments());
-  const [schoolsList, setSchoolsList] = useState(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const raw = localStorage.getItem('bsel_partner_schools');
-        if (raw) return JSON.parse(raw);
-      } catch {
-        // ignore
-      }
-    }
-    return DEFAULT_PARTNER_SCHOOLS;
-  });
+  const [schoolsList, setSchoolsList] = useState(() => getStoredSchools());
 
   // Notification Toast
   const [toastMessage, setToastMessage] = useState('');
@@ -270,12 +260,14 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
     const handleCoursesUpdate = () => setCoursesList(getStoredCourses());
     const handleFranchiseUpdate = () => setFranchiseList(getStoredFranchiseLeads());
     const handlePaymentsUpdate = () => setPaymentsList(getStoredPayments());
+    const handleSchoolsUpdate = () => setSchoolsList(getStoredSchools());
 
     window.addEventListener('bsel_users_updated', handleUsersUpdate);
     window.addEventListener('bsel_events_updated', handleEventsUpdate);
     window.addEventListener('bsel_courses_updated', handleCoursesUpdate);
     window.addEventListener('bsel_franchise_leads_updated', handleFranchiseUpdate);
     window.addEventListener('bsel_payments_updated', handlePaymentsUpdate);
+    window.addEventListener('bsel_schools_updated', handleSchoolsUpdate);
 
     return () => {
       window.removeEventListener('bsel_users_updated', handleUsersUpdate);
@@ -283,6 +275,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
       window.removeEventListener('bsel_courses_updated', handleCoursesUpdate);
       window.removeEventListener('bsel_franchise_leads_updated', handleFranchiseUpdate);
       window.removeEventListener('bsel_payments_updated', handlePaymentsUpdate);
+      window.removeEventListener('bsel_schools_updated', handleSchoolsUpdate);
     };
   }, []);
 
@@ -675,11 +668,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
 
       const updatedSchools = [...schoolsList, newBranch];
       setSchoolsList(updatedSchools);
-      try {
-        localStorage.setItem('bsel_partner_schools', JSON.stringify(updatedSchools));
-      } catch {
-        // ignore
-      }
+      saveStoredSchools(updatedSchools);
 
       // Add a payment record for Franchise Affiliation
       addStoredPayment({
@@ -4498,11 +4487,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
               };
               const updated = [...schoolsList, created];
               setSchoolsList(updated);
-              try {
-                localStorage.setItem('bsel_partner_schools', JSON.stringify(updated));
-              } catch {
-                // ignore
-              }
+              saveStoredSchools(updated);
               setShowAddSchoolModal(false);
               showToast(`Affiliated "${created.name}" with Centre Code ${nextCode}!`);
             }} className="p-5 space-y-3.5 text-xs">

@@ -1,5 +1,3 @@
-
-
 import React from 'react';
 import {
   BookOpen,
@@ -13,16 +11,7 @@ import {
   Award,
 } from 'lucide-react';
 
-import {
-  BookOpen,
-  CalendarDays,
-  MapPin,
-  Ticket,
-  Download,
-  GraduationCap,
-  CheckCircle2,
-  FileText,
-} from 'lucide-react';
+
 
 function InfoCard({ icon: Icon, label, value }) {
   return (
