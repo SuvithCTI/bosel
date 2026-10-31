@@ -236,6 +236,27 @@ export const getRegisteredUsers = () => {
       }
     });
 
+    // Ensure all students have a valid official Register Number (e.g. AB27-001)
+    users.forEach((u, i) => {
+      const isStudent = u.role === 'Student' || (!u.role && u.userId !== 'admin' && !u.userId.startsWith('branch.'));
+      if (isStudent) {
+        const needsReg = !u.registerNumber || 
+          u.registerNumber.startsWith('BSEL-STU-') || 
+          u.registerNumber === u.userId || 
+          u.registerNumber === 'Not provided';
+        if (needsReg) {
+          const course = u.program || u.courseName || 'Abacus Speed Arithmetic';
+          const prefix = getCoursePrefix(course);
+          const currentYear = new Date().getFullYear();
+          const year2Digit = String(currentYear).slice(-2);
+          const numSeq = String(i + 1).padStart(3, '0');
+          u.registerNumber = `${prefix}${year2Digit}-${numSeq}`;
+          u.registrationNo = u.registerNumber;
+          modified = true;
+        }
+      }
+    });
+
     if (modified) {
       try {
         localStorage.setItem('bsel_registered_users', JSON.stringify(users));
@@ -303,8 +324,44 @@ export const getDistrictShortCode = (districtName) => {
   return base.replace(/[^A-Za-z]/g, '').slice(0, 3).toUpperCase() || 'TN';
 };
 
+export const generateCertificateNumber = (courseName = '', level = 'Level 1') => {
+  const prefix = getCoursePrefix(courseName);
+  const cleanLevel = String(level).replace(/\D/g, '') || '1';
+  
+  let maxSerial = 0;
+  if (typeof window !== 'undefined') {
+    try {
+      const raw = localStorage.getItem('bsel_registered_users');
+      if (raw) {
+        const users = JSON.parse(raw);
+        if (Array.isArray(users)) {
+          const certPattern = new RegExp(`^BSEL/${prefix}/L${cleanLevel}/(\\d+)`, 'i');
+          users.forEach((u) => {
+            (u.results || []).forEach((r) => {
+              const cNo = r.certificateNo || '';
+              const match = cNo.match(certPattern);
+              if (match && match[1]) {
+                const num = parseInt(match[1], 10);
+                if (!isNaN(num) && num > maxSerial) {
+                  maxSerial = num;
+                }
+              }
+            });
+          });
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  const nextSerial = maxSerial + 1;
+  const paddedSerial = String(nextSerial).padStart(4, '0');
+  return `BSEL/${prefix}/L${cleanLevel}/${paddedSerial}`;
+};
+
 export const getCoursePrefix = (courseName = '') => {
-  const lower = (courseName || '').toLowerCase();
+  const lower = String(courseName || '').toLowerCase();
   if (lower.includes('abacus')) return 'AB';
   if (lower.includes('handwriting')) return 'HW';
   if (lower.includes('phonics')) return 'PH';
@@ -602,9 +659,13 @@ export const deleteUserAccount = (userId) => {
 
 export const addUserAccount = (userData) => {
   const users = getRegisteredUsers();
+  const progName = userData.program || userData.courseName || 'Abacus Speed Arithmetic';
+  const officialRegNo = userData.registerNumber || userData.registrationNo || generateRegisterNumber(progName);
   const newUser = {
     userId: userData.userId || `BSEL-STU-${Math.floor(100000 + Math.random() * 900000)}`,
     password: userData.password || 'besel2026',
+    registerNumber: officialRegNo,
+    registrationNo: officialRegNo,
     studentName: userData.studentName || 'Student Name',
     parentName: userData.parentName || 'Guardian',
     email: userData.email || 'student@besellearning.org',

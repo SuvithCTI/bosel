@@ -3,7 +3,6 @@ import {
   Users, 
   Calendar, 
   Award, 
-  Trophy,
   School, 
   Plus, 
   Trash2, 
@@ -33,8 +32,12 @@ import {
   UserCheck,
   ChevronRight,
   ArrowUpRight,
-  Menu
+  Menu,
+  GraduationCap
 } from 'lucide-react';
+import StudentAdmissionFormView from '../components/StudentAdmissionFormView';
+import OfficialMarksheetView from '../components/OfficialMarksheetView';
+import CertificateModal from '../components/CertificateModal';
 import Logo from '../components/Logo';
 import Certificate from '../components/Certificate';
 import { 
@@ -100,6 +103,26 @@ export const getStudentPhotoUrl = (student, index = 0) => {
   if (student?.studentPhoto) return student.studentPhoto;
   if (student?.photo) return student.photo;
   return SAMPLE_STUDENT_PHOTOS[Math.abs(index) % SAMPLE_STUDENT_PHOTOS.length];
+};
+
+export const getStudentRegisterNumber = (student) => {
+  if (!student) return 'AB26-001';
+  if (student.registerNumber && student.registerNumber !== 'Not provided' && !student.registerNumber.startsWith('BSEL-STU-')) {
+    return student.registerNumber;
+  }
+  if (student.registrationNo && student.registrationNo !== 'Not provided' && !student.registrationNo.startsWith('BSEL-STU-')) {
+    return student.registrationNo;
+  }
+  const course = (student.program || student.courseName || 'Abacus Speed Arithmetic').toLowerCase();
+  const prefix = course.includes('abacus') ? 'AB' :
+                 course.includes('handwriting') ? 'HW' :
+                 course.includes('phonics') ? 'PH' :
+                 course.includes('vedic') ? 'VM' :
+                 course.includes('calligraphy') ? 'CG' :
+                 course.includes('art') ? 'AD' :
+                 course.includes('python') ? 'PY' : 'BC';
+  const digits = String(student.userId || '').replace(/\D/g, '').slice(-3) || '001';
+  return `${prefix}26-${digits}`;
 };
 
 export const getMarksheetSubjects = (student) => {
@@ -333,6 +356,8 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
   const [viewingStudentReceipt, setViewingStudentReceipt] = useState(null);
   const [showMarksheetModal, setShowMarksheetModal] = useState(false);
   const [selectedMarksheetStudent, setSelectedMarksheetStudent] = useState(null);
+  const [viewingAdmissionStudent, setViewingAdmissionStudent] = useState(null);
+  const [previewCertModalData, setPreviewCertModalData] = useState(null);
 
   const [showAddCourseModal, setShowAddCourseModal] = useState(false);
   const [editingCourse, setEditingCourse] = useState(null);
@@ -349,6 +374,8 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
   const hasOpenModal = Boolean(
     showAddStudentModal || 
     showMarksheetModal ||
+    viewingAdmissionStudent ||
+    previewCertModalData ||
     editingStudent || 
     viewingStudentReceipt || 
     showAddCourseModal || 
@@ -731,6 +758,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
 
   // 6. Certificate Handlers
   const handleOpenCertForStudent = (student) => {
+    const regNo = getStudentRegisterNumber(student);
     const studentCertData = {
       studentName: student.studentName || 'Candidate Name',
       courseName: student.program || student.courseName || 'Abacus',
@@ -738,28 +766,25 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
       level: student.grade || 'Level 1',
       grade: student.results?.[0]?.rank || 'A',
       duration: student.duration || '6 Months',
-      registrationNo: student.registerNumber || student.registrationNo || student.userId,
-      certificateNo: student.results?.[0]?.certificateNo || `BSEL/CERT/2026-${student.userId.replace(/\D/g, '').slice(-4) || '9012'}`,
+      registrationNo: regNo,
+      certificateNo: student.results?.[0]?.certificateNo || `BSEL/CERT/2026-${String(student.userId || '').replace(/\D/g, '').slice(-4) || '9012'}`,
       centreName: student.branch || student.institution || activeBranch || 'test branch',
       centreCode: '545454',
       centreAddress: student.address || 'second street, surandai,keelasurandai,tenkasi',
       issueDate: student.enrolmentDate || '05-10-2026',
       certificateType: 'COMPETITION',
-      studentPhoto: student.studentPhoto || null
+      studentPhoto: getStudentPhotoUrl(student) || student.studentPhoto || null
     };
 
     setCertData(studentCertData);
-    if (currentAdminRole === 'Branch Head') {
-      setActiveTab('branch_certificates');
-    } else {
-      setActiveTab('certificates');
-    }
-    showToast(`Loaded Certificate for ${student.studentName}!`);
+    setPreviewCertModalData(studentCertData);
+    showToast(`Opened Certificate for ${student.studentName}!`);
   };
 
   // 7. Marksheet Handler
   const handleOpenMarksheet = (student, index = 0) => {
     const photo = getStudentPhotoUrl(student, index);
+    const regNo = getStudentRegisterNumber(student);
     const subjects = getMarksheetSubjects(student);
     const totalMax = subjects.reduce((sum, s) => sum + s.max, 0);
     const totalMarks = subjects.reduce((sum, s) => sum + s.marks, 0);
@@ -768,17 +793,20 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
     setSelectedMarksheetStudent({
       ...student,
       photoUrl: photo,
+      studentPhoto: photo,
+      registerNumber: regNo,
+      registrationNo: regNo,
       subjects,
       totalMax,
       totalMarks,
       percentage,
       resultText: percentage >= 85 ? 'FIRST CLASS WITH DISTINCTION' : 'FIRST CLASS',
       overallGrade: percentage >= 90 ? 'O (Outstanding)' : percentage >= 80 ? 'A+ (Excellent)' : 'A (Very Good)',
-      marksheetNo: `BSEL/MS/2026/${student.userId.replace(/\D/g, '').slice(-4) || '1042'}`,
+      marksheetNo: `BSEL/MS/2026/${String(student.userId || '').replace(/\D/g, '').slice(-4) || '1042'}`,
       issueDate: student.enrolmentDate || '05-10-2026'
     });
     setShowMarksheetModal(true);
-    showToast(`Loaded Marksheet for ${student.studentName || 'Student'}!`);
+    showToast(`Loaded Official Marksheet for ${student.studentName || 'Student'}!`);
   };
 
   const handleVerifyCertificate = (e) => {
@@ -1166,20 +1194,6 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                   >
                     <Award className={`w-4 h-4 shrink-0 ${activeTab === 'certificates' ? 'text-amber-400' : 'text-slate-500'}`} />
                     <span className="truncate">Certificate Desk</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setActivePage ? setActivePage('achievements') : handleTabSelect('achievements')}
-                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-black transition cursor-pointer text-left text-slate-700 hover:bg-amber-50 hover:text-amber-900 border border-transparent hover:border-amber-300/60"
-                  >
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <Trophy className="w-4 h-4 shrink-0 text-amber-500" />
-                      <span className="truncate">Website Achievements</span>
-                    </div>
-                    <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-800">
-                      Live Web ↗
-                    </span>
                   </button>
                 </>
               ) : (
@@ -1756,7 +1770,18 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                           </td>
 
                           <td className="py-3 px-3 text-right">
-                            <div className="flex items-center justify-end gap-1.5">
+                            <div className="flex items-center justify-end gap-1.5 flex-wrap sm:flex-nowrap">
+                              {/* Admission Form Button */}
+                              <button
+                                type="button"
+                                onClick={() => setViewingAdmissionStudent(student)}
+                                className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-lg text-[10px] transition cursor-pointer flex items-center gap-1 shadow-xs"
+                                title="View & Print Official Admission Form"
+                              >
+                                <GraduationCap className="w-3 h-3 text-emerald-200" />
+                                <span>Admission Form</span>
+                              </button>
+
                               {/* Marksheet Button */}
                               <button
                                 type="button"
@@ -2817,7 +2842,17 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                           </td>
 
                           <td className="py-3 px-3 text-right">
-                            <div className="flex items-center justify-end gap-1.5">
+                            <div className="flex items-center justify-end gap-1.5 flex-wrap sm:flex-nowrap">
+                              <button
+                                type="button"
+                                onClick={() => setViewingAdmissionStudent(st)}
+                                className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-lg text-[10px] transition cursor-pointer flex items-center gap-1 shadow-xs"
+                                title="View & Print Official Admission Form"
+                              >
+                                <GraduationCap className="w-3 h-3 text-emerald-200" />
+                                <span>Admission Form</span>
+                              </button>
+
                               <button
                                 type="button"
                                 onClick={() => handleOpenCertForStudent(st)}
@@ -3140,279 +3175,35 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
       {/* =========================================================================
           MODAL: OFFICIAL EXAMINATION MARKSHEET (SUPER ADMIN & ALL DESKS)
           ========================================================================= */}
-      {showMarksheetModal && selectedMarksheetStudent && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-y-auto">
-          <div className="bg-white w-full max-w-3xl rounded-2xl shadow-2xl border-2 border-amber-400/60 overflow-hidden animate-in zoom-in-95 duration-150 my-auto">
-            
-            {/* Top Toolbar (Controls) */}
-            <div className="bg-gradient-to-r from-[#081d3d] via-[#0c234b] to-[#123068] text-white p-3.5 sm:p-4 flex items-center justify-between gap-3 border-b-2 border-amber-400 print:hidden">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-amber-400 text-slate-950 flex items-center justify-center font-black">
-                  <FileText className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-black text-white flex items-center gap-2">
-                    <span>Official Statement of Marks</span>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-emerald-500 text-white">
-                      Verified Record
-                    </span>
-                  </h3>
-                  <p className="text-[11px] text-slate-300">
-                    B★SEL Board Autonomous Skill Examination Directorate • Academic Year 2026–2027
-                  </p>
-                </div>
-              </div>
+      {(showMarksheetModal || selectedMarksheetStudent) && selectedMarksheetStudent && (
+        <OfficialMarksheetView
+          student={selectedMarksheetStudent}
+          onClose={() => {
+            setShowMarksheetModal(false);
+            setSelectedMarksheetStudent(null);
+          }}
+        />
+      )}
 
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => window.print()}
-                  className="px-3.5 py-1.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-black rounded-xl text-xs transition cursor-pointer flex items-center gap-1.5 shadow-sm"
-                  title="Print official marksheet"
-                >
-                  <Printer className="w-3.5 h-3.5" />
-                  <span>Print Marksheet</span>
-                </button>
+      {/* =========================================================================
+          MODAL: OFFICIAL CERTIFICATE PREVIEW (SUPER ADMIN & ALL DESKS)
+          ========================================================================= */}
+      {previewCertModalData && (
+        <CertificateModal
+          isOpen={Boolean(previewCertModalData)}
+          initialData={previewCertModalData}
+          onClose={() => setPreviewCertModalData(null)}
+        />
+      )}
 
-                <button
-                  type="button"
-                  onClick={() => setShowMarksheetModal(false)}
-                  className="p-1.5 text-white/80 hover:text-white hover:bg-white/10 rounded-xl transition cursor-pointer"
-                  title="Close"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-
-            {/* Printable Marksheet Container */}
-            <div className="p-4 sm:p-6 md:p-8 bg-amber-50/20 text-slate-900 overflow-y-auto max-h-[80vh] print:max-h-none print:p-0 print:bg-white">
-              <div className="bg-white border-4 border-[#0c234b] p-5 sm:p-7 md:p-8 rounded-xl shadow-md relative overflow-hidden">
-                
-                {/* Ornate Gold Inner Border */}
-                <div className="absolute inset-1.5 sm:inset-2 border border-amber-500/60 pointer-events-none rounded-lg"></div>
-
-                {/* Corner Accents */}
-                <div className="absolute top-2.5 left-2.5 w-3 h-3 border-t-2 border-l-2 border-amber-600 pointer-events-none"></div>
-                <div className="absolute top-2.5 right-2.5 w-3 h-3 border-t-2 border-r-2 border-amber-600 pointer-events-none"></div>
-                <div className="absolute bottom-2.5 left-2.5 w-3 h-3 border-b-2 border-l-2 border-amber-600 pointer-events-none"></div>
-                <div className="absolute bottom-2.5 right-2.5 w-3 h-3 border-b-2 border-r-2 border-amber-600 pointer-events-none"></div>
-
-                {/* Header Banner */}
-                <div className="text-center pb-4 border-b-2 border-amber-500/80 relative">
-                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-                    <div className="shrink-0 flex items-center justify-center">
-                      <Logo />
-                    </div>
-
-                    <div className="flex-1 text-center px-2">
-                      <h1 className="text-base sm:text-lg md:text-xl font-black text-[#081d3d] uppercase tracking-wide font-serif">
-                        Board of Skills and Educational Learning
-                      </h1>
-                      <div className="text-xs font-black text-amber-700 uppercase tracking-widest mt-0.5">
-                        (B★SEL Autonomous National Council)
-                      </div>
-                      <p className="text-[10px] text-slate-600 mt-1">
-                        Registered & Authorized Skill Assessment Authority • ISO 9001:2015 Certified
-                      </p>
-                      <p className="text-[9.5px] text-slate-500">
-                        Head Office: Tenkasi, Tamil Nadu, India • Email: bsel.mindsparc@gmail.com • Ph: 98652 19131
-                      </p>
-                    </div>
-
-                    <div className="shrink-0 hidden sm:flex flex-col items-center">
-                      <div className="w-12 h-12 rounded-full border-2 border-amber-500 bg-amber-50 flex items-center justify-center font-black text-[#081d3d] text-xs shadow-xs">
-                        ★ B★SEL ★
-                      </div>
-                      <span className="text-[9px] font-bold text-slate-600 mt-1 uppercase">Official Seal</span>
-                    </div>
-                  </div>
-
-                  {/* Ribbon Title */}
-                  <div className="mt-3.5 bg-gradient-to-r from-[#081d3d] via-[#0c234b] to-[#081d3d] text-amber-300 py-1.5 px-4 rounded-md text-xs sm:text-sm font-black uppercase tracking-[0.18em] shadow-xs inline-block border border-amber-400">
-                    STATEMENT OF MARKS & EVALUATION RECORD
-                  </div>
-                </div>
-
-                {/* Candidate & Assessment Metadata Section */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 py-4.5 border-b border-slate-200">
-                  {/* Candidate Details (3 columns) */}
-                  <div className="md:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-xs">
-                    <div>
-                      <span className="text-[10px] uppercase font-bold text-slate-500 block">Candidate Name</span>
-                      <span className="font-extrabold text-slate-900 text-sm uppercase">{selectedMarksheetStudent.studentName}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] uppercase font-bold text-slate-500 block">Register Number</span>
-                      <span className="font-mono font-bold text-sky-800 text-sm">{selectedMarksheetStudent.registerNumber || selectedMarksheetStudent.userId}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] uppercase font-bold text-slate-500 block">Course / Program</span>
-                      <span className="font-bold text-slate-900">{selectedMarksheetStudent.program || selectedMarksheetStudent.courseName || 'Abacus'}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] uppercase font-bold text-slate-500 block">Examination Level</span>
-                      <span className="font-bold text-amber-700 uppercase">{selectedMarksheetStudent.grade || 'Level 1'}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] uppercase font-bold text-slate-500 block">Study & Examination Centre</span>
-                      <span className="font-semibold text-slate-800">{selectedMarksheetStudent.branch || selectedMarksheetStudent.institution || 'Tenkasi Regional Branch'}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] uppercase font-bold text-slate-500 block">Centre Code / Serial No.</span>
-                      <span className="font-mono font-bold text-slate-700">545454 • {selectedMarksheetStudent.marksheetNo}</span>
-                    </div>
-                  </div>
-
-                  {/* Student Photo Column */}
-                  <div className="flex md:flex-col items-center justify-center gap-2 shrink-0">
-                    <div className="w-22 h-26 sm:w-24 sm:h-28 rounded-lg overflow-hidden border-2 border-amber-500 shadow-sm bg-slate-50 p-1 flex flex-col items-center justify-center">
-                      <img 
-                        src={selectedMarksheetStudent.photoUrl} 
-                        alt="Student" 
-                        className="w-full h-full object-cover rounded"
-                      />
-                    </div>
-                    <div className="text-[9px] font-bold text-slate-500 text-center uppercase tracking-wider">
-                      Student Photo
-                    </div>
-                  </div>
-                </div>
-
-                {/* Marks Breakdown Table */}
-                <div className="py-4">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs border border-slate-300">
-                      <thead className="bg-[#081d3d] text-white uppercase text-[10px] tracking-wider font-black">
-                        <tr>
-                          <th className="py-2.5 px-3 border border-slate-300 text-center w-12">Sl.</th>
-                          <th className="py-2.5 px-3 border border-slate-300">Subject / Examination Component</th>
-                          <th className="py-2.5 px-3 border border-slate-300 text-center w-24">Max Marks</th>
-                          <th className="py-2.5 px-3 border border-slate-300 text-center w-24">Min Pass</th>
-                          <th className="py-2.5 px-3 border border-slate-300 text-center w-24">Marks Secured</th>
-                          <th className="py-2.5 px-3 border border-slate-300 text-center w-20">Grade</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-200 font-semibold text-slate-800">
-                        {selectedMarksheetStudent.subjects?.map((sub, sIdx) => (
-                          <tr key={sub.id} className={sIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/60'}>
-                            <td className="py-2.5 px-3 border border-slate-300 text-center font-bold text-slate-500">{sIdx + 1}</td>
-                            <td className="py-2.5 px-3 border border-slate-300 font-bold text-slate-900">{sub.name}</td>
-                            <td className="py-2.5 px-3 border border-slate-300 text-center">{sub.max}</td>
-                            <td className="py-2.5 px-3 border border-slate-300 text-center text-slate-500">{sub.min}</td>
-                            <td className="py-2.5 px-3 border border-slate-300 text-center font-black text-sky-900">{sub.marks}</td>
-                            <td className="py-2.5 px-3 border border-slate-300 text-center">
-                              <span className="px-2 py-0.5 rounded text-[10px] font-black bg-emerald-100 text-emerald-900">
-                                {sub.grade}
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
-
-                        {/* Grand Total Row */}
-                        <tr className="bg-amber-100/70 text-slate-950 font-black text-xs border-t-2 border-slate-400">
-                          <td colSpan="2" className="py-2.5 px-3 border border-slate-300 uppercase tracking-wider text-right pr-4">
-                            Grand Total
-                          </td>
-                          <td className="py-2.5 px-3 border border-slate-300 text-center font-black">
-                            {selectedMarksheetStudent.totalMax}
-                          </td>
-                          <td className="py-2.5 px-3 border border-slate-300 text-center font-bold text-slate-600">
-                            40
-                          </td>
-                          <td className="py-2.5 px-3 border border-slate-300 text-center font-black text-emerald-900 text-sm">
-                            {selectedMarksheetStudent.totalMarks}
-                          </td>
-                          <td className="py-2.5 px-3 border border-slate-300 text-center">
-                            <span className="px-2 py-0.5 rounded text-[10px] font-black bg-emerald-700 text-white">
-                              PASS
-                            </span>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-
-                {/* Result & Evaluation Summary Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 py-3 border-y border-slate-200 bg-slate-50/80 p-3 rounded-lg text-xs">
-                  <div>
-                    <span className="text-[10px] font-bold text-slate-500 uppercase block">Percentage</span>
-                    <span className="text-base font-black text-sky-900">{selectedMarksheetStudent.percentage}%</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] font-bold text-slate-500 uppercase block">Overall Grade</span>
-                    <span className="text-base font-black text-amber-700">{selectedMarksheetStudent.overallGrade}</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] font-bold text-slate-500 uppercase block">Final Result Status</span>
-                    <span className="text-xs font-black text-emerald-800 uppercase bg-emerald-100 px-2 py-0.5 rounded border border-emerald-300 inline-block mt-0.5">
-                      {selectedMarksheetStudent.resultText}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Footer Signatures & QR Verification */}
-                <div className="pt-6 sm:pt-8 flex flex-col sm:flex-row items-center justify-between gap-6 text-center text-xs">
-                  {/* Centre Director */}
-                  <div className="space-y-1">
-                    <div className="font-serif italic font-bold text-sm text-slate-800 border-b border-slate-400 pb-1 px-4">
-                      Sankar / Centre Director
-                    </div>
-                    <div className="font-bold text-[11px] text-slate-900 uppercase">Centre Director</div>
-                    <div className="text-[9.5px] text-slate-500">{selectedMarksheetStudent.branch || 'test branch'}</div>
-                  </div>
-
-                  {/* QR & Verification Box */}
-                  <div className="flex items-center gap-2.5 border border-amber-300 bg-amber-50/50 p-2 rounded-lg">
-                    <div className="w-12 h-12 bg-white border border-amber-400 p-0.5 rounded shrink-0">
-                      <svg viewBox="0 0 100 100" className="w-full h-full text-[#0c234b]">
-                        <rect x="5" y="5" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="5" />
-                        <rect x="12" y="12" width="14" height="14" fill="currentColor" />
-                        <rect x="67" y="5" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="5" />
-                        <rect x="74" y="12" width="14" height="14" fill="currentColor" />
-                        <rect x="5" y="67" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="5" />
-                        <rect x="12" y="74" width="14" height="14" fill="currentColor" />
-                        <rect x="42" y="8" width="6" height="6" fill="currentColor" />
-                        <rect x="52" y="15" width="6" height="6" fill="currentColor" />
-                        <rect x="40" y="24" width="6" height="6" fill="currentColor" />
-                        <rect x="50" y="32" width="6" height="6" fill="currentColor" />
-                        <rect x="42" y="44" width="16" height="16" fill="currentColor" />
-                      </svg>
-                    </div>
-                    <div className="text-left text-[9.5px] text-slate-600">
-                      <div className="font-black text-slate-900 uppercase">Digitally Authenticated</div>
-                      <div>B★SEL Registry Verification</div>
-                      <div className="font-mono text-slate-500">ID: {selectedMarksheetStudent.userId}</div>
-                    </div>
-                  </div>
-
-                  {/* Authorized Signatory */}
-                  <div className="space-y-1">
-                    <div className="font-serif italic font-bold text-sm text-slate-800 border-b border-slate-400 pb-1 px-4">
-                      AAshwini / Secretary
-                    </div>
-                    <div className="font-bold text-[11px] text-slate-900 uppercase">Authorized Signatory</div>
-                    <div className="text-[9.5px] text-slate-500">Board of Skills & Educational Learning</div>
-                  </div>
-                </div>
-
-              </div>
-            </div>
-
-            {/* Modal Bottom Close */}
-            <div className="bg-slate-50 p-3 flex items-center justify-end border-t border-slate-200 print:hidden">
-              <button
-                type="button"
-                onClick={() => setShowMarksheetModal(false)}
-                className="px-4 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold rounded-xl text-xs transition cursor-pointer"
-              >
-                Close Marksheet
-              </button>
-            </div>
-
-          </div>
-        </div>
+      {/* =========================================================================
+          MODAL: OFFICIAL STUDENT ADMISSION FORM (SUPER ADMIN & BRANCH HEAD)
+          ========================================================================= */}
+      {viewingAdmissionStudent && (
+        <StudentAdmissionFormView
+          student={viewingAdmissionStudent}
+          onClose={() => setViewingAdmissionStudent(null)}
+        />
       )}
 
       {/* =========================================================================

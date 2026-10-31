@@ -1,7 +1,6 @@
 import React, { useRef, useState } from 'react';
-import { Upload, Download, Loader2, Sparkles } from 'lucide-react';
-import html2canvas from 'html2canvas';
-import { jsPDF } from 'jspdf';
+import { Upload, Download, Loader2 } from 'lucide-react';
+import { exportPdfFromElement } from '../utils/pdfExport';
 import risingStarsEmblem from '../assets/rising_stars_emblem.png';
 
 export default function Certificate({
@@ -21,6 +20,7 @@ export default function Certificate({
   certificateType = 'COMPETITION',
   onPhotoUpload = null,
   showControls = true,
+  showUploadPhoto = false,
   className = ''
 }) {
   const certificateRef = useRef(null);
@@ -36,45 +36,17 @@ export default function Certificate({
     if (!certificateRef.current || isDownloadingPdf) return;
     setIsDownloadingPdf(true);
     try {
-      const element = certificateRef.current;
-      
-      // High-resolution rasterization for razor-sharp vector/font quality in PDF
-      const canvas = await html2canvas(element, {
-        scale: 2.5,
-        useCORS: true,
-        allowTaint: false,
-        logging: false,
-        backgroundColor: '#fcfbf7'
-      });
-
-      const imgData = canvas.toDataURL('image/jpeg', 0.98);
-
-      // A4 Landscape dimensions in mm: 297mm width, 210mm height
-      const pdf = new jsPDF({
-        orientation: 'landscape',
-        unit: 'mm',
-        format: 'a4'
-      });
-
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-
-      pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
-
       const safeStudent = (studentName || 'Candidate').trim().replace(/[^a-zA-Z0-9]/g, '_');
       const safeCourse = (courseName || 'Skill').trim().replace(/[^a-zA-Z0-9]/g, '_');
       const fileName = `BSEL_${safeCourse}_Certificate_${safeStudent}.pdf`;
 
-      // Direct download trigger via Blob URL
-      const pdfBlob = pdf.output('blob');
-      const blobUrl = URL.createObjectURL(pdfBlob);
-      const downloadLink = document.createElement('a');
-      downloadLink.href = blobUrl;
-      downloadLink.download = fileName;
-      document.body.appendChild(downloadLink);
-      downloadLink.click();
-      document.body.removeChild(downloadLink);
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
+      await exportPdfFromElement(certificateRef.current, {
+        filename: fileName,
+        orientation: 'landscape',
+        margin: 0,
+        backgroundColor: '#fcfbf7',
+        scale: 3
+      });
     } catch (err) {
       console.error('Direct PDF Generation failed:', err);
     } finally {
@@ -106,21 +78,25 @@ export default function Certificate({
           </div>
 
           <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-            <input
-              type="file"
-              ref={fileInputRef}
-              accept="image/*"
-              className="hidden"
-              onChange={handlePhotoChange}
-            />
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="flex-1 sm:flex-none px-3 py-1.5 bg-white/10 hover:bg-white/20 active:bg-white/30 text-white rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 border border-white/20 cursor-pointer"
-            >
-              <Upload className="w-3.5 h-3.5 text-sky-400" />
-              <span>{studentPhoto ? 'Change Photo' : 'Upload Photo'}</span>
-            </button>
+            {showUploadPhoto && (
+              <>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handlePhotoChange}
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex-1 sm:flex-none px-3 py-1.5 bg-white/10 hover:bg-white/20 active:bg-white/30 text-white rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 border border-white/20 cursor-pointer"
+                >
+                  <Upload className="w-3.5 h-3.5 text-sky-400" />
+                  <span>{studentPhoto ? 'Change Photo' : 'Upload Photo'}</span>
+                </button>
+              </>
+            )}
 
             <button
               type="button"
@@ -146,9 +122,8 @@ export default function Certificate({
 
       {/* Mobile Rotational Tip Badge */}
       <div className="w-full max-w-[1020px] mb-2 px-1 flex items-center justify-between text-[11px] text-slate-600 font-semibold sm:hidden print:hidden">
-        <span className="flex items-center gap-1 text-slate-700">
-          <Sparkles className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-          <span>Tip: Rotate phone to landscape for full preview</span>
+        <span className="text-slate-700">
+          Tip: Rotate phone to landscape for full preview
         </span>
       </div>
 

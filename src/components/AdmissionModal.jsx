@@ -23,6 +23,7 @@ import {
   QrCode,
   FileCheck2,
   Printer,
+  Download,
   Smartphone,
   PhoneCall,
   User,
@@ -35,6 +36,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { registerStudentAccount, generateRegisterNumber } from '../utils/authStorage';
+import { exportPdfFromElement } from '../utils/pdfExport';
 import { getStoredCourses } from '../data/coursesData';
 import { getStoredSchools } from '../data/schoolsData';
 
@@ -179,6 +181,8 @@ export default function AdmissionModal({
   const [districtError, setDistrictError] = useState(false);
   const [photoError, setPhotoError] = useState(false);
   const districtDropdownRef = useRef(null);
+  const slipRef = useRef(null);
+  const [isDownloadingSlip, setIsDownloadingSlip] = useState(false);
   const modalBodyRef = useRef(null);
 
   // Real-time Payment Gateway State
@@ -604,7 +608,7 @@ export default function AdmissionModal({
               </div>
 
               {/* Printable Official Slip Card */}
-              <div id="admission-slip" className="bg-white border-2 border-slate-300 rounded-2xl p-3.5 sm:p-5 space-y-3 shadow-xs text-left">
+              <div id="admission-slip" ref={slipRef} className="bg-white border-2 border-slate-300 rounded-2xl p-3.5 sm:p-5 space-y-3 shadow-xs text-left">
                 <div className="flex items-center justify-between pb-2.5 border-b-2 border-slate-100">
                   <div className="flex items-center gap-2.5">
                     {formData.photoPreview ? (
@@ -745,11 +749,42 @@ export default function AdmissionModal({
               <div className="flex flex-col sm:flex-row items-center gap-2 pt-1">
                 <button
                   type="button"
+                  disabled={isDownloadingSlip}
+                  onClick={async () => {
+                    if (!slipRef.current || isDownloadingSlip) return;
+                    setIsDownloadingSlip(true);
+                    try {
+                      const regNo = createdAccount.registerNumber || formData.registerNumber || 'Student';
+                      await exportPdfFromElement(slipRef.current, {
+                        filename: `Admission_Slip_${regNo}_${formData.studentName || 'Student'}.pdf`,
+                        orientation: 'portrait',
+                        margin: 10,
+                        backgroundColor: '#ffffff'
+                      });
+                    } catch (err) {
+                      console.error('Failed to export slip PDF:', err);
+                      window.print();
+                    } finally {
+                      setIsDownloadingSlip(false);
+                    }
+                  }}
+                  className="w-full sm:flex-1 py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-black rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs cursor-pointer min-h-[42px] disabled:opacity-50"
+                >
+                  {isDownloadingSlip ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Download className="w-4 h-4" />
+                  )}
+                  <span>{isDownloadingSlip ? 'Downloading...' : 'Download Slip PDF'}</span>
+                </button>
+
+                <button
+                  type="button"
                   onClick={() => window.print()}
                   className="w-full sm:flex-1 py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-900 text-xs font-black rounded-xl transition flex items-center justify-center gap-1.5 border border-slate-300 cursor-pointer min-h-[42px]"
                 >
                   <Printer className="w-4 h-4 text-slate-700" />
-                  <span>Print Admission Slip</span>
+                  <span>Print Slip</span>
                 </button>
 
                 {setActivePage && (

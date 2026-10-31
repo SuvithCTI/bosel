@@ -22,9 +22,11 @@ import {
   Calendar,
   MapPin,
   School,
-  Check
+  Check,
+  Download
 } from 'lucide-react';
 import ProgramIcon from '../components/ProgramIcons';
+import { exportPdfFromElement } from '../utils/pdfExport';
 
 // Images for 14 programs
 import abacusImg from '../assets/programs/abacus.jpg';
@@ -145,6 +147,8 @@ export default function ProgramsPage() {
   // Right-side drawer registration state
   const [registeringProgram, setRegisteringProgram] = useState(null);
   const [regStep, setRegStep] = useState('form'); // 'form' | 'payment' | 'processing' | 'success'
+  const slipRef = React.useRef(null);
+  const [isDownloadingSlip, setIsDownloadingSlip] = useState(false);
   
   // Registration form fields
   const [regForm, setRegForm] = useState({
@@ -1105,7 +1109,7 @@ export default function ProgramsPage() {
                     </div>
 
                     {/* Printable Receipt Card */}
-                    <div id="enrollment-receipt" className="bg-white border-2 border-slate-300 rounded-2xl p-3.5 sm:p-4 space-y-3 sm:space-y-3.5 shadow-sm">
+                    <div id="enrollment-receipt" ref={slipRef} className="bg-white border-2 border-slate-300 rounded-2xl p-3.5 sm:p-4 space-y-3 sm:space-y-3.5 shadow-sm">
                       <div className="flex items-center justify-between pb-2.5 sm:pb-3 border-b-2 border-slate-100">
                         <div>
                           <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-sky-800 block">Board of Skills & Educational Learning</span>
@@ -1158,11 +1162,42 @@ export default function ProgramsPage() {
                     <div className="flex flex-col sm:flex-row items-center gap-2 pt-1">
                       <button
                         type="button"
+                        disabled={isDownloadingSlip}
+                        onClick={async () => {
+                          if (!slipRef.current || isDownloadingSlip) return;
+                          setIsDownloadingSlip(true);
+                          try {
+                            const regNo = confirmationData.registrationNo || 'Enrollment';
+                            await exportPdfFromElement(slipRef.current, {
+                              filename: `Enrollment_Slip_${regNo}_${confirmationData.studentName || 'Student'}.pdf`,
+                              orientation: 'portrait',
+                              margin: 8,
+                              scale: 2.5
+                            });
+                          } catch (err) {
+                            console.error('Failed to export enrollment slip PDF:', err);
+                            window.print();
+                          } finally {
+                            setIsDownloadingSlip(false);
+                          }
+                        }}
+                        className="w-full sm:flex-1 bg-amber-400 hover:bg-amber-300 active:scale-95 text-slate-950 py-2.5 sm:py-3 rounded-xl font-black text-xs sm:text-sm flex items-center justify-center gap-1.5 transition cursor-pointer shadow-sm min-h-[42px]"
+                      >
+                        {isDownloadingSlip ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Download className="w-4 h-4" />
+                        )}
+                        <span>{isDownloadingSlip ? 'Downloading...' : 'Download Slip PDF'}</span>
+                      </button>
+
+                      <button
+                        type="button"
                         onClick={() => window.print()}
                         className="w-full sm:flex-1 bg-slate-100 hover:bg-slate-200 text-slate-900 py-2.5 sm:py-3 rounded-xl font-black text-xs sm:text-sm flex items-center justify-center gap-1.5 transition cursor-pointer border border-slate-300 min-h-[42px]"
                       >
                         <Printer className="w-4 h-4 text-slate-700" />
-                        <span>Print Enrollment Slip</span>
+                        <span>Print</span>
                       </button>
 
                       <button
@@ -1170,7 +1205,7 @@ export default function ProgramsPage() {
                         onClick={handleCloseRegister}
                         className="w-full sm:flex-1 bg-[#0F2B5C] hover:bg-[#163875] text-white py-2.5 sm:py-3 rounded-xl font-black text-xs sm:text-sm flex items-center justify-center gap-1.5 transition cursor-pointer min-h-[42px]"
                       >
-                        <span>Done & Close</span>
+                        <span>Done</span>
                       </button>
                     </div>
                   </div>
