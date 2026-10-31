@@ -46,9 +46,11 @@ import canvaImg from '../assets/programs/canva.png';
 
 // Comprehensive dataset for 14 programs across Skill Development and Digital & Technology
 import { getStoredCourses } from '../data/coursesData';
+import { getStoredBatches } from '../data/batchesData';
 
 export default function ProgramsPage() {
   const [courses, setCourses] = useState(() => getStoredCourses());
+  const [batchesList, setBatchesList] = useState(() => getStoredBatches());
   const [selectedProgram, setSelectedProgram] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState('all'); // 'all' | 'skill' | 'digital'
 
@@ -56,11 +58,18 @@ export default function ProgramsPage() {
     const handleCoursesUpdate = () => {
       setCourses(getStoredCourses());
     };
+    const handleBatchesUpdate = () => {
+      setBatchesList(getStoredBatches());
+    };
     window.addEventListener('bsel_courses_updated', handleCoursesUpdate);
+    window.addEventListener('bsel_batches_updated', handleBatchesUpdate);
     window.addEventListener('storage', handleCoursesUpdate);
+    window.addEventListener('storage', handleBatchesUpdate);
     return () => {
       window.removeEventListener('bsel_courses_updated', handleCoursesUpdate);
+      window.removeEventListener('bsel_batches_updated', handleBatchesUpdate);
       window.removeEventListener('storage', handleCoursesUpdate);
+      window.removeEventListener('storage', handleBatchesUpdate);
     };
   }, []);
 
@@ -602,6 +611,59 @@ export default function ProgramsPage() {
                   </div>
                 </div>
               )}
+
+              {/* Available Batches & Timings */}
+              {(() => {
+                const progBatches = batchesList.filter(b => {
+                  const pName = (selectedProgram.name || '').toLowerCase();
+                  const pFull = (selectedProgram.fullName || '').toLowerCase();
+                  const bProg = (b.program || '').toLowerCase();
+                  return pName.includes(bProg) || bProg.includes(pName) || pFull.includes(bProg) || bProg.includes(pFull);
+                });
+
+                if (progBatches.length === 0) return null;
+
+                return (
+                  <div className="bg-sky-50/60 border border-sky-200 rounded-xl p-3 sm:p-4 text-left">
+                    <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-sky-200/60">
+                      <h4 className="text-xs sm:text-sm font-black text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                        <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-sky-700 shrink-0" />
+                        <span>Branch Classroom Batches & Timings</span>
+                      </h4>
+                      <span className="text-[10px] font-bold text-sky-800 bg-sky-100 px-2 py-0.5 rounded-full">
+                        {progBatches.length} Available
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+                      {progBatches.map(b => (
+                        <div key={b.id} className="bg-white p-2.5 rounded-xl border border-sky-100 shadow-2xs space-y-1">
+                          <div className="flex items-center justify-between gap-1">
+                            <span className="font-black text-xs text-slate-900">{b.name}</span>
+                            <span className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded ${
+                              b.status === 'Active' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                            }`}>
+                              {b.status || 'Active'}
+                            </span>
+                          </div>
+                          <div className="text-[11px] text-slate-600 font-bold flex items-center gap-1.5">
+                            <Calendar className="w-3 h-3 text-sky-600 shrink-0" />
+                            <span>{b.days}</span>
+                          </div>
+                          <div className="text-[11px] text-slate-900 font-black flex items-center gap-1.5">
+                            <Clock className="w-3 h-3 text-amber-500 shrink-0" />
+                            <span>{b.startTime} - {b.endTime}</span>
+                          </div>
+                          <div className="text-[10px] text-slate-500 pt-1 border-t border-slate-100 flex items-center justify-between">
+                            <span>{b.branch || 'Regional Branch'}</span>
+                            {b.room && <span>Room: <strong className="text-slate-700">{b.room}</strong></span>}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Fee & Enrollment Box (At the end of Details) */}
               <div className="pt-2 sm:pt-3 border-t border-slate-200">

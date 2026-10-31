@@ -24,7 +24,6 @@ export default function Navbar({ activePage, setActivePage, sessionUser }) {
     { id: 'events', label: 'Events' },
     { id: 'achievements', label: 'Achievements' },
     { id: 'franchise', label: 'Franchise' },
-    { id: 'certificate', label: 'Certificates' },
     { id: 'contact', label: 'Contact Us' },
   ];
 
