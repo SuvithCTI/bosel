@@ -360,271 +360,214 @@ export default function AboutPage({ setActivePage }) {
           UPDATED IMAGE FITTING
       ========================================================= */}
 
-      <section className="py-12 sm:py-20 bg-slate-50 border-b border-slate-200">
+     
+<section className="py-10 sm:py-16 bg-slate-50 border-b border-slate-200">
+  <div className="w-full max-w-[1700px] mx-auto px-3 sm:px-5 lg:px-8">
 
-        <div className="w-full max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-12">
+    {/* Section Heading */}
+    <div className="text-center max-w-3xl mx-auto mb-8 sm:mb-12 space-y-2">
+      <h2 className="text-2xl sm:text-4xl md:text-5xl font-black font-heading text-slate-900">
+        Meet Our Founder
+      </h2>
 
-          <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-14 space-y-2">
+      <p className="text-slate-700 text-sm sm:text-base font-semibold">
+        The educator, visionary, and guiding force behind B⭐SEL's learning ecosystem.
+      </p>
+    </div>
 
-            <h2 className="text-2xl sm:text-4xl md:text-5xl font-black font-heading text-slate-900">
-              Meet Our Founder
-            </h2>
+    {/* Founder Profile Card */}
+    <div className="max-w-7xl mx-auto bg-white border-2 border-slate-200 rounded-2xl sm:rounded-3xl p-4 sm:p-7 md:p-9 shadow-md hover:shadow-xl transition relative overflow-hidden">
 
-            <p className="text-slate-700 text-sm sm:text-base font-semibold">
-              The educator, visionary, and guiding force behind B⭐SEL's learning ecosystem.
-            </p>
+      <Quote className="absolute top-6 right-6 w-20 h-20 text-slate-100 pointer-events-none" />
 
-          </div>
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-5 md:gap-5 lg:gap-7 items-center relative z-10">
 
+        {/* FOUNDER IMAGE */}
+        <div className="md:col-span-5 lg:col-span-5 flex flex-col items-center text-center">
 
-          {/* Founder Profile Card */}
+         {/* Image Frame */}
+<div className="relative w-full max-w-[260px] sm:max-w-[280px] md:max-w-[290px] lg:max-w-[310px] h-[300px] sm:h-[330px] md:h-[350px] lg:h-[370px] mx-auto rounded-2xl sm:rounded-3xl bg-gradient-to-tr from-[#081d3d] via-[#0F2B5C] to-[#1e4d99] p-1.5 sm:p-2 shadow-2xl border-2 sm:border-[3px] border-amber-400 overflow-hidden">
 
-          <div className="max-w-6xl lg:max-w-7xl mx-auto bg-white border-2 border-slate-200 rounded-2xl sm:rounded-3xl p-5 sm:p-8 md:p-12 shadow-md hover:shadow-xl transition relative overflow-hidden">
+  {!imgError ? (
+    <img
+      src={AdminImage}
+      alt="Master M. A. Alwin Raj"
+      className="block w-full h-full object-cover object-top rounded-xl sm:rounded-2xl"
+      onError={() => setImgError(true)}
+    />
+  ) : (
+    <div className="w-full h-full rounded-xl sm:rounded-2xl bg-[#0b2146] flex flex-col items-center justify-center text-white p-5 sm:p-8">
+      <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-amber-400/20 border-2 border-amber-400/50 flex items-center justify-center text-amber-300 font-black text-2xl sm:text-3xl mb-3 shadow-inner">
+        AR
+      </div>
 
-            <Quote className="absolute top-6 right-6 w-20 h-20 text-slate-100 pointer-events-none" />
+      <span className="text-xs sm:text-sm font-black text-amber-300 uppercase tracking-widest">
+        Master
+      </span>
 
+      <span className="text-base sm:text-xl font-black text-white mt-1">
+        M. A. Alwin Raj
+      </span>
 
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12 items-center relative z-10">
+      <span className="text-xs sm:text-sm font-mono text-slate-300 mt-1">
+        BSc, DECE, ADCTT
+      </span>
+    </div>
+  )}
+</div>
 
+          {/* Mobile Name & Qualifications */}
+          <div className="mt-4 md:hidden">
+            <h3 className="text-xl font-black text-[#0F2B5C]">
+              Master M. A. Alwin Raj
+            </h3>
 
-              {/* ==========================================
-                  FOUNDER IMAGE COLUMN
-                  FIXED: PORTRAIT IMAGE WITHOUT CROPPING
-              ========================================== */}
-
-              <div className="md:col-span-5 lg:col-span-4 flex flex-col items-center text-center">
-
-                {/* Responsive Portrait Image Frame */}
-
-                <div className="relative w-[240px] xs:w-[260px] sm:w-[280px] md:w-[300px] lg:w-[320px] aspect-[3/4] mx-auto rounded-2xl sm:rounded-3xl bg-gradient-to-tr from-[#081d3d] via-[#0F2B5C] to-[#1e4d99] p-2 sm:p-2.5 shadow-2xl border-2 sm:border-[3px] border-amber-400">
-
-                  {!imgError ? (
-
-                    <img
-                      src={AdminImage}
-                      alt="Master M. A. Alwin Raj"
-                      className="block w-full h-full object-contain object-center rounded-xl sm:rounded-2xl bg-white"
-                      onError={() => setImgError(true)}
-                    />
-
-                  ) : (
-
-                    <div className="w-full h-full rounded-xl sm:rounded-2xl bg-[#0b2146] flex flex-col items-center justify-center text-white p-6 sm:p-8">
-
-                      <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-amber-400/20 border-2 border-amber-400/50 flex items-center justify-center text-amber-300 font-black text-2xl sm:text-3xl mb-3 shadow-inner">
-                        AR
-                      </div>
-
-                      <span className="text-xs sm:text-sm font-black text-amber-300 uppercase tracking-widest">
-                        Master
-                      </span>
-
-                      <span className="text-base sm:text-xl font-black text-white mt-1">
-                        M. A. Alwin Raj
-                      </span>
-
-                      <span className="text-xs sm:text-sm font-mono text-slate-300 mt-1">
-                        BSc, DECE, ADCTT
-                      </span>
-
-                    </div>
-
-                  )}
-
-                </div>
-
-
-                {/* Mobile Name & Qualifications */}
-
-                <div className="mt-4 md:hidden">
-
-                  <h3 className="text-xl font-black text-[#0F2B5C]">
-                    Master M. A. Alwin Raj
-                  </h3>
-
-                  <div
-                    className="text-xs font-mono font-bold text-amber-700 mt-0.5"
-                    style={{ fontFamily: "'Outfit', sans-serif" }}
-                  >
-                    BSc, DECE, ADCTT
-                  </div>
-
-                  <div className="text-xs font-bold text-slate-600 uppercase tracking-wider mt-1">
-                    Founder & Director, B⭐SEL
-                  </div>
-
-                </div>
-
-              </div>
-
-
-              {/* ==========================================
-                  FOUNDER BIOGRAPHY COLUMN
-              ========================================== */}
-
-              <div className="md:col-span-7 lg:col-span-8 space-y-4 text-left">
-
-                {/* Desktop Name & Qualifications */}
-
-                <div className="hidden md:block">
-
-                  <h3 className="text-2xl sm:text-3xl font-black text-[#0F2B5C] font-heading">
-                    Master M. A. Alwin Raj
-                  </h3>
-
-                  <div
-                    className="text-sm font-bold text-slate-600 mt-1"
-                    style={{ fontFamily: "'Outfit', sans-serif" }}
-                  >
-                    Qualifications:{' '}
-                    <span className="font-mono text-amber-800 font-extrabold">
-                      BSc, DECE, ADCTT
-                    </span>
-                  </div>
-
-                </div>
-
-
-                {/* Biography */}
-
-                <div className="space-y-3 text-slate-800 text-sm sm:text-base leading-relaxed font-medium">
-
-                  <p>
-                    Master M. A. Alwin Raj brings over 10 years of experience in skill development and has engaged with more than 30 schools. He has built lasting relationships with educational institutions, including a continuous seven-year association with one school.
-                  </p>
-
-                  <p>
-                    He has participated in and conducted student competitions, supported school annual-day programs, and remains committed to creating structured, engaging, and meaningful learning opportunities for students.
-                  </p>
-
-                </div>
-
-
-                {/* Founder Signature */}
-
-                <div className="pt-3 sm:pt-4 flex flex-col sm:flex-row items-center sm:items-end justify-between gap-3 border-t border-slate-100 text-center sm:text-left">
-
-                  <div className="space-y-0.5">
-
-                    <div
-                      className="text-3xl sm:text-4xl text-[#0c234b] font-cursive select-none"
-                      style={{ fontFamily: "'Great Vibes', cursive" }}
-                    >
-                      Alwin Raj
-                    </div>
-
-                    <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                      Master M. A. Alwin Raj • Founder & Director
-                    </div>
-
-                  </div>
-
-                  <div className="px-3 py-1 bg-slate-100 rounded-lg text-slate-700 text-xs font-mono font-bold border border-slate-200">
-                    B⭐SEL Directorate
-                  </div>
-
-                </div>
-
-              </div>
-
+            <div
+              className="text-xs font-mono font-bold text-amber-700 mt-0.5"
+              style={{ fontFamily: "'Outfit', sans-serif" }}
+            >
+              BSc, DECE, ADCTT
             </div>
 
-
-            {/* ==========================================
-                FOUNDER EXPERIENCE HIGHLIGHTS
-            ========================================== */}
-
-            <div className="mt-8 pt-8 border-t border-slate-200">
-
-              {/* Rotating Border Animation */}
-
-              <style>{`
-                @keyframes shineBorderLoop {
-                  from {
-                    transform: translate(-50%, -50%) rotate(0deg);
-                  }
-                  to {
-                    transform: translate(-50%, -50%) rotate(360deg);
-                  }
-                }
-              `}</style>
-
-
-              <div className="text-center mb-4">
-
-                <span className="text-xs font-black uppercase tracking-wider text-slate-500">
-                  Founder Experience Highlights
-                </span>
-
-              </div>
-
-
-              {/* Statistics Cards */}
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
-
-                {founderStats.map((stat, idx) => (
-
-                  <div
-                    key={idx}
-                    className="relative p-[2.5px] rounded-2xl overflow-hidden shadow-[0_0_12px_rgba(245,158,11,0.2)] hover:shadow-[0_0_24px_rgba(245,158,11,0.45)] hover:-translate-y-1 transition-all duration-300 group [isolation:isolate]"
-                  >
-
-                    {/* Rotating Shining Border */}
-
-                    <div
-                      className="absolute pointer-events-none opacity-90 group-hover:opacity-100 transition-opacity"
-                      style={{
-                        width: '260%',
-                        aspectRatio: '1 / 1',
-                        left: '50%',
-                        top: '50%',
-                        background: 'conic-gradient(from 0deg, transparent 0deg 210deg, #d97706 245deg, #f59e0b 280deg, #fef08a 320deg, #ffffff 345deg, #f59e0b 360deg)',
-                        animation: 'shineBorderLoop 3.5s linear infinite',
-                        animationDelay: `${idx * 1.1}s`,
-                      }}
-                    />
-
-
-                    {/* Amber Border Guide */}
-
-                    <div className="absolute inset-0 rounded-2xl border-2 border-amber-300/70 pointer-events-none" />
-
-
-                    {/* Card Content */}
-
-                    <div className="relative z-10 bg-amber-50/90 backdrop-blur-xs rounded-[13.5px] p-4 sm:p-5 text-center flex flex-col justify-center h-full">
-
-                      <div
-                        className="text-3xl sm:text-4xl font-black text-[#0F2B5C] leading-none"
-                        style={{ fontFamily: "'Outfit', sans-serif" }}
-                      >
-                        {stat.value}
-                      </div>
-
-                      <div className="text-xs sm:text-sm font-black text-slate-900 mt-2">
-                        {stat.label}
-                      </div>
-
-                      <div className="text-[11px] font-semibold text-slate-700 mt-1">
-                        {stat.subtext}
-                      </div>
-
-                    </div>
-
-                  </div>
-
-                ))}
-
-              </div>
-
+            <div className="text-xs font-bold text-slate-600 uppercase tracking-wider mt-1">
+              Founder & Director, B⭐SEL
             </div>
-
           </div>
-
         </div>
 
-      </section>
+        {/* FOUNDER BIOGRAPHY */}
+        <div className="md:col-span-7 lg:col-span-7 space-y-4 text-left">
+
+          {/* Desktop Name & Qualifications */}
+          <div className="hidden md:block">
+            <h3 className="text-2xl sm:text-3xl font-black text-[#0F2B5C] font-heading">
+              Master M. A. Alwin Raj
+            </h3>
+
+            <div
+              className="text-sm font-bold text-slate-600 mt-1"
+              style={{ fontFamily: "'Outfit', sans-serif" }}
+            >
+              Qualifications:{' '}
+              <span className="font-mono text-amber-800 font-extrabold">
+                BSc, DECE, ADCTT
+              </span>
+            </div>
+
+            <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mt-1">
+              Founder & Director, B⭐SEL
+            </div>
+          </div>
+
+          {/* Biography */}
+          <div className="space-y-3 text-slate-800 text-sm sm:text-base leading-relaxed font-medium">
+            <p>
+              Master M. A. Alwin Raj brings over 10 years of experience in skill development and has engaged with more than 30 schools. He has built lasting relationships with educational institutions, including a continuous seven-year association with one school.
+            </p>
+
+            <p>
+              He has participated in and conducted student competitions, supported school annual-day programs, and remains committed to creating structured, engaging, and meaningful learning opportunities for students.
+            </p>
+          </div>
+
+          {/* Founder Signature */}
+          <div className="pt-3 sm:pt-4 flex flex-col sm:flex-row items-center sm:items-end justify-between gap-3 border-t border-slate-100 text-center sm:text-left">
+
+            <div className="space-y-0.5">
+              <div
+                className="text-3xl sm:text-4xl text-[#0c234b] font-cursive select-none"
+                style={{ fontFamily: "'Great Vibes', cursive" }}
+              >
+                Alwin Raj
+              </div>
+
+              <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                Master M. A. Alwin Raj • Founder & Director
+              </div>
+            </div>
+
+            <div className="px-3 py-1 bg-slate-100 rounded-lg text-slate-700 text-xs font-mono font-bold border border-slate-200">
+              B⭐SEL Directorate
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* FOUNDER EXPERIENCE HIGHLIGHTS */}
+      <div className="mt-7 sm:mt-8 pt-7 sm:pt-8 border-t border-slate-200">
+
+        {/* Rotating Border Animation */}
+        <style>{`
+          @keyframes shineBorderLoop {
+            from {
+              transform: translate(-50%, -50%) rotate(0deg);
+            }
+            to {
+              transform: translate(-50%, -50%) rotate(360deg);
+            }
+          }
+        `}</style>
+
+        <div className="text-center mb-4">
+          <span className="text-xs font-black uppercase tracking-wider text-slate-500">
+            Founder Experience Highlights
+          </span>
+        </div>
+
+        {/* Statistics Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
+
+          {founderStats.map((stat, idx) => (
+            <div
+              key={idx}
+              className="relative p-[2.5px] rounded-2xl overflow-hidden shadow-[0_0_12px_rgba(245,158,11,0.2)] hover:shadow-[0_0_24px_rgba(245,158,11,0.45)] hover:-translate-y-1 transition-all duration-300 group [isolation:isolate]"
+            >
+
+              {/* Rotating Shining Border */}
+              <div
+                className="absolute pointer-events-none opacity-90 group-hover:opacity-100 transition-opacity"
+                style={{
+                  width: '260%',
+                  aspectRatio: '1 / 1',
+                  left: '50%',
+                  top: '50%',
+                  background:
+                    'conic-gradient(from 0deg, transparent 0deg 210deg, #d97706 245deg, #f59e0b 280deg, #fef08a 320deg, #ffffff 345deg, #f59e0b 360deg)',
+                  animation: 'shineBorderLoop 3.5s linear infinite',
+                  animationDelay: `${idx * 1.1}s`,
+                }}
+              />
+
+              {/* Amber Border */}
+              <div className="absolute inset-0 rounded-2xl border-2 border-amber-300/70 pointer-events-none" />
+
+              {/* Card Content */}
+              <div className="relative z-10 bg-amber-50/90 backdrop-blur-xs rounded-[13.5px] p-4 sm:p-5 text-center flex flex-col justify-center h-full">
+
+                <div
+                  className="text-3xl sm:text-4xl font-black text-[#0F2B5C] leading-none"
+                  style={{ fontFamily: "'Outfit', sans-serif" }}
+                >
+                  {stat.value}
+                </div>
+
+                <div className="text-xs sm:text-sm font-black text-slate-900 mt-2">
+                  {stat.label}
+                </div>
+
+                <div className="text-[11px] font-semibold text-slate-700 mt-1">
+                  {stat.subtext}
+                </div>
+              </div>
+            </div>
+          ))}
+
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 
     </div>
   );

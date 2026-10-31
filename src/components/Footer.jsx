@@ -1,15 +1,50 @@
+
 import React from 'react';
-import { Phone, Mail, MapPin } from 'lucide-react';
+import {
+  FaFacebookF,
+  FaInstagram,
+  FaYoutube,
+  FaWhatsapp,
+} from 'react-icons/fa';
+
+import {
+  Phone,
+  Mail,
+  MapPin,
+} from 'lucide-react';
+
 import Logo from './Logo';
 
-export default function Footer({ setActivePage, onOpenLegal }) {
-  const handleNav = (pageId) => {
-    setActivePage(pageId);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
+export default function Footer({ handleNav, onOpenLegal }) {
   const linkClass =
-    'py-0.5 transition-colors duration-200 text-slate-300 hover:text-amber-400 cursor-pointer truncate';
+    'text-slate-300 hover:text-amber-400 transition-colors text-left font-medium';
+
+  const socialLinks = [
+  {
+    name: 'Facebook',
+    href: 'https://www.facebook.com/',
+    icon: FaFacebookF,
+    color: 'hover:bg-blue-600',
+  },
+  {
+    name: 'Instagram',
+    href: 'https://www.instagram.com/',
+    icon: FaInstagram,
+    color: 'hover:bg-pink-600',
+  },
+  {
+    name: 'YouTube',
+    href: 'https://www.youtube.com/',
+    icon: FaYoutube,
+    color: 'hover:bg-red-600',
+  },
+  {
+    name: 'WhatsApp',
+    href: 'https://wa.me/919655319131',
+    icon: FaWhatsapp,
+    color: 'hover:bg-green-600',
+  },
+];
 
   return (
     <footer className="border-t-2 border-amber-400 bg-[#0A1B36] pt-5 pb-3 text-slate-200 sm:pt-7 sm:pb-4">
@@ -19,14 +54,47 @@ export default function Footer({ setActivePage, onOpenLegal }) {
         <div className="grid grid-cols-1 gap-5 border-b border-slate-700/80 pb-4 sm:gap-6 sm:pb-5 md:grid-cols-3 md:gap-8">
 
           {/* Brand Information */}
-          <div className="space-y-2">
+          <div className="space-y-3">
             <div className="inline-block">
               <Logo size="small" lightText={true} />
             </div>
 
             <p className="max-w-md text-justify [text-align-last:left] text-[11px] leading-relaxed text-slate-300 sm:text-xs">
-  Board of Skills and Educational Learning (B★SEL) is an autonomous educational initiative empowering students with cognitive development, life skills, and competitive excellence.
-</p>
+              Board of Skills and Educational Learning (B★SEL) is an autonomous
+              educational initiative empowering students with cognitive
+              development, life skills, and competitive excellence.
+            </p>
+
+            {/* Social Media Section */}
+            <div className="pt-1 space-y-2">
+
+              <h4 className="text-[11px] sm:text-xs font-black uppercase tracking-wider text-amber-300">
+                Connect With Us
+              </h4>
+
+              
+
+              {/* Social Media Links */}
+              <div className="flex items-center gap-2 pt-1">
+                {socialLinks.map((social) => {
+                  const Icon = social.icon;
+
+                  return (
+                    <a
+                      key={social.name}
+                      href={social.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={social.name}
+                      title={social.name}
+                      className={`h-8 w-8 rounded-lg border border-slate-600 bg-slate-800 flex items-center justify-center text-slate-200 transition-all duration-300 hover:-translate-y-1 hover:text-white hover:border-transparent ${social.color}`}
+                    >
+                      <Icon className="h-4 w-4" />
+                    </a>
+                  );
+                })}
+              </div>
+            </div>
           </div>
 
           {/* Quick Links */}
@@ -73,12 +141,6 @@ export default function Footer({ setActivePage, onOpenLegal }) {
               </li>
 
               <li>
-                <button type="button" onClick={() => handleNav('certificate')} className={linkClass}>
-                  Certificates
-                </button>
-              </li>
-
-              <li>
                 <button type="button" onClick={() => handleNav('contact')} className={linkClass}>
                   Contact Us
                 </button>
@@ -102,14 +164,18 @@ export default function Footer({ setActivePage, onOpenLegal }) {
               <li className="flex items-start gap-2">
                 <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-400" />
                 <span>
-                  No.1161 ,Muthu Pragathi Complex, South Mount Road, Tirunelveli, Town-627006
+                  No.1161, Muthu Pragathi Complex, South Mount Road,
+                  Tirunelveli, Town-627006
                 </span>
               </li>
 
               <li className="flex items-center gap-2">
                 <Phone className="h-3.5 w-3.5 shrink-0 text-sky-400" />
-                <a href="tel:+919876543210" className="transition-colors hover:text-amber-300">
-                  +91 9876543210
+                <a
+                  href="tel:+919655319131"
+                  className="transition-colors hover:text-amber-300"
+                >
+                  +91 9655319131
                 </a>
               </li>
 
@@ -126,7 +192,9 @@ export default function Footer({ setActivePage, onOpenLegal }) {
 
             {/* Helpline Hours */}
             <div className="mt-3 rounded-lg border border-slate-700 bg-slate-800/70 px-3 py-2 text-[10px] text-slate-300 sm:text-xs">
-              <span className="font-bold text-amber-300">Helpline Hours: </span>
+              <span className="font-bold text-amber-300">
+                Helpline Hours:{' '}
+              </span>
               Mon - Sat: 9:00 AM - 6:30 PM (IST)
             </div>
           </div>
