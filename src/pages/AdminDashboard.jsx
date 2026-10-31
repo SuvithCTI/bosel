@@ -37,6 +37,7 @@ import {
 } from 'lucide-react';
 import Logo from '../components/Logo';
 import Certificate from '../components/Certificate';
+import AdmissionModal from '../components/AdmissionModal';
 import { 
   getRegisteredUsers, 
   deleteUserAccount, 
@@ -78,6 +79,13 @@ import {
   addStoredSchool,
   deleteStoredSchool
 } from '../data/schoolsData';
+import {
+  getStoredBatches,
+  addStoredBatch,
+  updateStoredBatch,
+  deleteStoredBatch,
+  resetStoredBatches
+} from '../data/batchesData';
 
 // Student Photo Assets
 import student1Img from '../assets/programs/student1.jpg';
@@ -216,7 +224,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
 
   // Active Tab:
   // Super Admin: 'overview' | 'students' | 'courses' | 'events' | 'franchise' | 'payments' | 'schools' | 'certificates'
-  // Branch Head: 'branch_overview' | 'branch_students' | 'branch_batches' | 'branch_fees' | 'branch_certificates' | 'branch_notices'
+  // Branch Head: 'branch_overview' | 'branch_students' | 'branch_batches' | 'branch_fees' | 'branch_certificates'
   const [activeTab, setActiveTab] = useState(() => {
     return (sessionUser?.role === 'Branch Head' || currentAdminRole === 'Branch Head')
       ? 'branch_overview' 
@@ -230,6 +238,24 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
   const [franchiseList, setFranchiseList] = useState(() => getStoredFranchiseLeads());
   const [paymentsList, setPaymentsList] = useState(() => getStoredPayments());
   const [schoolsList, setSchoolsList] = useState(() => getStoredSchools());
+  const [batchesList, setBatchesList] = useState(() => getStoredBatches());
+
+  // Batch Management Modal State
+  const [showAddBatchModal, setShowAddBatchModal] = useState(false);
+  const [editingBatch, setEditingBatch] = useState(null);
+  const [batchForm, setBatchForm] = useState({
+    name: '',
+    program: 'Abacus',
+    days: 'Saturday & Sunday',
+    startTime: '09:30 AM',
+    endTime: '11:30 AM',
+    room: 'Classroom 1',
+    maxCapacity: 15,
+    enrolledCount: 0,
+    instructor: '',
+    status: 'Active',
+    notes: ''
+  });
 
   // Notification Toast
   const [toastMessage, setToastMessage] = useState('');
@@ -267,6 +293,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
     const handleFranchiseUpdate = () => setFranchiseList(getStoredFranchiseLeads());
     const handlePaymentsUpdate = () => setPaymentsList(getStoredPayments());
     const handleSchoolsUpdate = () => setSchoolsList(getStoredSchools());
+    const handleBatchesUpdate = () => setBatchesList(getStoredBatches());
 
     window.addEventListener('bsel_users_updated', handleUsersUpdate);
     window.addEventListener('bsel_events_updated', handleEventsUpdate);
@@ -274,6 +301,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
     window.addEventListener('bsel_franchise_leads_updated', handleFranchiseUpdate);
     window.addEventListener('bsel_payments_updated', handlePaymentsUpdate);
     window.addEventListener('bsel_schools_updated', handleSchoolsUpdate);
+    window.addEventListener('bsel_batches_updated', handleBatchesUpdate);
 
     return () => {
       window.removeEventListener('bsel_users_updated', handleUsersUpdate);
@@ -282,6 +310,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
       window.removeEventListener('bsel_franchise_leads_updated', handleFranchiseUpdate);
       window.removeEventListener('bsel_payments_updated', handlePaymentsUpdate);
       window.removeEventListener('bsel_schools_updated', handleSchoolsUpdate);
+      window.removeEventListener('bsel_batches_updated', handleBatchesUpdate);
     };
   }, []);
 
@@ -317,13 +346,6 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
   // BRANCH HEAD FILTERS & SEARCH
   // -------------------------------------------------------------
   const [branchStudentSearch, setBranchStudentSearch] = useState('');
-  const [selectedBatch, setSelectedBatch] = useState('Batch 1 - Weekend Morning');
-
-  // Attendance state for branch
-  const [attendanceRecords, setAttendanceRecords] = useState({
-    'BSEL-TSI-9865219131': 'Present',
-    'BSEL-TSI-9442188771': 'Present'
-  });
 
   // -------------------------------------------------------------
   // MODALS
@@ -357,7 +379,8 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
     editingEvent || 
     showAddPaymentModal || 
     selectedReceiptForPrint || 
-    showAddSchoolModal
+    showAddSchoolModal ||
+    showAddBatchModal
   );
 
   useEffect(() => {
@@ -817,6 +840,39 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
     }
   };
 
+  // 8. Batch & Schedule Handlers
+  const handleSaveBatch = (e) => {
+    e.preventDefault();
+    if (!batchForm.name.trim()) return;
+
+    if (editingBatch) {
+      const updatedFields = {
+        ...batchForm,
+        branch: editingBatch.branch || activeBranch
+      };
+      const updated = updateStoredBatch(editingBatch.id, updatedFields);
+      setBatchesList(updated);
+      showToast(`Batch "${batchForm.name}" updated successfully!`);
+    } else {
+      const updated = addStoredBatch({
+        ...batchForm,
+        branch: activeBranch
+      });
+      setBatchesList(updated);
+      showToast(`New batch "${batchForm.name}" created successfully!`);
+    }
+    setShowAddBatchModal(false);
+    setEditingBatch(null);
+  };
+
+  const handleDeleteBatch = (batchId, batchName) => {
+    if (window.confirm(`Are you sure you want to delete batch "${batchName}"?`)) {
+      const updated = deleteStoredBatch(batchId);
+      setBatchesList(updated);
+      showToast(`Batch "${batchName}" removed successfully.`);
+    }
+  };
+
   // -------------------------------------------------------------
   // FILTERED LISTS
   // -------------------------------------------------------------
@@ -861,6 +917,18 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
         u.phone?.toLowerCase().includes(term)
       );
     });
+
+  // Branch Head: Available Batches scoped to activeBranch
+  const branchBatches = batchesList.filter(b => {
+    if (!b.branch) return true;
+    const bBranch = (b.branch || '').toLowerCase();
+    const targetBranch = (activeBranch || '').toLowerCase();
+    if (!targetBranch || targetBranch.includes('headquarters') || targetBranch.includes('all')) return true;
+    const keyBranch = targetBranch.includes('tenkasi') ? 'tenkasi' : 
+                      targetBranch.includes('chennai') ? 'chennai' : 
+                      targetBranch.includes('coimbatore') ? 'coimbatore' : targetBranch;
+    return bBranch.includes(keyBranch) || keyBranch.includes(bBranch);
+  });
 
   // Filtered Payments for Super Admin
   const filteredPayments = paymentsList.filter(p => {
@@ -939,44 +1007,10 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
             </button>
 
             <Logo lightText={true} />
-            
-            {/* Branch Head Identifier (Only displayed when in Branch Head mode) */}
-            {currentAdminRole === 'Branch Head' && (
-              <div className="border-l border-white/20 pl-3">
-                <div className="flex items-center gap-2">
-                  <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-emerald-500 text-white ring-1 ring-emerald-300">
-                    🏢 Branch Head Desk
-                  </span>
-                  <span className="text-xs font-black tracking-wide text-white">
-                    {activeBranch}
-                  </span>
-                </div>
-                <p className="text-[11px] text-sky-200 font-medium">
-                  Authorized Branch Administration & Concerned Student Operations Portal
-                </p>
-              </div>
-            )}
           </div>
 
           {/* Controls */}
           <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-end">
-
-            {/* If in Branch Head mode, allow switching the active branch for testing */}
-            {currentAdminRole === 'Branch Head' && (
-              <select
-                value={activeBranch}
-                onChange={(e) => {
-                  setActiveBranch(e.target.value);
-                  showToast(`Viewing Branch: ${e.target.value}`);
-                }}
-                className="bg-[#081d3d] border border-amber-400 text-white text-xs font-bold rounded-xl px-2.5 py-1.5 outline-none cursor-pointer"
-                title="Switch branch context"
-              >
-                <option value="Tenkasi Regional Branch">Tenkasi Regional Branch (Director: Mrs. Thangam Sivaji)</option>
-                <option value="Chennai Central Branch">Chennai Central Branch (Director: Mrs. K. Malathi)</option>
-                <option value="Coimbatore Branch">Coimbatore Branch (Director: Mrs. Lakshmi Priya)</option>
-              </select>
-            )}
 
             {/* View Live Website Button */}
             <button
@@ -1030,25 +1064,6 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
         >
           <div className="p-3.5 sm:p-4 space-y-3.5">
             
-            {/* Active Role Indicator Card (Only shown for Branch Head; removed for Super Admin) */}
-            {currentAdminRole === 'Branch Head' && (
-              <div className="p-3 rounded-xl border flex items-center gap-3 bg-gradient-to-br from-emerald-950 to-teal-900 text-white border-emerald-400/40 shadow-xs">
-                <div className="w-9 h-9 rounded-lg flex items-center justify-center font-black shrink-0 bg-emerald-400 text-slate-950">
-                  🏢
-                </div>
-                <div className="min-w-0 flex-1">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-emerald-300 block">
-                    Concern Branch
-                  </span>
-                  <div className="text-xs font-black text-white truncate">
-                    {activeBranch}
-                  </div>
-                  <span className="text-[10px] text-slate-300 block truncate">
-                    Centre Director Portal
-                  </span>
-                </div>
-              </div>
-            )}
 
             {/* Navigation Heading */}
             <div className="px-1 pt-1 flex items-center justify-between">
@@ -1056,7 +1071,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                 {currentAdminRole === 'Super Admin' ? 'Executive Desks' : 'Branch Management'}
               </span>
               <span className="text-[10px] font-bold text-slate-400">
-                {currentAdminRole === 'Super Admin' ? '8 Modules' : '6 Modules'}
+                {currentAdminRole === 'Super Admin' ? '8 Modules' : '5 Modules'}
               </span>
             </div>
 
@@ -1187,142 +1202,75 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                   <button
                     type="button"
                     onClick={() => handleTabSelect('branch_overview')}
-                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-black transition cursor-pointer text-left ${
+                    className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-black transition cursor-pointer text-left ${
                       activeTab === 'branch_overview'
-                        ? 'bg-emerald-800 text-white shadow-sm ring-1 ring-emerald-300'
+                        ? 'bg-[#0c234b] text-white shadow-sm ring-1 ring-amber-400/40'
                         : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950'
                     }`}
                   >
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <Building className={`w-4 h-4 shrink-0 ${activeTab === 'branch_overview' ? 'text-emerald-300' : 'text-slate-500'}`} />
-                      <span className="truncate">Branch Overview</span>
-                    </div>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-white/20 text-white">
-                      Active
-                    </span>
+                    <Building className={`w-4 h-4 shrink-0 ${activeTab === 'branch_overview' ? 'text-amber-400' : 'text-slate-500'}`} />
+                    <span className="truncate">Branch Overview</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => handleTabSelect('branch_students')}
-                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-black transition cursor-pointer text-left ${
+                    className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-black transition cursor-pointer text-left ${
                       activeTab === 'branch_students'
-                        ? 'bg-emerald-800 text-white shadow-sm ring-1 ring-emerald-300'
+                        ? 'bg-[#0c234b] text-white shadow-sm ring-1 ring-amber-400/40'
                         : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950'
                     }`}
                   >
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <Users className={`w-4 h-4 shrink-0 ${activeTab === 'branch_students' ? 'text-sky-300' : 'text-slate-500'}`} />
-                      <span className="truncate">Concern Branch Students</span>
-                    </div>
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
-                      activeTab === 'branch_students' ? 'bg-sky-400 text-slate-950' : 'bg-sky-50 text-sky-800'
-                    }`}>
-                      {branchStudents.length}
-                    </span>
+                    <Users className={`w-4 h-4 shrink-0 ${activeTab === 'branch_students' ? 'text-sky-400' : 'text-slate-500'}`} />
+                    <span className="truncate">Concern Branch Students</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => handleTabSelect('branch_batches')}
-                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-black transition cursor-pointer text-left ${
+                    className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-black transition cursor-pointer text-left ${
                       activeTab === 'branch_batches'
-                        ? 'bg-emerald-800 text-white shadow-sm ring-1 ring-emerald-300'
+                        ? 'bg-[#0c234b] text-white shadow-sm ring-1 ring-amber-400/40'
                         : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950'
                     }`}
                   >
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <Clock className={`w-4 h-4 shrink-0 ${activeTab === 'branch_batches' ? 'text-amber-300' : 'text-slate-500'}`} />
-                      <span className="truncate">Batches & Attendance</span>
-                    </div>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-100 text-amber-900">
-                      3 Batches
-                    </span>
+                    <Clock className={`w-4 h-4 shrink-0 ${activeTab === 'branch_batches' ? 'text-amber-400' : 'text-slate-500'}`} />
+                    <span className="truncate">Available Batches & Timings</span>
                   </button>
+
 
                   <button
                     type="button"
                     onClick={() => handleTabSelect('branch_fees')}
-                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-black transition cursor-pointer text-left ${
+                    className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-black transition cursor-pointer text-left ${
                       activeTab === 'branch_fees'
-                        ? 'bg-emerald-800 text-white shadow-sm ring-1 ring-emerald-300'
+                        ? 'bg-[#0c234b] text-white shadow-sm ring-1 ring-amber-400/40'
                         : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950'
                     }`}
                   >
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <CreditCard className={`w-4 h-4 shrink-0 ${activeTab === 'branch_fees' ? 'text-emerald-300' : 'text-slate-500'}`} />
-                      <span className="truncate">Branch Fee Collections</span>
-                    </div>
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-black ${
-                      activeTab === 'branch_fees' ? 'bg-emerald-300 text-slate-950' : 'bg-emerald-50 text-emerald-800'
-                    }`}>
-                      {branchRevenueFormatted}
-                    </span>
+                    <CreditCard className={`w-4 h-4 shrink-0 ${activeTab === 'branch_fees' ? 'text-amber-400' : 'text-slate-500'}`} />
+                    <span className="truncate">Branch Fee Collections</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => handleTabSelect('branch_certificates')}
-                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-black transition cursor-pointer text-left ${
+                    className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-black transition cursor-pointer text-left ${
                       activeTab === 'branch_certificates'
-                        ? 'bg-emerald-800 text-white shadow-sm ring-1 ring-emerald-300'
+                        ? 'bg-[#0c234b] text-white shadow-sm ring-1 ring-amber-400/40'
                         : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950'
                     }`}
                   >
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <Award className={`w-4 h-4 shrink-0 ${activeTab === 'branch_certificates' ? 'text-amber-300' : 'text-slate-500'}`} />
-                      <span className="truncate">Branch Certificate Desk</span>
-                    </div>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-100 text-amber-900">
-                      Official
-                    </span>
+                    <Award className={`w-4 h-4 shrink-0 ${activeTab === 'branch_certificates' ? 'text-amber-400' : 'text-slate-500'}`} />
+                    <span className="truncate">Branch Certificate Desk</span>
                   </button>
 
-                  <button
-                    type="button"
-                    onClick={() => handleTabSelect('branch_notices')}
-                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-black transition cursor-pointer text-left ${
-                      activeTab === 'branch_notices'
-                        ? 'bg-emerald-800 text-white shadow-sm ring-1 ring-emerald-300'
-                        : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <FileText className={`w-4 h-4 shrink-0 ${activeTab === 'branch_notices' ? 'text-teal-300' : 'text-slate-500'}`} />
-                      <span className="truncate">HQ Directives & Notices</span>
-                    </div>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-teal-100 text-teal-900">
-                      2 New
-                    </span>
-                  </button>
                 </>
               )}
             </nav>
 
           </div>
 
-          {/* Pinned Bottom Helpline & Session Card (Only displayed for Branch Head; removed from Super Admin) */}
-          {currentAdminRole === 'Branch Head' && (
-            <div className="p-3.5 sm:p-4 border-t border-slate-100 bg-slate-50/70 mt-auto">
-              <div className="p-3 bg-white rounded-xl border border-slate-200 text-[11px] space-y-1 shadow-xs">
-                <div className="flex items-center justify-between font-bold text-slate-700">
-                  <span>Academic Session</span>
-                  <span className="text-emerald-700 font-black">2026-2027</span>
-                </div>
-                <div className="flex items-center justify-between text-slate-500">
-                  <span>Helpline Support</span>
-                  <span className="font-mono font-bold text-slate-800">98652 19131</span>
-                </div>
-                <div className="pt-1 flex items-center justify-between text-[10px] text-slate-400">
-                  <span>B★SEL Board Portal</span>
-                  <span className="flex items-center gap-1 text-emerald-600 font-bold">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                    Online
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
 
         </aside>
 
@@ -1331,25 +1279,20 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
             ========================================================================= */}
         <main className="flex-1 min-w-0 w-full p-4 sm:p-6 lg:p-8 space-y-5 bg-slate-100">
 
-            {/* BRANCH HEAD CONTEXT BANNER (Rendered when viewing as Branch Head) */}
+            {/* BRANCH HEAD CONTEXT BANNER (Rendered when viewing as Branch Head; styled in Super Admin blue theme) */}
             {currentAdminRole === 'Branch Head' && (
-              <div className="bg-gradient-to-r from-emerald-900 via-teal-900 to-[#081d3d] text-white p-4 sm:p-5 rounded-2xl shadow-md border-2 border-emerald-400/70 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 animate-in fade-in duration-200">
+              <div className="bg-gradient-to-r from-[#081d3d] via-[#0c234b] to-[#123068] text-white p-4 sm:p-5 rounded-2xl shadow-md border-2 border-amber-400/40 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 animate-in fade-in duration-200">
                 <div className="flex items-center gap-3.5">
-                  <div className="w-12 h-12 rounded-xl bg-emerald-500/20 border border-emerald-400 flex items-center justify-center text-emerald-300 shrink-0">
+                  <div className="w-12 h-12 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-amber-400 shrink-0 shadow-sm">
                     <Building className="w-6 h-6" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2 flex-wrap">
                       <h1 className="text-base sm:text-lg font-black text-white">{activeBranch}</h1>
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-400 text-slate-950">
-                        Concern Branch Active Desk
-                      </span>
                     </div>
-                    <p className="text-xs text-emerald-200 mt-0.5">
+                    <p className="text-xs text-sky-200 mt-0.5">
                       Centre Director: <strong className="text-amber-300">Mrs. Thangam Sivaji</strong> &nbsp;|&nbsp; 
-                      Branch Code: <strong className="text-white">TSI-01</strong> &nbsp;|&nbsp; 
-                      Helpline: <strong className="text-white">98652 19131</strong> &nbsp;|&nbsp; 
-                      Location: <span className="text-emerald-100">Surandai, Tenkasi</span>
+                      Branch Code: <strong className="text-white">TSI-01</strong>
                     </p>
                   </div>
                 </div>
@@ -1361,7 +1304,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                       setNewStudent(prev => ({ ...prev, branch: activeBranch, institution: activeBranch }));
                       setShowAddStudentModal(true);
                     }}
-                    className="px-3.5 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-black transition flex items-center gap-1.5 shadow-sm cursor-pointer"
+                    className="px-3.5 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded-xl text-xs font-black transition flex items-center gap-1.5 shadow-sm cursor-pointer"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>Enroll Student to This Branch</span>
@@ -1373,7 +1316,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                       setNewPayment(prev => ({ ...prev, branch: activeBranch }));
                       setShowAddPaymentModal(true);
                     }}
-                    className="px-3.5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl text-xs font-black transition flex items-center gap-1.5 shadow-sm cursor-pointer"
+                    className="px-3.5 py-2 bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-xl text-xs font-black transition flex items-center gap-1.5 shadow-sm cursor-pointer"
                   >
                     <CreditCard className="w-3.5 h-3.5" />
                     <span>Record Branch Fee</span>
@@ -2588,17 +2531,17 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
         {currentAdminRole === 'Branch Head' && activeTab === 'branch_overview' && (
           <div className="space-y-5 animate-in fade-in duration-200">
             {/* Branch Metrics */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               
               <div className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
                 <div>
                   <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Branch Enrolled Students</span>
                   <div className="text-2xl font-black text-slate-950 mt-1">{branchStudents.length}</div>
-                  <span className="text-[11px] font-bold text-emerald-700 flex items-center gap-1 mt-0.5">
+                  <span className="text-[11px] font-bold text-sky-700 flex items-center gap-1 mt-0.5">
                     <CheckCircle2 className="w-3 h-3" /> Enrolled in {activeBranch}
                   </span>
                 </div>
-                <div className="w-11 h-11 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">
+                <div className="w-11 h-11 rounded-xl bg-sky-100 text-[#0c234b] flex items-center justify-center font-bold">
                   <Users className="w-5 h-5" />
                 </div>
               </div>
@@ -2606,9 +2549,9 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
               <div className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
                 <div>
                   <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Active Batches</span>
-                  <div className="text-2xl font-black text-slate-950 mt-1">3 Batches</div>
+                  <div className="text-2xl font-black text-slate-950 mt-1">{branchBatches.length} Batches</div>
                   <span className="text-[11px] font-bold text-sky-700 flex items-center gap-1 mt-0.5">
-                    <Clock className="w-3 h-3" /> Weekend & Weekday
+                    <Clock className="w-3 h-3" /> Scheduled class slots
                   </span>
                 </div>
                 <div className="w-11 h-11 rounded-xl bg-sky-100 text-sky-800 flex items-center justify-center font-bold">
@@ -2619,26 +2562,13 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
               <div className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
                 <div>
                   <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Branch Fees Collected</span>
-                  <div className="text-2xl font-black text-emerald-800 mt-1">{branchRevenueFormatted}</div>
-                  <span className="text-[11px] font-bold text-emerald-700 flex items-center gap-1 mt-0.5">
+                  <div className="text-2xl font-black text-slate-950 mt-1">{branchRevenueFormatted}</div>
+                  <span className="text-[11px] font-bold text-sky-700 flex items-center gap-1 mt-0.5">
                     <ShieldCheck className="w-3 h-3" /> Branch desk collections
                   </span>
                 </div>
-                <div className="w-11 h-11 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">
+                <div className="w-11 h-11 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold">
                   <CreditCard className="w-5 h-5" />
-                </div>
-              </div>
-
-              <div className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
-                <div>
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Branch Attendance</span>
-                  <div className="text-2xl font-black text-slate-950 mt-1">96.5%</div>
-                  <span className="text-[11px] font-bold text-teal-700 flex items-center gap-1 mt-0.5">
-                    <TrendingUp className="w-3 h-3" /> Excellent regularity
-                  </span>
-                </div>
-                <div className="w-11 h-11 rounded-xl bg-teal-100 text-teal-800 flex items-center justify-center font-bold">
-                  <Check className="w-5 h-5" />
                 </div>
               </div>
 
@@ -2651,12 +2581,12 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
               <div className="lg:col-span-2 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
                 <div className="flex items-center justify-between">
                   <h2 className="text-sm font-black text-slate-950 flex items-center gap-2">
-                    <Users className="w-4 h-4 text-emerald-600" />
+                    <Users className="w-4 h-4 text-sky-600" />
                     <span>Recent Students Enrolled in {activeBranch}</span>
                   </h2>
                   <button
                     onClick={() => setActiveTab('branch_students')}
-                    className="text-xs font-bold text-emerald-700 hover:underline flex items-center gap-1"
+                    className="text-xs font-bold text-sky-700 hover:underline flex items-center gap-1"
                   >
                     <span>Full Branch Roster</span>
                     <ArrowRight className="w-3 h-3" />
@@ -2669,13 +2599,13 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                       <div>
                         <div className="text-xs font-black text-slate-900 capitalize">{st.studentName}</div>
                         <div className="text-[11px] text-slate-500 flex items-center gap-2 mt-0.5">
-                          <span className="font-mono text-emerald-800 font-bold">{st.registerNumber || st.userId}</span>
+                          <span className="font-mono text-sky-900 font-bold">{st.registerNumber || st.userId}</span>
                           <span>•</span>
                           <span>Course: <strong className="text-slate-700">{st.program}</strong></span>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="px-2 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-black rounded">
+                        <span className="px-2 py-0.5 bg-sky-50 text-sky-800 border border-sky-200 text-[10px] font-black rounded">
                           {st.grade || 'Level 1'}
                         </span>
                         <button
@@ -2693,26 +2623,41 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
 
               {/* Weekly Branch Schedule */}
               <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
-                <h2 className="text-sm font-black text-slate-950 flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-amber-500" />
-                  <span>Weekly Branch Schedule</span>
-                </h2>
+                <div className="flex items-center justify-between">
+                  <h2 className="text-sm font-black text-slate-950 flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-amber-500" />
+                    <span>Weekly Branch Schedule</span>
+                  </h2>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('branch_batches')}
+                    className="text-xs font-bold text-sky-700 hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>Manage Batches</span>
+                    <ArrowRight className="w-3 h-3" />
+                  </button>
+                </div>
 
                 <div className="space-y-2.5 text-xs">
-                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                    <div className="font-bold text-slate-900">Abacus Level 1 & 2 (Batch A)</div>
-                    <div className="text-slate-500 text-[11px] mt-0.5">Saturday & Sunday: 09:30 AM - 11:30 AM</div>
-                  </div>
-
-                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                    <div className="font-bold text-slate-900">Drawing & Fine Arts (Batch B)</div>
-                    <div className="text-slate-500 text-[11px] mt-0.5">Saturday & Sunday: 02:00 PM - 04:00 PM</div>
-                  </div>
-
-                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                    <div className="font-bold text-slate-900">Handwriting & Phonics (Batch C)</div>
-                    <div className="text-slate-500 text-[11px] mt-0.5">Tuesday & Thursday: 05:00 PM - 06:30 PM</div>
-                  </div>
+                  {branchBatches.length === 0 ? (
+                    <div className="p-4 text-center text-slate-400 text-xs">
+                      No active batches found for this branch.
+                    </div>
+                  ) : (
+                    branchBatches.slice(0, 4).map((b) => (
+                      <div key={b.id} className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-start justify-between gap-2">
+                        <div>
+                          <div className="font-bold text-slate-900">{b.name}</div>
+                          <div className="text-slate-500 text-[11px] mt-0.5">
+                            {b.days}: <strong className="text-sky-950">{b.startTime} - {b.endTime}</strong>
+                          </div>
+                        </div>
+                        <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-sky-100 text-sky-800 shrink-0">
+                          {b.program}
+                        </span>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
 
@@ -2725,32 +2670,6 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
             ========================================================================= */}
         {currentAdminRole === 'Branch Head' && activeTab === 'branch_students' && (
           <div className="space-y-4 animate-in fade-in duration-200">
-            {/* Header */}
-            <div className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-              <div>
-                <h2 className="text-base font-black text-slate-950 flex items-center gap-2">
-                  <Users className="w-5 h-5 text-emerald-600" />
-                  <span>{activeBranch} — Student Details & Records</span>
-                </h2>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Managing students exclusively enrolled in {activeBranch}. Update levels, grades, parent contacts, and print certificates.
-                </p>
-              </div>
-
-              <div className="flex items-center gap-2 flex-wrap">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setNewStudent(prev => ({ ...prev, branch: activeBranch, institution: activeBranch }));
-                    setShowAddStudentModal(true);
-                  }}
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black transition flex items-center gap-1.5 shadow-sm cursor-pointer"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Enroll Student in This Branch</span>
-                </button>
-              </div>
-            </div>
 
             {/* Search */}
             <div className="relative max-w-md">
@@ -2790,7 +2709,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                         <tr key={st.userId} className="hover:bg-slate-50 transition">
                           <td className="py-3 px-4">
                             <div className="font-extrabold text-slate-900 capitalize">{st.studentName}</div>
-                            <div className="text-[10px] text-emerald-800 font-mono font-bold mt-0.5">
+                            <div className="text-[10px] text-sky-900 font-mono font-bold mt-0.5">
                               {st.registerNumber || st.userId}
                             </div>
                           </td>
@@ -2811,7 +2730,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                           </td>
 
                           <td className="py-3 px-3">
-                            <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 font-black rounded-full text-[10px] uppercase">
+                            <span className="px-2 py-0.5 bg-sky-100 text-sky-900 font-black rounded-full text-[10px] uppercase">
                               {st.feeAmount || '₹450'} • {st.feePaymentType || 'Paid'}
                             </span>
                           </td>
@@ -2856,86 +2775,167 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
         )}
 
         {/* =========================================================================
-            BRANCH HEAD: TAB 3 - BATCHES & ATTENDANCE
+            BRANCH HEAD: TAB 3 - AVAILABLE BATCHES & CLASS TIMINGS
             ========================================================================= */}
         {currentAdminRole === 'Branch Head' && activeTab === 'branch_batches' && (
           <div className="space-y-4 animate-in fade-in duration-200">
+            {/* Top Toolbar */}
             <div className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-              <div>
-                <h2 className="text-base font-black text-slate-950 flex items-center gap-2">
-                  <Clock className="w-5 h-5 text-amber-500" />
-                  <span>Branch Batches & Daily Attendance Register</span>
-                </h2>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Select your batch timing and mark attendance for today's classroom learners.
-                </p>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-sky-100 text-sky-900 flex items-center justify-center font-bold shrink-0">
+                  <Clock className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-base font-black text-slate-950 flex items-center gap-2">
+                    <span>Available Batches & Class Timings</span>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-amber-100 text-amber-900">
+                      {branchBatches.length} Configured
+                    </span>
+                  </h2>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Manage branch batch schedules, timings, days, and intake capacity for {activeBranch}.
+                  </p>
+                </div>
               </div>
 
-              {/* Batch Selector */}
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-slate-600">Active Batch:</span>
-                <select
-                  value={selectedBatch}
-                  onChange={(e) => setSelectedBatch(e.target.value)}
-                  className="px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-xl font-bold outline-none cursor-pointer"
-                >
-                  <option value="Batch 1 - Weekend Morning">Batch 1: Abacus Juniors (Sat & Sun 09:30 AM)</option>
-                  <option value="Batch 2 - Weekend Afternoon">Batch 2: Drawing & Art (Sat & Sun 02:00 PM)</option>
-                  <option value="Batch 3 - Weekday Evening">Batch 3: Handwriting (Tue & Thu 05:00 PM)</option>
-                </select>
-              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingBatch(null);
+                  setBatchForm({
+                    name: '',
+                    program: coursesList[0]?.name || 'Abacus',
+                    days: 'Saturday & Sunday',
+                    startTime: '09:30 AM',
+                    endTime: '11:30 AM',
+                    room: 'Classroom 1',
+                    maxCapacity: 15,
+                    enrolledCount: 0,
+                    instructor: '',
+                    status: 'Active',
+                    notes: ''
+                  });
+                  setShowAddBatchModal(true);
+                }}
+                className="px-4 py-2 bg-[#081d3d] hover:bg-[#123068] text-white rounded-xl text-xs font-black transition flex items-center gap-1.5 shadow-sm cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Create New Batch</span>
+              </button>
             </div>
 
-            {/* Attendance Register Table */}
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4.5 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-black text-slate-800">
-                  Attendance for Today ({new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}):
-                </span>
-                <button
-                  type="button"
-                  onClick={() => showToast('Attendance saved for this session!')}
-                  className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-black transition"
-                >
-                  Save Attendance
-                </button>
+            {/* Batch Cards Grid */}
+            {branchBatches.length === 0 ? (
+              <div className="bg-white p-12 text-center rounded-2xl border border-slate-200 shadow-sm">
+                <Clock className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+                <h3 className="text-sm font-black text-slate-700">No Batches Configured</h3>
+                <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+                  Click "Create New Batch" above to set up your first classroom timing slot.
+                </p>
               </div>
-
-              <div className="divide-y divide-slate-100">
-                {branchStudents.map((st) => (
-                  <div key={st.userId} className="py-2.5 flex items-center justify-between gap-3">
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                {branchBatches.map((batch) => (
+                  <div 
+                    key={batch.id} 
+                    className="bg-white rounded-2xl border border-slate-200 p-4.5 shadow-sm hover:shadow-md transition flex flex-col justify-between space-y-4"
+                  >
                     <div>
-                      <div className="text-xs font-extrabold text-slate-900 capitalize">{st.studentName}</div>
-                      <div className="text-[10px] text-slate-500">Reg: {st.registerNumber || st.userId} • {st.program}</div>
+                      {/* Top Badges */}
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-sky-100 text-sky-900">
+                          {batch.program}
+                        </span>
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${
+                          batch.status === 'Active' 
+                            ? 'bg-emerald-100 text-emerald-800' 
+                            : batch.status === 'Full' 
+                            ? 'bg-rose-100 text-rose-800' 
+                            : 'bg-amber-100 text-amber-800'
+                        }`}>
+                          {batch.status}
+                        </span>
+                      </div>
+
+                      {/* Batch Name */}
+                      <h3 className="text-sm font-black text-slate-950 mb-1 leading-snug">
+                        {batch.name}
+                      </h3>
+                      {batch.batchCode && (
+                        <div className="text-[10px] font-mono text-slate-400 mb-3">
+                          Batch Code: {batch.batchCode}
+                        </div>
+                      )}
+
+                      {/* Timing & Details Box */}
+                      <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-2 text-xs">
+                        <div className="flex items-center gap-2 text-slate-700 font-bold">
+                          <Calendar className="w-4 h-4 text-sky-600 shrink-0" />
+                          <span>{batch.days}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-slate-900 font-black">
+                          <Clock className="w-4 h-4 text-amber-500 shrink-0" />
+                          <span>{batch.startTime} — {batch.endTime}</span>
+                        </div>
+                        <div className="flex items-center justify-between pt-1 border-t border-slate-200/60 text-[11px] text-slate-500">
+                          <span>Room: <strong className="text-slate-800">{batch.room || 'General Room'}</strong></span>
+                          {batch.instructor && (
+                            <span>Faculty: <strong className="text-slate-800">{batch.instructor}</strong></span>
+                          )}
+                        </div>
+                      </div>
+
+                      {batch.notes && (
+                        <p className="text-[11px] text-slate-500 italic mt-2.5 line-clamp-2">
+                          "{batch.notes}"
+                        </p>
+                      )}
                     </div>
 
-                    <div className="flex items-center gap-1.5">
-                      {['Present', 'Absent', 'Late'].map((status) => (
+                    {/* Bottom Controls */}
+                    <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                      <span className="text-[11px] font-bold text-slate-500">
+                        Intake: <strong className="text-slate-900">{batch.enrolledCount || 0} / {batch.maxCapacity || 15}</strong>
+                      </span>
+
+                      <div className="flex items-center gap-1.5">
                         <button
-                          key={status}
                           type="button"
                           onClick={() => {
-                            setAttendanceRecords(prev => ({ ...prev, [st.userId]: status }));
-                            showToast(`Marked ${st.studentName} as ${status}`);
+                            setEditingBatch(batch);
+                            setBatchForm({
+                              name: batch.name,
+                              program: batch.program,
+                              days: batch.days,
+                              startTime: batch.startTime,
+                              endTime: batch.endTime,
+                              room: batch.room || '',
+                              maxCapacity: batch.maxCapacity || 15,
+                              enrolledCount: batch.enrolledCount || 0,
+                              instructor: batch.instructor || '',
+                              status: batch.status || 'Active',
+                              notes: batch.notes || ''
+                            });
+                            setShowAddBatchModal(true);
                           }}
-                          className={`px-3 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
-                            (attendanceRecords[st.userId] || 'Present') === status
-                              ? status === 'Present'
-                                ? 'bg-emerald-600 text-white shadow-xs'
-                                : status === 'Absent'
-                                ? 'bg-rose-600 text-white shadow-xs'
-                                : 'bg-amber-500 text-white shadow-xs'
-                              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                          }`}
+                          className="px-2.5 py-1 text-slate-700 hover:text-sky-700 hover:bg-sky-50 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer"
                         >
-                          {status}
+                          <Edit3 className="w-3.5 h-3.5" />
+                          <span>Edit</span>
                         </button>
-                      ))}
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteBatch(batch.id, batch.name)}
+                          className="px-2 py-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg text-xs font-bold transition cursor-pointer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
               </div>
-            </div>
+            )}
           </div>
         )}
 
@@ -2944,29 +2944,6 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
             ========================================================================= */}
         {currentAdminRole === 'Branch Head' && activeTab === 'branch_fees' && (
           <div className="space-y-4 animate-in fade-in duration-200">
-            <div className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-              <div>
-                <h2 className="text-base font-black text-slate-950 flex items-center gap-2">
-                  <CreditCard className="w-5 h-5 text-emerald-600" />
-                  <span>{activeBranch} — Fee Collections & Receipts</span>
-                </h2>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Record tuition payments collected at the branch desk and print official parent receipts.
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setNewPayment(prev => ({ ...prev, branch: activeBranch }));
-                  setShowAddPaymentModal(true);
-                }}
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black transition flex items-center gap-1.5 shadow-sm cursor-pointer"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Record Fee Payment at Branch</span>
-              </button>
-            </div>
 
             {/* Branch Payments Table */}
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
@@ -2999,7 +2976,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                           {p.program}
                         </td>
 
-                        <td className="py-3 px-3 font-black text-emerald-800">
+                        <td className="py-3 px-3 font-black text-slate-900">
                           {p.amount}
                         </td>
 
@@ -3008,7 +2985,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                         </td>
 
                         <td className="py-3 px-3">
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-100 text-emerald-800">
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-sky-100 text-sky-900">
                             {p.status}
                           </span>
                         </td>
@@ -3089,50 +3066,6 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
           </div>
         )}
 
-        {/* =========================================================================
-            BRANCH HEAD: TAB 6 - HQ CIRCULARS & NOTICES
-            ========================================================================= */}
-        {currentAdminRole === 'Branch Head' && activeTab === 'branch_notices' && (
-          <div className="space-y-4 animate-in fade-in duration-200">
-            <div className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-sm">
-              <h2 className="text-base font-black text-slate-950 flex items-center gap-2">
-                <FileText className="w-5 h-5 text-teal-600" />
-                <span>Headquarters Directives & Academic Circulars</span>
-              </h2>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Official notices dispatched by the B★SEL Central Secretariat to {activeBranch}.
-              </p>
-            </div>
-
-            <div className="space-y-3">
-              <div className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-sm space-y-1.5">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="px-2.5 py-0.5 bg-amber-100 text-amber-900 font-bold rounded text-[10px] uppercase">
-                    Circular #BSEL/CIR/2026/04
-                  </span>
-                  <span className="text-xs text-slate-400">28 Oct 2026</span>
-                </div>
-                <h3 className="text-sm font-black text-slate-950">14th State Level Abacus Championship 2026 Confirmation</h3>
-                <p className="text-xs text-slate-600">
-                  All Centre Directors are requested to finalize candidate registrations for Level 1 through Level 8 abacus learners by 5th Nov 2026. Hall tickets and seating allotments will be published automatically in the branch portal.
-                </p>
-              </div>
-
-              <div className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-sm space-y-1.5">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="px-2.5 py-0.5 bg-sky-100 text-sky-900 font-bold rounded text-[10px] uppercase">
-                    Circular #BSEL/CIR/2026/03
-                  </span>
-                  <span className="text-xs text-slate-400">15 Oct 2026</span>
-                </div>
-                <h3 className="text-sm font-black text-slate-950">Updated Mindsparc Abacus Workbooks Dispatch</h3>
-                <p className="text-xs text-slate-600">
-                  New student toolkit shipments containing 17-rod wooden abacus frames and Level 1 practice exercise books have been dispatched via courier to {activeBranch}.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
 
           </main>
       </div>
@@ -3416,53 +3349,86 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
       )}
 
       {/* =========================================================================
-          MODAL 1: REGISTER NEW STUDENT (SUPER ADMIN & BRANCH HEAD)
+          MODAL 1: OFFICIAL STUDENT ADMISSION FORM (SAME AS WEBSITE ADMISSION FORM)
           ========================================================================= */}
-      {showAddStudentModal && (
+      <AdmissionModal
+        isOpen={showAddStudentModal}
+        onClose={() => {
+          setShowAddStudentModal(false);
+          setUsersList(getRegisteredUsers());
+          setPaymentsList(getStoredPayments());
+        }}
+        setActivePage={setActivePage}
+        initialBranch={currentAdminRole === 'Branch Head' ? activeBranch : null}
+        lockBranch={currentAdminRole === 'Branch Head'}
+        onSuccess={(account) => {
+          setUsersList(getRegisteredUsers());
+          if (account) {
+            addStoredPayment({
+              payerName: account.studentName || account.name,
+              studentId: account.userId,
+              branch: account.branch || activeBranch,
+              sector: 'Course Tuition',
+              program: account.program || account.courseName,
+              amount: account.feeAmount || '₹450',
+              paymentMode: account.paymentMode || 'UPI / QR Code',
+              refNo: account.receiptRefNo || `REC-${Date.now().toString().slice(-5)}`,
+              status: 'Verified',
+              verifiedBy: currentAdminRole === 'Branch Head' ? `${activeBranch} Head` : 'Super Admin',
+              notes: `Admission enrollment fee for ${account.program || account.courseName}`
+            });
+            setPaymentsList(getStoredPayments());
+          }
+        }}
+      />
+
+      {/* =========================================================================
+          MODAL: CREATE / EDIT BRANCH BATCH & CLASS TIMING
+          ========================================================================= */}
+      {showAddBatchModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
-          <div className="bg-white w-full max-w-xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-150">
+          <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-150 my-auto">
             <div className="bg-[#081d3d] text-white p-4 flex items-center justify-between">
-              <div>
-                <h3 className="text-sm font-black">
-                  {currentAdminRole === 'Branch Head' ? `Enroll Student in ${activeBranch}` : 'Register New Student (Central Registry)'}
-                </h3>
-                <p className="text-[11px] text-slate-300">Generates official B★SEL registration number & credentials</p>
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-amber-400 text-slate-950 flex items-center justify-center font-bold">
+                  <Clock className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black">
+                    {editingBatch ? 'Edit Batch Timing & Schedule' : `Create New Batch for ${activeBranch}`}
+                  </h3>
+                  <p className="text-[11px] text-slate-300">Set classroom schedule, days, and intake capacity</p>
+                </div>
               </div>
-              <button onClick={() => setShowAddStudentModal(false)} className="text-white/80 hover:text-white">
+              <button 
+                onClick={() => {
+                  setShowAddBatchModal(false);
+                  setEditingBatch(null);
+                }} 
+                className="text-white/80 hover:text-white cursor-pointer"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
+            <form onSubmit={handleSaveBatch} className="p-5 space-y-3.5 text-xs">
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">Batch Title / Name *</label>
+                <input
+                  type="text"
+                  required
+                  value={batchForm.name}
+                  onChange={(e) => setBatchForm(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="e.g. Abacus Foundation & Speed (Batch A)"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-sky-500 font-semibold"
+                />
+              </div>
 
-            <form onSubmit={handleCreateStudent} className="p-5 space-y-3.5 text-xs">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="font-bold text-slate-700 block mb-1">Candidate Full Name *</label>
-                  <input
-                    type="text"
-                    required
-                    value={newStudent.studentName}
-                    onChange={(e) => setNewStudent(prev => ({ ...prev, studentName: e.target.value }))}
-                    placeholder="e.g. Sivaji Pandian"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="font-bold text-slate-700 block mb-1">Parent / Guardian Name</label>
-                  <input
-                    type="text"
-                    value={newStudent.parentName}
-                    onChange={(e) => setNewStudent(prev => ({ ...prev, parentName: e.target.value }))}
-                    placeholder="e.g. M. Sivaji"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
-                  />
-                </div>
-
                 <div>
                   <label className="font-bold text-slate-700 block mb-1">Course Program *</label>
                   <select
-                    value={newStudent.program}
-                    onChange={(e) => setNewStudent(prev => ({ ...prev, program: e.target.value }))}
+                    value={batchForm.program}
+                    onChange={(e) => setBatchForm(prev => ({ ...prev, program: e.target.value }))}
                     className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none bg-white font-bold"
                   >
                     {coursesList.map(c => (
@@ -3472,79 +3438,127 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                 </div>
 
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Grade / Level</label>
+                  <label className="font-bold text-slate-700 block mb-1">Schedule Days *</label>
                   <select
-                    value={newStudent.grade}
-                    onChange={(e) => setNewStudent(prev => ({ ...prev, grade: e.target.value }))}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none bg-white"
+                    value={batchForm.days}
+                    onChange={(e) => setBatchForm(prev => ({ ...prev, days: e.target.value }))}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none bg-white font-bold"
                   >
-                    <option value="Level 1">Level 1</option>
-                    <option value="Level 2">Level 2</option>
-                    <option value="Level 3">Level 3</option>
-                    <option value="Level 4">Level 4</option>
-                    <option value="Grade 4">Grade 4</option>
-                    <option value="Grade 5">Grade 5</option>
+                    <option value="Saturday & Sunday">Saturday & Sunday (Weekend)</option>
+                    <option value="Tuesday & Thursday">Tuesday & Thursday (Weekday Evening)</option>
+                    <option value="Monday, Wednesday & Friday">Monday, Wednesday & Friday</option>
+                    <option value="Daily (Monday to Friday)">Daily (Monday to Friday)</option>
+                    <option value="Sundays Only">Sundays Only (Special Batch)</option>
+                    <option value="Flexible / Online">Flexible / Hybrid Schedule</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Phone / Mobile *</label>
+                  <label className="font-bold text-slate-700 block mb-1">Class Start Time *</label>
                   <input
-                    type="tel"
+                    type="text"
                     required
-                    value={newStudent.phone}
-                    onChange={(e) => setNewStudent(prev => ({ ...prev, phone: e.target.value }))}
-                    placeholder="10-digit mobile number"
+                    value={batchForm.startTime}
+                    onChange={(e) => setBatchForm(prev => ({ ...prev, startTime: e.target.value }))}
+                    placeholder="e.g. 09:30 AM"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-sky-500 font-bold"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">Class End Time *</label>
+                  <input
+                    type="text"
+                    required
+                    value={batchForm.endTime}
+                    onChange={(e) => setBatchForm(prev => ({ ...prev, endTime: e.target.value }))}
+                    placeholder="e.g. 11:30 AM"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-sky-500 font-bold"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">Classroom / Room / Lab</label>
+                  <input
+                    type="text"
+                    value={batchForm.room}
+                    onChange={(e) => setBatchForm(prev => ({ ...prev, room: e.target.value }))}
+                    placeholder="e.g. Lab 1 / Room 2"
                     className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Assigned Branch *</label>
+                  <label className="font-bold text-slate-700 block mb-1">Assigned Faculty / Trainer</label>
                   <input
                     type="text"
-                    readOnly={currentAdminRole === 'Branch Head'}
-                    value={currentAdminRole === 'Branch Head' ? activeBranch : newStudent.branch}
-                    onChange={(e) => setNewStudent(prev => ({ ...prev, branch: e.target.value, institution: e.target.value }))}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none bg-slate-50 font-bold text-slate-800"
+                    value={batchForm.instructor}
+                    onChange={(e) => setBatchForm(prev => ({ ...prev, instructor: e.target.value }))}
+                    placeholder="e.g. Mrs. Thangam Sivaji"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
                   />
+                </div>
+
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">Max Intake Capacity</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="100"
+                    value={batchForm.maxCapacity}
+                    onChange={(e) => setBatchForm(prev => ({ ...prev, maxCapacity: Number(e.target.value) }))}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">Batch Status</label>
+                  <select
+                    value={batchForm.status}
+                    onChange={(e) => setBatchForm(prev => ({ ...prev, status: e.target.value }))}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none bg-white font-bold"
+                  >
+                    <option value="Active">Active (Ongoing)</option>
+                    <option value="Enrolling Soon">Enrolling Soon</option>
+                    <option value="Full">Full (Closed)</option>
+                    <option value="Completed">Completed</option>
+                  </select>
                 </div>
               </div>
 
               <div>
-                <label className="font-bold text-slate-700 block mb-1">Student Residential Address</label>
-                <input
-                  type="text"
-                  value={newStudent.address}
-                  onChange={(e) => setNewStudent(prev => ({ ...prev, address: e.target.value }))}
-                  placeholder="Street address, city, district"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
+                <label className="font-bold text-slate-700 block mb-1">Batch Notes / Remarks</label>
+                <textarea
+                  rows={2}
+                  value={batchForm.notes}
+                  onChange={(e) => setBatchForm(prev => ({ ...prev, notes: e.target.value }))}
+                  placeholder="Additional student instructions, prerequisites, or session notes..."
+                  className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none resize-none"
                 />
               </div>
 
               <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
                 <button
                   type="button"
-                  onClick={() => setShowAddStudentModal(false)}
-                  className="px-4 py-2 border border-slate-300 text-slate-700 rounded-xl font-bold hover:bg-slate-100 transition"
+                  onClick={() => {
+                    setShowAddBatchModal(false);
+                    setEditingBatch(null);
+                  }}
+                  className="px-4 py-2 border border-slate-300 text-slate-700 rounded-xl font-bold hover:bg-slate-100 transition cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black transition"
+                  className="px-5 py-2 bg-[#081d3d] hover:bg-[#123068] text-white rounded-xl font-black transition cursor-pointer"
                 >
-                  Enroll & Generate ID
+                  {editingBatch ? 'Save Changes' : 'Create Batch'}
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
-
-      {/* =========================================================================
-          MODAL 2B: EDIT EXISTING COURSE (SUPER ADMIN)
-          ========================================================================= */}
       {editingCourse && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
           <div className="bg-white w-full max-w-xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-150 my-auto">
@@ -4271,7 +4285,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black transition"
+                  className="px-5 py-2 bg-[#081d3d] hover:bg-[#123068] text-white rounded-xl font-black transition"
                 >
                   Record & Issue Receipt
                 </button>

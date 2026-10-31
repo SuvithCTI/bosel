@@ -17,6 +17,7 @@ import {
   ChevronUp,
   Upload,
   Calendar,
+  Clock,
   Building2,
   MapPin,
   CreditCard,
@@ -37,6 +38,7 @@ import {
 import { registerStudentAccount, generateRegisterNumber } from '../utils/authStorage';
 import { getStoredCourses } from '../data/coursesData';
 import { getStoredSchools } from '../data/schoolsData';
+import { getStoredBatches } from '../data/batchesData';
 
 const TAMIL_NADU_DISTRICTS = [
   'Ariyalur',
@@ -116,19 +118,28 @@ export default function AdmissionModal({
   onClose, 
   setActivePage,
   initialProgram = null,
-  initialFee = null
+  initialFee = null,
+  initialBranch = null,
+  lockBranch = false,
+  onSuccess = null
 }) {
   const [coursesList, setCoursesList] = useState(() => getStoredCourses());
   const [schoolsList, setSchoolsList] = useState(() => getStoredSchools());
+  const [batchesList, setBatchesList] = useState(() => getStoredBatches());
 
   useEffect(() => {
     const handleCourses = () => setCoursesList(getStoredCourses());
     const handleSchools = () => setSchoolsList(getStoredSchools());
+    const handleBatches = () => setBatchesList(getStoredBatches());
     window.addEventListener('bsel_courses_updated', handleCourses);
     window.addEventListener('bsel_schools_updated', handleSchools);
+    window.addEventListener('bsel_batches_updated', handleBatches);
+    window.addEventListener('storage', handleBatches);
     return () => {
       window.removeEventListener('bsel_courses_updated', handleCourses);
       window.removeEventListener('bsel_schools_updated', handleSchools);
+      window.removeEventListener('bsel_batches_updated', handleBatches);
+      window.removeEventListener('storage', handleBatches);
     };
   }, []);
 
@@ -136,14 +147,19 @@ export default function AdmissionModal({
   const availablePrograms = dynamicProgramNames.length > 0 ? dynamicProgramNames : BSEL_PROGRAMS;
 
   const dynamicBranchNames = schoolsList.map(s => s.branchName || s.name);
-  const availableBranches = dynamicBranchNames.length > 0 ? dynamicBranchNames : BSEL_BRANCHES;
+  const baseBranches = dynamicBranchNames.length > 0 ? dynamicBranchNames : BSEL_BRANCHES;
+  const availableBranches = initialBranch && !baseBranches.includes(initialBranch)
+    ? [initialBranch, ...baseBranches]
+    : baseBranches;
 
   const initialCourse = initialProgram || availablePrograms[0] || 'Abacus Speed Arithmetic';
+  const defaultBranch = initialBranch || availableBranches[0] || 'Tenkasi Main Branch (Head Office)';
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0], // 1. Date
     registerNumber: generateRegisterNumber(initialCourse), // 2. Register number [non-editable]
-    branch: 'Tenkasi Main Branch (Head Office)', // 3. Branch
+    branch: defaultBranch, // 3. Branch
     courseName: initialCourse, // 4. Course Name [non-editable]
+    batchTiming: '', // 5. Preferred Batch & Timing Slot
     studentName: '', // 7. Student name
     dob: '', // 8. Date of Birth
     age: '', // 9. Age
@@ -204,7 +220,19 @@ export default function AdmissionModal({
       }));
       setIsCourseLocked(true);
     }
-  }, [initialProgram, initialFee, isOpen]);
+    if (initialBranch) {
+      setFormData(prev => ({
+        ...prev,
+        branch: initialBranch
+      }));
+    }
+    if (initialFee && !initialProgram) {
+      setFormData(prev => ({
+        ...prev,
+        feeAmount: initialFee
+      }));
+    }
+  }, [initialProgram, initialFee, initialBranch, isOpen]);
 
   // Click outside listener for district dropdown
   useEffect(() => {
@@ -452,6 +480,13 @@ export default function AdmissionModal({
     });
     setCreatedAccount(account);
     setSubmitted(true);
+    if (onSuccess) {
+      try {
+        onSuccess(account);
+      } catch (err) {
+        console.error('onSuccess error:', err);
+      }
+    }
     modalBodyRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -469,7 +504,7 @@ export default function AdmissionModal({
     setFormData({
       date: new Date().toISOString().split('T')[0],
       registerNumber: generateRegisterNumber(resetCourse),
-      branch: 'Tenkasi Main Branch (Head Office)',
+      branch: initialBranch || 'Tenkasi Main Branch (Head Office)',
       courseName: resetCourse,
       studentName: '',
       dob: '',
@@ -810,14 +845,25 @@ export default function AdmissionModal({
                   </div>
 
                   <div>
-                    <label className="block text-[11px] sm:text-xs font-black text-slate-800 mb-0.5 sm:mb-1 truncate">
-                      2. Branch *
-                    </label>
+                    <div className="flex items-center justify-between mb-0.5 sm:mb-1">
+                      <label className="block text-[11px] sm:text-xs font-black text-slate-800 truncate">
+                        2. Branch *
+                      </label>
+                      {lockBranch && (
+                        <span className="text-[10px] font-black text-sky-800 bg-sky-100 px-1.5 py-0.5 rounded flex items-center gap-1">
+                          <Lock className="w-2.5 h-2.5 text-sky-700" />
+                          <span>Branch Assigned</span>
+                        </span>
+                      )}
+                    </div>
                     <select
                       required
+                      disabled={lockBranch}
                       value={formData.branch}
                       onChange={(e) => setFormData({ ...formData, branch: e.target.value })}
-                      className="w-full px-2 sm:px-3 py-2 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-sky-500 focus:outline-none text-base sm:text-sm shadow-2xs truncate"
+                      className={`w-full px-2 sm:px-3 py-2 border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-sky-500 focus:outline-none text-base sm:text-sm shadow-2xs truncate ${
+                        lockBranch ? 'bg-slate-100 cursor-not-allowed text-slate-700 font-bold' : 'bg-white'
+                      }`}
                     >
                       {availableBranches.map((b, i) => (
                         <option key={i} value={b}>{b}</option>
@@ -865,6 +911,55 @@ export default function AdmissionModal({
                     </select>
                   )}
                 </div>
+
+                {/* 4. Available Batch & Class Timing */}
+                {(() => {
+                  const bList = batchesList.filter(b => {
+                    const bBranch = (b.branch || '').toLowerCase();
+                    const curBranch = (formData.branch || '').toLowerCase();
+                    const branchMatch = !curBranch || 
+                      curBranch.includes('headquarters') || 
+                      curBranch.includes('all') ||
+                      (bBranch.includes('tenkasi') && curBranch.includes('tenkasi')) ||
+                      (bBranch.includes('chennai') && curBranch.includes('chennai')) ||
+                      (bBranch.includes('coimbatore') && curBranch.includes('coimbatore')) ||
+                      bBranch.includes(curBranch) || curBranch.includes(bBranch);
+
+                    const bProg = (b.program || '').toLowerCase();
+                    const curCourse = (formData.courseName || '').toLowerCase();
+                    const progMatch = !curCourse || curCourse.includes(bProg) || bProg.includes(curCourse);
+
+                    return branchMatch && progMatch;
+                  });
+
+                  if (bList.length === 0) return null;
+
+                  return (
+                    <div className="pt-2 border-t border-slate-200">
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-[11px] sm:text-xs font-black text-slate-800 flex items-center gap-1.5">
+                          <Clock className="w-3.5 h-3.5 text-sky-700" />
+                          <span>4. Available Batch & Class Timing</span>
+                        </label>
+                        <span className="text-[10px] font-bold text-sky-800 bg-sky-100 px-2 py-0.5 rounded-full">
+                          {bList.length} Active Slots
+                        </span>
+                      </div>
+                      <select
+                        value={formData.batchTiming}
+                        onChange={(e) => setFormData(prev => ({ ...prev, batchTiming: e.target.value }))}
+                        className="w-full px-2.5 sm:px-3 py-2 bg-white border-2 border-slate-300 rounded-lg sm:rounded-xl text-slate-900 font-bold text-xs sm:text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none shadow-2xs"
+                      >
+                        <option value="">-- Select Available Batch & Timing Slot --</option>
+                        {bList.map(b => (
+                          <option key={b.id} value={`${b.name} (${b.days} • ${b.startTime} - ${b.endTime})`}>
+                            {b.name} — {b.days} ({b.startTime} - {b.endTime}){b.room ? ` • ${b.room}` : ''}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* SECTION 2: STUDENT PERSONAL DETAILS */}
