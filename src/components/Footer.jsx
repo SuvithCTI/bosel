@@ -102,7 +102,7 @@ export default function Footer({ setActivePage, onOpenLegal }) {
               <li className="flex items-start gap-2">
                 <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-400" />
                 <span>
-                  No. 42, Skill Tower, Gandhi Salai, T. Nagar, Chennai - 600017
+                  No.1161 ,Muthu Pragathi Complex, South Mount Road, Tirunelveli, Town-627006
                 </span>
               </li>
 
