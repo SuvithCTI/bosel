@@ -1,21 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  X, 
-  Ticket, 
-  Calendar, 
-  MapPin, 
-  Award, 
-  ArrowLeft, 
-  Lock, 
-  CreditCard, 
-  QrCode, 
-  Building2, 
-  ShieldCheck, 
-  CheckCircle2, 
-  AlertCircle, 
-  Loader2, 
-  ArrowRight
+import {
+  X,
+  Ticket,
+  Calendar,
+  MapPin,
+  Award,
+  ArrowLeft,
+  Lock,
+  CreditCard,
+  QrCode,
+  Building2,
+  ShieldCheck,
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
+  ArrowRight,
 } from 'lucide-react';
+
 import Certificate from './Certificate';
 
 export default function EventRegisterModal({ event, onClose }) {
@@ -28,15 +29,15 @@ export default function EventRegisterModal({ event, onClose }) {
     schoolName: '',
     city: '',
     levelCategory: 'Level 1 (Sub-Junior / Age 5-7)',
-    acceptTerms: true
+    acceptTerms: true,
   });
 
-  // Steps: 'form' | 'payment' | 'processing' | 'payment_failed' | 'payment_success' | 'certificate'
   const [currentStep, setCurrentStep] = useState('form');
   const [ticketId, setTicketId] = useState('');
   const [txnId, setTxnId] = useState('');
   const [studentPhoto, setStudentPhoto] = useState(null);
-  const [paymentMethod, setPaymentMethod] = useState('upi'); // 'upi' | 'card' | 'netbanking'
+
+  const [paymentMethod, setPaymentMethod] = useState('upi');
   const [upiId, setUpiId] = useState('');
   const [cardNumber, setCardNumber] = useState('');
   const [cardExpiry, setCardExpiry] = useState('');
@@ -45,27 +46,25 @@ export default function EventRegisterModal({ event, onClose }) {
   const [selectedBank, setSelectedBank] = useState('HDFC Bank');
   const [simulateFailure, setSimulateFailure] = useState(false);
 
-  // Extract clean level name like "Level 1"
-  const formattedLevel = formData.levelCategory.startsWith('Level') 
-    ? formData.levelCategory.split(' ')[0] + ' ' + formData.levelCategory.split(' ')[1]
+  const formattedLevel = formData.levelCategory.startsWith('Level')
+    ? formData.levelCategory.split(' ').slice(0, 2).join(' ')
     : 'Level 1';
 
-  // Format today's date
-  const [todayFormatted] = useState(() => {
-    return new Date().toLocaleDateString('en-GB', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    }).replace(/\//g, '-');
-  });
+  const [todayFormatted] = useState(() =>
+    new Date()
+      .toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+      })
+      .replace(/\//g, '-')
+  );
 
-  // Lock background scroll when modal is open
   useEffect(() => {
     if (event) {
       document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
     }
+
     return () => {
       document.body.style.overflow = '';
     };
@@ -73,25 +72,30 @@ export default function EventRegisterModal({ event, onClose }) {
 
   if (!event) return null;
 
-  // Step 1: Submit Form -> Go to Payment Gateway
   const handleFormSubmit = (e) => {
     e.preventDefault();
-    const generatedId = `BSEL-${event.category.substring(0,3).toUpperCase()}-${Math.floor(100000 + Math.random() * 900000)}`;
+
+    const generatedId = `BSEL-${event.category
+      .substring(0, 3)
+      .toUpperCase()}-${Math.floor(100000 + Math.random() * 900000)}`;
+
     setTicketId(generatedId);
     setCurrentStep('payment');
   };
 
-  // Step 2: Trigger Payment Gateway Processing
   const handleProcessPayment = () => {
     setCurrentStep('processing');
-    const generatedTxn = `TXN-UPI-${Math.floor(10000000 + Math.random() * 90000000)}`;
+
+    const generatedTxn = `TXN-UPI-${Math.floor(
+      10000000 + Math.random() * 90000000
+    )}`;
+
     setTxnId(generatedTxn);
 
     setTimeout(() => {
       if (simulateFailure) {
         setCurrentStep('payment_failed');
       } else {
-        // Persist registered student details on successful payment
         const registeredStudent = {
           studentName: formData.studentName,
           courseName: event.category || 'Abacus',
@@ -100,21 +104,28 @@ export default function EventRegisterModal({ event, onClose }) {
           grade: 'A',
           duration: '6 Months',
           registrationNo: ticketId,
-          certificateNo: `BSEL/${(event.category || 'ABACUS').toUpperCase()}/L1/${ticketId.replace(/\D/g, '').slice(-4) || '1024'}`,
+          certificateNo: `BSEL/${(
+            event.category || 'ABACUS'
+          ).toUpperCase()}/L1/${
+            ticketId.replace(/\D/g, '').slice(-4) || '1024'
+          }`,
           centreName: formData.schoolName || 'test branch',
           centreCode: '546454',
           centreAddress: `${formData.city || 'Tenkasi'}, Tamil Nadu`,
           issueDate: todayFormatted,
           certificateType: 'COMPETITION',
-          studentPhoto: studentPhoto,
+          studentPhoto,
           transactionId: generatedTxn,
-          feePaid: event.fee
+          feePaid: event.fee,
         };
 
         try {
-          localStorage.setItem('bsel_registered_student', JSON.stringify(registeredStudent));
+          localStorage.setItem(
+            'bsel_registered_student',
+            JSON.stringify(registeredStudent)
+          );
         } catch {
-          // ignore
+          // Ignore localStorage errors
         }
 
         setCurrentStep('payment_success');
@@ -122,27 +133,54 @@ export default function EventRegisterModal({ event, onClose }) {
     }, 1600);
   };
 
+  const updateForm = (field, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const inputClass =
+    'w-full h-10 sm:h-10 px-3 text-sm text-slate-950 font-semibold border border-slate-300 rounded-lg bg-white focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none transition';
+
+  const labelClass =
+    'block text-[11px] sm:text-xs font-bold text-slate-800 mb-1';
+
+  const isPaymentStep = [
+    'payment',
+    'processing',
+    'payment_failed',
+    'payment_success',
+  ].includes(currentStep);
+
   return (
-    <div 
-      className="fixed inset-0 z-50 overflow-y-auto overscroll-contain bg-slate-950/80 backdrop-blur-sm flex flex-col justify-end sm:justify-center items-center p-0 sm:p-4"
+    <div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-950/80 backdrop-blur-sm p-0 sm:p-4"
       onClick={onClose}
     >
-      <div 
-        className={`relative bg-white rounded-t-3xl sm:rounded-2xl w-full shadow-2xl flex flex-col max-h-[92vh] sm:max-h-[88vh] overflow-hidden border border-slate-200 animate-in slide-in-from-bottom-4 sm:zoom-in-95 duration-200 overscroll-contain ${
-          currentStep === 'certificate' ? 'max-w-5xl' : currentStep === 'payment' ? 'max-w-2xl' : 'max-w-xl'
+      <div
+        className={`relative flex flex-col w-full h-[100dvh] sm:h-auto sm:max-h-[94dvh] bg-white rounded-none sm:rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in slide-in-from-bottom-4 sm:zoom-in-95 duration-200 ${
+          currentStep === 'certificate'
+            ? 'max-w-5xl'
+            : currentStep === 'payment'
+            ? 'max-w-2xl'
+            : 'max-w-xl'
         }`}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header (Pinned at top, perfectly padded and aligned) */}
-        <div className="bg-[#0F2B5C] text-white p-3.5 sm:p-5 shrink-0 border-b border-white/10">
-          {/* Top row: Badge + Close Button */}
+        {/* =====================================================
+            HEADER
+        ====================================================== */}
+
+        <div className="bg-[#0F2B5C] text-white px-3.5 py-3 sm:px-5 sm:py-4 shrink-0 border-b border-white/10">
           <div className="flex items-center justify-between gap-2">
             <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/15 text-amber-300 text-[10px] sm:text-xs font-black uppercase tracking-wider">
               <Ticket className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+
               <span>
-                {currentStep === 'payment' || currentStep === 'processing' || currentStep === 'payment_failed' || currentStep === 'payment_success'
-                  ? 'Secure Payment' 
-                  : currentStep === 'certificate' 
+                {isPaymentStep
+                  ? 'Secure Payment'
+                  : currentStep === 'certificate'
                   ? 'Official Certificate Issued'
                   : 'Event Registration Desk'}
               </span>
@@ -158,47 +196,95 @@ export default function EventRegisterModal({ event, onClose }) {
             </button>
           </div>
 
-          {/* Event Title */}
           <h3 className="text-base sm:text-2xl font-black font-heading text-white leading-snug mt-2">
             {event.eventName}
           </h3>
 
-          {/* Metadata chips */}
           <div className="mt-2 flex items-center justify-between gap-2 text-[11px] sm:text-xs text-slate-200 flex-wrap">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="inline-flex items-center gap-1 font-semibold">
                 <MapPin className="w-3 h-3 text-sky-300 shrink-0" />
-                <span className="truncate max-w-[130px] sm:max-w-none">{event.place}</span>
+                <span className="truncate max-w-[130px] sm:max-w-none">
+                  {event.place}
+                </span>
               </span>
+
               <span>•</span>
+
               <span className="inline-flex items-center gap-1 font-semibold">
                 <Calendar className="w-3 h-3 text-amber-300 shrink-0" />
                 <span>{event.date}</span>
               </span>
             </div>
-            <span className="bg-amber-400 text-slate-950 px-2 py-0.5 rounded-md font-black text-[11px] shadow-xs">
+
+            <span className="bg-amber-400 text-slate-950 px-2 py-0.5 rounded-md font-black text-[11px]">
               Fee: {event.fee}
             </span>
           </div>
 
-          {/* Responsive Step Progress Bar */}
+          {/* Progress Bar */}
+
           <div className="mt-3 pt-2.5 border-t border-white/15 flex items-center justify-between text-[11px] font-bold">
-            <div className={`flex items-center gap-1.5 ${currentStep === 'form' ? 'text-amber-400 font-black' : 'text-emerald-400'}`}>
-              <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-black shrink-0 ${currentStep === 'form' ? 'bg-amber-400 text-slate-950' : 'bg-emerald-500 text-white'}`}>
+            <div
+              className={`flex items-center gap-1.5 ${
+                currentStep === 'form'
+                  ? 'text-amber-400'
+                  : 'text-emerald-400'
+              }`}
+            >
+              <span
+                className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-black shrink-0 ${
+                  currentStep === 'form'
+                    ? 'bg-amber-400 text-slate-950'
+                    : 'bg-emerald-500 text-white'
+                }`}
+              >
                 {currentStep === 'form' ? '1' : '✓'}
               </span>
               <span>1. Details</span>
             </div>
+
             <div className="h-0.5 flex-1 mx-2 bg-white/20" />
-            <div className={`flex items-center gap-1.5 ${['payment', 'processing', 'payment_failed', 'payment_success'].includes(currentStep) ? 'text-amber-400 font-black' : currentStep === 'certificate' ? 'text-emerald-400' : 'text-slate-400'}`}>
-              <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-black shrink-0 ${currentStep === 'certificate' ? 'bg-emerald-500 text-white' : ['payment', 'processing', 'payment_failed', 'payment_success'].includes(currentStep) ? 'bg-amber-400 text-slate-950' : 'bg-white/20 text-white'}`}>
+
+            <div
+              className={`flex items-center gap-1.5 ${
+                isPaymentStep
+                  ? 'text-amber-400'
+                  : currentStep === 'certificate'
+                  ? 'text-emerald-400'
+                  : 'text-slate-400'
+              }`}
+            >
+              <span
+                className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-black shrink-0 ${
+                  currentStep === 'certificate'
+                    ? 'bg-emerald-500 text-white'
+                    : isPaymentStep
+                    ? 'bg-amber-400 text-slate-950'
+                    : 'bg-white/20 text-white'
+                }`}
+              >
                 {currentStep === 'certificate' ? '✓' : '2'}
               </span>
               <span>2. Payment</span>
             </div>
+
             <div className="h-0.5 flex-1 mx-2 bg-white/20" />
-            <div className={`flex items-center gap-1.5 ${currentStep === 'certificate' ? 'text-amber-400 font-black' : 'text-slate-400'}`}>
-              <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-black shrink-0 ${currentStep === 'certificate' ? 'bg-amber-400 text-slate-950' : 'bg-white/20 text-white'}`}>
+
+            <div
+              className={`flex items-center gap-1.5 ${
+                currentStep === 'certificate'
+                  ? 'text-amber-400'
+                  : 'text-slate-400'
+              }`}
+            >
+              <span
+                className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-black shrink-0 ${
+                  currentStep === 'certificate'
+                    ? 'bg-amber-400 text-slate-950'
+                    : 'bg-white/20 text-white'
+                }`}
+              >
                 3
               </span>
               <span>3. Pass</span>
@@ -206,229 +292,353 @@ export default function EventRegisterModal({ event, onClose }) {
           </div>
         </div>
 
-        {/* Scrollable Body Content */}
-        <div className="flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6 space-y-4">
+        {/* =====================================================
+            BODY
+            Registration: button stays pinned at bottom.
+            Other steps: body scrolls normally.
+        ====================================================== */}
 
-          {/* =========================================================================
+        <div
+          className={`flex-1 min-h-0 p-3 sm:p-5 ${
+            currentStep === 'form'
+              ? 'flex flex-col overflow-hidden'
+              : 'overflow-y-auto overscroll-contain'
+          }`}
+        >
+          {/* =====================================================
               STEP 1: REGISTRATION FORM
-             ========================================================================= */}
+          ====================================================== */}
+
           {currentStep === 'form' && (
-            <form onSubmit={handleFormSubmit} className="space-y-3.5 sm:space-y-4">
-              <div className="bg-sky-50 border border-sky-200 rounded-xl p-2.5 sm:p-3 text-[11px] sm:text-xs text-sky-950 font-semibold leading-relaxed">
-                <span className="font-black text-sky-900">Eligibility:</span> {event.eligibility}. Please ensure participant details match school ID records.
+            <form
+              onSubmit={handleFormSubmit}
+              className="flex flex-col flex-1 min-h-0 gap-2"
+            >
+              {/* Scrollable form fields */}
+
+              <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain pr-1 space-y-2.5">
+                <div className="bg-sky-50 border border-sky-200 rounded-lg px-3 py-2 text-[11px] sm:text-xs text-sky-950 font-semibold leading-relaxed">
+                  <span className="font-black text-sky-900">
+                    Eligibility:
+                  </span>{' '}
+                  {event.eligibility}. Please ensure participant details match
+                  school ID records.
+                </div>
+
+                <div className="space-y-2.5">
+                  <h4 className="text-[11px] sm:text-xs font-black uppercase tracking-wider text-slate-700">
+                    Student & Contact Details
+                  </h4>
+
+                  {/* Student Name + DOB */}
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <div>
+                      <label className={labelClass}>
+                        Student Full Name *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={formData.studentName}
+                        onChange={(e) =>
+                          updateForm('studentName', e.target.value)
+                        }
+                        className={inputClass}
+                      />
+                    </div>
+
+                    <div>
+                      <label className={labelClass}>Date of Birth *</label>
+                      <input
+                        type="date"
+                        required
+                        value={formData.dob}
+                        onChange={(e) =>
+                          updateForm('dob', e.target.value)
+                        }
+                        className={inputClass}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Parent + Phone */}
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <div>
+                      <label className={labelClass}>
+                        Parent / Guardian Name *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={formData.parentName}
+                        onChange={(e) =>
+                          updateForm('parentName', e.target.value)
+                        }
+                        className={inputClass}
+                      />
+                    </div>
+
+                    <div>
+                      <label className={labelClass}>
+                        WhatsApp / Mobile Number *
+                      </label>
+                      <input
+                        type="tel"
+                        required
+                        value={formData.phone}
+                        onChange={(e) =>
+                          updateForm('phone', e.target.value)
+                        }
+                        className={inputClass}
+                      />
+                    </div>
+                  </div>
+
+                  {/* School */}
+
+                  <div>
+                    <label className={labelClass}>
+                      School / Academy Name *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.schoolName}
+                      onChange={(e) =>
+                        updateForm('schoolName', e.target.value)
+                      }
+                      className={inputClass}
+                    />
+                  </div>
+
+                  {/* Level + City */}
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <div>
+                      <label className={labelClass}>
+                        Competition Level
+                      </label>
+                      <select
+                        value={formData.levelCategory}
+                        onChange={(e) =>
+                          updateForm('levelCategory', e.target.value)
+                        }
+                        className={inputClass}
+                      >
+                        <option>Level 1 (Sub-Junior / Age 5-7)</option>
+                        <option>Level 2 (Junior / Age 8-10)</option>
+                        <option>Level 3 (Senior / Age 11-13)</option>
+                        <option>Level 4 (Super-Senior / Age 14+)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className={labelClass}>
+                        Participant City *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={formData.city}
+                        onChange={(e) =>
+                          updateForm('city', e.target.value)
+                        }
+                        className={inputClass}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Email field */}
+
+                  <div>
+                    <label className={labelClass}>
+                      Email Address
+                    </label>
+                    <input
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) =>
+                        updateForm('email', e.target.value)
+                      }
+                      className={inputClass}
+                    />
+                  </div>
+
+                  {/* Terms */}
+
+                  <label className="flex items-start gap-2 pt-1 text-[10px] sm:text-[11px] text-slate-700 font-semibold cursor-pointer leading-relaxed">
+                    <input
+                      type="checkbox"
+                      checked={formData.acceptTerms}
+                      onChange={(e) =>
+                        updateForm('acceptTerms', e.target.checked)
+                      }
+                      className="rounded text-sky-600 focus:ring-sky-500 mt-0.5 shrink-0"
+                      required
+                    />
+
+                    <span>
+                      I confirm that the details provided are accurate and
+                      agree to follow the official B★SEL competition code of
+                      conduct and rules.
+                    </span>
+                  </label>
+                </div>
               </div>
 
-              <div className="space-y-3">
-                <h4 className="text-[11px] sm:text-xs font-black uppercase tracking-wider text-slate-700">
-                  Student & Contact Details
-                </h4>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
-                  <div>
-                    <label className="block text-[11px] sm:text-xs font-black text-slate-900 mb-1">Student Full Name *</label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.studentName}
-                      onChange={(e) => setFormData({...formData, studentName: e.target.value})}
-                      className="w-full h-10 sm:h-11 px-3 py-2 text-base sm:text-sm text-slate-950 font-semibold border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] sm:text-xs font-black text-slate-900 mb-1">Date of Birth *</label>
-                    <input
-                      type="date"
-                      required
-                      value={formData.dob}
-                      onChange={(e) => setFormData({...formData, dob: e.target.value})}
-                      className="w-full h-10 sm:h-11 px-3 py-2 text-base sm:text-sm text-slate-950 font-semibold border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none bg-white"
-                    />
-                  </div>
-                </div>
+              {/* PINNED PROCEED BUTTON */}
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
-                  <div>
-                    <label className="block text-[11px] sm:text-xs font-black text-slate-900 mb-1">Parent / Guardian Name *</label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.parentName}
-                      onChange={(e) => setFormData({...formData, parentName: e.target.value})}
-                      className="w-full h-10 sm:h-11 px-3 py-2 text-base sm:text-sm text-slate-950 font-semibold border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] sm:text-xs font-black text-slate-900 mb-1">WhatsApp / Mobile Number *</label>
-                    <input
-                      type="tel"
-                      required
-                      value={formData.phone}
-                      onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                      className="w-full h-10 sm:h-11 px-3 py-2 text-base sm:text-sm text-slate-950 font-semibold border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] sm:text-xs font-black text-slate-900 mb-1">School / Academy Name *</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.schoolName}
-                    onChange={(e) => setFormData({...formData, schoolName: e.target.value})}
-                    className="w-full h-10 sm:h-11 px-3 py-2 text-base sm:text-sm text-slate-950 font-semibold border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
-                  <div>
-                    <label className="block text-[11px] sm:text-xs font-black text-slate-900 mb-1">Competition Level</label>
-                    <select
-                      value={formData.levelCategory}
-                      onChange={(e) => setFormData({...formData, levelCategory: e.target.value})}
-                      className="w-full h-10 sm:h-11 px-3 py-2 text-base sm:text-sm text-slate-950 font-semibold border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none bg-white"
-                    >
-                      <option>Level 1 (Sub-Junior / Age 5-7)</option>
-                      <option>Level 2 (Junior / Age 8-10)</option>
-                      <option>Level 3 (Senior / Age 11-13)</option>
-                      <option>Level 4 (Super-Senior / Age 14+)</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-[11px] sm:text-xs font-black text-slate-900 mb-1">Participant City *</label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.city}
-                      onChange={(e) => setFormData({...formData, city: e.target.value})}
-                      className="w-full h-10 sm:h-11 px-3 py-2 text-base sm:text-sm text-slate-950 font-semibold border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none"
-                    />
-                  </div>
-                </div>
-
-                <label className="flex items-start gap-2 pt-1 text-[11px] sm:text-xs text-slate-800 font-semibold cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.acceptTerms}
-                    onChange={(e) => setFormData({...formData, acceptTerms: e.target.checked})}
-                    className="rounded text-sky-600 focus:ring-sky-500 mt-0.5"
-                    required
-                  />
-                  <span>
-                    I confirm that the details provided are accurate and agree to follow the official B★SEL competition code of conduct and rules.
-                  </span>
-                </label>
-              </div>
-
-              <div className="pt-1.5 pb-2">
+              <div className="shrink-0 pt-2 border-t border-slate-200 bg-white">
                 <button
                   type="submit"
                   className="w-full bg-[#0F2B5C] hover:bg-[#163875] active:scale-[0.99] text-white py-3 sm:py-3.5 rounded-xl font-black text-sm transition flex items-center justify-center gap-2 shadow-md hover:shadow-lg cursor-pointer"
                 >
                   <Lock className="w-4 h-4 text-amber-400" />
+
                   <span>Proceed to Payment ({event.fee})</span>
+
                   <ArrowRight className="w-4 h-4" />
                 </button>
+
+                <p className="text-center text-[9px] sm:text-[10px] text-slate-400 mt-1.5">
+                  Your information is used only for event registration.
+                </p>
               </div>
             </form>
           )}
 
-          {/* =========================================================================
-              STEP 2: PAYMENT GATEWAY INTERFACE
-             ========================================================================= */}
+          {/* =====================================================
+              STEP 2: PAYMENT GATEWAY
+          ====================================================== */}
+
           {currentStep === 'payment' && (
             <div className="space-y-4 sm:space-y-5">
-              {/* Order Summary Box */}
+              {/* Order Summary */}
+
               <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 sm:p-4">
                 <div className="flex items-center justify-between pb-2.5 border-b border-slate-200">
                   <div className="min-w-0 pr-2">
-                    <span className="text-[10px] font-black uppercase text-slate-500 tracking-wider block">Registration Order</span>
-                    <h4 className="text-sm sm:text-base font-black text-slate-900 truncate">{event.eventName}</h4>
+                    <span className="text-[10px] font-black uppercase text-slate-500 tracking-wider block">
+                      Registration Order
+                    </span>
+
+                    <h4 className="text-sm sm:text-base font-black text-slate-900 truncate">
+                      {event.eventName}
+                    </h4>
                   </div>
+
                   <div className="text-right shrink-0">
-                    <span className="text-[10px] font-bold text-slate-500 block">Total Payable</span>
-                    <span className="text-xl sm:text-2xl font-black text-emerald-700 font-heading">{event.fee}</span>
+                    <span className="text-[10px] font-bold text-slate-500 block">
+                      Total Payable
+                    </span>
+
+                    <span className="text-xl sm:text-2xl font-black text-emerald-700 font-heading">
+                      {event.fee}
+                    </span>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-2.5 text-xs">
                   <div>
-                    <span className="text-slate-500 block text-[10px]">Candidate:</span>
-                    <strong className="text-slate-900 font-bold truncate block">{formData.studentName}</strong>
+                    <span className="text-slate-500 block text-[10px]">
+                      Candidate:
+                    </span>
+                    <strong className="text-slate-900 font-bold truncate block">
+                      {formData.studentName}
+                    </strong>
                   </div>
+
                   <div>
-                    <span className="text-slate-500 block text-[10px]">Category:</span>
-                    <strong className="text-slate-900 font-bold">{formData.levelCategory.split(' ')[0]} {formData.levelCategory.split(' ')[1]}</strong>
+                    <span className="text-slate-500 block text-[10px]">
+                      Category:
+                    </span>
+                    <strong className="text-slate-900 font-bold">
+                      {formattedLevel}
+                    </strong>
                   </div>
+
                   <div className="col-span-2 sm:col-span-1">
-                    <span className="text-slate-500 block text-[10px]">School:</span>
-                    <strong className="text-slate-900 font-bold truncate block">{formData.schoolName}</strong>
+                    <span className="text-slate-500 block text-[10px]">
+                      School:
+                    </span>
+                    <strong className="text-slate-900 font-bold truncate block">
+                      {formData.schoolName}
+                    </strong>
                   </div>
                 </div>
               </div>
 
-              {/* Payment Methods Selector */}
+              {/* Payment Method Selector */}
+
               <div>
                 <label className="block text-xs font-black uppercase tracking-wider text-slate-900 mb-2">
                   Select Payment Method
                 </label>
+
                 <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod('upi')}
-                    className={`p-2.5 sm:p-3 rounded-xl border text-center transition cursor-pointer flex flex-col items-center justify-center gap-1 active:scale-95 ${
-                      paymentMethod === 'upi'
-                        ? 'border-sky-600 bg-sky-50 text-sky-900 ring-2 ring-sky-500/20 font-black'
-                        : 'border-slate-200 hover:bg-slate-50 text-slate-700'
-                    }`}
-                  >
-                    <QrCode className="w-4 h-4 sm:w-5 sm:h-5 text-sky-600" />
-                    <span className="text-xs font-bold">UPI / QR</span>
-                    <span className="text-[9px] text-emerald-700 font-black bg-emerald-100 px-1 rounded">Instant</span>
-                  </button>
+                  {[
+                    {
+                      id: 'upi',
+                      icon: QrCode,
+                      title: 'UPI / QR',
+                      subtitle: 'Instant',
+                    },
+                    {
+                      id: 'card',
+                      icon: CreditCard,
+                      title: 'Card',
+                      subtitle: 'RuPay/Visa',
+                    },
+                    {
+                      id: 'netbanking',
+                      icon: Building2,
+                      title: 'Net Bank',
+                      subtitle: 'All Banks',
+                    },
+                  ].map((method) => {
+                    const Icon = method.icon;
 
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod('card')}
-                    className={`p-2.5 sm:p-3 rounded-xl border text-center transition cursor-pointer flex flex-col items-center justify-center gap-1 active:scale-95 ${
-                      paymentMethod === 'card'
-                        ? 'border-sky-600 bg-sky-50 text-sky-900 ring-2 ring-sky-500/20 font-black'
-                        : 'border-slate-200 hover:bg-slate-50 text-slate-700'
-                    }`}
-                  >
-                    <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-sky-600" />
-                    <span className="text-xs font-bold">Card</span>
-                    <span className="text-[9px] text-slate-500">RuPay/Visa</span>
-                  </button>
+                    return (
+                      <button
+                        key={method.id}
+                        type="button"
+                        onClick={() => setPaymentMethod(method.id)}
+                        className={`p-2.5 sm:p-3 rounded-xl border text-center transition cursor-pointer flex flex-col items-center justify-center gap-1 active:scale-95 ${
+                          paymentMethod === method.id
+                            ? 'border-sky-600 bg-sky-50 text-sky-900 ring-2 ring-sky-500/20 font-black'
+                            : 'border-slate-200 hover:bg-slate-50 text-slate-700'
+                        }`}
+                      >
+                        <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-sky-600" />
 
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod('netbanking')}
-                    className={`p-2.5 sm:p-3 rounded-xl border text-center transition cursor-pointer flex flex-col items-center justify-center gap-1 active:scale-95 ${
-                      paymentMethod === 'netbanking'
-                        ? 'border-sky-600 bg-sky-50 text-sky-900 ring-2 ring-sky-500/20 font-black'
-                        : 'border-slate-200 hover:bg-slate-50 text-slate-700'
-                    }`}
-                  >
-                    <Building2 className="w-4 h-4 sm:w-5 sm:h-5 text-sky-600" />
-                    <span className="text-xs font-bold">Net Bank</span>
-                    <span className="text-[9px] text-slate-500">All Banks</span>
-                  </button>
+                        <span className="text-xs font-bold">
+                          {method.title}
+                        </span>
+
+                        <span className="text-[9px] text-slate-500">
+                          {method.subtitle}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
-              {/* Method Details Form */}
+              {/* Payment Details */}
+
               <div className="bg-slate-50/80 border border-slate-200 rounded-2xl p-3.5 sm:p-4">
-                {/* 1. UPI Payment */}
                 {paymentMethod === 'upi' && (
                   <div className="space-y-3.5 text-center">
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                      {/* Stylized QR Code */}
-                      <div className="bg-white p-2.5 rounded-xl border-2 border-slate-300 shadow-xs inline-block">
+                      <div className="bg-white p-2.5 rounded-xl border-2 border-slate-300 shadow-sm inline-block">
                         <div className="w-28 h-28 sm:w-32 sm:h-32 bg-slate-950 rounded-lg p-2 flex flex-col items-center justify-between text-white relative">
                           <div className="w-full h-full border-2 border-dashed border-white/60 flex flex-col items-center justify-center">
                             <QrCode className="w-12 h-12 sm:w-16 sm:h-16 text-white" />
-                            <span className="text-[8px] font-black uppercase text-amber-300 tracking-wider mt-0.5">Scan to Pay</span>
+                            <span className="text-[8px] font-black uppercase text-amber-300 tracking-wider mt-0.5">
+                              Scan to Pay
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -437,21 +647,34 @@ export default function EventRegisterModal({ event, onClose }) {
                         <div className="text-xs font-black text-slate-900">
                           Scan QR using any UPI Application
                         </div>
-                        <div className="flex items-center justify-center sm:justify-start gap-1 text-xs text-slate-600 flex-wrap">
-                          <span className="px-2 py-0.5 bg-white border border-slate-200 rounded text-[10px] font-bold text-slate-800">GPay</span>
-                          <span className="px-2 py-0.5 bg-white border border-slate-200 rounded text-[10px] font-bold text-slate-800">PhonePe</span>
-                          <span className="px-2 py-0.5 bg-white border border-slate-200 rounded text-[10px] font-bold text-slate-800">Paytm</span>
-                          <span className="px-2 py-0.5 bg-white border border-slate-200 rounded text-[10px] font-bold text-slate-800">BHIM</span>
+
+                        <div className="flex items-center justify-center sm:justify-start gap-1 flex-wrap">
+                          {['GPay', 'PhonePe', 'Paytm', 'BHIM'].map(
+                            (app) => (
+                              <span
+                                key={app}
+                                className="px-2 py-0.5 bg-white border border-slate-200 rounded text-[10px] font-bold text-slate-800"
+                              >
+                                {app}
+                              </span>
+                            )
+                          )}
                         </div>
+
                         <div className="text-xs text-slate-600 pt-1">
-                          Official VPA: <strong className="text-slate-950 font-mono select-all">besel.board@icici</strong>
+                          Official VPA:{' '}
+                          <strong className="text-slate-950 font-mono select-all">
+                            besel.board@icici
+                          </strong>
                         </div>
                       </div>
                     </div>
 
                     <div className="relative flex items-center justify-center pt-1">
                       <div className="border-t border-slate-200 w-full" />
-                      <span className="bg-slate-50 px-2.5 text-[10px] font-bold uppercase text-slate-500 absolute">OR ENTER UPI ID</span>
+                      <span className="bg-slate-50 px-2.5 text-[10px] font-bold uppercase text-slate-500 absolute">
+                        OR ENTER UPI ID
+                      </span>
                     </div>
 
                     <div className="flex gap-2">
@@ -459,11 +682,17 @@ export default function EventRegisterModal({ event, onClose }) {
                         type="text"
                         value={upiId}
                         onChange={(e) => setUpiId(e.target.value)}
-                        className="flex-1 px-3 py-2 text-sm sm:text-base bg-white border border-slate-300 rounded-xl font-mono focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                        placeholder="Enter your UPI ID"
+                        className="flex-1 min-w-0 px-3 py-2 text-sm sm:text-base bg-white border border-slate-300 rounded-xl font-mono focus:ring-2 focus:ring-sky-500 focus:outline-none"
                       />
+
                       <button
                         type="button"
-                        onClick={() => alert(`UPI ID ${upiId || 'besel.board@icici'} verified successfully!`)}
+                        onClick={() =>
+                          alert(
+                            `UPI ID ${upiId || 'besel.board@icici'} verified successfully!`
+                          )
+                        }
                         className="px-3.5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-bold rounded-xl transition cursor-pointer"
                       >
                         Verify
@@ -472,59 +701,86 @@ export default function EventRegisterModal({ event, onClose }) {
                   </div>
                 )}
 
-                {/* 2. Card Payment */}
                 {paymentMethod === 'card' && (
                   <div className="space-y-3">
                     <div>
-                      <label className="block text-xs font-bold text-slate-800 mb-1">Card Number</label>
+                      <label className="block text-xs font-bold text-slate-800 mb-1">
+                        Card Number
+                      </label>
+
                       <input
                         type="text"
                         maxLength="19"
                         value={cardNumber}
                         onChange={(e) => setCardNumber(e.target.value)}
+                        placeholder="0000 0000 0000 0000"
                         className="w-full px-3 py-2 text-sm sm:text-base bg-white border border-slate-300 rounded-xl font-mono focus:ring-2 focus:ring-sky-500 focus:outline-none"
                       />
                     </div>
+
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-xs font-bold text-slate-800 mb-1">Expiry (MM/YY)</label>
+                        <label className="block text-xs font-bold text-slate-800 mb-1">
+                          Expiry (MM/YY)
+                        </label>
+
                         <input
                           type="text"
                           maxLength="5"
                           value={cardExpiry}
                           onChange={(e) => setCardExpiry(e.target.value)}
-                          className="w-full px-3 py-2 text-sm sm:text-base bg-white border border-slate-300 rounded-xl font-mono focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                          placeholder="MM/YY"
+                          className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-xl font-mono focus:ring-2 focus:ring-sky-500 focus:outline-none"
                         />
                       </div>
+
                       <div>
-                        <label className="block text-xs font-bold text-slate-800 mb-1">CVV</label>
+                        <label className="block text-xs font-bold text-slate-800 mb-1">
+                          CVV
+                        </label>
+
                         <input
                           type="password"
                           maxLength="4"
                           value={cardCvv}
                           onChange={(e) => setCardCvv(e.target.value)}
-                          className="w-full px-3 py-2 text-sm sm:text-base bg-white border border-slate-300 rounded-xl font-mono focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                          placeholder="***"
+                          className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-xl font-mono focus:ring-2 focus:ring-sky-500 focus:outline-none"
                         />
                       </div>
                     </div>
+
                     <div>
-                      <label className="block text-xs font-bold text-slate-800 mb-1">Cardholder Name</label>
+                      <label className="block text-xs font-bold text-slate-800 mb-1">
+                        Cardholder Name
+                      </label>
+
                       <input
                         type="text"
                         value={cardName}
                         onChange={(e) => setCardName(e.target.value)}
-                        className="w-full px-3 py-2 text-sm sm:text-base bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                        placeholder="Name on card"
+                        className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none"
                       />
                     </div>
                   </div>
                 )}
 
-                {/* 3. Net Banking */}
                 {paymentMethod === 'netbanking' && (
                   <div className="space-y-2.5">
-                    <label className="block text-xs font-bold text-slate-800">Select Bank</label>
+                    <label className="block text-xs font-bold text-slate-800">
+                      Select Bank
+                    </label>
+
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                      {['State Bank of India', 'HDFC Bank', 'ICICI Bank', 'Axis Bank', 'Kotak Mahindra', 'Canara Bank'].map((bank) => (
+                      {[
+                        'State Bank of India',
+                        'HDFC Bank',
+                        'ICICI Bank',
+                        'Axis Bank',
+                        'Kotak Mahindra',
+                        'Canara Bank',
+                      ].map((bank) => (
                         <button
                           key={bank}
                           type="button"
@@ -544,11 +800,13 @@ export default function EventRegisterModal({ event, onClose }) {
               </div>
 
               {/* Security Banner */}
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1 text-[11px] text-slate-600 bg-slate-100 px-3 py-2 rounded-xl border border-slate-200">
+
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-[11px] text-slate-600 bg-slate-100 px-3 py-2 rounded-xl border border-slate-200">
                 <div className="flex items-center gap-1.5">
                   <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
                   <span>256-Bit SSL • NPCI & RBI Compliant</span>
                 </div>
+
                 <div className="flex items-center gap-1 text-[10px] text-slate-500">
                   <input
                     type="checkbox"
@@ -557,11 +815,15 @@ export default function EventRegisterModal({ event, onClose }) {
                     onChange={(e) => setSimulateFailure(e.target.checked)}
                     className="rounded text-rose-600 focus:ring-rose-500 cursor-pointer"
                   />
-                  <label htmlFor="failSim" className="cursor-pointer">Simulate Failure</label>
+
+                  <label htmlFor="failSim" className="cursor-pointer">
+                    Simulate Failure
+                  </label>
                 </div>
               </div>
 
-              {/* Action Buttons */}
+              {/* Payment Actions */}
+
               <div className="flex items-center justify-between gap-2.5 pt-1">
                 <button
                   type="button"
@@ -575,7 +837,7 @@ export default function EventRegisterModal({ event, onClose }) {
                 <button
                   type="button"
                   onClick={handleProcessPayment}
-                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white py-3 rounded-xl font-black text-sm transition flex items-center justify-center gap-2 shadow-lg hover:shadow-xl cursor-pointer"
+                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white py-3 rounded-xl font-black text-sm transition flex items-center justify-center gap-2 shadow-lg cursor-pointer"
                 >
                   <Lock className="w-4 h-4" />
                   <span>Pay {event.fee} Securely</span>
@@ -584,21 +846,26 @@ export default function EventRegisterModal({ event, onClose }) {
             </div>
           )}
 
-          {/* =========================================================================
-              STEP 2.2: PROCESSING PAYMENT LOADER
-             ========================================================================= */}
+          {/* =====================================================
+              PROCESSING
+          ====================================================== */}
+
           {currentStep === 'processing' && (
             <div className="py-10 px-4 text-center space-y-4">
               <div className="relative inline-flex items-center justify-center">
                 <Loader2 className="w-14 h-14 sm:w-16 sm:h-16 text-sky-600 animate-spin" />
                 <Lock className="w-5 h-5 text-slate-700 absolute" />
               </div>
+
               <h4 className="text-lg sm:text-xl font-bold font-heading text-slate-900">
                 Processing Payment of {event.fee}...
               </h4>
+
               <p className="text-xs text-slate-600 max-w-sm mx-auto leading-relaxed">
-                Connecting to payment gateway bank network. Please do not refresh the page.
+                Connecting to payment gateway bank network. Please do not
+                refresh the page.
               </p>
+
               <div className="inline-flex items-center gap-2 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
                 <span>Verifying UPI / Bank Authorization...</span>
@@ -606,23 +873,30 @@ export default function EventRegisterModal({ event, onClose }) {
             </div>
           )}
 
-          {/* =========================================================================
-              STEP 2.3: PAYMENT FAILED SCREEN
-             ========================================================================= */}
+          {/* =====================================================
+              PAYMENT FAILED
+          ====================================================== */}
+
           {currentStep === 'payment_failed' && (
             <div className="py-6 sm:py-8 px-3 text-center space-y-4">
               <div className="w-14 h-14 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto shadow-inner">
                 <AlertCircle className="w-8 h-8" />
               </div>
+
               <h4 className="text-xl sm:text-2xl font-black font-heading text-rose-700">
                 Payment Not Completed
               </h4>
+
               <p className="text-xs text-slate-600 max-w-md mx-auto leading-relaxed">
-                The transaction could not be completed by your bank. Your account was not debited.
+                The transaction could not be completed by your bank. Your
+                account was not debited.
               </p>
 
               <div className="bg-rose-50 border border-rose-200 rounded-xl p-3 text-xs text-rose-900 font-semibold max-w-md mx-auto text-left space-y-1">
-                <div>Error Code: <span className="font-mono">ERR_BANK_DECLINED_04</span></div>
+                <div>
+                  Error Code:{' '}
+                  <span className="font-mono">ERR_BANK_DECLINED_04</span>
+                </div>
                 <div>Candidate: {formData.studentName}</div>
                 <div>Amount: {event.fee}</div>
               </div>
@@ -638,6 +912,7 @@ export default function EventRegisterModal({ event, onClose }) {
                 >
                   Retry Payment ({event.fee})
                 </button>
+
                 <button
                   type="button"
                   onClick={() => setCurrentStep('form')}
@@ -649,9 +924,10 @@ export default function EventRegisterModal({ event, onClose }) {
             </div>
           )}
 
-          {/* =========================================================================
-              STEP 2.4: PAYMENT SUCCESS SCREEN
-             ========================================================================= */}
+          {/* =====================================================
+              PAYMENT SUCCESS
+          ====================================================== */}
+
           {currentStep === 'payment_success' && (
             <div className="py-5 sm:py-6 px-3 text-center space-y-4 sm:space-y-5">
               <div className="w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto shadow-md animate-bounce">
@@ -662,121 +938,60 @@ export default function EventRegisterModal({ event, onClose }) {
                 <span className="text-xs font-black uppercase text-emerald-700 tracking-wider bg-emerald-100 px-3 py-1 rounded-full">
                   Payment Confirmed
                 </span>
+
                 <h4 className="text-xl sm:text-2xl font-black font-heading text-slate-900 mt-2">
                   Registration Successful!
                 </h4>
+
                 <p className="text-xs text-slate-600 mt-1">
-                  Confirmed for <strong className="text-slate-900">{formData.studentName}</strong>. Official certificate is generated below.
+                  Confirmed for{' '}
+                  <strong className="text-slate-900">
+                    {formData.studentName}
+                  </strong>
+                  . Official certificate is generated below.
                 </p>
               </div>
 
-              {/* Receipt Summary Card */}
               <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 max-w-md mx-auto text-left text-xs space-y-2">
                 <div className="flex items-center justify-between pb-2 border-b border-slate-200">
-                  <span className="font-bold text-slate-700">Amount Paid:</span>
-                  <span className="text-base font-black text-emerald-700 font-mono">{event.fee}</span>
+                  <span className="font-bold text-slate-700">
+                    Amount Paid:
+                  </span>
+
+                  <span className="text-base font-black text-emerald-700 font-mono">
+                    {event.fee}
+                  </span>
                 </div>
-                <div className="flex items-center justify-between">
+
+                <div className="flex items-center justify-between gap-2">
                   <span className="text-slate-600">Txn ID:</span>
-                  <span className="font-mono font-bold text-slate-900">{txnId}</span>
+                  <span className="font-mono font-bold text-slate-900 break-all text-right">
+                    {txnId}
+                  </span>
                 </div>
-                <div className="flex items-center justify-between">
+
+                <div className="flex items-center justify-between gap-2">
                   <span className="text-slate-600">Roll / Reg ID:</span>
-                  <span className="font-mono font-bold text-slate-900">{ticketId}</span>
+                  <span className="font-mono font-bold text-slate-900 text-right">
+                    {ticketId}
+                  </span>
                 </div>
-                <div className="flex items-center justify-between">
+
+                <div className="flex items-center justify-between gap-2">
                   <span className="text-slate-600">Event:</span>
-                  <span className="font-semibold text-slate-900 truncate max-w-[190px]">{event.eventName}</span>
+                  <span className="font-semibold text-slate-900 truncate max-w-[190px]">
+                    {event.eventName}
+                  </span>
                 </div>
               </div>
 
-              {/* Transition to Certificate Button */}
-              <div className="pt-1">
-                <button
-                  type="button"
-                  onClick={() => setCurrentStep('certificate')}
-                  className="w-full max-w-md mx-auto bg-[#0F2B5C] hover:bg-[#163875] active:scale-[0.98] text-white py-3.5 rounded-xl font-black text-sm transition flex items-center justify-center gap-2 shadow-xl hover:shadow-2xl cursor-pointer"
-                >
-                  <Award className="w-5 h-5 text-amber-400" />
-                  <span>View Official Certificate & Pass →</span>
-                </button>
-              </div>
+             
             </div>
           )}
 
-          {/* =========================================================================
-              STEP 3: OFFICIAL CERTIFICATE VIEW
-             ========================================================================= */}
-          {currentStep === 'certificate' && (
-            <div className="space-y-4">
-              {/* Status Banner */}
-              <div className="bg-emerald-50 border border-emerald-300 rounded-xl p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1.5 text-xs">
-                <div className="flex items-center gap-2 text-emerald-900 font-bold">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>Payment Verified ({event.fee}) • Official Certificate Issued</span>
-                </div>
-                <div className="text-slate-600 font-mono text-[11px]">
-                  Txn ID: <strong className="text-slate-900">{txnId}</strong>
-                </div>
-              </div>
-
-              {/* OFFICIAL CERTIFICATE */}
-              <div className="flex justify-center py-1">
-                <Certificate
-                  studentName={formData.studentName || 'Registered Student'}
-                  courseName={event.category || 'Abacus'}
-                  programPrefix="MINDSPARC"
-                  level={formattedLevel}
-                  grade="A"
-                  duration="6 Months"
-                  registrationNo={ticketId || 'AB27-001'}
-                  certificateNo={`BSEL/${(event.category || 'ABACUS').toUpperCase()}/L1/${ticketId.replace(/\D/g, '').slice(-4) || '1024'}`}
-                  centreName={formData.schoolName || 'test branch'}
-                  centreCode="546454"
-                  centreAddress={`${formData.city || 'Tenkasi'}, Tamil Nadu`}
-                  issueDate={todayFormatted}
-                  studentPhoto={studentPhoto}
-                  certificateType="COMPETITION"
-                  onPhotoUpload={(photo) => setStudentPhoto(photo)}
-                  showControls={true}
-                />
-              </div>
-
-              {/* Action buttons at bottom */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 pt-2 border-t border-slate-200">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setCurrentStep('form');
-                    setFormData({
-                      studentName: '',
-                      dob: '',
-                      parentName: '',
-                      phone: '',
-                      email: '',
-                      schoolName: '',
-                      city: '',
-                      levelCategory: 'Level 1 (Sub-Junior / Age 5-7)',
-                      acceptTerms: true
-                    });
-                    setStudentPhoto(null);
-                  }}
-                  className="px-3 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 flex items-center justify-center gap-1 transition cursor-pointer"
-                >
-                  <ArrowLeft className="w-3.5 h-3.5" />
-                  <span>Register Another Candidate</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="px-6 py-2.5 bg-[#0F2B5C] hover:bg-[#163875] text-white rounded-xl font-black text-xs transition cursor-pointer shadow text-center"
-                >
-                  Done & Close
-                </button>
-              </div>
-            </div>
-          )}
+          {/* =====================================================
+              CERTIFICATE
+          ====================================================== */}
 
         </div>
       </div>

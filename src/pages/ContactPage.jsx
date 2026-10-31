@@ -118,7 +118,7 @@ export default function ContactPage({ setActivePage }) {
                   </div>
                   <div>
                     <strong className="text-slate-950 block text-sm font-extrabold">Headquarters</strong>
-                    <span className="text-slate-900">Board of Skills and Educational Learning (B★SEL)<br />No. 42, Skill Tower, Gandhi Salai, T. Nagar, Chennai - 600017</span>
+                    <span className="text-slate-900">Board of Skills and Educational Learning (B★SEL)<br />No.1161 ,Muthu Pragathi Complex, South Mount Road, Tirunelveli, Town-627006</span>
                   </div>
                 </div>
 
@@ -128,7 +128,7 @@ export default function ContactPage({ setActivePage }) {
                   </div>
                   <div>
                     <strong className="text-slate-950 block text-sm font-extrabold">Phone Helpline</strong>
-                    <span className="text-slate-900 font-bold">+91 9876543210</span>
+                    <span className="text-slate-900 font-bold">+91 9655319131</span>
                   </div>
                 </div>
 
