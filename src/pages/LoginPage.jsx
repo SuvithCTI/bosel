@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 
 import {
   User,
-  Lock,
   Eye,
   EyeOff,
   ArrowRight,
@@ -10,7 +9,6 @@ import {
   AlertCircle,
 } from 'lucide-react';
 
-import Logo from '../components/Logo';
 import CertificateModal from '../components/CertificateModal';
 import StudentDashboard from '../components/student/StudentDashboard';
 
@@ -540,8 +538,8 @@ export default function LoginPage({
                     <button
                       type="button"
                       onClick={() => {
-                        setUserId('BSEL-STU-784201');
-                        setPassword('besel2026');
+                        setUserId('BSEL-9840123456');
+                        setPassword('9840123456');
                         setErrorMessage('');
                       }}
                       className="w-full py-1.5 px-1 sm:px-2 bg-sky-500/20 hover:bg-sky-500/30 border border-sky-400/50 text-sky-200 font-semibold rounded-lg text-[11px] sm:text-xs transition active:scale-95 cursor-pointer text-center flex flex-col items-center justify-center min-h-[36px]"
@@ -589,104 +587,9 @@ export default function LoginPage({
                 </a>
               </div>
             </div>
-
-<<<<<<< HEAD
-            {/* Remember User ID */}
-            <label className="flex cursor-pointer items-center gap-2 text-xs font-semibold text-slate-700">
-              <input
-                type="checkbox"
-                checked={rememberMe}
-                onChange={(event) =>
-                  setRememberMe(event.target.checked)
-                }
-                className="h-4 w-4 rounded border-slate-300 text-blue-800 focus:ring-blue-600"
-              />
-
-              Remember User ID
-            </label>
-
-            {/* Quick Demo Credentials Pill for Evaluators */}
-            <div className="rounded-xl bg-slate-50 p-3 border border-slate-200 text-xs">
-              <span className="font-bold text-slate-700 block mb-1.5 uppercase text-[10px] tracking-wider">⚡ Quick Demo Portals:</span>
-              <div className="flex flex-wrap gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setUserId('admin');
-                    setPassword('admin123');
-                    setErrorMessage('');
-                  }}
-                  className="px-2.5 py-1 bg-[#0F2B5C] text-white hover:bg-[#18458F] font-bold rounded-lg text-[11px] transition"
-                >
-                  👑 Super Admin
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setUserId('branch.tenkasi');
-                    setPassword('branch123');
-                    setErrorMessage('');
-                  }}
-                  className="px-2.5 py-1 bg-amber-500 text-slate-950 hover:bg-amber-400 font-bold rounded-lg text-[11px] transition"
-                >
-                  🏢 Branch Head (Tenkasi)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setUserId('BSEL-9840123456');
-                    setPassword('9840123456');
-                    setErrorMessage('');
-                  }}
-                  className="px-2.5 py-1 bg-slate-200 text-slate-800 hover:bg-slate-300 font-bold rounded-lg text-[11px] transition"
-                >
-                  🎓 Student
-                </button>
-              </div>
-            </div>
-
-            {/* Submit */}
-            <button
-              type="submit"
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#0F2B5C] py-3.5 text-sm font-extrabold text-white shadow-md transition hover:bg-[#18458F] hover:shadow-lg"
-            >
-              Log In
-              <ArrowRight className="h-4 w-4" />
-            </button>
-          </form>
-
-          {/* Admission Enquiry */}
-          {setActivePage && (
-            <div className="border-t border-slate-100 pt-5 text-center">
-              <button
-                type="button"
-                onClick={() => {
-                  window.dispatchEvent(
-                    new CustomEvent('open_admission_modal')
-                  );
-                }}
-                className="text-xs font-bold text-blue-800 hover:text-blue-950 hover:underline"
-              >
-                Don't have login credentials? Submit Admission Enquiry →
-              </button>
-            </div>
-          )}
-
-          {/* Help */}
-          <div className="border-t border-slate-100 pt-4 text-center text-xs text-slate-500">
-            Need assistance? Helpline:{' '}
-            <a
-              href="tel:+919840123456"
-              className="font-extrabold text-slate-800 hover:text-blue-800"
-            >
-              +91 98401 23456
-            </a>
-=======
->>>>>>> 9c4983e8ef67d4e5f55edbc7eb9decb8dc6a9270
           </div>
         </div>
       </div>
     </div>
   );
-
 }
