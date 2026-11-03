@@ -77,7 +77,7 @@ const DEFAULT_USERS = [
     results: []
   },
   {
-    userId: 'BSEL-TSI-9865219131',
+    userId: 'BSEL-9865219131',
     password: 'besel2026',
     registerNumber: 'AB27-001',
     registrationNo: 'AB27-001',
@@ -107,7 +107,7 @@ const DEFAULT_USERS = [
     ]
   },
   {
-    userId: 'BSEL-TSI-9442188771',
+    userId: 'BSEL-9442188771',
     password: 'besel2026',
     registerNumber: 'DR26-015',
     registrationNo: 'DR26-015',
@@ -137,7 +137,7 @@ const DEFAULT_USERS = [
     ]
   },
   {
-    userId: 'BSEL-STU-784201',
+    userId: 'BSEL-9840123456',
     password: 'besel2026',
     registerNumber: 'AB26-001',
     registrationNo: 'AB26-001',
@@ -168,7 +168,7 @@ const DEFAULT_USERS = [
     ]
   },
   {
-    userId: 'BSEL-CBE-9443322110',
+    userId: 'BSEL-9443322110',
     password: 'besel2026',
     registerNumber: 'PY26-004',
     registrationNo: 'PY26-004',
@@ -236,10 +236,25 @@ export const getRegisteredUsers = () => {
       }
     });
 
-    // Ensure all students have a valid official Register Number (e.g. AB27-001)
+    // Ensure all students have a valid official Register Number (e.g. AB27-001) and strictly BSEL-<MobileNumber> User ID (no district)
     users.forEach((u, i) => {
-      const isStudent = u.role === 'Student' || (!u.role && u.userId !== 'admin' && !u.userId.startsWith('branch.'));
+      const isStudent = u.role === 'Student' || (!u.role && u.userId !== 'admin' && !u.userId.startsWith('branch.') && !u.userId.startsWith('SCH-'));
       if (isStudent) {
+        // Enforce BSEL-<cleanMobile> format for student User ID
+        const phoneDigits = (u.phone || '').replace(/\D/g, '');
+        const cleanMobile = phoneDigits.length >= 10 ? phoneDigits.slice(-10) : '';
+        if (cleanMobile) {
+          const expectedId = `BSEL-${cleanMobile}`;
+          if (u.userId !== expectedId) {
+            u.userId = expectedId;
+            // Also ensure password matches their mobile if it was using default or district format
+            if (!u.password || u.password === 'besel2026') {
+              u.password = cleanMobile;
+            }
+            modified = true;
+          }
+        }
+
         const needsReg = !u.registerNumber || 
           u.registerNumber.startsWith('BSEL-STU-') || 
           u.registerNumber === u.userId || 
@@ -419,31 +434,58 @@ export const generateRegisterNumber = (courseName = '') => {
 export const registerStudentAccount = (formData) => {
   const users = getRegisteredUsers();
 
-  // District Short Code & Clean Mobile Number
-  const districtCode = getDistrictShortCode(formData.district);
+  // The branch selected in Field 2 is the student's official branch
+  const studentBranch = (formData.branch || formData.district || 'Tenkasi').trim();
   const rawDigits = (formData.phone || '').replace(/\D/g, '');
   const cleanMobile = rawDigits.length >= 10 ? rawDigits.slice(-10) : (rawDigits || '9840123456');
 
-  // Format: BSEL-District short form-mobile number
-  const newUserId = `BSEL-${districtCode}-${cleanMobile}`;
+  // Format: BSEL-MobileNumber (e.g., BSEL-9988776655)
+  const newUserId = `BSEL-${cleanMobile}`;
   // Password: their mobile number
   const newPassword = cleanMobile;
 
-  const progName = formData.courseName || formData.program || 'Abacus Speed Arithmetic';
-  const progCode = progName
-    .replace(/[^A-Za-z]/g, '')
-    .substring(0, 4)
-    .toUpperCase();
-  const certSuffix = cleanMobile.slice(-4);
-  const officialRegNo = formData.registerNumber || generateRegisterNumber(progName);
+  // Handle multi-course or single course
+  const selectedCourses = Array.isArray(formData.selectedCourses) && formData.selectedCourses.length > 0
+    ? formData.selectedCourses
+    : [
+        {
+          courseName: formData.courseName || formData.program || 'Abacus Speed Arithmetic',
+          level: formData.grade || formData.level || 'Level 1',
+          fee: formData.feeAmount || '₹450'
+        }
+      ];
 
-  const matchGrade = formData.grade?.match(/Grade\s*(\d+)/i);
-  const formattedLevel = matchGrade 
-    ? `Grade ${matchGrade[1]}` 
-    : (formData.grade?.includes('Kindergarten') ? 'Kindergarten' : (formData.grade || 'Level 1'));
+  const primaryCourse = selectedCourses[0]?.courseName || formData.courseName || formData.program || 'Abacus Speed Arithmetic';
+  const combinedCourseNames = selectedCourses.map(c => c.courseName).join(', ');
+  const combinedLevels = selectedCourses.map(c => `${c.courseName}: ${c.level}`).join(' | ');
+
+  const certSuffix = cleanMobile.slice(-4);
+  const officialRegNo = formData.registerNumber || generateRegisterNumber(primaryCourse);
 
   const studentFullName = (formData.studentName || formData.name || '').trim();
-  const studentBranch = formData.branch || (formData.district ? `B★SEL ${formData.district} Center` : 'Tenkasi Main Branch');
+
+  // Build events & results for each enrolled course
+  const generatedEvents = selectedCourses.map((c, idx) => ({
+    name: `Annual State ${c.courseName} Assessment 2026`,
+    date: '28 Nov 2026',
+    status: 'Enrolment Confirmed',
+    level: c.level || 'Level 1',
+    seat: `Hall ${['A', 'B', 'C'][idx % 3]} / Seat ${Math.floor(10 + Math.random() * 80)}`
+  }));
+
+  const generatedResults = selectedCourses.map((c, idx) => {
+    const code = (c.courseName || 'BSEL')
+      .replace(/[^A-Za-z]/g, '')
+      .substring(0, 4)
+      .toUpperCase();
+    return {
+      exam: `${c.courseName} (${c.level || 'Level 1'}) Assessment Entry`,
+      score: 'Enrolled & Verified',
+      rank: 'Admitted',
+      level: c.level || 'Level 1',
+      certificateNo: `BSEL-${code}-2026-${certSuffix}-${idx + 1}`
+    };
+  });
 
   const newUser = {
     userId: newUserId,
@@ -455,12 +497,16 @@ export const registerStudentAccount = (formData) => {
     email: (formData.email || '').trim(),
     phone: cleanMobile,
     alternatePhone: (formData.alternatePhone || '').trim(),
-    grade: formData.grade || 'Level 1',
-    program: progName,
-    courseName: progName,
+    grade: selectedCourses.length === 1 ? selectedCourses[0].level : combinedLevels,
+    selectedCourses: selectedCourses,
+    courses: selectedCourses,
+    program: combinedCourseNames,
+    courseName: combinedCourseNames,
     branch: studentBranch,
     dob: formData.dob || '',
     age: formData.age || '',
+    studentClass: formData.studentClass || '',
+    studentStage: formData.studentStage || '',
     gender: formData.gender || 'Male',
     studentPhoto: formData.studentPhoto || null,
     address: (formData.address || '').trim(),
@@ -485,22 +531,8 @@ export const registerStudentAccount = (formData) => {
       month: 'short',
       year: 'numeric'
     }),
-    events: [
-      {
-        name: `Annual State ${progName} Assessment 2026`,
-        date: '28 Nov 2026',
-        status: 'Enrolment Confirmed',
-        seat: `Hall ${['A', 'B', 'C'][Math.floor(Math.random() * 3)]} / Seat ${Math.floor(10 + Math.random() * 80)}`
-      }
-    ],
-    results: [
-      {
-        exam: `${progName} Assessment Entry`,
-        score: 'Enrolled & Verified',
-        rank: 'Admitted',
-        certificateNo: `BSEL-${progCode}-2026-${certSuffix}`
-      }
-    ]
+    events: generatedEvents,
+    results: generatedResults
   };
 
   const otherUsers = users.filter((u) => u.userId.toUpperCase() !== newUserId.toUpperCase());
@@ -615,24 +647,48 @@ export const validateLogin = (enteredUserId, enteredPassword) => {
     }
   }
 
-  // 3. Standard User Lookup (matches by userId OR email)
+  // 3. Standard User Lookup (matches by BSEL-MobileNumber, phone digits, or email)
   const users = getRegisteredUsers();
-  const userFound = users.find((u) => 
-    u.userId.toLowerCase() === cleanId || 
-    (u.email && u.email.toLowerCase() === cleanId)
-  );
+  const digitsOnly = cleanId.replace(/\D/g, '');
+  const cleanMobile = digitsOnly.length >= 10 ? digitsOnly.slice(-10) : '';
+
+  const userFound = users.find((u) => {
+    const uId = (u.userId || '').toLowerCase();
+    const uEmail = (u.email || '').toLowerCase();
+    const uPhone = (u.phone || '').replace(/\D/g, '');
+    const uCleanMobile = uPhone.length >= 10 ? uPhone.slice(-10) : '';
+
+    // Direct match by User ID (e.g. BSEL-9988776655) or email
+    if (uId === cleanId || (uEmail && uEmail === cleanId)) return true;
+
+    // Direct match by clean mobile digits (allows logging in with BSEL-9988776655 or 9988776655)
+    if (uCleanMobile && cleanMobile && uCleanMobile === cleanMobile) {
+      return true;
+    }
+
+    return false;
+  });
 
   if (!userFound) {
     return {
       success: false,
-      message: `Invalid User ID "${enteredUserId}". No account was found with this ID or email. Please check the ID or submit the Admission Enquiry form to obtain login credentials.`
+      message: `Invalid User ID "${enteredUserId}". Please enter your registered User ID (format: BSEL-MobileNumber) or mobile number.`
     };
   }
 
-  if (userFound.password !== cleanPassword && cleanPassword !== 'besel2026' && cleanPassword !== 'admin123' && cleanPassword !== 'branch123') {
+  const userPhone = (userFound.phone || '').replace(/\D/g, '');
+  const userMobilePass = userPhone.length >= 10 ? userPhone.slice(-10) : '';
+  const isCorrectPassword = 
+    userFound.password === cleanPassword ||
+    (userMobilePass && cleanPassword === userMobilePass) ||
+    cleanPassword === 'besel2026' ||
+    cleanPassword === 'admin123' ||
+    cleanPassword === 'branch123';
+
+  if (!isCorrectPassword) {
     return {
       success: false,
-      message: 'Incorrect Password. Please enter the exact password generated during admission enquiry or registration.'
+      message: 'Incorrect Password. Please enter the 10-digit mobile number registered with your account.'
     };
   }
 
@@ -659,11 +715,13 @@ export const deleteUserAccount = (userId) => {
 
 export const addUserAccount = (userData) => {
   const users = getRegisteredUsers();
+  const rawDigits = (userData.phone || '').replace(/\D/g, '');
+  const cleanMobile = rawDigits.length >= 10 ? rawDigits.slice(-10) : (rawDigits || String(Math.floor(1000000000 + Math.random() * 9000000000)));
   const progName = userData.program || userData.courseName || 'Abacus Speed Arithmetic';
   const officialRegNo = userData.registerNumber || userData.registrationNo || generateRegisterNumber(progName);
   const newUser = {
-    userId: userData.userId || `BSEL-STU-${Math.floor(100000 + Math.random() * 900000)}`,
-    password: userData.password || 'besel2026',
+    userId: userData.userId || `BSEL-${cleanMobile}`,
+    password: userData.password || cleanMobile,
     registerNumber: officialRegNo,
     registrationNo: officialRegNo,
     studentName: userData.studentName || 'Student Name',

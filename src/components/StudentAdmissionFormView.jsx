@@ -283,6 +283,17 @@ export default function StudentAdmissionFormView({ student, onClose }) {
                 {student.grade || student.classGrade || 'Not provided'}
               </span>
             </div>
+
+            {student.studentStage && (
+              <div className="col-span-2 bg-amber-50 border border-amber-200 rounded-lg p-2 flex items-center justify-between">
+                <span className="text-[9.5px] font-black text-amber-900 uppercase tracking-wider">
+                  ACADEMIC STAGE
+                </span>
+                <span className="font-extrabold text-amber-950 text-xs">
+                  At the {student.studentStage} stage {student.studentClass ? `(${student.studentClass})` : ''}
+                </span>
+              </div>
+            )}
           </div>
         </div>
 

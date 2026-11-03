@@ -293,8 +293,8 @@ export default function LoginPage({
   const handleForgotPassword = () => {
     window.alert(
       'Your password is your registered 10-digit mobile number. ' +
-        'Your User ID follows the format BSEL-District-MobileNumber ' +
-        '(example: BSEL-CBE-9876543211). ' +
+        'Your User ID follows the format BSEL-MobileNumber ' +
+        '(example: BSEL-9876543211). ' +
         'For assistance, contact +91 98401 23456.'
     );
   };
@@ -503,8 +503,8 @@ export default function LoginPage({
                 <button
                   type="button"
                   onClick={() => {
-                    setUserId('BSEL-STU-784201');
-                    setPassword('besel2026');
+                    setUserId('BSEL-9840123456');
+                    setPassword('9840123456');
                     setErrorMessage('');
                   }}
                   className="px-2.5 py-1 bg-slate-200 text-slate-800 hover:bg-slate-300 font-bold rounded-lg text-[11px] transition"
