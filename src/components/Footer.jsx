@@ -40,14 +40,8 @@ export default function Footer({ handleNav, onOpenLegal }) {
 
   const socialLinks = [
   {
-    name: 'Facebook',
-    href: 'https://www.facebook.com/',
-    icon: FaFacebookF,
-    color: 'hover:bg-blue-600',
-  },
-  {
     name: 'Instagram',
-    href: 'https://www.instagram.com/',
+    href: '',
     icon: FaInstagram,
     color: 'hover:bg-pink-600',
   },
