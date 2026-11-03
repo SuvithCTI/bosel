@@ -3,7 +3,6 @@ import {
   Users, 
   Calendar, 
   Award, 
-  Trophy,
   School, 
   Plus, 
   Trash2, 
@@ -33,8 +32,12 @@ import {
   UserCheck,
   ChevronRight,
   ArrowUpRight,
-  Menu
+  Menu,
+  GraduationCap
 } from 'lucide-react';
+import StudentAdmissionFormView from '../components/StudentAdmissionFormView';
+import OfficialMarksheetView from '../components/OfficialMarksheetView';
+import CertificateModal from '../components/CertificateModal';
 import Logo from '../components/Logo';
 import Certificate from '../components/Certificate';
 import AdmissionModal from '../components/AdmissionModal';
@@ -87,7 +90,7 @@ import {
   resetStoredBatches
 } from '../data/batchesData';
 
-// Student Photo Assets
+
 import student1Img from '../assets/programs/student1.jpg';
 import student2Img from '../assets/programs/student2.jpg';
 import student3Img from '../assets/programs/student3.jpg';
@@ -108,6 +111,26 @@ export const getStudentPhotoUrl = (student, index = 0) => {
   if (student?.studentPhoto) return student.studentPhoto;
   if (student?.photo) return student.photo;
   return SAMPLE_STUDENT_PHOTOS[Math.abs(index) % SAMPLE_STUDENT_PHOTOS.length];
+};
+
+export const getStudentRegisterNumber = (student) => {
+  if (!student) return 'AB26-001';
+  if (student.registerNumber && student.registerNumber !== 'Not provided' && !student.registerNumber.startsWith('BSEL-STU-')) {
+    return student.registerNumber;
+  }
+  if (student.registrationNo && student.registrationNo !== 'Not provided' && !student.registrationNo.startsWith('BSEL-STU-')) {
+    return student.registrationNo;
+  }
+  const course = (student.program || student.courseName || 'Abacus Speed Arithmetic').toLowerCase();
+  const prefix = course.includes('abacus') ? 'AB' :
+                 course.includes('handwriting') ? 'HW' :
+                 course.includes('phonics') ? 'PH' :
+                 course.includes('vedic') ? 'VM' :
+                 course.includes('calligraphy') ? 'CG' :
+                 course.includes('art') ? 'AD' :
+                 course.includes('python') ? 'PY' : 'BC';
+  const digits = String(student.userId || '').replace(/\D/g, '').slice(-3) || '001';
+  return `${prefix}26-${digits}`;
 };
 
 export const getMarksheetSubjects = (student) => {
@@ -212,26 +235,24 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
   // Session determination
   const sessionUser = getActiveSession();
 
-  // Role State: 'Super Admin' or 'Branch Head'
+
   const [currentAdminRole, setCurrentAdminRole] = useState(() => {
     return sessionUser?.role === 'Branch Head' ? 'Branch Head' : 'Super Admin';
   });
 
-  // Current active branch context (for Branch Head mode)
+
   const [activeBranch, setActiveBranch] = useState(() => {
     return sessionUser?.branch || 'Tenkasi Regional Branch';
   });
 
-  // Active Tab:
-  // Super Admin: 'overview' | 'students' | 'courses' | 'events' | 'franchise' | 'payments' | 'schools' | 'certificates'
-  // Branch Head: 'branch_overview' | 'branch_students' | 'branch_batches' | 'branch_fees' | 'branch_certificates'
+ 
   const [activeTab, setActiveTab] = useState(() => {
     return (sessionUser?.role === 'Branch Head' || currentAdminRole === 'Branch Head')
       ? 'branch_overview' 
       : 'overview';
   });
 
-  // Master Data States
+
   const [usersList, setUsersList] = useState(() => getRegisteredUsers());
   const [eventsList, setEventsList] = useState(() => getStoredEvents());
   const [coursesList, setCoursesList] = useState(() => getStoredCourses());
@@ -355,6 +376,8 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
   const [viewingStudentReceipt, setViewingStudentReceipt] = useState(null);
   const [showMarksheetModal, setShowMarksheetModal] = useState(false);
   const [selectedMarksheetStudent, setSelectedMarksheetStudent] = useState(null);
+  const [viewingAdmissionStudent, setViewingAdmissionStudent] = useState(null);
+  const [previewCertModalData, setPreviewCertModalData] = useState(null);
 
   const [showAddCourseModal, setShowAddCourseModal] = useState(false);
   const [editingCourse, setEditingCourse] = useState(null);
@@ -371,6 +394,8 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
   const hasOpenModal = Boolean(
     showAddStudentModal || 
     showMarksheetModal ||
+    viewingAdmissionStudent ||
+    previewCertModalData ||
     editingStudent || 
     viewingStudentReceipt || 
     showAddCourseModal || 
@@ -754,6 +779,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
 
   // 6. Certificate Handlers
   const handleOpenCertForStudent = (student) => {
+    const regNo = getStudentRegisterNumber(student);
     const studentCertData = {
       studentName: student.studentName || 'Candidate Name',
       courseName: student.program || student.courseName || 'Abacus',
@@ -761,28 +787,25 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
       level: student.grade || 'Level 1',
       grade: student.results?.[0]?.rank || 'A',
       duration: student.duration || '6 Months',
-      registrationNo: student.registerNumber || student.registrationNo || student.userId,
-      certificateNo: student.results?.[0]?.certificateNo || `BSEL/CERT/2026-${student.userId.replace(/\D/g, '').slice(-4) || '9012'}`,
+      registrationNo: regNo,
+      certificateNo: student.results?.[0]?.certificateNo || `BSEL/CERT/2026-${String(student.userId || '').replace(/\D/g, '').slice(-4) || '9012'}`,
       centreName: student.branch || student.institution || activeBranch || 'test branch',
       centreCode: '545454',
       centreAddress: student.address || 'second street, surandai,keelasurandai,tenkasi',
       issueDate: student.enrolmentDate || '05-10-2026',
       certificateType: 'COMPETITION',
-      studentPhoto: student.studentPhoto || null
+      studentPhoto: getStudentPhotoUrl(student) || student.studentPhoto || null
     };
 
     setCertData(studentCertData);
-    if (currentAdminRole === 'Branch Head') {
-      setActiveTab('branch_certificates');
-    } else {
-      setActiveTab('certificates');
-    }
-    showToast(`Loaded Certificate for ${student.studentName}!`);
+    setPreviewCertModalData(studentCertData);
+    showToast(`Opened Certificate for ${student.studentName}!`);
   };
 
   // 7. Marksheet Handler
   const handleOpenMarksheet = (student, index = 0) => {
     const photo = getStudentPhotoUrl(student, index);
+    const regNo = getStudentRegisterNumber(student);
     const subjects = getMarksheetSubjects(student);
     const totalMax = subjects.reduce((sum, s) => sum + s.max, 0);
     const totalMarks = subjects.reduce((sum, s) => sum + s.marks, 0);
@@ -791,17 +814,20 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
     setSelectedMarksheetStudent({
       ...student,
       photoUrl: photo,
+      studentPhoto: photo,
+      registerNumber: regNo,
+      registrationNo: regNo,
       subjects,
       totalMax,
       totalMarks,
       percentage,
       resultText: percentage >= 85 ? 'FIRST CLASS WITH DISTINCTION' : 'FIRST CLASS',
       overallGrade: percentage >= 90 ? 'O (Outstanding)' : percentage >= 80 ? 'A+ (Excellent)' : 'A (Very Good)',
-      marksheetNo: `BSEL/MS/2026/${student.userId.replace(/\D/g, '').slice(-4) || '1042'}`,
+      marksheetNo: `BSEL/MS/2026/${String(student.userId || '').replace(/\D/g, '').slice(-4) || '1042'}`,
       issueDate: student.enrolmentDate || '05-10-2026'
     });
     setShowMarksheetModal(true);
-    showToast(`Loaded Marksheet for ${student.studentName || 'Student'}!`);
+    showToast(`Loaded Official Marksheet for ${student.studentName || 'Student'}!`);
   };
 
   const handleVerifyCertificate = (e) => {
@@ -1181,20 +1207,6 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                   >
                     <Award className={`w-4 h-4 shrink-0 ${activeTab === 'certificates' ? 'text-amber-400' : 'text-slate-500'}`} />
                     <span className="truncate">Certificate Desk</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setActivePage ? setActivePage('achievements') : handleTabSelect('achievements')}
-                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-black transition cursor-pointer text-left text-slate-700 hover:bg-amber-50 hover:text-amber-900 border border-transparent hover:border-amber-300/60"
-                  >
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <Trophy className="w-4 h-4 shrink-0 text-amber-500" />
-                      <span className="truncate">Website Achievements</span>
-                    </div>
-                    <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-800">
-                      Live Web ↗
-                    </span>
                   </button>
                 </>
               ) : (
@@ -1699,7 +1711,18 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                           </td>
 
                           <td className="py-3 px-3 text-right">
-                            <div className="flex items-center justify-end gap-1.5">
+                            <div className="flex items-center justify-end gap-1.5 flex-wrap sm:flex-nowrap">
+                              {/* Admission Form Button */}
+                              <button
+                                type="button"
+                                onClick={() => setViewingAdmissionStudent(student)}
+                                className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-lg text-[10px] transition cursor-pointer flex items-center gap-1 shadow-xs"
+                                title="View & Print Official Admission Form"
+                              >
+                                <GraduationCap className="w-3 h-3 text-emerald-200" />
+                                <span>Admission Form</span>
+                              </button>
+
                               {/* Marksheet Button */}
                               <button
                                 type="button"
@@ -2736,7 +2759,17 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                           </td>
 
                           <td className="py-3 px-3 text-right">
-                            <div className="flex items-center justify-end gap-1.5">
+                            <div className="flex items-center justify-end gap-1.5 flex-wrap sm:flex-nowrap">
+                              <button
+                                type="button"
+                                onClick={() => setViewingAdmissionStudent(st)}
+                                className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-lg text-[10px] transition cursor-pointer flex items-center gap-1 shadow-xs"
+                                title="View & Print Official Admission Form"
+                              >
+                                <GraduationCap className="w-3 h-3 text-emerald-200" />
+                                <span>Admission Form</span>
+                              </button>
+
                               <button
                                 type="button"
                                 onClick={() => handleOpenCertForStudent(st)}
@@ -3073,39 +3106,26 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
       {/* =========================================================================
           MODAL: OFFICIAL EXAMINATION MARKSHEET (SUPER ADMIN & ALL DESKS)
           ========================================================================= */}
-      {showMarksheetModal && selectedMarksheetStudent && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-y-auto">
-          <div className="bg-white w-full max-w-3xl rounded-2xl shadow-2xl border-2 border-amber-400/60 overflow-hidden animate-in zoom-in-95 duration-150 my-auto">
-            
-            {/* Top Toolbar (Controls) */}
-            <div className="bg-gradient-to-r from-[#081d3d] via-[#0c234b] to-[#123068] text-white p-3.5 sm:p-4 flex items-center justify-between gap-3 border-b-2 border-amber-400 print:hidden">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-amber-400 text-slate-950 flex items-center justify-center font-black">
-                  <FileText className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-black text-white flex items-center gap-2">
-                    <span>Official Statement of Marks</span>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-emerald-500 text-white">
-                      Verified Record
-                    </span>
-                  </h3>
-                  <p className="text-[11px] text-slate-300">
-                    B★SEL Board Autonomous Skill Examination Directorate • Academic Year 2026–2027
-                  </p>
-                </div>
-              </div>
+      {(showMarksheetModal || selectedMarksheetStudent) && selectedMarksheetStudent && (
+        <OfficialMarksheetView
+          student={selectedMarksheetStudent}
+          onClose={() => {
+            setShowMarksheetModal(false);
+            setSelectedMarksheetStudent(null);
+          }}
+        />
+      )}
 
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => window.print()}
-                  className="px-3.5 py-1.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-black rounded-xl text-xs transition cursor-pointer flex items-center gap-1.5 shadow-sm"
-                  title="Print official marksheet"
-                >
-                  <Printer className="w-3.5 h-3.5" />
-                  <span>Print Marksheet</span>
-                </button>
+      {/* =========================================================================
+          MODAL: OFFICIAL CERTIFICATE PREVIEW (SUPER ADMIN & ALL DESKS)
+          ========================================================================= */}
+      {previewCertModalData && (
+        <CertificateModal
+          isOpen={Boolean(previewCertModalData)}
+          initialData={previewCertModalData}
+          onClose={() => setPreviewCertModalData(null)}
+        />
+      )}
 
                 <button
                   type="button"
@@ -3351,6 +3371,16 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
 
           </div>
         </div>
+
+      {/* =========================================================================
+          MODAL: OFFICIAL STUDENT ADMISSION FORM (SUPER ADMIN & BRANCH HEAD)
+          ========================================================================= */}
+      {viewingAdmissionStudent && (
+        <StudentAdmissionFormView
+          student={viewingAdmissionStudent}
+          onClose={() => setViewingAdmissionStudent(null)}
+        />
+
       )}
 
       {/* =========================================================================

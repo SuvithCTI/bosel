@@ -982,53 +982,7 @@ export default function AchievementsPage({ setActivePage }) {
         </div>
       )}
 
-      {/* Top Super Admin Live Editor Bar */}
-      {isSuperAdmin && (
-        <aside aria-label="Super Administrator Toolbar" className="sticky top-0 z-30 bg-gradient-to-r from-blue-950 via-slate-900 to-blue-950 text-white border-b-2 border-amber-400 shadow-md px-3 sm:px-6 py-2.5">
-          <div className="max-w-[1440px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-2.5">
-            <div className="flex items-center gap-2.5">
-              <span className="w-8 h-8 rounded-lg bg-amber-400 text-blue-950 font-black flex items-center justify-center text-sm shadow-sm shrink-0">
-                👑
-              </span>
-              <div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-xs font-black uppercase tracking-wider text-amber-400">
-                    Super Administrator Mode
-                  </span>
-                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-[10px] font-bold">
-                    Website Live Editor
-                  </span>
-                </div>
-                <p className="text-[11px] text-slate-300 hidden md:block">
-                  You are authorized to publish student achievements directly to this public page.
-                </p>
-              </div>
-            </div>
 
-            <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-              <button
-                type="button"
-                onClick={() => setIsAddModalOpen(true)}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-blue-950 font-black text-xs shadow-md transition cursor-pointer"
-              >
-                <Plus className="w-4 h-4 stroke-[3]" />
-                <span>+ Add Achievement</span>
-              </button>
-
-              {setActivePage && (
-                <button
-                  type="button"
-                  onClick={() => setActivePage('admin')}
-                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs border border-white/20 transition cursor-pointer"
-                >
-                  <span>Admin Dashboard</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
-          </div>
-        </aside>
-      )}
 
       <main>
         <Hero />
@@ -1182,86 +1136,32 @@ export default function AchievementsPage({ setActivePage }) {
               {/* Photo Selector */}
               <div>
                 <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-2">
-                  Student Photo
+                  Student Photo (Optional)
                 </label>
 
-                {/* Photo mode toggle */}
-                <div className="flex items-center gap-2 mb-3">
-                  <button
-                    type="button"
-                    onClick={() => setPhotoMode('preset')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition ${
-                      photoMode === 'preset'
-                        ? 'bg-blue-950 text-white'
-                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                    }`}
-                  >
-                    Preset Avatars
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPhotoMode('upload')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition ${
-                      photoMode === 'upload'
-                        ? 'bg-blue-950 text-white'
-                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                    }`}
-                  >
-                    Upload Photo
-                  </button>
-                </div>
+                <div className="flex items-center gap-4">
+                  <label className="flex-1 flex flex-col items-center justify-center px-4 py-3 border-2 border-dashed border-slate-300 rounded-xl hover:border-amber-400 cursor-pointer bg-slate-50 transition">
+                    <Upload className="w-5 h-5 text-slate-400 mb-1" />
+                    <span className="text-xs font-bold text-slate-700">Choose Student Image</span>
+                    <span className="text-[10px] text-slate-400">JPG, PNG up to 2MB</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileUpload}
+                      className="hidden"
+                    />
+                  </label>
 
-                {photoMode === 'preset' ? (
-                  <div className="grid grid-cols-6 gap-2">
-                    {PRESET_STUDENT_PHOTOS.map((preset) => (
-                      <button
-                        type="button"
-                        key={preset.id}
-                        onClick={() => setForm({ ...form, photo: preset.img })}
-                        className={`relative rounded-xl overflow-hidden aspect-square border-2 transition cursor-pointer ${
-                          form.photo === preset.img
-                            ? 'border-amber-500 ring-2 ring-amber-400'
-                            : 'border-slate-200 hover:border-slate-400'
-                        }`}
-                      >
-                        <img
-                          src={preset.img}
-                          alt={preset.label}
-                          className="w-full h-full object-cover object-top"
-                        />
-                        {form.photo === preset.img && (
-                          <div className="absolute inset-0 bg-amber-500/30 flex items-center justify-center font-bold text-blue-950">
-                            ✓
-                          </div>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-4">
-                    <label className="flex-1 flex flex-col items-center justify-center px-4 py-3 border-2 border-dashed border-slate-300 rounded-xl hover:border-amber-400 cursor-pointer bg-slate-50 transition">
-                      <Upload className="w-5 h-5 text-slate-400 mb-1" />
-                      <span className="text-xs font-bold text-slate-700">Choose Student Image</span>
-                      <span className="text-[10px] text-slate-400">JPG, PNG up to 2MB</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleFileUpload}
-                        className="hidden"
+                  {uploadedPhotoPreview && (
+                    <div className="w-16 h-16 rounded-xl overflow-hidden border-2 border-amber-400 shrink-0">
+                      <img
+                        src={uploadedPhotoPreview}
+                        alt="Preview"
+                        className="w-full h-full object-cover object-top"
                       />
-                    </label>
-
-                    {uploadedPhotoPreview && (
-                      <div className="w-16 h-16 rounded-xl overflow-hidden border-2 border-amber-400 shrink-0">
-                        <img
-                          src={uploadedPhotoPreview}
-                          alt="Preview"
-                          className="w-full h-full object-cover object-top"
-                        />
-                      </div>
-                    )}
-                  </div>
-                )}
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Submit / Cancel */}

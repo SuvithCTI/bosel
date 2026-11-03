@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Store, GraduationCap } from 'lucide-react';
+import { Store } from 'lucide-react';
 import FranchiseModal from './FranchiseModal';
 import AdmissionModal from './AdmissionModal';
 
@@ -34,27 +34,7 @@ export default function FloatingActions({ setActivePage }) {
     <>
       <div className="fixed bottom-5 right-5 sm:bottom-6 sm:right-6 z-40 flex flex-col items-end gap-3 pointer-events-auto select-none print:hidden">
         
-        {/* 1. Admission Form Circular Icon Button (Above Franchise Form Icon) */}
-        <div className="relative group">
-          <button
-            onClick={() => {
-              setAdmissionProgram(null);
-              setAdmissionFee(null);
-              setShowAdmissionModal(true);
-            }}
-            aria-label="Student Admission Form"
-            className="flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 bg-[#0F2B5C] hover:bg-[#18458F] text-amber-400 rounded-full shadow-2xl border-2 border-amber-400 hover:border-amber-300 transition-all duration-300 transform hover:scale-110 active:scale-95 cursor-pointer relative"
-          >
-            <GraduationCap className="w-6 h-6 sm:w-7 sm:h-7" />
-          </button>
-
-          {/* Desktop Hover Tooltip */}
-          <div className="absolute right-0 -top-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none bg-slate-950 text-white text-[11px] font-bold px-3 py-1 rounded-lg shadow-lg whitespace-nowrap">
-            Admission Form
-          </div>
-        </div>
-
-        {/* 2. Franchise Enquiry Circular Icon Button */}
+        {/* 1. Franchise Enquiry Circular Icon Button */}
         <div className="relative group">
           <button
             onClick={() => setShowFranchiseModal(true)}

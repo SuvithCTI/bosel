@@ -102,6 +102,13 @@ export const addStoredAchievement = (data) => {
   return updated;
 };
 
+export const updateStoredAchievement = (id, updatedFields) => {
+  const current = getStoredAchievements();
+  const updated = current.map(item => item.id === id ? { ...item, ...updatedFields } : item);
+  saveStoredAchievements(updated);
+  return updated;
+};
+
 export const deleteStoredAchievement = (id) => {
   const current = getStoredAchievements();
   const updated = current.filter(a => a.id !== id);

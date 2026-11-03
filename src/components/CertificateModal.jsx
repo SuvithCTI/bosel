@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { X, Award, Edit3 } from 'lucide-react';
+import { X, Award } from 'lucide-react';
 import Certificate from './Certificate';
 
 export default function CertificateModal({
@@ -89,8 +89,6 @@ export default function CertificateModal({
     initialData.certificateType || 'COMPETITION'
   );
 
-  const [isEditing, setIsEditing] = useState(false);
-
   // Lock background scrolling while the modal is open.
   useEffect(() => {
     if (!isOpen) return;
@@ -104,19 +102,6 @@ export default function CertificateModal({
   }, [isOpen]);
 
   if (!isOpen) return null;
-
-  const fieldClass =
-    'h-8 w-full rounded-md border border-slate-700 bg-slate-900 px-2 text-xs text-white outline-none transition focus:border-amber-400 focus:ring-1 focus:ring-amber-400';
-
-  const labelClass =
-    'mb-0.5 block text-[9px] font-bold uppercase leading-3 tracking-wide text-slate-400';
-
-  const renderField = (label, control) => (
-    <div className="min-w-0" key={label}>
-      <label className={labelClass}>{label}</label>
-      {control}
-    </div>
-  );
 
   return (
     <div
@@ -164,142 +149,14 @@ export default function CertificateModal({
           <div className="flex shrink-0 items-center gap-1.5">
             <button
               type="button"
-              onClick={() => setIsEditing((previous) => !previous)}
-              aria-expanded={isEditing}
-              className={`flex h-8 items-center justify-center gap-1 rounded-lg px-2.5 text-xs font-bold transition active:scale-95 sm:px-3 ${
-                isEditing
-                  ? 'bg-amber-400 text-slate-950'
-                  : 'bg-white/10 text-white hover:bg-white/20'
-              }`}
-            >
-              <Edit3 className="h-3.5 w-3.5" />
-
-              <span>{isEditing ? 'Done' : 'Customize'}</span>
-            </button>
-
-            <button
-              type="button"
               onClick={onClose}
-              className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10 text-white transition hover:bg-white/20 active:scale-95"
+              className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10 text-white transition hover:bg-white/20 active:scale-95 cursor-pointer"
               aria-label="Close certificate preview"
             >
               <X className="h-4 w-4 sm:h-5 sm:w-5" />
             </button>
           </div>
         </div>
-
-        {/* COMPACT EDITING PANEL */}
-        {isEditing && (
-          <div className="shrink-0 border-b border-slate-700 bg-slate-800 px-3 py-2 text-slate-200 animate-in slide-in-from-top-2 sm:px-4 sm:py-2.5">
-            <div className="grid grid-cols-2 gap-x-2.5 gap-y-2 sm:grid-cols-4 sm:gap-x-3 sm:gap-y-2">
-              {renderField(
-                'Candidate Name',
-                <input
-                  type="text"
-                  value={studentName}
-                  onChange={(event) => setStudentName(event.target.value)}
-                  className={fieldClass}
-                  placeholder="Candidate name"
-                />
-              )}
-
-              {renderField(
-                'Course / Subject',
-                <input
-                  type="text"
-                  value={courseName}
-                  onChange={(event) => setCourseName(event.target.value)}
-                  className={fieldClass}
-                  placeholder="Course name"
-                />
-              )}
-
-              {renderField(
-                'Level',
-                <input
-                  type="text"
-                  value={level}
-                  onChange={(event) => setLevel(event.target.value)}
-                  className={fieldClass}
-                  placeholder="Level"
-                />
-              )}
-
-              {renderField(
-                'Grade',
-                <select
-                  value={grade}
-                  onChange={(event) => setGrade(event.target.value)}
-                  className={fieldClass}
-                >
-                  <option value="A+">A+ (Outstanding)</option>
-                  <option value="A">A (Distinction)</option>
-                  <option value="B">B (Merit)</option>
-                  <option value="Passed">Passed</option>
-                </select>
-              )}
-
-              {renderField(
-                'Certificate Type',
-                <select
-                  value={certificateType}
-                  onChange={(event) =>
-                    setCertificateType(event.target.value)
-                  }
-                  className={fieldClass}
-                >
-                  <option value="COMPETITION">COMPETITION</option>
-                  <option value="COMPLETION">COMPLETION</option>
-                </select>
-              )}
-
-              {renderField(
-                'Examination Centre',
-                <input
-                  type="text"
-                  value={centreName}
-                  onChange={(event) => setCentreName(event.target.value)}
-                  className={fieldClass}
-                  placeholder="Centre name"
-                />
-              )}
-
-              {renderField(
-                'Reg No.',
-                <input
-                  type="text"
-                  value={registrationNo}
-                  onChange={(event) =>
-                    setRegistrationNo(event.target.value)
-                  }
-                  className={fieldClass}
-                  placeholder="Registration number"
-                />
-              )}
-
-              {renderField(
-                'Date of Issue',
-                <input
-                  type="text"
-                  value={issueDate}
-                  onChange={(event) => setIssueDate(event.target.value)}
-                  className={fieldClass}
-                  placeholder="DD-MM-YYYY"
-                />
-              )}
-            </div>
-
-            <div className="mt-2 flex justify-end">
-              <button
-                type="button"
-                onClick={() => setIsEditing(false)}
-                className="rounded-md bg-amber-400 px-3 py-1 text-[10px] font-extrabold text-slate-950 transition hover:bg-amber-300"
-              >
-                Done Editing
-              </button>
-            </div>
-          </div>
-        )}
 
         {/* SCROLLABLE CERTIFICATE PREVIEW */}
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-slate-950/60 p-2 sm:p-3">
@@ -318,8 +175,8 @@ export default function CertificateModal({
               issueDate={issueDate}
               studentPhoto={studentPhoto}
               certificateType={certificateType}
-              onPhotoUpload={(photo) => setStudentPhoto(photo)}
               showControls={true}
+              showUploadPhoto={false}
             />
           </div>
         </div>
