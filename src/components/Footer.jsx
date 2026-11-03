@@ -34,20 +34,24 @@ import {
 
 import Logo from './Logo';
 
-export default function Footer({ handleNav, onOpenLegal }) {
+export default function Footer({ setActivePage, handleNav, onOpenLegal }) {
+  const navigate = (page) => {
+    if (typeof handleNav === 'function') {
+      handleNav(page);
+    } else if (typeof setActivePage === 'function') {
+      setActivePage(page);
+    }
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
   const linkClass =
     'text-slate-300 hover:text-amber-400 transition-colors text-left font-medium';
 
   const socialLinks = [
   {
-    name: 'Facebook',
-    href: 'https://www.facebook.com/',
-    icon: FaFacebookF,
-    color: 'hover:bg-blue-600',
-  },
-  {
     name: 'Instagram',
-    href: 'https://www.instagram.com/',
+    href: '',
     icon: FaInstagram,
     color: 'hover:bg-pink-600',
   },
@@ -75,7 +79,7 @@ export default function Footer({ handleNav, onOpenLegal }) {
           {/* Brand Information */}
           <div className="space-y-3">
             <div className="inline-block">
-              <Logo size="small" lightText={true} />
+              <Logo size="small" lightText={true} onClick={() => navigate('home')} />
             </div>
 
             <p className="max-w-md text-justify [text-align-last:left] text-[11px] leading-relaxed text-slate-300 sm:text-xs">
@@ -124,49 +128,49 @@ export default function Footer({ handleNav, onOpenLegal }) {
 
             <ul className="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px] sm:text-xs md:grid-cols-1 md:gap-y-1">
               <li>
-                <button type="button" onClick={() => handleNav('home')} className={linkClass}>
+                <button type="button" onClick={() => navigate('home')} className={linkClass}>
                   Home
                 </button>
               </li>
 
               <li>
-                <button type="button" onClick={() => handleNav('about')} className={linkClass}>
+                <button type="button" onClick={() => navigate('about')} className={linkClass}>
                   About Us
                 </button>
               </li>
 
               <li>
-                <button type="button" onClick={() => handleNav('programs')} className={linkClass}>
+                <button type="button" onClick={() => navigate('programs')} className={linkClass}>
                   Programs
                 </button>
               </li>
 
               <li>
-                <button type="button" onClick={() => handleNav('events')} className={linkClass}>
+                <button type="button" onClick={() => navigate('events')} className={linkClass}>
                   Events
                 </button>
               </li>
 
               <li>
-                <button type="button" onClick={() => handleNav('achievements')} className={linkClass}>
+                <button type="button" onClick={() => navigate('achievements')} className={linkClass}>
                   Achievements
                 </button>
               </li>
 
               <li>
-                <button type="button" onClick={() => handleNav('franchise')} className={linkClass}>
+                <button type="button" onClick={() => navigate('franchise')} className={linkClass}>
                   Franchise
                 </button>
               </li>
 
               <li>
-                <button type="button" onClick={() => handleNav('contact')} className={linkClass}>
+                <button type="button" onClick={() => navigate('contact')} className={linkClass}>
                   Contact Us
                 </button>
               </li>
 
               <li className="col-span-2 md:col-span-1">
-                <button type="button" onClick={() => handleNav('login')} className={linkClass}>
+                <button type="button" onClick={() => navigate('login')} className={linkClass}>
                   Student Login
                 </button>
               </li>
@@ -228,7 +232,7 @@ export default function Footer({ handleNav, onOpenLegal }) {
               type="button"
               className="font-bold transition-colors hover:text-amber-400"
               onClick={() =>
-                onOpenLegal ? onOpenLegal('privacy') : handleNav('privacy')
+                onOpenLegal ? onOpenLegal('privacy') : navigate('privacy')
               }
             >
               Privacy
@@ -240,7 +244,7 @@ export default function Footer({ handleNav, onOpenLegal }) {
               type="button"
               className="font-bold transition-colors hover:text-amber-400"
               onClick={() =>
-                onOpenLegal ? onOpenLegal('terms') : handleNav('terms')
+                onOpenLegal ? onOpenLegal('terms') : navigate('terms')
               }
             >
               Terms
@@ -251,7 +255,7 @@ export default function Footer({ handleNav, onOpenLegal }) {
             <button
               type="button"
               className="font-bold transition-colors hover:text-amber-400"
-              onClick={() => handleNav('franchise')}
+              onClick={() => navigate('franchise')}
             >
               Franchise
             </button>

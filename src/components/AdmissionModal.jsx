@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   X, 
   GraduationCap, 
-  Send, 
   CheckCircle2, 
   KeyRound, 
   Copy, 
@@ -16,31 +15,25 @@ import {
   ChevronDown, 
   ChevronUp,
   Upload,
-  Calendar,
-  Clock,
   Building2,
   MapPin,
   CreditCard,
   QrCode,
   FileCheck2,
-  Printer,
-  Download,
-  Smartphone,
-  PhoneCall,
   User,
-  Image as ImageIcon,
   Loader2,
   ExternalLink,
-  Sparkles,
-  Trash2,
-  RefreshCw,
-  AlertCircle
+  Plus,
+  BookOpen,
+  Camera,
+  RotateCcw,
+  Crop,
+  Trash2
 } from 'lucide-react';
 import { registerStudentAccount, generateRegisterNumber } from '../utils/authStorage';
-import { exportPdfFromElement } from '../utils/pdfExport';
 import { getStoredCourses } from '../data/coursesData';
-import { getStoredSchools } from '../data/schoolsData';
-import { getStoredBatches } from '../data/batchesData';
+import { replacePhotoBackground } from '../utils/photoSegmentation';
+import { ACADEMIC_STAGES, getAcademicStageFromAge } from '../utils/academicStages';
 
 const TAMIL_NADU_DISTRICTS = [
   'Ariyalur',
@@ -84,20 +77,6 @@ const TAMIL_NADU_DISTRICTS = [
   'Other District / State'
 ];
 
-const BSEL_BRANCHES = [
-  'Tenkasi Main Branch (Head Office)',
-  'Chennai Central Branch',
-  'Madurai Regional Centre',
-  'Tirunelveli Skill Centre',
-  'Coimbatore City Branch',
-  'Salem Educational Centre',
-  'Tiruchirappalli Branch',
-  'Erode Learning Academy',
-  'Thoothukudi Coastal Branch',
-  'Online / Direct Distance Learning',
-  'Other Authorized Study Centre'
-];
-
 const BSEL_PROGRAMS = [
   'Abacus Speed Arithmetic',
   'Handwriting Excellence & Calligraphy',
@@ -115,6 +94,94 @@ const BSEL_PROGRAMS = [
   'Canva Digital Design & Marketing'
 ];
 
+// Helper to extract available levels for a given course
+const getLevelsForCourse = (courseName, coursesList = []) => {
+  if (!courseName) return ['Level 1 (Foundation)', 'Level 2', 'Level 3'];
+  const cleanName = courseName.toLowerCase();
+  const matched = coursesList.find(
+    c => (c.fullName && c.fullName.toLowerCase() === cleanName) ||
+         (c.name && c.name.toLowerCase() === cleanName) ||
+         cleanName.includes((c.name || '').toLowerCase())
+  );
+
+  if (matched && Array.isArray(matched.curriculum) && matched.curriculum.length > 0) {
+    const titles = matched.curriculum
+      .map(cur => (typeof cur === 'string' ? cur : cur.title))
+      .filter(Boolean);
+    if (titles.length > 0) return titles;
+  }
+
+  if (cleanName.includes('abacus')) {
+    return [
+      'Level 1: Bead Fundamentals & Direct Operations',
+      'Level 2: Small Friend Concept (+5 and -5 Formulas)',
+      'Level 3: Big Friend Concept (+10 and -10 Formulas)',
+      'Level 4: Combination Formulas (Mixed Operations)',
+      'Level 5: Multiplication Fundamentals (2D x 1D & 3D x 1D)',
+      'Level 6: Division Principles & Decimals',
+      'Level 7: Advanced Multiplication & Long Division',
+      'Level 8: Negative Numbers & Square Roots',
+      'Level 9: Grandmaster Speed & Decimal Power'
+    ];
+  }
+  if (cleanName.includes('handwriting')) {
+    return [
+      'Level 1: Posture, Stroke & Print Basics',
+      'Level 2: Cursive Rhythm, Spacing & Joining',
+      'Level 3: Speed Writing & Exam Calligraphy'
+    ];
+  }
+  if (cleanName.includes('phonics')) {
+    return [
+      'Level 1: 42 Core Phonemes & CVC Blending',
+      'Level 2: Digraphs, Diphthongs & Sight Words',
+      'Level 3: Reading Fluency & Expression',
+      'Level 4: Advanced Syllabification & Lexicon'
+    ];
+  }
+  if (cleanName.includes('drawing') || cleanName.includes('art')) {
+    return [
+      'Level 1: Shapes, Lines & Proportions',
+      'Level 2: Colour Theory & Shading Techniques',
+      'Level 3: Perspective, Landscapes & Portraits',
+      'Level 4: Portfolio Art & Creative Exhibition'
+    ];
+  }
+  if (cleanName.includes('python') || cleanName.includes('coding')) {
+    return [
+      'Level 1: Syntax, Variables & Control Flow',
+      'Level 2: Functions, Data Structures & Logic',
+      'Level 3: OOP, Projects & Algorithm Drills'
+    ];
+  }
+  return [
+    'Level 1 (Foundation)',
+    'Level 2 (Intermediate)',
+    'Level 3 (Advanced)',
+    'Level 4 (Mastery)'
+  ];
+};
+
+const parseCourseFee = (courseName, coursesList = []) => {
+  if (!courseName) return 450;
+  const cleanName = courseName.toLowerCase();
+  const matched = coursesList.find(
+    c => (c.fullName && c.fullName.toLowerCase() === cleanName) ||
+         (c.name && c.name.toLowerCase() === cleanName) ||
+         cleanName.includes((c.name || '').toLowerCase())
+  );
+  if (matched) {
+    if (typeof matched.feeAmount === 'number' && !isNaN(matched.feeAmount)) {
+      return matched.feeAmount;
+    }
+    if (matched.fee) {
+      const num = parseInt(String(matched.fee).replace(/[^0-9]/g, ''), 10);
+      if (!isNaN(num) && num > 0) return num;
+    }
+  }
+  return 450;
+};
+
 export default function AdmissionModal({ 
   isOpen, 
   onClose, 
@@ -126,45 +193,45 @@ export default function AdmissionModal({
   onSuccess = null
 }) {
   const [coursesList, setCoursesList] = useState(() => getStoredCourses());
-  const [schoolsList, setSchoolsList] = useState(() => getStoredSchools());
-  const [batchesList, setBatchesList] = useState(() => getStoredBatches());
 
   useEffect(() => {
     const handleCourses = () => setCoursesList(getStoredCourses());
-    const handleSchools = () => setSchoolsList(getStoredSchools());
-    const handleBatches = () => setBatchesList(getStoredBatches());
     window.addEventListener('bsel_courses_updated', handleCourses);
-    window.addEventListener('bsel_schools_updated', handleSchools);
-    window.addEventListener('bsel_batches_updated', handleBatches);
-    window.addEventListener('storage', handleBatches);
     return () => {
       window.removeEventListener('bsel_courses_updated', handleCourses);
-      window.removeEventListener('bsel_schools_updated', handleSchools);
-      window.removeEventListener('bsel_batches_updated', handleBatches);
-      window.removeEventListener('storage', handleBatches);
     };
   }, []);
 
   const dynamicProgramNames = coursesList.map(c => c.fullName || c.name);
   const availablePrograms = dynamicProgramNames.length > 0 ? dynamicProgramNames : BSEL_PROGRAMS;
 
-  const dynamicBranchNames = schoolsList.map(s => s.branchName || s.name);
-  const baseBranches = dynamicBranchNames.length > 0 ? dynamicBranchNames : BSEL_BRANCHES;
-  const availableBranches = initialBranch && !baseBranches.includes(initialBranch)
-    ? [initialBranch, ...baseBranches]
-    : baseBranches;
+  // 2. Branch: every district name
+  const availableBranches = initialBranch && !TAMIL_NADU_DISTRICTS.includes(initialBranch)
+    ? [initialBranch, ...TAMIL_NADU_DISTRICTS]
+    : TAMIL_NADU_DISTRICTS;
 
   const initialCourse = initialProgram || availablePrograms[0] || 'Abacus Speed Arithmetic';
-  const defaultBranch = initialBranch || availableBranches[0] || 'Tenkasi Main Branch (Head Office)';
+  const defaultBranch = initialBranch || (availableBranches.includes('Tenkasi') ? 'Tenkasi' : availableBranches[0]);
+  const initialLevel = getLevelsForCourse(initialCourse, coursesList)[0] || 'Level 1';
+  const initialSingleFee = parseCourseFee(initialCourse, coursesList);
+
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0], // 1. Date
     registerNumber: generateRegisterNumber(initialCourse), // 2. Register number [non-editable]
     branch: defaultBranch, // 3. Branch
-    courseName: initialCourse, // 4. Course Name [non-editable]
-    batchTiming: '', // 5. Preferred Batch & Timing Slot
+    courseName: initialCourse, // 4. Course Name (kept for backward compat)
+    selectedCourses: [
+      {
+        courseName: initialCourse,
+        level: initialLevel,
+        fee: initialSingleFee
+      }
+    ],
     studentName: '', // 7. Student name
     dob: '', // 8. Date of Birth
     age: '', // 9. Age
+    studentClass: '', // Auto calculated from age
+    studentStage: '', // Auto calculated stage
     gender: 'Male', // 9. Gender
     phone: '', // 11. Phone
     alternatePhone: '', // 11. Alternate ph
@@ -176,7 +243,7 @@ export default function AdmissionModal({
     district: 'Tenkasi', // 14. District
     pincode: '', // 14. Pin
     feePaymentType: 'Pay Now', // 15. Admission fee payment: pay now / later
-    feeAmount: initialFee || '₹450', // 16. Admission fee amount
+    feeAmount: initialFee || `₹${initialSingleFee}`, // 16. Admission fee amount
     paymentMode: 'UPI / QR Code', // 17. Payment mode
     receiptRefNo: '', // 18. Receipt / Reference Num
     paymentScreenshot: null, // 19. Payment Screenshot (upload)
@@ -189,19 +256,34 @@ export default function AdmissionModal({
   const [formStep, setFormStep] = useState(1); // Step 1: Candidate Details | Step 2: Fees, Payment & Declaration
   const [submitted, setSubmitted] = useState(false);
   const [createdAccount, setCreatedAccount] = useState(null);
-  const [copiedField, setCopiedField] = useState(null);
-  const [showPassword, setShowPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(true);
 
   const [districtDropdownOpen, setDistrictDropdownOpen] = useState(false);
   const [districtSearch, setDistrictSearch] = useState('');
   const [districtError, setDistrictError] = useState(false);
+  const [branchDropdownOpen, setBranchDropdownOpen] = useState(false);
+  const [branchSearch, setBranchSearch] = useState('');
+  const branchDropdownRef = useRef(null);
   const [photoError, setPhotoError] = useState(false);
+  const [pincodeLoading, setPincodeLoading] = useState(false);
+  const [pincodeMessage, setPincodeMessage] = useState('');
+  const [availablePlaces, setAvailablePlaces] = useState([]);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [cameraError, setCameraError] = useState('');
+  const [cameraFacingMode, setCameraFacingMode] = useState('user'); // 'user' (front) | 'environment' (back)
+  const videoRef = useRef(null);
+  const streamRef = useRef(null);
   const districtDropdownRef = useRef(null);
   const slipRef = useRef(null);
-  const [isDownloadingSlip, setIsDownloadingSlip] = useState(false);
   const modalBodyRef = useRef(null);
 
-  // Real-time Payment Gateway State
+  // Photo Editor State
+  const [isPhotoEditorOpen, setIsPhotoEditorOpen] = useState(false);
+  const [editorBgColor, setEditorBgColor] = useState('original');
+  const [originalPhotoSrc, setOriginalPhotoSrc] = useState(null);
+  const [editorPreviewUrl, setEditorPreviewUrl] = useState(null);
+  const [isProcessingBg, setIsProcessingBg] = useState(false);
+  const editorImageRef = useRef(null);
   const [paymentGatewayStatus, setPaymentGatewayStatus] = useState('idle'); // 'idle' | 'processing' | 'success'
   const [paymentGatewayTxn, setPaymentGatewayTxn] = useState('');
   const [copiedUpi, setCopiedUpi] = useState(false);
@@ -216,11 +298,20 @@ export default function AdmissionModal({
   // Sync with initial props whenever modal opens or props change
   useEffect(() => {
     if (initialProgram) {
+      const pLevels = getLevelsForCourse(initialProgram, coursesList);
+      const pFee = parseCourseFee(initialProgram, coursesList);
       setFormData(prev => ({
         ...prev,
         courseName: initialProgram,
         registerNumber: generateRegisterNumber(initialProgram),
-        feeAmount: initialFee || prev.feeAmount || '₹450'
+        feeAmount: initialFee || `₹${pFee}`,
+        selectedCourses: [
+          {
+            courseName: initialProgram,
+            level: pLevels[0] || 'Level 1',
+            fee: pFee
+          }
+        ]
       }));
       setIsCourseLocked(true);
     }
@@ -236,13 +327,16 @@ export default function AdmissionModal({
         feeAmount: initialFee
       }));
     }
-  }, [initialProgram, initialFee, initialBranch, isOpen]);
+  }, [initialProgram, initialFee, initialBranch, isOpen, coursesList]);
 
-  // Click outside listener for district dropdown
+  // Click outside listener for district and branch dropdowns
   useEffect(() => {
     function handleClickOutside(event) {
       if (districtDropdownRef.current && !districtDropdownRef.current.contains(event.target)) {
         setDistrictDropdownOpen(false);
+      }
+      if (branchDropdownRef.current && !branchDropdownRef.current.contains(event.target)) {
+        setBranchDropdownOpen(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
@@ -262,16 +356,33 @@ export default function AdmissionModal({
     };
   }, [isOpen]);
 
+  // Close camera whenever modal is closed
+  useEffect(() => {
+    if (!isOpen) {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
+      }
+      setIsCameraOpen(false);
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const filteredDistricts = TAMIL_NADU_DISTRICTS.filter((d) =>
     d.toLowerCase().includes(districtSearch.toLowerCase().trim())
   );
 
-  // Auto calculate age from Date of Birth (Field 8 -> 9)
+  const filteredBranches = availableBranches.filter((b) =>
+    b.toLowerCase().includes(branchSearch.toLowerCase().trim())
+  );
+
+  // Auto calculate age from Date of Birth & determine Academic Stage (Field 5 -> 6 & Category)
   const handleDobChange = (e) => {
     const dobVal = e.target.value;
     let computedAge = '';
+    let autoClass = '';
+    let autoStage = '';
     if (dobVal) {
       const birth = new Date(dobVal);
       const today = new Date();
@@ -282,9 +393,193 @@ export default function AdmissionModal({
       }
       if (age >= 0 && age <= 100) {
         computedAge = String(age);
+        const stageInfo = getAcademicStageFromAge(age);
+        autoClass = stageInfo.className;
+        autoStage = stageInfo.stage;
       }
     }
-    setFormData(prev => ({ ...prev, dob: dobVal, age: computedAge }));
+    setFormData(prev => ({ 
+      ...prev, 
+      dob: dobVal, 
+      age: computedAge,
+      studentClass: autoClass || prev.studentClass,
+      studentStage: autoStage || prev.studentStage
+    }));
+  };
+
+  // Handle manual Age change and auto-set Academic Stage
+  const handleAgeChange = (e) => {
+    const ageVal = e.target.value;
+    const stageInfo = getAcademicStageFromAge(ageVal);
+    setFormData(prev => ({
+      ...prev,
+      age: ageVal,
+      studentClass: stageInfo.className || prev.studentClass,
+      studentStage: stageInfo.stage || prev.studentStage
+    }));
+  };
+
+  // Handle manual override of Academic Stage
+  const handleStageSelect = (selectedStage) => {
+    const matched = ACADEMIC_STAGES.find(s => s.stage === selectedStage);
+    if (matched) {
+      setFormData(prev => ({
+        ...prev,
+        studentClass: matched.className,
+        studentStage: matched.stage
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        studentStage: selectedStage
+      }));
+    }
+  };
+
+  // Camera Cleanup and Helpers
+  const stopCameraStream = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+  };
+
+  const startCamera = async (mode = 'user') => {
+    stopCameraStream();
+    setCameraError('');
+    setIsCameraOpen(true);
+
+    try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('Camera access is not supported by your browser.');
+      }
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: mode,
+          width: { ideal: 640 },
+          height: { ideal: 480 }
+        },
+        audio: false
+      });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+      }
+    } catch (err) {
+      console.error('Camera access error:', err);
+      setCameraError(err.message || 'Unable to access camera. Please allow camera permissions or upload a photo.');
+    }
+  };
+
+  const handleFlipCamera = () => {
+    const nextMode = cameraFacingMode === 'user' ? 'environment' : 'user';
+    setCameraFacingMode(nextMode);
+    startCamera(nextMode);
+  };
+
+  const handleCapturePhoto = () => {
+    if (!videoRef.current) return;
+    try {
+      const video = videoRef.current;
+      const vw = video.videoWidth || 640;
+      const vh = video.videoHeight || 480;
+
+      // Official 3.5 : 4.5 passport portrait proportion
+      const passportAspect = 3.5 / 4.5;
+      let cropW = Math.round(vh * passportAspect);
+      let cropH = vh;
+      if (cropW > vw) {
+        cropW = vw;
+        cropH = Math.round(vw / passportAspect);
+      }
+      const startX = Math.round((vw - cropW) / 2);
+      const startY = Math.round((vh - cropH) / 2);
+
+      const canvas = document.createElement('canvas');
+      canvas.width = 420; // 3.5 * 120
+      canvas.height = 540; // 4.5 * 120 (Standard passport resolution)
+      const ctx = canvas.getContext('2d');
+
+      if (cameraFacingMode === 'user') {
+        // Mirror horizontally for natural selfie experience
+        ctx.translate(canvas.width, 0);
+        ctx.scale(-1, 1);
+      }
+
+      ctx.drawImage(video, startX, startY, cropW, cropH, 0, 0, canvas.width, canvas.height);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+
+      setFormData(prev => ({
+        ...prev,
+        studentPhoto: dataUrl,
+        photoPreview: dataUrl
+      }));
+      setPhotoError(false);
+      stopCameraStream();
+      setIsCameraOpen(false);
+    } catch (err) {
+      console.error('Failed to capture photo from camera:', err);
+      alert('Could not capture frame. Please try again or upload a photo.');
+    }
+  };
+
+  const handleCloseCamera = () => {
+    stopCameraStream();
+    setIsCameraOpen(false);
+    setCameraError('');
+  };
+
+  const handleOpenPhotoEditor = async () => {
+    if (!formData.photoPreview) return;
+    setOriginalPhotoSrc(formData.photoPreview);
+    setEditorPreviewUrl(formData.photoPreview);
+    setEditorBgColor('original');
+    setIsPhotoEditorOpen(true);
+
+    try {
+      const framed = await replacePhotoBackground(formData.photoPreview, 'original');
+      if (framed) {
+        setEditorPreviewUrl(framed);
+      }
+    } catch (e) {
+      console.warn('Initial passport framing notice:', e);
+    }
+  };
+
+  const handleSelectBgColor = async (colorVal) => {
+    setEditorBgColor(colorVal);
+
+    const sourceImage = originalPhotoSrc || formData.photoPreview;
+    if (!sourceImage) return;
+
+    setIsProcessingBg(true);
+    try {
+      const updatedUrl = await replacePhotoBackground(sourceImage, colorVal);
+      if (updatedUrl) {
+        setEditorPreviewUrl(updatedUrl);
+      }
+    } catch (err) {
+      console.error('Failed to change photo background:', err);
+    } finally {
+      setIsProcessingBg(false);
+    }
+  };
+
+  const handleApplyPhotoEdits = () => {
+    const finalPhoto = editorPreviewUrl || formData.photoPreview;
+    if (finalPhoto) {
+      setFormData(prev => ({
+        ...prev,
+        studentPhoto: finalPhoto,
+        photoPreview: finalPhoto
+      }));
+      setPhotoError(false);
+    }
+    setIsPhotoEditorOpen(false);
   };
 
   // Student Photo Upload (Field 10 - Compulsory)
@@ -308,37 +603,66 @@ export default function AdmissionModal({
     }
   };
 
-  // Payment Screenshot Upload (Field 20)
-  const handleScreenshotUpload = (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        alert('Payment screenshot size must be less than 5MB.');
-        return;
-      }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData(prev => ({
-          ...prev,
-          paymentScreenshot: reader.result,
-          screenshotPreview: reader.result
-        }));
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
   // Aadhar Number formatting (Field 9: 12 numeric digits)
   const handleAadharChange = (e) => {
     const digitsOnly = e.target.value.replace(/\D/g, '').slice(0, 12);
     setFormData(prev => ({ ...prev, aadharNumber: digitsOnly }));
   };
 
-  const handleCopy = (text, fieldName) => {
-    if (typeof navigator !== 'undefined' && navigator.clipboard) {
-      navigator.clipboard.writeText(text);
-      setCopiedField(fieldName);
-      setTimeout(() => setCopiedField(null), 2500);
+  // Automatic Pincode Lookup (Field 15 -> calls https://api.postalpincode.in/pincode/<PIN>)
+  const handlePincodeChange = async (e) => {
+    const pin = e.target.value.replace(/\D/g, '').slice(0, 6);
+    setFormData(prev => ({ ...prev, pincode: pin }));
+
+    if (pin.length === 6) {
+      setPincodeLoading(true);
+      setPincodeMessage('Connecting to postal database...');
+      try {
+        const response = await fetch(`https://api.postalpincode.in/pincode/${pin}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (Array.isArray(data) && data[0]?.Status === 'Success' && Array.isArray(data[0]?.PostOffice) && data[0].PostOffice.length > 0) {
+            const offices = data[0].PostOffice;
+            const po = offices[0];
+            const rawDistrict = (po.District || '').trim();
+            const rawCity = (po.Block && po.Block !== 'NA' ? po.Block : po.Name || '').trim();
+
+            // Extract unique place/area names covered by this PIN code
+            const places = Array.from(new Set(offices.map(o => (o.Name || '').trim()).filter(Boolean)));
+            setAvailablePlaces(places);
+
+            // Match closest district from official list
+            const matchedDistrict = TAMIL_NADU_DISTRICTS.find(d => 
+              d.toLowerCase() === rawDistrict.toLowerCase() ||
+              rawDistrict.toLowerCase().includes(d.toLowerCase()) ||
+              d.toLowerCase().includes(rawDistrict.toLowerCase())
+            ) || rawDistrict || 'Tenkasi';
+
+            setFormData(prev => ({
+              ...prev,
+              city: rawCity || rawDistrict || prev.city,
+              district: matchedDistrict
+            }));
+            setDistrictError(false);
+            const placeCount = places.length;
+            setPincodeMessage(`✓ Auto-filled: ${matchedDistrict} (${placeCount} place${placeCount > 1 ? 's' : ''} found)`);
+            setTimeout(() => setPincodeMessage(''), 5000);
+          } else {
+            setAvailablePlaces([]);
+            setPincodeMessage('PIN code verified. Please review City & District.');
+            setTimeout(() => setPincodeMessage(''), 3000);
+          }
+        }
+      } catch (err) {
+        console.warn('Pincode fetch error:', err);
+        setAvailablePlaces([]);
+        setPincodeMessage('');
+      } finally {
+        setPincodeLoading(false);
+      }
+    } else {
+      setAvailablePlaces([]);
+      setPincodeMessage('');
     }
   };
 
@@ -385,11 +709,90 @@ export default function AdmissionModal({
     }, 1800);
   };
 
-  const handleRemoveScreenshot = () => {
+  // Multi-Course and Level Handlers
+  const handleAddCourse = () => {
+    const existingNames = (formData.selectedCourses || []).map(c => c.courseName);
+    const nextProg = availablePrograms.find(p => !existingNames.includes(p)) || availablePrograms[0] || 'Abacus Speed Arithmetic';
+    const nextLevels = getLevelsForCourse(nextProg, coursesList);
+    const nextFee = parseCourseFee(nextProg, coursesList);
+
+    const updatedCourses = [
+      ...(formData.selectedCourses || []),
+      {
+        courseName: nextProg,
+        level: nextLevels[0] || 'Level 1',
+        fee: nextFee
+      }
+    ];
+
+    const totalFee = updatedCourses.reduce((sum, c) => sum + (c.fee || 450), 0);
+    const joinedNames = updatedCourses.map(c => c.courseName).join(', ');
+
     setFormData(prev => ({
       ...prev,
-      paymentScreenshot: null,
-      screenshotPreview: null
+      selectedCourses: updatedCourses,
+      courseName: joinedNames,
+      feeAmount: `₹${totalFee}`
+    }));
+  };
+
+  const handleRemoveCourse = (indexToRemove) => {
+    if ((formData.selectedCourses || []).length <= 1) return;
+    const updatedCourses = formData.selectedCourses.filter((_, idx) => idx !== indexToRemove);
+    const totalFee = updatedCourses.reduce((sum, c) => sum + (c.fee || 450), 0);
+    const joinedNames = updatedCourses.map(c => c.courseName).join(', ');
+
+    setFormData(prev => ({
+      ...prev,
+      selectedCourses: updatedCourses,
+      courseName: joinedNames,
+      feeAmount: `₹${totalFee}`,
+      registerNumber: generateRegisterNumber(updatedCourses[0]?.courseName || 'Abacus')
+    }));
+  };
+
+  const handleCourseChangeAt = (index, newProg) => {
+    const newLevels = getLevelsForCourse(newProg, coursesList);
+    const newFee = parseCourseFee(newProg, coursesList);
+
+    const updatedCourses = (formData.selectedCourses || []).map((c, idx) => {
+      if (idx === index) {
+        return {
+          ...c,
+          courseName: newProg,
+          level: newLevels[0] || 'Level 1',
+          fee: newFee
+        };
+      }
+      return c;
+    });
+
+    const totalFee = updatedCourses.reduce((sum, c) => sum + (c.fee || 450), 0);
+    const joinedNames = updatedCourses.map(c => c.courseName).join(', ');
+
+    setFormData(prev => ({
+      ...prev,
+      selectedCourses: updatedCourses,
+      courseName: joinedNames,
+      feeAmount: `₹${totalFee}`,
+      registerNumber: index === 0 ? generateRegisterNumber(newProg) : prev.registerNumber
+    }));
+  };
+
+  const handleLevelChangeAt = (index, newLevel) => {
+    const updatedCourses = (formData.selectedCourses || []).map((c, idx) => {
+      if (idx === index) {
+        return {
+          ...c,
+          level: newLevel
+        };
+      }
+      return c;
+    });
+
+    setFormData(prev => ({
+      ...prev,
+      selectedCourses: updatedCourses
     }));
   };
 
@@ -465,11 +868,6 @@ export default function AdmissionModal({
       return;
     }
 
-    if (formData.feePaymentType === 'Pay Now' && !formData.receiptRefNo.trim()) {
-      alert('Please enter the Payment Reference / Receipt / Transaction Number (Field 19).');
-      return;
-    }
-
     if (!formData.declaration) {
       alert('Please check the Official Declaration box (Field 21) to confirm your admission.');
       return;
@@ -477,12 +875,18 @@ export default function AdmissionModal({
 
     setPhotoError(false);
     setDistrictError(false);
+    const activeReceiptRef = formData.receiptRefNo?.trim() || (formData.feePaymentType === 'Pay Now' 
+      ? `TXN-${Math.floor(10000000 + Math.random() * 90000000)}` 
+      : 'CASH-PAY-LATER-AT-BRANCH');
+
     const account = registerStudentAccount({
       ...formData,
+      receiptRefNo: activeReceiptRef,
       name: formData.studentName,
       program: formData.courseName
     });
     setCreatedAccount(account);
+    setShowPassword(true);
     setSubmitted(true);
     if (onSuccess) {
       try {
@@ -498,6 +902,7 @@ export default function AdmissionModal({
     setSubmitted(false);
     setFormStep(1);
     setCreatedAccount(null);
+    setShowPassword(true);
     setDistrictError(false);
     setPhotoError(false);
     setPaymentGatewayStatus('idle');
@@ -505,14 +910,25 @@ export default function AdmissionModal({
     setCardDetails({ number: '', expiry: '', cvv: '', name: '' });
     setCopiedUpi(false);
     const resetCourse = initialProgram || 'Abacus Speed Arithmetic';
+    const resetLevels = getLevelsForCourse(resetCourse, coursesList);
+    const resetFee = parseCourseFee(resetCourse, coursesList);
     setFormData({
       date: new Date().toISOString().split('T')[0],
       registerNumber: generateRegisterNumber(resetCourse),
-      branch: initialBranch || 'Tenkasi Main Branch (Head Office)',
+      branch: initialBranch || 'Tenkasi',
       courseName: resetCourse,
+      selectedCourses: [
+        {
+          courseName: resetCourse,
+          level: resetLevels[0] || 'Level 1',
+          fee: resetFee
+        }
+      ],
       studentName: '',
       dob: '',
       age: '',
+      studentClass: '',
+      studentStage: '',
       gender: 'Male',
       phone: '',
       alternatePhone: '',
@@ -524,7 +940,7 @@ export default function AdmissionModal({
       district: 'Tenkasi',
       pincode: '',
       feePaymentType: 'Pay Now',
-      feeAmount: initialFee || '₹450',
+      feeAmount: initialFee || `₹${resetFee}`,
       paymentMode: 'UPI / QR Code',
       receiptRefNo: '',
       paymentScreenshot: null,
@@ -625,136 +1041,126 @@ export default function AdmissionModal({
             /* =========================================================================
                ADMISSION CONFIRMATION SLIP & CREDENTIALS
                ========================================================================= */
-            <div className="border-2 border-emerald-500/40 rounded-2xl p-4 sm:p-6 space-y-4 bg-emerald-50/20">
+            <div className="border border-emerald-200/70 rounded-2xl p-4 sm:p-6 space-y-4 bg-emerald-50/15">
               {/* Status Header */}
-              <div className="text-center space-y-1 sm:space-y-1.5">
-                <div className="inline-flex p-2.5 rounded-2xl bg-emerald-100 text-emerald-700 mb-0.5">
-                  <CheckCircle2 className="w-8 h-8 sm:w-10 sm:h-10" />
+              <div className="flex flex-col items-center justify-center text-center">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-600/20 ring-8 ring-emerald-50 mb-3">
+                  <Check className="w-7 h-7 sm:w-8 sm:h-8 stroke-[3]" />
                 </div>
-                <span className="inline-block text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-emerald-800 bg-emerald-100/90 px-3 py-0.5 rounded-full">
-                  Admission Successfully Confirmed
-                </span>
-                <h4 className="text-lg sm:text-2xl font-black text-slate-900 font-heading">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100/80 border border-emerald-200 text-emerald-800 text-[10.5px] sm:text-xs font-bold tracking-wide shadow-2xs">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                  ADMISSION SUCCESSFULLY CONFIRMED
+                </div>
+                <h4 className="text-xl sm:text-2xl font-black text-slate-900 font-heading tracking-tight mt-2.5">
                   Welcome, {createdAccount.studentName}!
                 </h4>
-                <p className="text-xs text-slate-700 max-w-lg mx-auto font-medium">
-                  Candidate has been officially enrolled in <strong className="text-slate-900">{formData.courseName}</strong> at <strong className="text-slate-900">{formData.branch}</strong>.
+                <p className="text-xs sm:text-[13px] text-slate-600 max-w-lg mx-auto mt-1 font-medium">
+                  Candidate has been officially enrolled in <strong className="text-slate-900 font-bold">{formData.courseName}</strong> at <strong className="text-slate-900 font-bold">{formData.branch}</strong>.
                 </p>
               </div>
 
-              {/* Printable Official Slip Card */}
-              <div id="admission-slip" ref={slipRef} className="bg-white border-2 border-slate-300 rounded-2xl p-3.5 sm:p-5 space-y-3 shadow-xs text-left">
-                <div className="flex items-center justify-between pb-2.5 border-b-2 border-slate-100">
-                  <div className="flex items-center gap-2.5">
+              {/* Official Admission Slip Card */}
+              <div id="admission-slip" ref={slipRef} className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-xs text-left space-y-3.5">
+                {/* Header Profile Section */}
+                <div className="flex items-start justify-between gap-3 pb-3 border-b border-slate-100">
+                  <div className="flex items-center gap-3">
                     {formData.photoPreview ? (
                       <img 
                         src={formData.photoPreview} 
                         alt={formData.studentName} 
-                        className="w-12 h-12 rounded-xl object-cover border-2 border-sky-600 shrink-0" 
+                        className="w-13 h-13 rounded-xl object-cover ring-2 ring-sky-500/30 shadow-xs shrink-0" 
                       />
                     ) : (
-                      <div className="w-12 h-12 rounded-xl bg-slate-100 border border-slate-300 flex items-center justify-center text-slate-400 shrink-0">
+                      <div className="w-13 h-13 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 shrink-0">
                         <User className="w-6 h-6" />
                       </div>
                     )}
-                    <div>
-                      <span className="text-[9px] font-black uppercase tracking-wider text-sky-800 block">Official Admission Slip</span>
-                      <h5 className="text-sm font-black text-slate-900 leading-snug">{formData.studentName}</h5>
-                      <span className="text-[10px] text-slate-600 font-bold">{formData.gender} • {formData.age} Years</span>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <h5 className="text-base font-black text-slate-900 tracking-tight leading-snug">{formData.studentName}</h5>
+                        <span className="text-[10px] font-semibold text-slate-500">({formData.gender}, {formData.age} yrs)</span>
+                      </div>
+                      {formData.studentStage && (
+                        <div className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-100 text-amber-900 font-extrabold text-[10.5px] rounded-md border border-amber-300">
+                          <span>🎯</span>
+                          <span>At the {formData.studentStage} stage</span>
+                        </div>
+                      )}
                     </div>
                   </div>
-                  <div className="text-right">
-                    <span className="text-[10px] font-mono font-black bg-amber-100 text-amber-900 px-2 py-0.5 rounded border border-amber-300 block">
+
+                  <div className="text-right shrink-0">
+                    <span className="text-[11px] font-mono font-black text-slate-900 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200 block">
                       Reg: {createdAccount.registerNumber || formData.registerNumber}
                     </span>
-                    <span className="text-[10px] font-mono font-bold bg-sky-100 text-sky-900 px-2 py-0.5 rounded block mt-1">
-                      ID: {createdAccount.userId}
+                    <span className="text-[10px] text-slate-400 font-medium block mt-1">Date: {formData.date}</span>
+                  </div>
+                </div>
+
+                {/* Enrolled Courses Summary */}
+                <div className="bg-slate-50/80 rounded-xl p-3 border border-slate-200/80 space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-[11px] font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                      <GraduationCap className="w-4 h-4 text-sky-700" />
+                      <span>Enrolled Course</span>
                     </span>
-                    <span className="text-[9px] text-slate-500 font-semibold block mt-0.5">Date: {formData.date}</span>
+                    <span className="font-mono font-black text-emerald-700 text-xs">
+                      Fee: {formData.feeAmount}
+                    </span>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    {(formData.selectedCourses && formData.selectedCourses.length > 0 ? formData.selectedCourses : [{ courseName: formData.courseName, level: 'Level 1', fee: 450 }]).map((c, idx) => (
+                      <div key={idx} className="bg-white border border-slate-200 rounded-lg p-2.5 flex items-center justify-between gap-2 shadow-2xs">
+                        <div className="min-w-0">
+                          <p className="font-extrabold text-slate-900 text-xs truncate">{c.courseName}</p>
+                          <span className="inline-block mt-0.5 text-[10px] font-bold text-sky-800 bg-sky-50 px-2 py-0.5 rounded border border-sky-200">
+                            {c.level}
+                          </span>
+                        </div>
+                        <span className="text-xs font-mono font-bold text-slate-700 shrink-0">₹{c.fee || 450}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div>
-                    <span className="text-slate-500 text-[10px] block">Register Number:</span>
-                    <strong className="text-amber-900 font-mono font-black truncate block">
-                      {createdAccount.registerNumber || formData.registerNumber}
-                    </strong>
+                {/* Candidate & Centre Key Information */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs pt-0.5">
+                  <div className="bg-slate-50/70 p-2 rounded-lg border border-slate-100">
+                    <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider block">Branch / Centre</span>
+                    <strong className="text-slate-900 font-extrabold block text-xs truncate mt-0.5">{formData.branch}</strong>
                   </div>
-                  <div>
-                    <span className="text-slate-500 text-[10px] block">Course Enrolled:</span>
-                    <strong className="text-slate-900 font-bold truncate block">{formData.courseName}</strong>
-                  </div>
-                  <div>
-                    <span className="text-slate-500 text-[10px] block">Branch / Centre:</span>
-                    <strong className="text-slate-900 font-bold truncate block">{formData.branch}</strong>
-                  </div>
-                  <div>
-                    <span className="text-slate-500 text-[10px] block">Contact Number:</span>
-                    <strong className="text-slate-900 font-bold block">{formData.phone}</strong>
-                  </div>
-                  <div>
-                    <span className="text-slate-500 text-[10px] block">Aadhar Number:</span>
-                    <strong className="text-slate-900 font-bold block font-mono">
-                      {formData.aadharNumber ? `XXXX-XXXX-${formData.aadharNumber.slice(-4)}` : 'Verified'}
-                    </strong>
-                  </div>
-                  <div className="col-span-2">
-                    <span className="text-slate-500 text-[10px] block">Residential Address:</span>
-                    <strong className="text-slate-900 font-bold block text-[11px]">
-                      {formData.address}, {formData.village && `${formData.village}, `}{formData.city}, {formData.district} - {formData.pincode}
-                    </strong>
-                  </div>
-                </div>
 
-                <div className="pt-2 border-t border-slate-200 flex items-center justify-between text-xs">
-                  <div>
-                    <span className="text-[10px] text-slate-500 block">Fee Payment Status:</span>
-                    <span className={`inline-flex items-center gap-1 font-black text-[11px] ${
-                      formData.feePaymentType === 'Pay Now' ? 'text-emerald-700' : 'text-amber-700'
+                  <div className="bg-slate-50/70 p-2 rounded-lg border border-slate-100">
+                    <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider block">Contact Phone</span>
+                    <strong className="text-slate-900 font-extrabold block text-xs mt-0.5">{formData.phone}</strong>
+                  </div>
+
+                  <div className="bg-slate-50/70 p-2 rounded-lg border border-slate-100 col-span-2 sm:col-span-1">
+                    <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider block">Payment Status</span>
+                    <span className={`inline-flex items-center gap-1 font-black text-[11px] mt-0.5 ${
+                      formData.feePaymentType === 'Pay Now' ? 'text-emerald-700' : 'text-amber-800'
                     }`}>
-                      {formData.feePaymentType === 'Pay Now' ? (
-                        <>
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                          <span>Paid ({formData.feeAmount}) via {formData.paymentMode}</span>
-                        </>
-                      ) : (
-                        <span>Pay Later at Branch ({formData.feeAmount})</span>
-                      )}
+                      {formData.feePaymentType === 'Pay Now' ? '✓ Paid Online' : 'Pay Later at Branch'}
                     </span>
-                    {formData.receiptRefNo && (
-                      <span className="text-[10px] font-mono text-slate-600 block">Ref: {formData.receiptRefNo}</span>
-                    )}
+                  </div>
+
+                  <div className="col-span-2 sm:col-span-3 bg-slate-50/70 p-2 rounded-lg border border-slate-100">
+                    <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider block">Address</span>
+                    <p className="text-slate-800 font-semibold text-[11px] mt-0.5 truncate">
+                      {formData.address}, {formData.village && `${formData.village}, `}{formData.city}, {formData.district} - {formData.pincode}
+                    </p>
                   </div>
                 </div>
               </div>
 
               {/* Portal Login Credentials Box */}
               <div className="bg-gradient-to-br from-[#0F2B5C] via-[#143B7A] to-[#1E4D99] rounded-2xl p-4 text-white space-y-3 shadow-md">
-                <div className="flex items-center justify-between border-b border-white/15 pb-2">
-                  <div className="flex items-center gap-1.5">
-                    <KeyRound className="w-4 h-4 text-amber-400" />
-                    <span className="text-xs font-black uppercase tracking-wider text-amber-300">
-                      Student Portal Credentials
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleCopy(`User ID: ${createdAccount.userId}\nPassword: ${createdAccount.password}`, 'all')}
-                    className="text-[10px] font-bold px-2.5 py-1 rounded-lg bg-white/15 hover:bg-white/25 text-white flex items-center gap-1 transition cursor-pointer"
-                  >
-                    {copiedField === 'all' ? (
-                      <>
-                        <Check className="w-3 h-3 text-emerald-400" />
-                        <span className="text-emerald-300">Copied!</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-3 h-3" />
-                        <span>Copy Login Info</span>
-                      </>
-                    )}
-                  </button>
+                <div className="flex items-center gap-1.5 border-b border-white/15 pb-2">
+                  <KeyRound className="w-4 h-4 text-amber-400" />
+                  <span className="text-xs font-black uppercase tracking-wider text-amber-300">
+                    Student Portal Credentials
+                  </span>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 text-left">
@@ -782,46 +1188,6 @@ export default function AdmissionModal({
 
               {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row items-center gap-2 pt-1">
-                <button
-                  type="button"
-                  disabled={isDownloadingSlip}
-                  onClick={async () => {
-                    if (!slipRef.current || isDownloadingSlip) return;
-                    setIsDownloadingSlip(true);
-                    try {
-                      const regNo = createdAccount.registerNumber || formData.registerNumber || 'Student';
-                      await exportPdfFromElement(slipRef.current, {
-                        filename: `Admission_Slip_${regNo}_${formData.studentName || 'Student'}.pdf`,
-                        orientation: 'portrait',
-                        margin: 10,
-                        backgroundColor: '#ffffff'
-                      });
-                    } catch (err) {
-                      console.error('Failed to export slip PDF:', err);
-                      window.print();
-                    } finally {
-                      setIsDownloadingSlip(false);
-                    }
-                  }}
-                  className="w-full sm:flex-1 py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-black rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs cursor-pointer min-h-[42px] disabled:opacity-50"
-                >
-                  {isDownloadingSlip ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Download className="w-4 h-4" />
-                  )}
-                  <span>{isDownloadingSlip ? 'Downloading...' : 'Download Slip PDF'}</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => window.print()}
-                  className="w-full sm:flex-1 py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-900 text-xs font-black rounded-xl transition flex items-center justify-center gap-1.5 border border-slate-300 cursor-pointer min-h-[42px]"
-                >
-                  <Printer className="w-4 h-4 text-slate-700" />
-                  <span>Print Slip</span>
-                </button>
-
                 {setActivePage && (
                   <button
                     type="button"
@@ -879,7 +1245,7 @@ export default function AdmissionModal({
                     />
                   </div>
 
-                  <div>
+                  <div className="relative" ref={branchDropdownRef}>
                     <div className="flex items-center justify-between mb-0.5 sm:mb-1">
                       <label className="block text-[11px] sm:text-xs font-black text-slate-800 truncate">
                         2. Branch *
@@ -891,110 +1257,183 @@ export default function AdmissionModal({
                         </span>
                       )}
                     </div>
-                    <select
-                      required
+
+                    <button
+                      type="button"
                       disabled={lockBranch}
-                      value={formData.branch}
-                      onChange={(e) => setFormData({ ...formData, branch: e.target.value })}
-                      className={`w-full px-2 sm:px-3 py-2 border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-sky-500 focus:outline-none text-base sm:text-sm shadow-2xs truncate ${
-                        lockBranch ? 'bg-slate-100 cursor-not-allowed text-slate-700 font-bold' : 'bg-white'
+                      onClick={() => !lockBranch && setBranchDropdownOpen(!branchDropdownOpen)}
+                      className={`w-full px-2 sm:px-3 py-2 border rounded-lg sm:rounded-xl text-left text-base sm:text-sm font-semibold flex items-center justify-between shadow-2xs transition truncate min-h-[42px] ${
+                        lockBranch 
+                          ? 'bg-slate-100 cursor-not-allowed text-slate-700 font-bold border-slate-300' 
+                          : branchDropdownOpen 
+                          ? 'bg-white border-sky-500 ring-2 ring-sky-500/20 text-slate-950' 
+                          : 'bg-white border-slate-300 hover:border-slate-400 text-slate-950'
                       }`}
                     >
-                      {availableBranches.map((b, i) => (
-                        <option key={i} value={b}>{b}</option>
-                      ))}
-                    </select>
+                      <span className="truncate">{formData.branch || 'Select Branch'}</span>
+                      {!lockBranch && (
+                        branchDropdownOpen ? (
+                          <ChevronUp className="w-3.5 h-3.5 text-slate-500 shrink-0 ml-1" />
+                        ) : (
+                          <ChevronDown className="w-3.5 h-3.5 text-slate-500 shrink-0 ml-1" />
+                        )
+                      )}
+                    </button>
+
+                    {branchDropdownOpen && !lockBranch && (
+                      <div className="absolute z-30 left-0 right-0 top-full mt-1 bg-white border border-slate-300 rounded-xl shadow-xl overflow-hidden animate-in fade-in duration-100">
+                        <div className="p-1.5 border-b border-slate-200 bg-slate-50">
+                          <input
+                            type="text"
+                            placeholder="Search district..."
+                            value={branchSearch}
+                            onChange={(e) => setBranchSearch(e.target.value)}
+                            className="w-full px-2 py-1 text-xs text-slate-950 font-semibold border border-slate-300 rounded-md focus:outline-none focus:border-sky-500 bg-white"
+                            autoFocus
+                          />
+                        </div>
+                        <div className="max-h-44 overflow-y-auto p-1 divide-y divide-slate-100">
+                          {filteredBranches.map((b) => {
+                            const isSelected = formData.branch === b;
+                            return (
+                              <button
+                                key={b}
+                                type="button"
+                                onClick={() => {
+                                  setFormData(prev => ({ 
+                                    ...prev, 
+                                    branch: b,
+                                    district: (!prev.district || prev.district === prev.branch || prev.district === 'Tenkasi') ? b : prev.district
+                                  }));
+                                  setBranchDropdownOpen(false);
+                                  setBranchSearch('');
+                                }}
+                                className={`w-full text-left px-2.5 py-1.5 text-xs font-semibold rounded-md transition flex items-center justify-between cursor-pointer ${
+                                  isSelected ? 'bg-sky-50 text-sky-900 font-bold' : 'text-slate-700 hover:bg-slate-100'
+                                }`}
+                              >
+                                <span className="truncate">{b}</span>
+                                {isSelected && <Check className="w-3 h-3 text-sky-600 shrink-0" />}
+                              </button>
+                            );
+                          })}
+                          {filteredBranches.length === 0 && (
+                            <div className="p-2.5 text-center text-xs text-slate-500">
+                              No matching district found
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                {/* 3. Course Name [non - editable] */}
-                <div>
-                  <div className="flex items-center justify-between mb-0.5 sm:mb-1">
-                    <label className="block text-[11px] sm:text-xs font-black text-slate-800">
-                      3. Course Name *
-                    </label>
-                    <span className="text-[10px] font-black text-amber-700 bg-amber-100 px-2 py-0.5 rounded flex items-center gap-1">
-                      <Lock className="w-3 h-3 text-amber-600" />
-                      <span>Non-editable</span>
+                {/* 3. Multi-Course & Level Selection Desk */}
+                <div className="space-y-2 pt-1 border-t border-slate-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <label className="block text-[11px] sm:text-xs font-black text-slate-800 flex items-center gap-1.5">
+                        <BookOpen className="w-3.5 h-3.5 text-sky-700" />
+                        <span>3. Enrolled Courses & Levels *</span>
+                      </label>
+                      <span className="text-[10px] text-slate-500 font-semibold block">
+                        Students can enroll in multiple courses and choose their starting level.
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleAddCourse}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 bg-sky-600 hover:bg-sky-700 active:scale-95 text-white text-[10px] sm:text-[11px] font-black rounded-lg transition shadow-xs cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add Course</span>
+                    </button>
+                  </div>
+
+                  {/* Course Cards List */}
+                  <div className="space-y-2">
+                    {(formData.selectedCourses || []).map((courseEntry, idx) => {
+                      const availableLevels = getLevelsForCourse(courseEntry.courseName, coursesList);
+                      return (
+                        <div 
+                          key={idx} 
+                          className="p-2.5 sm:p-3 bg-white border-2 border-slate-200 hover:border-sky-300 rounded-xl space-y-2 transition shadow-2xs"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-black uppercase text-slate-500 tracking-wider flex items-center gap-1">
+                              <span className="w-4 h-4 rounded-full bg-sky-100 text-sky-900 flex items-center justify-center font-mono font-black text-[9px]">
+                                {idx + 1}
+                              </span>
+                              <span>Course #{idx + 1}</span>
+                            </span>
+
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] font-mono font-black text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                                Fee: ₹{courseEntry.fee || 450}
+                              </span>
+
+                              {(formData.selectedCourses || []).length > 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveCourse(idx)}
+                                  className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition cursor-pointer"
+                                  title="Remove this course"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            {/* Course Select */}
+                            <div>
+                              <label className="block text-[10px] font-bold text-slate-600 mb-0.5">
+                                Select Course *
+                              </label>
+                              <select
+                                value={courseEntry.courseName}
+                                onChange={(e) => handleCourseChangeAt(idx, e.target.value)}
+                                className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-slate-950 font-bold text-xs focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                              >
+                                {availablePrograms.map((prog, i) => (
+                                  <option key={i} value={prog}>{prog}</option>
+                                ))}
+                              </select>
+                            </div>
+
+                            {/* Level Select */}
+                            <div>
+                              <label className="block text-[10px] font-bold text-slate-600 mb-0.5">
+                                Select Level *
+                              </label>
+                              <select
+                                value={courseEntry.level}
+                                onChange={(e) => handleLevelChangeAt(idx, e.target.value)}
+                                className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-slate-950 font-bold text-xs focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                              >
+                                {availableLevels.map((lvl, lvlIdx) => (
+                                  <option key={lvlIdx} value={lvl}>{lvl}</option>
+                                ))}
+                              </select>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Summary Footer */}
+                  <div className="flex items-center justify-between p-2 bg-sky-50 border border-sky-200 rounded-lg text-xs">
+                    <span className="font-bold text-sky-950 text-[11px]">
+                      Selected: <strong>{(formData.selectedCourses || []).length} Course{((formData.selectedCourses || []).length > 1 ? 's' : '')}</strong>
+                    </span>
+                    <span className="font-black text-sky-950 text-xs">
+                      Total Fee: <span className="text-emerald-700 font-mono text-sm">{formData.feeAmount}</span>
                     </span>
                   </div>
-
-                  {isCourseLocked ? (
-                    <div className="w-full px-3 py-2 sm:py-2.5 bg-slate-100 border-2 border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-black text-xs sm:text-sm flex items-center justify-between shadow-inner">
-                      <span className="truncate">{formData.courseName}</span>
-                      <span className="text-[10px] text-slate-500 font-bold shrink-0">B★SEL Syllabus</span>
-                    </div>
-                  ) : (
-                    <select
-                      value={formData.courseName}
-                      onChange={(e) => {
-                        const newProg = e.target.value;
-                        const matched = coursesList.find(c => c.fullName === newProg || c.name === newProg || c.id === newProg);
-                        const newFee = matched ? (matched.fee || '₹450') : formData.feeAmount;
-                        setFormData({ 
-                          ...formData, 
-                          courseName: newProg,
-                          feeAmount: newFee,
-                          registerNumber: generateRegisterNumber(newProg)
-                        });
-                      }}
-                      className="w-full px-2.5 sm:px-3 py-2 bg-white border-2 border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-black text-base sm:text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none shadow-2xs"
-                    >
-                      {availablePrograms.map((prog, i) => (
-                        <option key={i} value={prog}>{prog}</option>
-                      ))}
-                    </select>
-                  )}
                 </div>
-
-                {/* 4. Available Batch & Class Timing */}
-                {(() => {
-                  const bList = batchesList.filter(b => {
-                    const bBranch = (b.branch || '').toLowerCase();
-                    const curBranch = (formData.branch || '').toLowerCase();
-                    const branchMatch = !curBranch || 
-                      curBranch.includes('headquarters') || 
-                      curBranch.includes('all') ||
-                      (bBranch.includes('tenkasi') && curBranch.includes('tenkasi')) ||
-                      (bBranch.includes('chennai') && curBranch.includes('chennai')) ||
-                      (bBranch.includes('coimbatore') && curBranch.includes('coimbatore')) ||
-                      bBranch.includes(curBranch) || curBranch.includes(bBranch);
-
-                    const bProg = (b.program || '').toLowerCase();
-                    const curCourse = (formData.courseName || '').toLowerCase();
-                    const progMatch = !curCourse || curCourse.includes(bProg) || bProg.includes(curCourse);
-
-                    return branchMatch && progMatch;
-                  });
-
-                  if (bList.length === 0) return null;
-
-                  return (
-                    <div className="pt-2 border-t border-slate-200">
-                      <div className="flex items-center justify-between mb-1">
-                        <label className="block text-[11px] sm:text-xs font-black text-slate-800 flex items-center gap-1.5">
-                          <Clock className="w-3.5 h-3.5 text-sky-700" />
-                          <span>4. Available Batch & Class Timing</span>
-                        </label>
-                        <span className="text-[10px] font-bold text-sky-800 bg-sky-100 px-2 py-0.5 rounded-full">
-                          {bList.length} Active Slots
-                        </span>
-                      </div>
-                      <select
-                        value={formData.batchTiming}
-                        onChange={(e) => setFormData(prev => ({ ...prev, batchTiming: e.target.value }))}
-                        className="w-full px-2.5 sm:px-3 py-2 bg-white border-2 border-slate-300 rounded-lg sm:rounded-xl text-slate-900 font-bold text-xs sm:text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none shadow-2xs"
-                      >
-                        <option value="">-- Select Available Batch & Timing Slot --</option>
-                        {bList.map(b => (
-                          <option key={b.id} value={`${b.name} (${b.days} • ${b.startTime} - ${b.endTime})`}>
-                            {b.name} — {b.days} ({b.startTime} - {b.endTime}){b.room ? ` • ${b.room}` : ''}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  );
-                })()}
               </div>
 
               {/* SECTION 2: STUDENT PERSONAL DETAILS */}
@@ -1044,9 +1483,45 @@ export default function AdmissionModal({
                       required
                       placeholder="Age in yrs"
                       value={formData.age}
-                      onChange={(e) => setFormData({ ...formData, age: e.target.value })}
+                      onChange={handleAgeChange}
                       className="w-full px-2.5 sm:px-3 py-2 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold text-center text-base sm:text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none shadow-2xs min-h-[42px]"
                     />
+                  </div>
+                </div>
+
+                {/* Academic Category & Stage */}
+                <div className="p-3 bg-gradient-to-br from-amber-50/90 to-sky-50/80 border-2 border-amber-300/80 rounded-xl space-y-2 shadow-2xs">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div>
+                      <span className="block text-[10px] font-bold text-slate-600 mb-0.5">
+                        School Class
+                      </span>
+                      <input
+                        type="text"
+                        readOnly
+                        value={formData.studentClass || (formData.age ? 'Calculating...' : 'Pending DOB / Age')}
+                        placeholder="e.g. Class 1"
+                        className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-slate-900 font-bold text-xs"
+                      />
+                    </div>
+
+                    <div>
+                      <span className="block text-[10px] font-bold text-slate-600 mb-0.5">
+                        Stage Category (Selectable)
+                      </span>
+                      <select
+                        value={formData.studentStage}
+                        onChange={(e) => handleStageSelect(e.target.value)}
+                        className="w-full px-2.5 py-1.5 bg-white border-2 border-amber-400 rounded-lg text-slate-900 font-black text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                      >
+                        <option value="">-- Select Stage --</option>
+                        {ACADEMIC_STAGES.map((s) => (
+                          <option key={s.stage} value={s.stage}>
+                            {s.label} ({s.ageRange})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                 </div>
 
@@ -1119,40 +1594,86 @@ export default function AdmissionModal({
                   </div>
 
                   <div>
-                    <div className="flex items-center justify-between mb-0.5 sm:mb-1">
-                      <label className="block text-[11px] sm:text-xs font-black text-slate-800 truncate">
-                        10. Student Photo *
-                      </label>
-                      <span className="text-[9px] font-bold text-rose-600 bg-rose-50 px-1.5 py-0.2 rounded border border-rose-200">
-                        Compulsory
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <label className={`flex-1 flex items-center justify-center gap-1.5 px-2.5 py-2 bg-white border-2 rounded-lg sm:rounded-xl cursor-pointer hover:bg-slate-50 transition font-bold text-xs truncate shadow-2xs min-h-[42px] ${
-                        photoError 
-                          ? 'border-rose-500 bg-rose-50/20 text-rose-700 ring-2 ring-rose-400/20' 
-                          : formData.photoPreview
-                          ? 'border-emerald-500 bg-emerald-50/20 text-emerald-800'
-                          : 'border-slate-300 text-slate-800'
-                      }`}>
-                        <Upload className={`w-3.5 h-3.5 shrink-0 ${photoError ? 'text-rose-600' : 'text-sky-700'}`} />
-                        <span className="truncate">{formData.photoPreview ? 'Photo Uploaded ✓' : 'Upload Student Photo *'}</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          required={!formData.photoPreview}
-                          onChange={handlePhotoUpload}
-                          className="hidden"
-                        />
-                      </label>
+                    <label className="block text-[11px] sm:text-xs font-black text-slate-800 mb-0.5 sm:mb-1 truncate">
+                      10. Student Photo *
+                    </label>
+
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        {/* File Upload Option */}
+                        <label className={`flex-1 flex items-center justify-center gap-1 px-2 py-2 bg-white border-2 rounded-lg sm:rounded-xl cursor-pointer hover:bg-slate-50 transition font-bold text-[11px] truncate shadow-2xs min-h-[42px] ${
+                          photoError 
+                            ? 'border-rose-500 bg-rose-50/20 text-rose-700 ring-2 ring-rose-400/20' 
+                            : formData.photoPreview
+                            ? 'border-emerald-500 bg-emerald-50/20 text-emerald-800'
+                            : 'border-slate-300 text-slate-800'
+                        }`}>
+                          <Upload className={`w-3.5 h-3.5 shrink-0 ${photoError ? 'text-rose-600' : 'text-sky-700'}`} />
+                          <span className="truncate">{formData.photoPreview ? 'Change File' : 'Upload Photo'}</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handlePhotoUpload}
+                            className="hidden"
+                          />
+                        </label>
+
+                        {/* Camera Capture Button (Opens Popup) */}
+                        <button
+                          type="button"
+                          onClick={() => startCamera(cameraFacingMode)}
+                          className="flex-1 flex items-center justify-center gap-1 px-2 py-2 bg-[#0F2B5C] hover:bg-[#18458F] text-white rounded-lg sm:rounded-xl transition font-black text-[11px] truncate shadow-2xs min-h-[42px] cursor-pointer"
+                        >
+                          <Camera className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                          <span className="truncate">Take Photo</span>
+                        </button>
+
+                        {/* Photo Preview Thumbnail & Edit Button */}
+                        {formData.photoPreview && (
+                          <div className="relative group shrink-0">
+                            <img 
+                              src={formData.photoPreview} 
+                              alt="Student preview" 
+                              className="w-10 h-10 rounded-lg object-cover border-2 border-emerald-600 shadow-xs cursor-pointer hover:opacity-80 transition" 
+                              onClick={handleOpenPhotoEditor}
+                              title="Click to Edit Photo"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleOpenPhotoEditor}
+                              className="absolute -bottom-1 -right-1 p-0.5 bg-sky-600 hover:bg-sky-700 text-white rounded-full shadow-xs cursor-pointer border border-white"
+                              title="Edit Photo"
+                            >
+                              <Crop className="w-2.5 h-2.5" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
                       {formData.photoPreview && (
-                        <img 
-                          src={formData.photoPreview} 
-                          alt="Student preview" 
-                          className="w-10 h-10 rounded-lg object-cover border-2 border-emerald-600 shrink-0 shadow-xs" 
-                        />
+                        <div className="flex items-center justify-between text-[10px] text-emerald-700 font-bold px-1">
+                          <div className="flex items-center gap-1.5">
+                            <span>✓ Photo Attached</span>
+                            <button
+                              type="button"
+                              onClick={handleOpenPhotoEditor}
+                              className="text-sky-700 hover:text-sky-900 font-black flex items-center gap-0.5 underline cursor-pointer"
+                            >
+                              <Crop className="w-2.5 h-2.5" />
+                              <span>Edit Photo</span>
+                            </button>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setFormData(prev => ({ ...prev, studentPhoto: null, photoPreview: null }))}
+                            className="text-rose-600 hover:underline cursor-pointer"
+                          >
+                            Remove
+                          </button>
+                        </div>
                       )}
                     </div>
+
                     {photoError && (
                       <p className="text-[10px] text-rose-600 font-bold mt-1">
                         Student photo is compulsory *
@@ -1276,17 +1797,64 @@ export default function AdmissionModal({
 
                   {/* 15. PIN Code */}
                   <div>
-                    <label className="block text-[11px] sm:text-xs font-black text-slate-800 mb-0.5 sm:mb-1 truncate">
-                      15. PIN Code *
-                    </label>
-                    <input
-                      type="text"
-                      maxLength="6"
-                      required
-                      value={formData.pincode}
-                      onChange={(e) => setFormData({ ...formData, pincode: e.target.value.replace(/\D/g, '') })}
-                      className="w-full px-2.5 sm:px-3 py-2 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-sky-500 focus:outline-none text-base sm:text-sm shadow-2xs"
-                    />
+                    <div className="flex items-center justify-between mb-0.5 sm:mb-1">
+                      <label className="block text-[11px] sm:text-xs font-black text-slate-800 truncate">
+                        15. PIN Code *
+                      </label>
+                      {pincodeLoading && (
+                        <span className="text-[10px] text-sky-700 font-bold flex items-center gap-1 animate-pulse">
+                          <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                          <span>Locating...</span>
+                        </span>
+                      )}
+                    </div>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        maxLength="6"
+                        required
+                        placeholder="e.g. 627811"
+                        value={formData.pincode}
+                        onChange={handlePincodeChange}
+                        className="w-full px-2.5 sm:px-3 py-2 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-sky-500 focus:outline-none text-base sm:text-sm shadow-2xs font-mono"
+                      />
+                      {pincodeLoading && (
+                        <div className="absolute right-2.5 top-1/2 -translate-y-1/2">
+                          <Loader2 className="w-4 h-4 animate-spin text-sky-600" />
+                        </div>
+                      )}
+                    </div>
+                    {pincodeMessage && (
+                      <p className={`text-[10px] font-bold mt-1 ${pincodeMessage.includes('✓') ? 'text-emerald-700' : 'text-slate-500'}`}>
+                        {pincodeMessage}
+                      </p>
+                    )}
+
+                    {/* Places found for this PIN code */}
+                    {availablePlaces.length > 0 && (
+                      <div className="mt-2 p-2 bg-slate-50 border border-slate-200 rounded-lg space-y-1">
+                        <span className="text-[9.5px] font-black uppercase tracking-wider text-slate-500 block">
+                          Places in this PIN ({availablePlaces.length}):
+                        </span>
+                        <div className="flex flex-wrap gap-1 max-h-20 overflow-y-auto">
+                          {availablePlaces.map((pl, pIdx) => (
+                            <button
+                              key={pIdx}
+                              type="button"
+                              onClick={() => setFormData(prev => ({ ...prev, city: pl }))}
+                              className={`px-1.5 py-0.5 rounded text-[10px] font-semibold transition cursor-pointer border ${
+                                formData.city === pl
+                                  ? 'bg-sky-600 text-white border-sky-600'
+                                  : 'bg-white text-slate-700 border-slate-300 hover:border-sky-500 hover:text-sky-900'
+                              }`}
+                              title="Click to set as City / Town"
+                            >
+                              {pl}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1309,7 +1877,7 @@ export default function AdmissionModal({
                ========================================================================= */
             <div className="space-y-3 sm:space-y-4 animate-in fade-in duration-200">
               {/* Candidate Summary Pill Card */}
-              <div className="bg-sky-50 border border-sky-200 rounded-xl p-3 flex items-center justify-between gap-3 text-left">
+              <div className="bg-sky-50 border border-sky-200 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-left">
                 <div className="flex items-center gap-2.5 min-w-0">
                   {formData.photoPreview ? (
                     <img 
@@ -1330,21 +1898,31 @@ export default function AdmissionModal({
                       {formData.studentName || 'Student'}
                     </h5>
                     <span className="text-[10px] text-slate-600 font-semibold truncate block">
-                      {formData.courseName} • {formData.branch}
+                      {formData.branch}
                     </span>
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    setFormStep(1);
-                    modalBodyRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
-                  }}
-                  className="px-2.5 py-1.5 bg-white border border-slate-300 hover:border-slate-400 rounded-lg text-slate-700 hover:text-slate-950 text-[11px] font-black transition cursor-pointer shrink-0 shadow-2xs"
-                >
-                  Edit Step 1
-                </button>
+                <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex flex-wrap gap-1 max-w-[340px]">
+                    {(formData.selectedCourses || []).map((c, i) => (
+                      <span key={i} className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-white text-slate-800 border border-slate-200 shadow-2xs">
+                        {c.courseName}: <strong className="text-amber-800">{c.level}</strong>
+                      </span>
+                    ))}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFormStep(1);
+                      modalBodyRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className="px-2.5 py-1.5 bg-white border border-slate-300 hover:border-slate-400 rounded-lg text-slate-700 hover:text-slate-950 text-[11px] font-black transition cursor-pointer shrink-0 shadow-2xs ml-auto sm:ml-0"
+                  >
+                    Edit Step 1
+                  </button>
+                </div>
               </div>
 
               {/* SECTION 4: ADMISSION FEE & REAL-TIME PAYMENT GATEWAY */}
@@ -1718,67 +2296,6 @@ export default function AdmissionModal({
                         </div>
                       </div>
                     )}
-
-                    {/* 19. Ref / Receipt No & 20. Screenshot Upload */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-4 pt-1">
-                      {/* 19. Receipt / Ref Number */}
-                      <div>
-                        <label className="block text-[11px] sm:text-xs font-black text-slate-800 mb-0.5 truncate">
-                          19. Transaction / Ref No. *
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          value={formData.receiptRefNo}
-                          onChange={(e) => setFormData({ ...formData, receiptRefNo: e.target.value })}
-                          className="w-full px-2.5 sm:px-3 py-2 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-mono font-semibold focus:ring-2 focus:ring-sky-500 focus:outline-none text-base sm:text-sm shadow-2xs"
-                        />
-                      </div>
-
-                      {/* 20. Payment Screenshot Upload */}
-                      <div>
-                        <div className="flex items-center justify-between mb-0.5">
-                          <label className="block text-[11px] sm:text-xs font-black text-slate-800 truncate">
-                            20. Payment Screenshot
-                          </label>
-                          <span className="text-[10px] text-slate-500">
-                            {paymentGatewayStatus === 'success' ? 'Optional (Verified)' : 'Recommended'}
-                          </span>
-                        </div>
-
-                        {formData.screenshotPreview ? (
-                          <div className="flex items-center justify-between gap-2 p-1.5 bg-emerald-50 border border-emerald-300 rounded-lg">
-                            <div className="flex items-center gap-2 min-w-0">
-                              <img
-                                src={formData.screenshotPreview}
-                                alt="Payment proof"
-                                className="w-8 h-8 rounded object-cover border border-emerald-500 shrink-0"
-                              />
-                              <span className="text-[11px] text-emerald-900 font-bold truncate">Screenshot Attached ✓</span>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={handleRemoveScreenshot}
-                              className="p-1 hover:bg-rose-100 text-rose-600 rounded transition cursor-pointer"
-                              title="Remove screenshot"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        ) : (
-                          <label className="flex items-center justify-center gap-1.5 px-3 py-2 bg-white border border-slate-300 rounded-lg sm:rounded-xl cursor-pointer hover:bg-slate-50 transition text-slate-800 font-bold text-xs truncate shadow-2xs">
-                            <Upload className="w-3.5 h-3.5 text-sky-700 shrink-0" />
-                            <span>Upload Payment Screenshot</span>
-                            <input
-                              type="file"
-                              accept="image/*"
-                              onChange={handleScreenshotUpload}
-                              className="hidden"
-                            />
-                          </label>
-                        )}
-                      </div>
-                    </div>
                   </div>
                 ) : (
                   <div className="p-3 bg-amber-50/80 border border-amber-200 rounded-xl text-amber-900 text-xs font-semibold flex items-center gap-2 text-left">
@@ -1834,6 +2351,234 @@ export default function AdmissionModal({
           )}
         </div>
       </div>
+
+      {/* =========================================================================
+          CAMERA POPUP MODAL (LIGHTBOX MODAL)
+          ========================================================================= */}
+      {isCameraOpen && (
+        <div 
+          className="fixed inset-0 z-60 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 select-none animate-in fade-in duration-200"
+          onClick={handleCloseCamera}
+        >
+          <div 
+            className="bg-slate-900 border-2 border-slate-700 w-full max-w-md rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Popup Header */}
+            <div className="bg-[#081d3d] text-white px-4 py-3 flex items-center justify-between border-b border-slate-700">
+              <div className="flex items-center gap-2">
+                <span className="w-7 h-7 rounded-lg bg-amber-400 text-slate-950 flex items-center justify-center font-bold">
+                  <Camera className="w-4 h-4" />
+                </span>
+                <div>
+                  <h4 className="text-xs sm:text-sm font-black text-white">Capture Student Photo</h4>
+                  <p className="text-[10px] text-slate-400">Position candidate within the frame</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleCloseCamera}
+                className="p-1.5 text-slate-400 hover:text-white hover:bg-white/10 rounded-full transition cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Popup Body */}
+            <div className="p-4 space-y-3">
+              {cameraError ? (
+                <div className="p-4 bg-rose-950/80 border border-rose-500/50 rounded-xl text-rose-200 text-xs text-center space-y-2">
+                  <p className="font-semibold">{cameraError}</p>
+                  <button
+                    type="button"
+                    onClick={() => startCamera(cameraFacingMode)}
+                    className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-lg transition cursor-pointer"
+                  >
+                    Retry Camera Access
+                  </button>
+                </div>
+              ) : (
+                <div className="relative rounded-2xl overflow-hidden bg-black aspect-4/3 flex items-center justify-center border-2 border-slate-700 shadow-inner">
+                  <video
+                    ref={videoRef}
+                    playsInline
+                    muted
+                    autoPlay
+                    className={`w-full h-full object-cover ${cameraFacingMode === 'user' ? 'scale-x-[-1]' : ''}`}
+                  />
+                  {/* Passport Photo Outline Guide */}
+                  <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+                    <div className="w-44 h-56 border-2 border-dashed border-amber-400/70 rounded-2xl shadow-[0_0_0_9999px_rgba(0,0,0,0.35)]" />
+                  </div>
+                  <span className="absolute bottom-2 bg-black/60 backdrop-blur-xs text-[10px] text-amber-300 font-bold px-2 py-0.5 rounded-full pointer-events-none">
+                    Passport Photo Alignment
+                  </span>
+                </div>
+              )}
+
+              {/* Popup Controls */}
+              <div className="flex items-center gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={handleCapturePhoto}
+                  disabled={Boolean(cameraError)}
+                  className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 active:scale-95 disabled:opacity-50 text-white font-black text-xs sm:text-sm rounded-xl transition flex items-center justify-center gap-2 shadow-md cursor-pointer"
+                >
+                  <Camera className="w-4 h-4 text-emerald-200" />
+                  <span>Take Photo & Save</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleFlipCamera}
+                  className="px-3.5 py-3 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer border border-slate-700"
+                  title="Switch Front/Back Camera"
+                >
+                  <RotateCcw className="w-4 h-4 text-amber-400" />
+                  <span className="hidden sm:inline">Flip</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleCloseCamera}
+                  className="px-3.5 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs rounded-xl transition cursor-pointer border border-slate-700"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================================
+          PHOTO EDITOR POPUP MODAL (BACKGROUND COLOUR CHANGE)
+          ========================================================================= */}
+      {isPhotoEditorOpen && formData.photoPreview && (
+        <div 
+          className="fixed inset-0 z-60 bg-black/85 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 select-none animate-in fade-in duration-200"
+          onClick={() => setIsPhotoEditorOpen(false)}
+        >
+          <div 
+            className="bg-slate-900 border-2 border-slate-700 w-full max-w-md rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="bg-[#081d3d] text-white px-4 py-3 flex items-center justify-between border-b border-slate-700">
+              <div className="flex items-center gap-2">
+                <span className="w-7 h-7 rounded-lg bg-sky-500 text-white flex items-center justify-center font-bold">
+                  <Crop className="w-4 h-4" />
+                </span>
+                <div>
+                  <h4 className="text-xs sm:text-sm font-black text-white">Change Photo Background</h4>
+                  <p className="text-[10px] text-slate-400">Select standard passport background colour</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsPhotoEditorOpen(false)}
+                className="p-1.5 text-slate-400 hover:text-white hover:bg-white/10 rounded-full transition cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Preview Workspace (Correct 3.5 : 4.5 Passport Proportion) */}
+            <div className="p-4 space-y-3.5">
+              <div className="flex justify-center">
+                <div 
+                  className="relative w-48 sm:w-56 aspect-[3.5/4.5] rounded-2xl overflow-hidden flex items-center justify-center border-2 border-slate-700 shadow-xl transition-colors duration-200"
+                  style={{
+                    backgroundColor: editorBgColor === 'original' ? '#020617' : editorBgColor
+                  }}
+                >
+                  {/* Photo Element (Passport Fit: Consistent size & scale) */}
+                  <img
+                    ref={editorImageRef}
+                    src={editorPreviewUrl || originalPhotoSrc || formData.photoPreview}
+                    alt="Passport photo preview"
+                    crossOrigin="anonymous"
+                    className="w-full h-full object-cover transition-all duration-200"
+                  />
+
+                  {/* Processing Overlay */}
+                  {isProcessingBg && (
+                    <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-xs flex flex-col items-center justify-center gap-2 text-white z-10 animate-fade-in">
+                      <Loader2 className="w-8 h-8 text-amber-400 animate-spin" />
+                      <span className="text-xs font-bold tracking-wide">
+                        Replacing background with {editorBgColor === '#ffffff' ? 'White' : editorBgColor === '#38bdf8' ? 'Blue' : 'Grey'}...
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Background Color Selector: Only Blue, White, Grey */}
+              <div className="space-y-2.5 bg-slate-800/80 p-3.5 rounded-xl border border-slate-700 text-white text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-black uppercase tracking-wider text-slate-300">
+                    Choose Background Colour:
+                  </span>
+                  <span className="text-[10px] font-mono text-amber-300 font-bold">
+                    {editorBgColor === 'original' ? 'Original' : editorBgColor === '#ffffff' ? 'White' : editorBgColor === '#38bdf8' ? 'Blue' : editorBgColor === '#94a3b8' ? 'Grey' : editorBgColor}
+                  </span>
+                </div>
+
+                {/* Swatches: Only Original, White, Blue, Grey */}
+                <div className="grid grid-cols-4 gap-2 pt-1">
+                  {[
+                    { label: 'Original', value: 'original', bgClass: 'bg-slate-700 text-slate-200 border-slate-500' },
+                    { label: 'White', value: '#ffffff', bgClass: 'bg-white border-slate-300 text-slate-900 font-black' },
+                    { label: 'Blue', value: '#38bdf8', bgClass: 'bg-[#38bdf8] border-sky-400 text-slate-950 font-black' },
+                    { label: 'Grey', value: '#94a3b8', bgClass: 'bg-[#94a3b8] border-slate-400 text-slate-950 font-black' }
+                  ].map((swatch) => (
+                    <button
+                      key={swatch.value}
+                      type="button"
+                      disabled={isProcessingBg}
+                      onClick={() => handleSelectBgColor(swatch.value)}
+                      className={`h-11 rounded-xl border-2 flex flex-col items-center justify-center transition cursor-pointer relative ${swatch.bgClass} ${
+                        editorBgColor === swatch.value 
+                          ? 'ring-2 ring-amber-400 scale-105 shadow-md border-amber-400 font-black' 
+                          : 'hover:scale-100 opacity-90'
+                      } ${isProcessingBg ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      title={swatch.label}
+                    >
+                      <span className="text-xs font-black truncate px-1">{swatch.label}</span>
+                      {editorBgColor === swatch.value && (
+                        <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-amber-400 text-slate-950 rounded-full flex items-center justify-center text-[10px] font-black shadow-xs">
+                          ✓
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2 pt-1">
+                <button
+                  type="button"
+                  disabled={isProcessingBg}
+                  onClick={handleApplyPhotoEdits}
+                  className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-black text-xs rounded-xl transition flex items-center justify-center gap-1.5 shadow-md cursor-pointer disabled:opacity-50"
+                >
+                  <Check className="w-4 h-4 text-emerald-200" />
+                  <span>Apply Background Colour</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setIsPhotoEditorOpen(false)}
+                  className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs rounded-xl transition cursor-pointer border border-slate-700"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

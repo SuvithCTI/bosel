@@ -25,6 +25,31 @@ const navigationItems = [
 
 const NOTIFICATION_STORAGE_KEY = 'bsel_notifications';
 
+function StudentAvatar({ src, initials, className = '' }) {
+  const [imageFailed, setImageFailed] = useState(false);
+
+  useEffect(() => {
+    setImageFailed(false);
+  }, [src]);
+
+  return (
+    <div
+      className={`flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-amber-100 text-xs font-black text-blue-950 ring-2 ring-amber-200 ${className}`}
+    >
+      {src && !imageFailed ? (
+        <img
+          src={src}
+          alt="Student profile"
+          className="h-full w-full object-cover"
+          onError={() => setImageFailed(true)}
+        />
+      ) : (
+        initials || 'S'
+      )}
+    </div>
+  );
+}
+
 export default function StudentDashboard({
   student,
   onLogout,
@@ -53,8 +78,47 @@ export default function StudentDashboard({
 
   const [notifications, setNotifications] = useState([]);
 
-  const displayName =
-    student?.name || student?.studentName || 'Student';
+  const displayName = useMemo(() => {
+    const savedFullName =
+      student?.fullName || student?.name || student?.studentName;
+
+    if (savedFullName && String(savedFullName).trim()) {
+      return String(savedFullName).trim();
+    }
+
+    const combinedName = [
+      student?.firstName,
+      student?.middleName,
+      student?.lastName,
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .trim();
+
+    return combinedName || 'Student';
+  }, [student]);
+
+  const studentImage =
+    student?.profileImage ||
+    student?.profilePicture ||
+    student?.profile_picture ||
+    student?.profile_picture_url ||
+    student?.studentProfileImage ||
+    student?.studentPhoto ||
+    student?.student_photo ||
+    student?.profilePic ||
+    student?.profilePicUrl ||
+    student?.avatarUrl ||
+    student?.profilePhotoUrl ||
+    student?.profilePhoto ||
+    student?.studentImage ||
+    student?.photoURL ||
+    student?.photoUrl ||
+    student?.imageUrl ||
+    student?.image ||
+    student?.avatar ||
+    student?.photo ||
+    '';
 
   const studentId =
     student?.id || student?.userId || 'Not assigned';
@@ -523,9 +587,11 @@ export default function StudentDashboard({
                 aria-label="Open profile menu"
                 aria-expanded={profileMenuOpen}
               >
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-100 text-xs font-black text-blue-950 ring-2 ring-amber-200 sm:h-9 sm:w-9">
-                  {initials || 'S'}
-                </div>
+                <StudentAvatar
+                  src={studentImage}
+                  initials={initials}
+                  className="h-8 w-8 text-xs sm:h-9 sm:w-9"
+                />
 
                 <span className="hidden text-sm font-bold text-blue-950 sm:block">
                   Profile
@@ -567,14 +633,7 @@ export default function StudentDashboard({
                       <span>My Profile</span>
                     </button>
 
-                    <button
-                      type="button"
-                      onClick={openCertificates}
-                      className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-bold text-slate-700 transition hover:bg-amber-50 hover:text-blue-950"
-                    >
-                      <Award className="h-5 w-5 text-amber-600" />
-                      <span>Certificates</span>
-                    </button>
+                    
 
                     <div className="my-1 border-t border-slate-100" />
 
@@ -594,24 +653,7 @@ export default function StudentDashboard({
               )}
             </div>
 
-            {/* MOBILE MENU BUTTON */}
-            <button
-              type="button"
-              onClick={() => {
-                setMobileMenuOpen((previous) => !previous);
-                setNotificationMenuOpen(false);
-                setProfileMenuOpen(false);
-              }}
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 text-slate-700 transition hover:bg-blue-50 md:hidden"
-              aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
-              aria-expanded={mobileMenuOpen}
-            >
-              {mobileMenuOpen ? (
-                <X className="h-5 w-5" />
-              ) : (
-                <Menu className="h-5 w-5" />
-              )}
-            </button>
+            
           </div>
         </div>
 
@@ -627,9 +669,11 @@ export default function StudentDashboard({
 
             <div className="absolute left-0 right-0 top-full z-50 border-t border-slate-200 bg-white p-4 shadow-xl md:hidden">
               <div className="mb-4 flex items-center gap-3 rounded-2xl bg-slate-50 p-3">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-amber-100 text-sm font-black text-blue-950 ring-2 ring-amber-200">
-                  {initials || 'S'}
-                </div>
+                <StudentAvatar
+                  src={studentImage}
+                  initials={initials}
+                  className="h-11 w-11 text-sm"
+                />
 
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-black text-blue-950">
@@ -716,8 +760,8 @@ export default function StudentDashboard({
           <div className="pointer-events-none absolute -bottom-24 right-32 h-52 w-52 rounded-full bg-amber-400/10 blur-2xl" />
 
           <div className="relative">
-            <h2 className="mt-3 text-xl font-black tracking-tight text-white sm:text-3xl lg:text-4xl">
-              Welcome back, {displayName.split(' ')[0]}!
+            <h2 className="mt-3 whitespace-nowrap text-[clamp(0.875rem,4.4vw,1.25rem)] font-black tracking-tight text-white sm:text-3xl lg:text-4xl">
+              Welcome back, {displayName}!
             </h2>
 
             <p className="mt-2 max-w-2xl text-xs leading-5 text-blue-100 sm:text-sm sm:leading-6 lg:text-base">
@@ -781,147 +825,8 @@ export default function StudentDashboard({
         </div>
       )}
       
-{/* RESULTS & CERTIFICATES POPUP */}
 
-{/* RESULTS & CERTIFICATES POPUP */}
-{certificatePopupOpen && (
-  <div
-    className="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden bg-slate-950/70 p-2 backdrop-blur-sm sm:p-4"
-    onClick={closeCertificatesPopup}
-  >
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="student-certificates-title"
-      className="relative flex max-h-[65vh] w-full max-w-5xl flex-col overflow-hidden rounded-xl bg-slate-50 shadow-2xl sm:max-h-[60vh] sm:rounded-2xl"
-      onClick={(event) => event.stopPropagation()}
-    >
-      {/* COMPACT HEADER */}
-      <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-3 py-2 sm:px-5 sm:py-2.5">
-        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-700 sm:h-9 sm:w-9">
-            <Award className="h-4 w-4 sm:h-5 sm:w-5" />
-          </div>
 
-          <div className="min-w-0">
-            <h2
-              id="student-certificates-title"
-              className="text-sm font-black text-blue-950 sm:text-base"
-            >
-              Results & Certificates
-            </h2>
-
-            <p className="hidden text-[11px] text-slate-500 sm:block">
-              View your published examination results and certificates.
-            </p>
-          </div>
-        </div>
-
-        <button
-          type="button"
-          onClick={closeCertificatesPopup}
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:bg-rose-50 hover:text-rose-600"
-          aria-label="Close certificates popup"
-        >
-          <X className="h-4 w-4" />
-        </button>
-      </div>
-
-      {/* COMPACT SCROLLABLE CONTENT */}
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-2 sm:p-3">
-        {Array.isArray(student?.results) &&
-        student.results.length > 0 ? (
-          <div className="space-y-2">
-            {student.results.map((result, index) => (
-              <div
-                key={result.id || `${result.exam || 'result'}-${index}`}
-                className="flex flex-col gap-2 rounded-xl border border-amber-200 bg-white p-2.5 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:p-3"
-              >
-                <div className="min-w-0 flex-1">
-                  <h3 className="break-words text-sm font-extrabold text-slate-900">
-                    {result.exam || 'Examination Result'}
-                  </h3>
-
-                  <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1.5 text-xs text-slate-600">
-                    <span>
-                      Score:{' '}
-                      <strong className="text-slate-900">
-                        {result.score ?? 'Pending'}
-                      </strong>
-                    </span>
-
-                    <span>
-                      Rank:{' '}
-                      <strong className="text-slate-900">
-                        {result.rank ?? 'Pending'}
-                      </strong>
-                    </span>
-
-                    {result.certificateNo && (
-                      <span className="min-w-0">
-                        Certificate:{' '}
-                        <strong className="break-all font-mono text-slate-800">
-                          {result.certificateNo}
-                        </strong>
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {result.certificateNo && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const certificateData = {
-                        studentName:
-                          student?.name ||
-                          student?.studentName ||
-                          'Student',
-                        courseName:
-                          student?.program ||
-                          student?.course ||
-                          'Abacus Speed Math (Level 4) & Fine Arts',
-                        level:
-                          student?.level || 'As per registration',
-                        grade: result.grade || 'A+',
-                        certificateNo: result.certificateNo,
-                        centreName:
-                          student?.institution || 'Not specified',
-                      };
-
-                      closeCertificatesPopup();
-
-                      window.requestAnimationFrame(() => {
-                        onViewCertificate?.(certificateData);
-                      });
-                    }}
-                    className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-lg bg-amber-400 px-3 py-2 text-xs font-extrabold text-slate-950 transition hover:bg-amber-500 sm:w-auto"
-                  >
-                    <Award className="h-4 w-4" />
-                    View Certificate
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="flex min-h-40 flex-col items-center justify-center rounded-xl border border-dashed border-amber-200 bg-amber-50/50 px-4 py-5 text-center">
-            <Award className="h-7 w-7 text-amber-500" />
-
-            <h3 className="mt-2 text-sm font-extrabold text-slate-800">
-              Results not published yet
-            </h3>
-
-            <p className="mx-auto mt-1.5 max-w-md text-xs leading-5 text-slate-500">
-              Your examination results and certificates will appear here
-              after they are published for your registered examinations.
-            </p>
-          </div>
-        )}
-      </div>
-    </div>
-  </div>
-)}
 
 
 
