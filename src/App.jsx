@@ -68,11 +68,11 @@ export default function App() {
       );
     });
 
-  // Hide the global website layout only on the admin dashboard
-  // or while the student dashboard itself is open.
+  // Hide the global website layout on the admin dashboard
+  // or on the login page (including student dashboard).
   const hideGlobalLayout =
     activePage === 'admin' ||
-    (activePage === 'login' && isStudentDashboardOpen);
+    activePage === 'login';
 
   // -------------------------------------------------------
   // Modal states
@@ -291,6 +291,7 @@ export default function App() {
       {!hideGlobalLayout && (
         <Footer
           setActivePage={setActivePage}
+          handleNav={setActivePage}
           onOpenLegal={(tab) => setLegalModalTab(tab)}
         />
       )}

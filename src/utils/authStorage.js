@@ -589,16 +589,39 @@ export const validateLogin = (enteredUserId, enteredPassword) => {
     }
   }
 
-  // 2. Guaranteed Branch Head Check (e.g. branch.tenkasi, branch.chennai, branch.coimbatore)
-  if (cleanId.startsWith('branch.') || cleanId.startsWith('branch-') || cleanId.includes('tenkasi') || cleanId.includes('chennai') || cleanId.includes('coimbatore')) {
-    const branchUsers = getRegisteredUsers().filter(u => u.role === 'Branch Head');
-    const matchedBranchHead = branchUsers.find(b => 
+  // 2. Guaranteed Branch Admin / Branch Head Check (supports branch.admin or any branch)
+  if (cleanId.startsWith('branch.') || cleanId.startsWith('branch-') || cleanId === 'branch' || cleanId.includes('tenkasi') || cleanId.includes('chennai') || cleanId.includes('coimbatore')) {
+    const branchUsers = getRegisteredUsers().filter(u => u.role === 'Branch Head' || u.role === 'Branch Admin');
+    let matchedBranchHead = branchUsers.find(b => 
       b.userId.toLowerCase() === cleanId || 
       (b.email && b.email.toLowerCase() === cleanId) ||
       (cleanId.includes('tenkasi') && b.branch?.toLowerCase().includes('tenkasi')) ||
       (cleanId.includes('chennai') && b.branch?.toLowerCase().includes('chennai')) ||
       (cleanId.includes('coimbatore') && b.branch?.toLowerCase().includes('coimbatore'))
     );
+
+    // Support any branch ID (e.g. branch.admin, branch.madurai, etc.)
+    if (!matchedBranchHead) {
+      const branchNameSuffix = cleanId.replace(/^branch[.-]/i, '').trim();
+      const formattedBranchName = (branchNameSuffix && branchNameSuffix !== 'admin')
+        ? branchNameSuffix.charAt(0).toUpperCase() + branchNameSuffix.slice(1) + ' Regional Branch' 
+        : 'Main Regional Branch';
+      
+      matchedBranchHead = {
+        userId: cleanId,
+        password: 'branch123',
+        name: `${formattedBranchName} Administrator`,
+        studentName: `${formattedBranchName} Administrator`,
+        role: 'Branch Head',
+        branch: formattedBranchName,
+        branchCode: branchNameSuffix ? branchNameSuffix.toUpperCase().slice(0, 3) + '-01' : 'BR-01',
+        email: `${branchNameSuffix || 'branch'}@besellearning.org`,
+        grade: 'Centre Director',
+        program: 'Branch Operations & Training',
+        institution: `B★SEL ${formattedBranchName}`,
+        address: `${formattedBranchName}, Tamil Nadu`,
+      };
+    }
 
     if (matchedBranchHead) {
       if (cleanPassword === 'branch123' || cleanPassword === matchedBranchHead.password || cleanPassword === 'admin123' || cleanPassword === 'besel2026') {
@@ -609,7 +632,7 @@ export const validateLogin = (enteredUserId, enteredPassword) => {
       } else {
         return {
           success: false,
-          message: 'Incorrect Password for Branch Head. Please use "branch123".'
+          message: 'Incorrect Password for Branch Admin. Please use "branch123".'
         };
       }
     }
