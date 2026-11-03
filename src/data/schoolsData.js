@@ -1,5 +1,11 @@
 // Central Master Partner Schools & Branches Repository for B★SEL
 
+export const DEFAULT_SCHOOLS_SECTION_HEADER = {
+  label: 'Our School Community',
+  heading: 'Growing Together',
+  description: 'Celebrating the schools and educational communities involved in our learning activities and student recognition programs.'
+};
+
 export const DEFAULT_PARTNER_SCHOOLS = [
   {
     code: 'BSEL-CTR-101',
@@ -66,8 +72,54 @@ export const DEFAULT_PARTNER_SCHOOLS = [
     phone: '+91 98652 19131',
     studentsCount: 110,
     status: 'Authorized Franchise Branch'
+  },
+  {
+    code: 'BSEL-CTR-107',
+    name: 'B★SEL Tirunelveli Regional Academy',
+    branchName: 'Tirunelveli Regional Branch',
+    city: 'Tirunelveli, Tirunelveli, Tamil Nadu',
+    principal: 'Dr. P. Muthukumar',
+    coordinator: 'Mrs. S. Gandhimathi',
+    phone: '+91 98652 19131',
+    studentsCount: 140,
+    status: 'Authorized Franchise Branch'
+  },
+  {
+    code: 'BSEL-CTR-108',
+    name: 'B★SEL Erode Regional Academy',
+    branchName: 'Erode Regional Branch',
+    city: 'Erode, Erode, Tamil Nadu',
+    principal: 'Mr. V. Sakthivel',
+    coordinator: 'Mrs. M. Kavitha',
+    phone: '+91 98427 65432',
+    studentsCount: 125,
+    status: 'Authorized Franchise Branch'
   }
 ];
+
+export const getStoredSchoolsSectionHeader = () => {
+  if (typeof window === 'undefined') return DEFAULT_SCHOOLS_SECTION_HEADER;
+  try {
+    const raw = localStorage.getItem('bsel_schools_section_header');
+    if (!raw) return DEFAULT_SCHOOLS_SECTION_HEADER;
+    return { ...DEFAULT_SCHOOLS_SECTION_HEADER, ...JSON.parse(raw) };
+  } catch {
+    return DEFAULT_SCHOOLS_SECTION_HEADER;
+  }
+};
+
+export const saveStoredSchoolsSectionHeader = (headerInfo) => {
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem('bsel_schools_section_header', JSON.stringify(headerInfo));
+      window.dispatchEvent(new Event('bsel_schools_updated'));
+      window.dispatchEvent(new StorageEvent('storage', { key: 'bsel_schools_section_header' }));
+    } catch (err) {
+      console.error('Error saving schools section header:', err);
+    }
+  }
+  return headerInfo;
+};
 
 export const getStoredSchools = () => {
   if (typeof window === 'undefined') return DEFAULT_PARTNER_SCHOOLS;
@@ -78,7 +130,20 @@ export const getStoredSchools = () => {
       return DEFAULT_PARTNER_SCHOOLS;
     }
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) && parsed.length > 0 ? parsed : DEFAULT_PARTNER_SCHOOLS;
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      // Ensure all 8 default schools exist if fewer are present initially
+      if (parsed.length < DEFAULT_PARTNER_SCHOOLS.length) {
+        const existingNames = new Set(parsed.map(s => (s.name || '').toLowerCase().trim()));
+        const missing = DEFAULT_PARTNER_SCHOOLS.filter(s => !existingNames.has((s.name || '').toLowerCase().trim()));
+        if (missing.length > 0) {
+          const merged = [...parsed, ...missing];
+          localStorage.setItem('bsel_partner_schools', JSON.stringify(merged));
+          return merged;
+        }
+      }
+      return parsed;
+    }
+    return DEFAULT_PARTNER_SCHOOLS;
   } catch {
     return DEFAULT_PARTNER_SCHOOLS;
   }
@@ -106,7 +171,7 @@ export const addStoredSchool = (newSchool) => {
     status: newSchool.status || 'Active Partner',
     studentsCount: Number(newSchool.studentsCount) || 100
   };
-  const updated = [schoolRecord, ...current];
+  const updated = [...current, schoolRecord];
   saveStoredSchools(updated);
   return updated;
 };
@@ -123,4 +188,10 @@ export const deleteStoredSchool = (schoolCode) => {
   const filtered = current.filter(s => s.code !== schoolCode && s.name !== schoolCode);
   saveStoredSchools(filtered);
   return filtered;
+};
+
+export const resetStoredSchools = () => {
+  saveStoredSchools(DEFAULT_PARTNER_SCHOOLS);
+  saveStoredSchoolsSectionHeader(DEFAULT_SCHOOLS_SECTION_HEADER);
+  return DEFAULT_PARTNER_SCHOOLS;
 };

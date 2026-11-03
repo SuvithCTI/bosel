@@ -6,6 +6,15 @@ import student4 from '../assets/programs/student4.jpg';
 import student5 from '../assets/programs/student5.jpg';
 import student6 from '../assets/programs/student6.jpg';
 
+export const PRESET_STUDENT_PHOTOS = [
+  { id: 'student1', label: 'Student Photo 1', img: student1 },
+  { id: 'student2', label: 'Student Photo 2', img: student2 },
+  { id: 'student3', label: 'Student Photo 3', img: student3 },
+  { id: 'student4', label: 'Student Photo 4', img: student4 },
+  { id: 'student5', label: 'Student Photo 5', img: student5 },
+  { id: 'student6', label: 'Student Photo 6', img: student6 },
+];
+
 export const INITIAL_STUDENT_ACHIEVEMENTS = [
   {
     id: 'ach-1',
@@ -92,7 +101,7 @@ export const addStoredAchievement = (data) => {
     level: data.level || "State",
     award: data.award || "Achievement Award",
     description: data.description || "Demonstrated outstanding dedication and skill excellence in competition.",
-    photo: data.photo || student5,
+    photo: data.photo || student1,
     year: data.year || new Date().getFullYear().toString(),
     dateAdded: new Date().toISOString()
   };

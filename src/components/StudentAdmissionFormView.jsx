@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { ArrowLeft, Download, Printer, Loader2 } from 'lucide-react';
 import { exportPdfFromElement } from '../utils/pdfExport';
-import { getStudentPhotoUrl, getStudentRegisterNumber } from '../pages/AdminDashboard';
+import { getStudentPhotoUrl, getStudentRegisterNumber } from '../utils/studentDataHelpers';
 
 export default function StudentAdmissionFormView({ student, onClose }) {
   const formRef = useRef(null);

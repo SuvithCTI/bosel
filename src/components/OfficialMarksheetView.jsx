@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { ArrowLeft, Download, Printer, Loader2 } from 'lucide-react';
 import { exportPdfFromElement } from '../utils/pdfExport';
-import { getStudentPhotoUrl, getStudentRegisterNumber } from '../pages/AdminDashboard';
+import { getStudentPhotoUrl, getStudentRegisterNumber } from '../utils/studentDataHelpers';
 
 // Course-specific 5 modules matching official B★SEL curriculum
 export const getCourseSubjectModules = (courseName = '') => {
@@ -47,10 +47,10 @@ export const getCourseSubjectModules = (courseName = '') => {
   ];
 };
 
-export default function OfficialMarksheetView({ student, onClose }) {
+export default function OfficialMarksheetView({ student, onClose, standalone = false, defaultShowMarks = true }) {
   const sheetRef = useRef(null);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
-  const [showMarks, setShowMarks] = useState(false);
+  const [showMarks, setShowMarks] = useState(standalone ? defaultShowMarks : false);
 
   if (!student) return null;
 
@@ -103,94 +103,15 @@ export default function OfficialMarksheetView({ student, onClose }) {
   // Verified table row Y centers in percentage:
   const rowPositions = ['55.62%', '59.28%', '62.94%', '66.60%', '70.26%'];
 
-  return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/85 backdrop-blur-xs flex flex-col items-center justify-start py-4 px-2 sm:px-4">
-      {/* Print stylesheet override */}
-      <style>{`
-        @media print {
-          body * {
-            visibility: hidden !important;
-          }
-          #printable-marksheet-sheet, #printable-marksheet-sheet * {
-            visibility: visible !important;
-          }
-          #printable-marksheet-sheet {
-            position: absolute !important;
-            left: 0 !important;
-            top: 0 !important;
-            width: 100% !important;
-            max-width: none !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            box-shadow: none !important;
-            border: none !important;
-            background: white !important;
-          }
-          .no-print {
-            display: none !important;
-          }
-        }
-      `}</style>
-
-      {/* Top Controls Toolbar */}
-      <div className="no-print w-full max-w-[682px] bg-[#0c234b] text-white px-4 py-2.5 rounded-xl shadow-lg flex items-center justify-between gap-3 mb-3 sticky top-2 z-20 border border-amber-400/40">
-        <button
-          type="button"
-          onClick={onClose}
-          className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          <span>Back to student list</span>
-        </button>
-
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setShowMarks(prev => !prev)}
-            className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer border border-white/20"
-            title="Toggle marks display on/off"
-          >
-            <span>{showMarks ? 'Remove Marks' : 'Show Marks'}</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={handleDownloadPdf}
-            disabled={isGeneratingPdf}
-            className="px-3.5 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg text-xs font-black transition flex items-center gap-1.5 shadow-sm cursor-pointer disabled:opacity-50"
-          >
-            {isGeneratingPdf ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            ) : (
-              <Download className="w-3.5 h-3.5" />
-            )}
-            <span>{isGeneratingPdf ? 'Downloading...' : 'Download PDF'}</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={handlePrint}
-            className="px-3.5 py-1.5 bg-[#163e7c] hover:bg-[#1f54a6] text-white rounded-lg text-xs font-black transition flex items-center gap-1.5 border border-white/20 cursor-pointer"
-          >
-            <Printer className="w-3.5 h-3.5" />
-            <span>Print</span>
-          </button>
-        </div>
-      </div>
-
-      {/* 
-        Marksheet Sheet Canvas:
-        The wrapper is a block container shrink-wrapped around the in-flow template image.
-        This guarantees 100% exact pixel-for-pixel alignment across any screen size, zoom, or print!
-      */}
-      <div
-        id="printable-marksheet-sheet"
-        ref={sheetRef}
-        className="relative block w-full max-w-[682px] bg-white shadow-2xl rounded-none select-text text-slate-900 border border-slate-300 mx-auto"
-        style={{
-          fontFamily: "'Segoe UI', Arial, Helvetica, sans-serif"
-        }}
-      >
+  const sheetCanvas = (
+    <div
+      id="printable-marksheet-sheet"
+      ref={sheetRef}
+      className={`relative block w-full max-w-[682px] bg-white ${standalone ? 'shadow-none' : 'shadow-2xl'} rounded-none select-text text-slate-900 border border-slate-300 mx-auto`}
+      style={{
+        fontFamily: "'Segoe UI', Arial, Helvetica, sans-serif"
+      }}
+    >
         {/* Official Background Template Canvas - In Normal Flow */}
         <img
           src="/marksheet_template_clean_2x.png"
@@ -203,6 +124,23 @@ export default function OfficialMarksheetView({ student, onClose }) {
             ========================================================================= */}
         <div className="absolute inset-0 pointer-events-none">
           
+          {/* Official B★SEL Shield Crest Emblem */}
+          <div
+            className="absolute flex items-center justify-center pointer-events-none select-none"
+            style={{
+              left: '4.25%',
+              top: '3.42%',
+              width: '10.41%',
+              height: '6.93%'
+            }}
+          >
+            <img
+              src="/bsel_logo.png"
+              alt="B★SEL Official Logo"
+              className="w-full h-full object-contain"
+            />
+          </div>
+
           {/* 1. Student Details (Left Column - aligned right of the colons at 28.01%) */}
           
           {/* Registration No. */}
@@ -436,6 +374,88 @@ export default function OfficialMarksheetView({ student, onClose }) {
 
         </div>
       </div>
+  );
+
+  if (standalone) {
+    return sheetCanvas;
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/85 backdrop-blur-xs flex flex-col items-center justify-start py-4 px-2 sm:px-4">
+      {/* Print stylesheet override */}
+      <style>{`
+        @media print {
+          body * {
+            visibility: hidden !important;
+          }
+          #printable-marksheet-sheet, #printable-marksheet-sheet * {
+            visibility: visible !important;
+          }
+          #printable-marksheet-sheet {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            max-width: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            box-shadow: none !important;
+            border: none !important;
+            background: white !important;
+          }
+          .no-print {
+            display: none !important;
+          }
+        }
+      `}</style>
+
+      {/* Top Controls Toolbar */}
+      <div className="no-print w-full max-w-[682px] bg-[#0c234b] text-white px-4 py-2.5 rounded-xl shadow-lg flex items-center justify-between gap-3 mb-3 sticky top-2 z-20 border border-amber-400/40">
+        <button
+          type="button"
+          onClick={onClose}
+          className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          <span>Back to student list</span>
+        </button>
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowMarks(prev => !prev)}
+            className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer border border-white/20"
+            title="Toggle marks display on/off"
+          >
+            <span>{showMarks ? 'Remove Marks' : 'Show Marks'}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleDownloadPdf}
+            disabled={isGeneratingPdf}
+            className="px-3.5 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg text-xs font-black transition flex items-center gap-1.5 shadow-sm cursor-pointer disabled:opacity-50"
+          >
+            {isGeneratingPdf ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Download className="w-3.5 h-3.5" />
+            )}
+            <span>{isGeneratingPdf ? 'Downloading...' : 'Download PDF'}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handlePrint}
+            className="px-3.5 py-1.5 bg-[#163e7c] hover:bg-[#1f54a6] text-white rounded-lg text-xs font-black transition flex items-center gap-1.5 border border-white/20 cursor-pointer"
+          >
+            <Printer className="w-3.5 h-3.5" />
+            <span>Print</span>
+          </button>
+        </div>
+      </div>
+
+      {sheetCanvas}
     </div>
   );
 }

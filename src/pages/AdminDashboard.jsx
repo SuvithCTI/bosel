@@ -33,10 +33,14 @@ import {
   ChevronRight,
   ArrowUpRight,
   Menu,
-  GraduationCap
+  GraduationCap,
+  Trophy,
+  FileDown
 } from 'lucide-react';
+import AdminAchievementsModule from '../components/admin/AdminAchievementsModule';
 import StudentAdmissionFormView from '../components/StudentAdmissionFormView';
 import OfficialMarksheetView from '../components/OfficialMarksheetView';
+import MergedStudentPdfModal from '../components/MergedStudentPdfModal';
 import CertificateModal from '../components/CertificateModal';
 import Logo from '../components/Logo';
 import Certificate from '../components/Certificate';
@@ -91,85 +95,18 @@ import {
 } from '../data/batchesData';
 
 
-import student1Img from '../assets/programs/student1.jpg';
-import student2Img from '../assets/programs/student2.jpg';
-import student3Img from '../assets/programs/student3.jpg';
-import student4Img from '../assets/programs/student4.jpg';
-import student5Img from '../assets/programs/student5.jpg';
-import student6Img from '../assets/programs/student6.jpg';
+import {
+  SAMPLE_STUDENT_PHOTOS,
+  getStudentPhotoUrl,
+  getStudentRegisterNumber,
+  getMarksheetSubjects
+} from '../utils/studentDataHelpers';
 
-const SAMPLE_STUDENT_PHOTOS = [
-  student1Img,
-  student2Img,
-  student3Img,
-  student4Img,
-  student5Img,
-  student6Img
-];
-
-export const getStudentPhotoUrl = (student, index = 0) => {
-  if (student?.studentPhoto) return student.studentPhoto;
-  if (student?.photo) return student.photo;
-  return SAMPLE_STUDENT_PHOTOS[Math.abs(index) % SAMPLE_STUDENT_PHOTOS.length];
-};
-
-export const getStudentRegisterNumber = (student) => {
-  if (!student) return 'AB26-001';
-  if (student.registerNumber && student.registerNumber !== 'Not provided' && !student.registerNumber.startsWith('BSEL-STU-')) {
-    return student.registerNumber;
-  }
-  if (student.registrationNo && student.registrationNo !== 'Not provided' && !student.registrationNo.startsWith('BSEL-STU-')) {
-    return student.registrationNo;
-  }
-  const course = (student.program || student.courseName || 'Abacus Speed Arithmetic').toLowerCase();
-  const prefix = course.includes('abacus') ? 'AB' :
-                 course.includes('handwriting') ? 'HW' :
-                 course.includes('phonics') ? 'PH' :
-                 course.includes('vedic') ? 'VM' :
-                 course.includes('calligraphy') ? 'CG' :
-                 course.includes('art') ? 'AD' :
-                 course.includes('python') ? 'PY' : 'BC';
-  const digits = String(student.userId || '').replace(/\D/g, '').slice(-3) || '001';
-  return `${prefix}26-${digits}`;
-};
-
-export const getMarksheetSubjects = (student) => {
-  const course = (student?.program || student?.courseName || '').toLowerCase();
-  
-  if (course.includes('art') || course.includes('draw')) {
-    return [
-      { id: 1, name: 'Freehand Sketching & Contour Drawing', max: 25, min: 10, marks: 23, grade: 'O' },
-      { id: 2, name: 'Colour Harmony & Shading Techniques', max: 35, min: 14, marks: 33, grade: 'O' },
-      { id: 3, name: 'Visual Composition & Perspective', max: 25, min: 10, marks: 23, grade: 'A+' },
-      { id: 4, name: 'Studio Practice & Creative Project Portfolio', max: 15, min: 6, marks: 14, grade: 'O' },
-    ];
-  }
-
-  if (course.includes('python') || course.includes('code') || course.includes('comput')) {
-    return [
-      { id: 1, name: 'Computational Logic & Python Syntax', max: 25, min: 10, marks: 24, grade: 'O' },
-      { id: 2, name: 'Algorithmic Problem Solving & Functions', max: 35, min: 14, marks: 32, grade: 'A+' },
-      { id: 3, name: 'Data Structures & Practical Coding Lab', max: 25, min: 10, marks: 23, grade: 'A+' },
-      { id: 4, name: 'Code Review & Technical Viva Voce', max: 15, min: 6, marks: 14, grade: 'O' },
-    ];
-  }
-
-  if (course.includes('handwrit')) {
-    return [
-      { id: 1, name: 'Letter Formation & Geometric Alignment', max: 25, min: 10, marks: 24, grade: 'O' },
-      { id: 2, name: 'Cursive Flow, Rhythm & Speed Drills', max: 35, min: 14, marks: 34, grade: 'O' },
-      { id: 3, name: 'Presentation, Margins & Spacing Mastery', max: 25, min: 10, marks: 23, grade: 'A+' },
-      { id: 4, name: 'Notebook Examination & Precision Portfolio', max: 15, min: 6, marks: 14, grade: 'O' },
-    ];
-  }
-
-  // Default: Abacus Mental Arithmetic
-  return [
-    { id: 1, name: 'Abacus Bead Technique & Soroban Manipulation', max: 25, min: 10, marks: 24, grade: 'O' },
-    { id: 2, name: 'Speed Mental Addition & Subtraction Drills', max: 35, min: 14, marks: 33, grade: 'O' },
-    { id: 3, name: 'Photographic Memory & Flash Card Auditory Test', max: 25, min: 10, marks: 23, grade: 'A+' },
-    { id: 4, name: 'Continuous Internal Evaluation & Workbook Assessment', max: 15, min: 6, marks: 14, grade: 'O' },
-  ];
+export {
+  SAMPLE_STUDENT_PHOTOS,
+  getStudentPhotoUrl,
+  getStudentRegisterNumber,
+  getMarksheetSubjects
 };
 
 // Default Partner Schools / Branches
@@ -376,6 +313,9 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
   const [viewingStudentReceipt, setViewingStudentReceipt] = useState(null);
   const [showMarksheetModal, setShowMarksheetModal] = useState(false);
   const [selectedMarksheetStudent, setSelectedMarksheetStudent] = useState(null);
+  const [viewingMergedPdfStudent, setViewingMergedPdfStudent] = useState(null);
+  const [isMergeMode, setIsMergeMode] = useState(false);
+  const [selectedStudentIds, setSelectedStudentIds] = useState([]);
   const [viewingAdmissionStudent, setViewingAdmissionStudent] = useState(null);
   const [previewCertModalData, setPreviewCertModalData] = useState(null);
 
@@ -830,6 +770,104 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
     showToast(`Loaded Official Marksheet for ${student.studentName || 'Student'}!`);
   };
 
+  // 8. Merge Certificate & Marksheet as PDF Handlers
+  const handleToggleMergeMode = () => {
+    setIsMergeMode(prev => {
+      const next = !prev;
+      if (!next) setSelectedStudentIds([]);
+      return next;
+    });
+  };
+
+  const handleToggleSelectStudent = (userId) => {
+    setSelectedStudentIds(prev =>
+      prev.includes(userId)
+        ? prev.filter(id => id !== userId)
+        : [...prev, userId]
+    );
+  };
+
+  const handleToggleSelectAll = () => {
+    const visibleIds = filteredStudentsSuperAdmin.map(s => s.userId);
+    const allSelected = visibleIds.length > 0 && visibleIds.every(id => selectedStudentIds.includes(id));
+    if (allSelected) {
+      setSelectedStudentIds(prev => prev.filter(id => !visibleIds.includes(id)));
+    } else {
+      setSelectedStudentIds(prev => Array.from(new Set([...prev, ...visibleIds])));
+    }
+  };
+
+  const handleStartMergeSelected = () => {
+    if (selectedStudentIds.length === 0) {
+      showToast('Please select at least one student row to merge.');
+      return;
+    }
+
+    const selectedStudents = usersList.filter(u => selectedStudentIds.includes(u.userId));
+    if (selectedStudents.length === 0) return;
+
+    const studentPackages = selectedStudents.map((student, index) => {
+      const photo = getStudentPhotoUrl(student, index) || student.studentPhoto || null;
+      const regNo = getStudentRegisterNumber(student);
+      const safeStudent = (student.studentName || 'Student').trim().replace(/[^a-zA-Z0-9]/g, '_');
+      const safeRegNo = (regNo || 'REG').trim().replace(/[^a-zA-Z0-9]/g, '_');
+      const filename = `BSEL_Merged_Certificate_Marksheet_${safeStudent}_${safeRegNo}.pdf`;
+
+      const certData = {
+        studentName: student.studentName || 'Candidate Name',
+        courseName: student.program || student.courseName || 'Abacus',
+        programPrefix: 'MINDSPARC',
+        level: student.grade || 'Level 1',
+        grade: student.results?.[0]?.rank || 'A',
+        duration: student.duration || '6 Months',
+        registrationNo: regNo,
+        certificateNo: student.results?.[0]?.certificateNo || `BSEL/CERT/2026-${String(student.userId || '').replace(/\D/g, '').slice(-4) || '9012'}`,
+        centreName: student.branch || student.institution || activeBranch || 'test branch',
+        centreCode: '545454',
+        centreAddress: student.address || 'second street, surandai,keelasurandai,tenkasi',
+        issueDate: student.enrolmentDate || '05-10-2026',
+        certificateType: 'COMPETITION',
+        studentPhoto: photo
+      };
+
+      const subjects = getMarksheetSubjects(student);
+      const totalMax = subjects.reduce((sum, s) => sum + s.max, 0);
+      const totalMarks = subjects.reduce((sum, s) => sum + s.marks, 0);
+      const percentage = ((totalMarks / totalMax) * 100).toFixed(1);
+
+      const marksheetData = {
+        ...student,
+        photoUrl: photo,
+        studentPhoto: photo,
+        registerNumber: regNo,
+        registrationNo: regNo,
+        subjects,
+        totalMax,
+        totalMarks,
+        percentage,
+        resultText: percentage >= 85 ? 'FIRST CLASS WITH DISTINCTION' : 'FIRST CLASS',
+        overallGrade: percentage >= 90 ? 'O (Outstanding)' : percentage >= 80 ? 'A+ (Excellent)' : 'A (Very Good)',
+        marksheetNo: `BSEL/MS/2026/${String(student.userId || '').replace(/\D/g, '').slice(-4) || '1042'}`,
+        issueDate: student.enrolmentDate || '05-10-2026'
+      };
+
+      return {
+        student,
+        certData,
+        marksheetData,
+        filename
+      };
+    });
+
+    setViewingMergedPdfStudent({
+      students: studentPackages
+    });
+  };
+
+  const handleMergeAsPdf = (student, index = 0) => {
+    handleStartMergeSelected();
+  };
+
   const handleVerifyCertificate = (e) => {
     e.preventDefault();
     const cleanCert = verifyCertInput.trim().toUpperCase();
@@ -1194,6 +1232,15 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                   >
                     <School className={`w-4 h-4 shrink-0 ${activeTab === 'schools' ? 'text-orange-400' : 'text-slate-500'}`} />
                     <span className="truncate">Branches & Centres</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleTabSelect('achievements')}
+                    className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-black transition cursor-pointer text-left ${activeTab === 'achievements' ? 'bg-[#0c234b] text-white shadow-sm ring-1 ring-amber-400/40' : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950'}`}
+                  >
+                    <Trophy className={`w-4 h-4 shrink-0 ${activeTab === 'achievements' ? 'text-amber-400' : 'text-slate-500'}`} />
+                    <span className="truncate">Achievements / Competition</span>
                   </button>
 
                   <button
@@ -1564,6 +1611,26 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                 </div>
 
                 <div className="flex items-center gap-2 flex-wrap">
+                  {/* Merge as PDF button placed near Register New Student */}
+                  <button
+                    type="button"
+                    onClick={handleToggleMergeMode}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-black transition flex items-center gap-1.5 shadow-sm cursor-pointer border ${
+                      isMergeMode
+                        ? 'bg-[#081d3d] text-white border-amber-400 ring-2 ring-amber-400/30'
+                        : 'bg-white text-slate-800 hover:bg-slate-50 border-slate-300'
+                    }`}
+                    title="Select students to merge Certificate and Marksheet into PDF"
+                  >
+                    <FileDown className={`w-4 h-4 ${isMergeMode ? 'text-amber-300' : 'text-sky-600'}`} />
+                    <span>Merge as PDF</span>
+                    {selectedStudentIds.length > 0 && (
+                      <span className="ml-1 px-1.5 py-0.5 bg-amber-400 text-slate-950 rounded-full text-[10px] font-black">
+                        {selectedStudentIds.length}
+                      </span>
+                    )}
+                  </button>
+
                   <button
                     type="button"
                     onClick={() => setShowAddStudentModal(true)}
@@ -1629,12 +1696,71 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
               </div>
             </div>
 
+            {/* Merge as PDF Selection Action Banner */}
+            {isMergeMode && (
+              <div className="bg-gradient-to-r from-[#081d3d] to-[#123068] text-white p-3.5 rounded-2xl border border-amber-400/40 shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in duration-150">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <label className="flex items-center gap-2 bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-xl cursor-pointer transition select-none border border-white/10">
+                    <input
+                      type="checkbox"
+                      checked={filteredStudentsSuperAdmin.length > 0 && filteredStudentsSuperAdmin.every(s => selectedStudentIds.includes(s.userId))}
+                      onChange={handleToggleSelectAll}
+                      className="w-4 h-4 rounded cursor-pointer accent-amber-400"
+                    />
+                    <span className="text-xs font-bold text-amber-300">
+                      Select All ({filteredStudentsSuperAdmin.length})
+                    </span>
+                  </label>
+
+                  <div className="text-xs font-medium text-slate-200">
+                    <span className="font-black text-amber-400">{selectedStudentIds.length}</span> of {filteredStudentsSuperAdmin.length} candidate(s) selected
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsMergeMode(false);
+                      setSelectedStudentIds([]);
+                    }}
+                    className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={selectedStudentIds.length === 0}
+                    onClick={handleStartMergeSelected}
+                    className="px-4 py-1.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black rounded-xl text-xs transition flex items-center gap-1.5 shadow-md disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                  >
+                    <FileDown className="w-3.5 h-3.5" />
+                    <span>Download Merged PDF ({selectedStudentIds.length})</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Students Roster Table */}
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
                   <thead className="bg-[#081d3d] text-white uppercase text-[10px] tracking-wider font-black">
                     <tr>
+                      {isMergeMode && (
+                        <th className="py-3 px-3 w-12 text-center">
+                          <div className="flex items-center justify-center">
+                            <input
+                              type="checkbox"
+                              checked={filteredStudentsSuperAdmin.length > 0 && filteredStudentsSuperAdmin.every(s => selectedStudentIds.includes(s.userId))}
+                              onChange={handleToggleSelectAll}
+                              className="w-4 h-4 rounded cursor-pointer accent-amber-400"
+                              title="Select All Students"
+                            />
+                          </div>
+                        </th>
+                      )}
                       <th className="py-3 px-4">Student Details</th>
                       <th className="py-3 px-3">Parent & Contact</th>
                       <th className="py-3 px-3">Concern Branch</th>
@@ -1646,13 +1772,36 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                   <tbody className="divide-y divide-slate-100 font-medium">
                     {filteredStudentsSuperAdmin.length === 0 ? (
                       <tr>
-                        <td colSpan="6" className="py-8 text-center text-slate-500">
+                        <td colSpan={isMergeMode ? 7 : 6} className="py-8 text-center text-slate-500">
                           No students matching your filter criteria.
                         </td>
                       </tr>
                     ) : (
-                      filteredStudentsSuperAdmin.map((student, idx) => (
-                        <tr key={student.userId} className="hover:bg-slate-50/80 transition">
+                      filteredStudentsSuperAdmin.map((student, idx) => {
+                        const isSelected = selectedStudentIds.includes(student.userId);
+                        return (
+                        <tr
+                          key={student.userId}
+                          onClick={(e) => {
+                            if (isMergeMode && !['BUTTON', 'A', 'INPUT', 'SVG', 'PATH'].includes(e.target.tagName)) {
+                              handleToggleSelectStudent(student.userId);
+                            }
+                          }}
+                          className={`transition ${isMergeMode ? 'cursor-pointer' : ''} ${
+                            isSelected ? 'bg-amber-50/90 border-l-4 border-l-amber-500' : 'hover:bg-slate-50/80'
+                          }`}
+                        >
+                          {isMergeMode && (
+                            <td className="py-3 px-3 text-center" onClick={(e) => e.stopPropagation()}>
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={() => handleToggleSelectStudent(student.userId)}
+                                className="w-4 h-4 rounded cursor-pointer accent-amber-500"
+                                title={`Select ${student.studentName}`}
+                              />
+                            </td>
+                          )}
                           <td className="py-3 px-4">
                             <div className="flex items-center gap-3">
                               {/* Student Passport Photo Thumbnail */}
@@ -1710,7 +1859,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                             </span>
                           </td>
 
-                          <td className="py-3 px-3 text-right">
+                          <td className="py-3 px-3 text-right" onClick={(e) => e.stopPropagation()}>
                             <div className="flex items-center justify-end gap-1.5 flex-wrap sm:flex-nowrap">
                               {/* Admission Form Button */}
                               <button
@@ -1747,7 +1896,8 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                             </div>
                           </td>
                         </tr>
-                      ))
+                        );
+                      })
                     )}
                   </tbody>
                 </table>
@@ -2423,6 +2573,13 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
               ))}
             </div>
           </div>
+        )}
+
+        {/* =========================================================================
+            SUPER ADMIN: TAB - ACHIEVEMENTS & COMPETITION RECOGNITION
+            ========================================================================= */}
+        {currentAdminRole === 'Super Admin' && activeTab === 'achievements' && (
+          <AdminAchievementsModule showToast={showToast} />
         )}
 
         {/* =========================================================================
@@ -3102,6 +3259,15 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
 
           </main>
       </div>
+
+      {/* Merged Certificate & Marksheet PDF Modal */}
+      {viewingMergedPdfStudent && (
+        <MergedStudentPdfModal
+          data={viewingMergedPdfStudent}
+          onClose={() => setViewingMergedPdfStudent(null)}
+          showToast={showToast}
+        />
+      )}
 
       {/* =========================================================================
           MODAL: OFFICIAL EXAMINATION MARKSHEET (SUPER ADMIN & ALL DESKS)
