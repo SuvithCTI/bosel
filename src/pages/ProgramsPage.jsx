@@ -1,3 +1,4 @@
+import { getProgramPartnerLogo } from '../data/partnerLogos';
 import React, { useState, useEffect } from 'react';
 import { 
   X, 
@@ -109,7 +110,7 @@ export default function ProgramsPage() {
       {/* Card Inner Content */}
       <div className="relative bg-white rounded-[10px] sm:rounded-[21px] overflow-hidden flex flex-col text-left h-full group-hover:bg-slate-50/70 transition-colors">
         {/* Course Photography Container */}
-        <div className="relative aspect-[4/3] sm:aspect-[3/2] w-full overflow-hidden bg-slate-100">
+        <div className="relative aspect-[3/2] w-full overflow-hidden bg-slate-100">
           <img
             src={prog.image}
             alt={prog.name}
@@ -120,6 +121,17 @@ export default function ProgramsPage() {
           <span className="absolute top-1.5 left-1.5 sm:top-2.5 sm:left-2.5 bg-slate-950/75 backdrop-blur-xs text-white text-[9px] sm:text-[11px] font-bold px-1.5 sm:px-2 py-0.5 rounded-md shadow-xs">
             {prog.ageGroup}
           </span>
+          {/* Partner Logo Badge in top right corner */}
+          {getProgramPartnerLogo(prog) && (
+            <div className="absolute top-1.5 right-1.5 sm:top-2.5 sm:right-2.5 z-10 bg-white/95 backdrop-blur-xs rounded-lg sm:rounded-xl px-1.5 py-0.5 sm:px-2 sm:py-1 shadow-md border border-slate-200/90 flex items-center justify-center pointer-events-none">
+              <img
+                src={getProgramPartnerLogo(prog)}
+                alt={`${prog.name} partner logo`}
+                className="h-5 sm:h-7 md:h-8 w-auto object-contain max-w-[100px] sm:max-w-[130px]"
+                loading="lazy"
+              />
+            </div>
+          )}
         </div>
 
         {/* Program Card Body */}

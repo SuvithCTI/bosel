@@ -1,3 +1,4 @@
+import { getProgramPartnerLogo } from '../data/partnerLogos';
 import React, { useState, useEffect } from 'react';
 import { 
   ArrowRight, 
@@ -192,6 +193,17 @@ export default function HomePage({ setActivePage, onSelectProgram }) {
                         className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
                         loading="lazy"
                       />
+                      {/* Partner Logo Badge in top right corner */}
+                      {getProgramPartnerLogo(prog) && (
+                        <div className="absolute top-1.5 right-1.5 sm:top-2.5 sm:right-2.5 z-10 bg-white/95 backdrop-blur-xs rounded-lg sm:rounded-xl px-1.5 py-0.5 sm:px-2 sm:py-1 shadow-md border border-slate-200/90 flex items-center justify-center pointer-events-none">
+                          <img
+                            src={getProgramPartnerLogo(prog)}
+                            alt={`${prog.name} partner logo`}
+                            className="h-5 sm:h-7 md:h-8 w-auto object-contain max-w-[100px] sm:max-w-[130px]"
+                            loading="lazy"
+                          />
+                        </div>
+                      )}
                     </div>
 
                     {/* Program Card Body */}
@@ -274,6 +286,17 @@ export default function HomePage({ setActivePage, onSelectProgram }) {
                           className="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
                           loading="lazy"
                         />
+                      {/* Partner Logo Badge in top right corner */}
+                      {getProgramPartnerLogo(prog) && (
+                        <div className="absolute top-1.5 right-1.5 sm:top-2.5 sm:right-2.5 z-10 bg-white/95 backdrop-blur-xs rounded-lg sm:rounded-xl px-1.5 py-0.5 sm:px-2 sm:py-1 shadow-md border border-slate-200/90 flex items-center justify-center pointer-events-none">
+                          <img
+                            src={getProgramPartnerLogo(prog)}
+                            alt={`${prog.name} partner logo`}
+                            className="h-5 sm:h-7 md:h-8 w-auto object-contain max-w-[100px] sm:max-w-[130px]"
+                            loading="lazy"
+                          />
+                        </div>
+                      )}
                       </div>
 
                       {/* Program Card Body */}
