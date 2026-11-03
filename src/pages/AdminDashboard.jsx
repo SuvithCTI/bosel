@@ -3,6 +3,7 @@ import {
   Users, 
   Calendar, 
   Award, 
+  Trophy,
   School, 
   Plus, 
   Trash2, 
@@ -32,15 +33,10 @@ import {
   UserCheck,
   ChevronRight,
   ArrowUpRight,
-  Menu,
-  GraduationCap
+  Menu
 } from 'lucide-react';
-import StudentAdmissionFormView from '../components/StudentAdmissionFormView';
-import OfficialMarksheetView from '../components/OfficialMarksheetView';
-import CertificateModal from '../components/CertificateModal';
 import Logo from '../components/Logo';
 import Certificate from '../components/Certificate';
-import AdmissionModal from '../components/AdmissionModal';
 import { 
   getRegisteredUsers, 
   deleteUserAccount, 
@@ -82,13 +78,6 @@ import {
   addStoredSchool,
   deleteStoredSchool
 } from '../data/schoolsData';
-import {
-  getStoredBatches,
-  addStoredBatch,
-  updateStoredBatch,
-  deleteStoredBatch,
-  resetStoredBatches
-} from '../data/batchesData';
 
 // Student Photo Assets
 import student1Img from '../assets/programs/student1.jpg';
@@ -111,26 +100,6 @@ export const getStudentPhotoUrl = (student, index = 0) => {
   if (student?.studentPhoto) return student.studentPhoto;
   if (student?.photo) return student.photo;
   return SAMPLE_STUDENT_PHOTOS[Math.abs(index) % SAMPLE_STUDENT_PHOTOS.length];
-};
-
-export const getStudentRegisterNumber = (student) => {
-  if (!student) return 'AB26-001';
-  if (student.registerNumber && student.registerNumber !== 'Not provided' && !student.registerNumber.startsWith('BSEL-STU-')) {
-    return student.registerNumber;
-  }
-  if (student.registrationNo && student.registrationNo !== 'Not provided' && !student.registrationNo.startsWith('BSEL-STU-')) {
-    return student.registrationNo;
-  }
-  const course = (student.program || student.courseName || 'Abacus Speed Arithmetic').toLowerCase();
-  const prefix = course.includes('abacus') ? 'AB' :
-                 course.includes('handwriting') ? 'HW' :
-                 course.includes('phonics') ? 'PH' :
-                 course.includes('vedic') ? 'VM' :
-                 course.includes('calligraphy') ? 'CG' :
-                 course.includes('art') ? 'AD' :
-                 course.includes('python') ? 'PY' : 'BC';
-  const digits = String(student.userId || '').replace(/\D/g, '').slice(-3) || '001';
-  return `${prefix}26-${digits}`;
 };
 
 export const getMarksheetSubjects = (student) => {
@@ -247,7 +216,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
 
   // Active Tab:
   // Super Admin: 'overview' | 'students' | 'courses' | 'events' | 'franchise' | 'payments' | 'schools' | 'certificates'
-  // Branch Head: 'branch_overview' | 'branch_students' | 'branch_batches' | 'branch_fees' | 'branch_certificates'
+  // Branch Head: 'branch_overview' | 'branch_students' | 'branch_batches' | 'branch_fees' | 'branch_certificates' | 'branch_notices'
   const [activeTab, setActiveTab] = useState(() => {
     return (sessionUser?.role === 'Branch Head' || currentAdminRole === 'Branch Head')
       ? 'branch_overview' 
@@ -261,24 +230,6 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
   const [franchiseList, setFranchiseList] = useState(() => getStoredFranchiseLeads());
   const [paymentsList, setPaymentsList] = useState(() => getStoredPayments());
   const [schoolsList, setSchoolsList] = useState(() => getStoredSchools());
-  const [batchesList, setBatchesList] = useState(() => getStoredBatches());
-
-  // Batch Management Modal State
-  const [showAddBatchModal, setShowAddBatchModal] = useState(false);
-  const [editingBatch, setEditingBatch] = useState(null);
-  const [batchForm, setBatchForm] = useState({
-    name: '',
-    program: 'Abacus',
-    days: 'Saturday & Sunday',
-    startTime: '09:30 AM',
-    endTime: '11:30 AM',
-    room: 'Classroom 1',
-    maxCapacity: 15,
-    enrolledCount: 0,
-    instructor: '',
-    status: 'Active',
-    notes: ''
-  });
 
   // Notification Toast
   const [toastMessage, setToastMessage] = useState('');
@@ -316,7 +267,6 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
     const handleFranchiseUpdate = () => setFranchiseList(getStoredFranchiseLeads());
     const handlePaymentsUpdate = () => setPaymentsList(getStoredPayments());
     const handleSchoolsUpdate = () => setSchoolsList(getStoredSchools());
-    const handleBatchesUpdate = () => setBatchesList(getStoredBatches());
 
     window.addEventListener('bsel_users_updated', handleUsersUpdate);
     window.addEventListener('bsel_events_updated', handleEventsUpdate);
@@ -324,7 +274,6 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
     window.addEventListener('bsel_franchise_leads_updated', handleFranchiseUpdate);
     window.addEventListener('bsel_payments_updated', handlePaymentsUpdate);
     window.addEventListener('bsel_schools_updated', handleSchoolsUpdate);
-    window.addEventListener('bsel_batches_updated', handleBatchesUpdate);
 
     return () => {
       window.removeEventListener('bsel_users_updated', handleUsersUpdate);
@@ -333,7 +282,6 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
       window.removeEventListener('bsel_franchise_leads_updated', handleFranchiseUpdate);
       window.removeEventListener('bsel_payments_updated', handlePaymentsUpdate);
       window.removeEventListener('bsel_schools_updated', handleSchoolsUpdate);
-      window.removeEventListener('bsel_batches_updated', handleBatchesUpdate);
     };
   }, []);
 
@@ -369,6 +317,13 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
   // BRANCH HEAD FILTERS & SEARCH
   // -------------------------------------------------------------
   const [branchStudentSearch, setBranchStudentSearch] = useState('');
+  const [selectedBatch, setSelectedBatch] = useState('Batch 1 - Weekend Morning');
+
+  // Attendance state for branch
+  const [attendanceRecords, setAttendanceRecords] = useState({
+    'BSEL-TSI-9865219131': 'Present',
+    'BSEL-TSI-9442188771': 'Present'
+  });
 
   // -------------------------------------------------------------
   // MODALS
@@ -378,8 +333,6 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
   const [viewingStudentReceipt, setViewingStudentReceipt] = useState(null);
   const [showMarksheetModal, setShowMarksheetModal] = useState(false);
   const [selectedMarksheetStudent, setSelectedMarksheetStudent] = useState(null);
-  const [viewingAdmissionStudent, setViewingAdmissionStudent] = useState(null);
-  const [previewCertModalData, setPreviewCertModalData] = useState(null);
 
   const [showAddCourseModal, setShowAddCourseModal] = useState(false);
   const [editingCourse, setEditingCourse] = useState(null);
@@ -396,8 +349,6 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
   const hasOpenModal = Boolean(
     showAddStudentModal || 
     showMarksheetModal ||
-    viewingAdmissionStudent ||
-    previewCertModalData ||
     editingStudent || 
     viewingStudentReceipt || 
     showAddCourseModal || 
@@ -406,8 +357,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
     editingEvent || 
     showAddPaymentModal || 
     selectedReceiptForPrint || 
-    showAddSchoolModal ||
-    showAddBatchModal
+    showAddSchoolModal
   );
 
   useEffect(() => {
@@ -781,7 +731,6 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
 
   // 6. Certificate Handlers
   const handleOpenCertForStudent = (student) => {
-    const regNo = getStudentRegisterNumber(student);
     const studentCertData = {
       studentName: student.studentName || 'Candidate Name',
       courseName: student.program || student.courseName || 'Abacus',
@@ -789,25 +738,28 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
       level: student.grade || 'Level 1',
       grade: student.results?.[0]?.rank || 'A',
       duration: student.duration || '6 Months',
-      registrationNo: regNo,
-      certificateNo: student.results?.[0]?.certificateNo || `BSEL/CERT/2026-${String(student.userId || '').replace(/\D/g, '').slice(-4) || '9012'}`,
+      registrationNo: student.registerNumber || student.registrationNo || student.userId,
+      certificateNo: student.results?.[0]?.certificateNo || `BSEL/CERT/2026-${student.userId.replace(/\D/g, '').slice(-4) || '9012'}`,
       centreName: student.branch || student.institution || activeBranch || 'test branch',
       centreCode: '545454',
       centreAddress: student.address || 'second street, surandai,keelasurandai,tenkasi',
       issueDate: student.enrolmentDate || '05-10-2026',
       certificateType: 'COMPETITION',
-      studentPhoto: getStudentPhotoUrl(student) || student.studentPhoto || null
+      studentPhoto: student.studentPhoto || null
     };
 
     setCertData(studentCertData);
-    setPreviewCertModalData(studentCertData);
-    showToast(`Opened Certificate for ${student.studentName}!`);
+    if (currentAdminRole === 'Branch Head') {
+      setActiveTab('branch_certificates');
+    } else {
+      setActiveTab('certificates');
+    }
+    showToast(`Loaded Certificate for ${student.studentName}!`);
   };
 
   // 7. Marksheet Handler
   const handleOpenMarksheet = (student, index = 0) => {
     const photo = getStudentPhotoUrl(student, index);
-    const regNo = getStudentRegisterNumber(student);
     const subjects = getMarksheetSubjects(student);
     const totalMax = subjects.reduce((sum, s) => sum + s.max, 0);
     const totalMarks = subjects.reduce((sum, s) => sum + s.marks, 0);
@@ -816,20 +768,17 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
     setSelectedMarksheetStudent({
       ...student,
       photoUrl: photo,
-      studentPhoto: photo,
-      registerNumber: regNo,
-      registrationNo: regNo,
       subjects,
       totalMax,
       totalMarks,
       percentage,
       resultText: percentage >= 85 ? 'FIRST CLASS WITH DISTINCTION' : 'FIRST CLASS',
       overallGrade: percentage >= 90 ? 'O (Outstanding)' : percentage >= 80 ? 'A+ (Excellent)' : 'A (Very Good)',
-      marksheetNo: `BSEL/MS/2026/${String(student.userId || '').replace(/\D/g, '').slice(-4) || '1042'}`,
+      marksheetNo: `BSEL/MS/2026/${student.userId.replace(/\D/g, '').slice(-4) || '1042'}`,
       issueDate: student.enrolmentDate || '05-10-2026'
     });
     setShowMarksheetModal(true);
-    showToast(`Loaded Official Marksheet for ${student.studentName || 'Student'}!`);
+    showToast(`Loaded Marksheet for ${student.studentName || 'Student'}!`);
   };
 
   const handleVerifyCertificate = (e) => {
@@ -868,42 +817,12 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
     }
   };
 
-  // 8. Batch & Schedule Handlers
-  const handleSaveBatch = (e) => {
-    e.preventDefault();
-    if (!batchForm.name.trim()) return;
-
-    if (editingBatch) {
-      const updatedFields = {
-        ...batchForm,
-        branch: editingBatch.branch || activeBranch
-      };
-      const updated = updateStoredBatch(editingBatch.id, updatedFields);
-      setBatchesList(updated);
-      showToast(`Batch "${batchForm.name}" updated successfully!`);
-    } else {
-      const updated = addStoredBatch({
-        ...batchForm,
-        branch: activeBranch
-      });
-      setBatchesList(updated);
-      showToast(`New batch "${batchForm.name}" created successfully!`);
-    }
-    setShowAddBatchModal(false);
-    setEditingBatch(null);
-  };
-
-  const handleDeleteBatch = (batchId, batchName) => {
-    if (window.confirm(`Are you sure you want to delete batch "${batchName}"?`)) {
-      const updated = deleteStoredBatch(batchId);
-      setBatchesList(updated);
-      showToast(`Batch "${batchName}" removed successfully.`);
-    }
-  };
-
   // -------------------------------------------------------------
   // FILTERED LISTS
   // -------------------------------------------------------------
+    // Student Pagination
+const [studentCurrentPage, setStudentCurrentPage] = useState(1);
+const studentsPerPage = 5;
   
   // Super Admin: All students with filters
   const filteredStudentsSuperAdmin = usersList
@@ -922,6 +841,29 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
 
       return matchSearch && matchBranch && matchCourse && matchPayment;
     });
+
+    // Student Pagination Logic
+const totalStudentPages = Math.ceil(
+  filteredStudentsSuperAdmin.length / studentsPerPage
+);
+
+const startStudentIndex =
+  (studentCurrentPage - 1) * studentsPerPage;
+
+const paginatedStudents = filteredStudentsSuperAdmin.slice(
+  startStudentIndex,
+  startStudentIndex + studentsPerPage
+);
+
+// Reset to first page when filters change
+useEffect(() => {
+  setStudentCurrentPage(1);
+}, [
+  studentSearch,
+  studentBranchFilter,
+  studentCourseFilter,
+  studentPaymentFilter
+]);
 
   // Branch Head: Scoped strictly to activeBranch
   const branchStudents = usersList
@@ -945,18 +887,6 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
         u.phone?.toLowerCase().includes(term)
       );
     });
-
-  // Branch Head: Available Batches scoped to activeBranch
-  const branchBatches = batchesList.filter(b => {
-    if (!b.branch) return true;
-    const bBranch = (b.branch || '').toLowerCase();
-    const targetBranch = (activeBranch || '').toLowerCase();
-    if (!targetBranch || targetBranch.includes('headquarters') || targetBranch.includes('all')) return true;
-    const keyBranch = targetBranch.includes('tenkasi') ? 'tenkasi' : 
-                      targetBranch.includes('chennai') ? 'chennai' : 
-                      targetBranch.includes('coimbatore') ? 'coimbatore' : targetBranch;
-    return bBranch.includes(keyBranch) || keyBranch.includes(bBranch);
-  });
 
   // Filtered Payments for Super Admin
   const filteredPayments = paymentsList.filter(p => {
@@ -1000,98 +930,318 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
   const branchRevenueNumber = branchPayments.reduce((acc, p) => acc + (p.amountNum || 0), 0);
   const branchRevenueFormatted = `₹${branchRevenueNumber.toLocaleString('en-IN')}`;
 
-  return (
-    <div className="min-h-screen bg-slate-100 font-sans text-slate-900 pb-12">
-      
+
+// Course Pagination
+const [courseCurrentPage, setCourseCurrentPage] = useState(1);
+const coursesPerPage = 6;
+
+// Course Pagination Logic
+const totalCoursePages = Math.ceil(
+  filteredCourses.length / coursesPerPage
+);
+
+const startCourseIndex =
+  (courseCurrentPage - 1) * coursesPerPage;
+
+const paginatedCourses = filteredCourses.slice(
+  startCourseIndex,
+  startCourseIndex + coursesPerPage
+);
+
+// Reset pagination when search or category changes
+useEffect(() => {
+  setCourseCurrentPage(1);
+}, [courseSearch, courseCategoryFilter]);
+
+// Keep current page valid when courses are deleted
+useEffect(() => {
+  if (totalCoursePages > 0 && courseCurrentPage > totalCoursePages) {
+    setCourseCurrentPage(totalCoursePages);
+  }
+}, [totalCoursePages, courseCurrentPage]);
+
+// Event Pagination
+const [eventCurrentPage, setEventCurrentPage] = useState(1);
+const eventsPerPage = 10;
+
+// -------------------------------------------------------------
+// EVENT PAGINATION LOGIC
+// -------------------------------------------------------------
+
+const totalEventPages = Math.ceil(eventsList.length / eventsPerPage);
+
+const startEventIndex = (eventCurrentPage - 1) * eventsPerPage;
+
+const paginatedEvents = eventsList.slice(
+  startEventIndex,
+  startEventIndex + eventsPerPage
+);
+
+// Reset page if the event list becomes shorter
+useEffect(() => {
+  if (totalEventPages > 0 && eventCurrentPage > totalEventPages) {
+    setEventCurrentPage(totalEventPages);
+  }
+
+  if (totalEventPages === 0) {
+    setEventCurrentPage(1);
+  }
+}, [totalEventPages, eventCurrentPage]);
+
+
+// Franchise Pagination
+const [franchiseCurrentPage, setFranchiseCurrentPage] = useState(1);
+const franchisePerPage = 3;
+
+// -------------------------------------------------------------
+// FRANCHISE PAGINATION LOGIC
+// -------------------------------------------------------------
+
+const totalFranchisePages = Math.ceil(
+  filteredFranchiseLeads.length / franchisePerPage
+);
+
+const startFranchiseIndex =
+  (franchiseCurrentPage - 1) * franchisePerPage;
+
+const paginatedFranchiseLeads = filteredFranchiseLeads.slice(
+  startFranchiseIndex,
+  startFranchiseIndex + franchisePerPage
+);
+
+// Reset pagination when status filter changes
+useEffect(() => {
+  setFranchiseCurrentPage(1);
+}, [franchiseStatusFilter]);
+
+// Adjust page when enquiries are deleted
+useEffect(() => {
+  if (totalFranchisePages > 0 && franchiseCurrentPage > totalFranchisePages) {
+    setFranchiseCurrentPage(totalFranchisePages);
+  }
+
+  if (totalFranchisePages === 0) {
+    setFranchiseCurrentPage(1);
+  }
+}, [totalFranchisePages, franchiseCurrentPage]);
+
+// Payment Pagination
+const [paymentCurrentPage, setPaymentCurrentPage] = useState(1);
+const paymentsPerPage = 3;
+
+// -------------------------------------------------------------
+// PAYMENT PAGINATION LOGIC
+// -------------------------------------------------------------
+
+const totalPaymentPages = Math.ceil(
+  filteredPayments.length / paymentsPerPage
+);
+
+const startPaymentIndex =
+  (paymentCurrentPage - 1) * paymentsPerPage;
+
+const paginatedPayments = filteredPayments.slice(
+  startPaymentIndex,
+  startPaymentIndex + paymentsPerPage
+);
+
+// Reset pagination when payment filters change
+useEffect(() => {
+  setPaymentCurrentPage(1);
+}, [paymentSectorFilter, paymentBranchFilter]);
+
+// Adjust page when payment records are deleted
+useEffect(() => {
+  if (totalPaymentPages > 0 && paymentCurrentPage > totalPaymentPages) {
+    setPaymentCurrentPage(totalPaymentPages);
+  }
+
+  if (totalPaymentPages === 0) {
+    setPaymentCurrentPage(1);
+  }
+}, [totalPaymentPages, paymentCurrentPage]);
+
+
+const [schoolCurrentPage, setSchoolCurrentPage] = useState(1);
+const schoolsPerPage = 6;
+
+const totalSchoolPages = Math.ceil(schoolsList.length / schoolsPerPage);
+
+const startSchoolIndex = (schoolCurrentPage - 1) * schoolsPerPage;
+
+const paginatedSchools = schoolsList.slice(
+  startSchoolIndex,
+  startSchoolIndex + schoolsPerPage
+);
+
+useEffect(() => {
+  if (totalSchoolPages === 0) {
+    setSchoolCurrentPage(1);
+  } else if (schoolCurrentPage > totalSchoolPages) {
+    setSchoolCurrentPage(totalSchoolPages);
+  }
+}, [schoolCurrentPage, totalSchoolPages]);
+
+
+
+
+
+return (
+    <div className="bsel-admin min-h-screen bg-slate-100 font-sans text-slate-900 pb-12 overflow-x-hidden">
+
+      {/* Mobile-only: stop iOS from zooming into small inputs */}
+      <style>{`@media (max-width: 639px){ .bsel-admin input, .bsel-admin select, .bsel-admin textarea { font-size: 16px !important; } }`}</style>
+
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed top-5 right-5 z-50 bg-[#0c234b] text-white px-5 py-3 rounded-2xl shadow-2xl border border-amber-400 flex items-center gap-3 animate-in slide-in-from-top-4 duration-200">
+        <div className="fixed top-3 right-3 left-3 sm:left-auto sm:top-5 sm:right-5 z-[60] bg-[#0c234b] text-white px-4 py-3 rounded-2xl shadow-2xl border border-amber-400 flex items-center gap-3 animate-in slide-in-from-top-4 duration-200">
           <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
-          <span className="text-sm font-bold">{toastMessage}</span>
+          <span className="text-sm font-bold break-words">{toastMessage}</span>
         </div>
       )}
 
       {/* =========================================================================
-          TOP MASTER HEADER WITH ROLE SWITCHER FOR REAL-TIME DUAL-ADMIN REVIEW
+          TOP MASTER HEADER
           ========================================================================= */}
-      <header 
+      <header
         ref={headerRef}
         className="bg-gradient-to-r from-[#081d3d] via-[#0c234b] to-[#123068] text-white border-b-4 border-amber-400 sticky top-0 z-40 shadow-lg shrink-0"
       >
-        <div className="w-full px-3 sm:px-5 lg:px-6 py-2.5 sm:py-3 flex flex-wrap md:flex-nowrap items-center justify-between gap-3">
-          
-          {/* Brand & Portal Type with Mobile Toggle */}
-          <div className="flex items-center gap-2.5 sm:gap-3.5">
-            {/* Mobile Drawer Toggle Button */}
+        <div className="w-full px-3 sm:px-5 lg:px-6 py-2.5 sm:py-3 flex flex-wrap items-center gap-x-2 gap-y-2 sm:gap-3">
+
+          {/* Brand & Mobile Toggle */}
+          <div className="flex items-center gap-2 sm:gap-3.5 min-w-0 mr-auto">
             <button
               type="button"
               onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
-              className="lg:hidden p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center gap-1.5 text-xs font-bold transition cursor-pointer"
+              className="lg:hidden p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center gap-1.5 text-xs font-bold transition cursor-pointer shrink-0"
               title="Toggle Navigation Menu"
               aria-label="Toggle Navigation Menu"
+              aria-expanded={mobileSidebarOpen}
             >
-              {mobileSidebarOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+              {mobileSidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               <span className="hidden sm:inline">Desks</span>
             </button>
 
-            <Logo lightText={true} />
+            <div className="shrink-0 scale-90 sm:scale-100 origin-left">
+              <Logo lightText={true} />
+            </div>
+
+            {currentAdminRole === 'Branch Head' && (
+              <div className="hidden sm:block border-l border-white/20 pl-3 min-w-0">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-emerald-500 text-white ring-1 ring-emerald-300 whitespace-nowrap">
+                    🏢 Branch Head Desk
+                  </span>
+                  <span className="text-xs font-black tracking-wide text-white truncate">
+                    {activeBranch}
+                  </span>
+                </div>
+                <p className="hidden xl:block text-[11px] text-sky-200 font-medium">
+                  Authorized Branch Administration & Concerned Student Operations Portal
+                </p>
+              </div>
+            )}
           </div>
 
-          {/* Controls */}
-          <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-end">
+          {/* Branch switcher (Branch Head only) — full-width row on phones */}
+          {currentAdminRole === 'Branch Head' && (
+            <select
+              value={activeBranch}
+              onChange={(e) => {
+                setActiveBranch(e.target.value);
+                showToast(`Viewing Branch: ${e.target.value}`);
+              }}
+              className="order-last w-full md:order-none md:w-auto md:max-w-[320px] bg-[#081d3d] border border-amber-400 text-white text-xs font-bold rounded-xl px-2.5 py-2 md:py-1.5 outline-none cursor-pointer"
+              title="Switch branch context"
+            >
+              <option value="Tenkasi Regional Branch">Tenkasi Regional Branch (Director: Mrs. Thangam Sivaji)</option>
+              <option value="Chennai Central Branch">Chennai Central Branch (Director: Mrs. K. Malathi)</option>
+              <option value="Coimbatore Branch">Coimbatore Branch (Director: Mrs. Lakshmi Priya)</option>
+            </select>
+          )}
 
-            {/* View Live Website Button */}
+          {/* Controls */}
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             <button
               onClick={() => setActivePage('home')}
-              className="text-xs font-black bg-white hover:bg-slate-100 text-[#0c234b] px-3 py-1.5 rounded-xl transition shadow-sm cursor-pointer flex items-center gap-1.5"
+              className="text-xs font-black bg-white hover:bg-slate-100 text-[#0c234b] px-3 py-2 sm:py-1.5 rounded-xl transition shadow-sm cursor-pointer flex items-center gap-1.5"
             >
-              <span>Live Website</span>
+              <span className="hidden sm:inline">Live Website</span>
+              <span className="sm:hidden">Site</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
 
-            {/* Sign Out */}
             <button
               onClick={onLogout ? onLogout : () => setActivePage('login')}
-              className="text-xs font-black bg-rose-600/90 hover:bg-rose-700 text-white px-3 py-1.5 rounded-xl transition shadow-sm cursor-pointer flex items-center gap-1.5"
+              className="text-xs font-black bg-rose-600/90 hover:bg-rose-700 text-white px-3 py-2 sm:py-1.5 rounded-xl transition shadow-sm cursor-pointer flex items-center gap-1.5"
+              aria-label="Sign Out"
             >
               <LogOut className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Sign Out</span>
             </button>
           </div>
-
         </div>
       </header>
 
-      {/* Main Full-Bleed Two-Column Layout: Left Fixed Sidebar & Right Workspace */}
+      {/* Main Two-Column Layout: Sidebar (drawer on mobile) & Workspace */}
       <div className="flex-1 flex w-full relative min-h-[calc(100vh-68px)]">
 
         {/* Mobile Drawer Backdrop */}
         {mobileSidebarOpen && (
-          <div 
+          <div
             onClick={() => setMobileSidebarOpen(false)}
             className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-40 lg:hidden transition-opacity"
           />
         )}
 
         {/* =========================================================================
-            LEFT SIDEBAR: FULLY FIXED, FULL HEIGHT VERTICAL DESK NAVIGATION
+            LEFT SIDEBAR — HAMBURGER DRAWER ON MOBILE / FIXED ON DESKTOP
             ========================================================================= */}
-        <aside 
+        <aside
           style={{
             top: `${headerHeight}px`,
-            height: `calc(100vh - ${headerHeight}px)`
+            height: `calc(100dvh - ${headerHeight}px)`
           }}
           className={`
-            fixed lg:sticky left-0 z-40 lg:z-30
-            w-72 xl:w-80 shrink-0 
+            fixed lg:sticky left-0 z-50 lg:z-30
+            w-[85vw] max-w-[20rem] lg:w-72 xl:w-80 shrink-0
             bg-white border-r border-slate-200 shadow-xl lg:shadow-none
-            flex flex-col justify-between 
-            overflow-y-auto transition-transform duration-200 ease-in-out
+            flex flex-col justify-between
+            overflow-y-auto overscroll-contain transition-transform duration-200 ease-in-out
             ${mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
           `}
         >
           <div className="p-3.5 sm:p-4 space-y-3.5">
-            
+
+            {/* Drawer title (mobile only) */}
+            <div className="lg:hidden flex items-center justify-between pb-2 border-b border-slate-100">
+              <span className="text-sm font-black text-[#0c234b]">Navigation Menu</span>
+              <button
+                type="button"
+                onClick={() => setMobileSidebarOpen(false)}
+                className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 cursor-pointer"
+                aria-label="Close menu"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Active Role Indicator Card (Branch Head only) */}
+            {currentAdminRole === 'Branch Head' && (
+              <div className="p-3 rounded-xl border flex items-center gap-3 bg-gradient-to-br from-emerald-950 to-teal-900 text-white border-emerald-400/40 shadow-xs">
+                <div className="w-9 h-9 rounded-lg flex items-center justify-center font-black shrink-0 bg-emerald-400 text-slate-950">
+                  🏢
+                </div>
+                <div className="min-w-0 flex-1">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-emerald-300 block">
+                    Concern Branch
+                  </span>
+                  <div className="text-xs font-black text-white truncate">{activeBranch}</div>
+                  <span className="text-[10px] text-slate-300 block truncate">Centre Director Portal</span>
+                </div>
+              </div>
+            )}
 
             {/* Navigation Heading */}
             <div className="px-1 pt-1 flex items-center justify-between">
@@ -1099,226 +1249,149 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                 {currentAdminRole === 'Super Admin' ? 'Executive Desks' : 'Branch Management'}
               </span>
               <span className="text-[10px] font-bold text-slate-400">
-                {currentAdminRole === 'Super Admin' ? '8 Modules' : '5 Modules'}
+                {currentAdminRole === 'Super Admin' ? '8 Modules' : '6 Modules'}
               </span>
             </div>
 
             {/* Vertical Nav List */}
-            <nav className="space-y-1">
+            <nav className="grid grid-cols-1 gap-1">
               {currentAdminRole === 'Super Admin' ? (
                 <>
-                  <button
-                    type="button"
-                    onClick={() => handleTabSelect('overview')}
-                    className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-black transition cursor-pointer text-left ${
-                      activeTab === 'overview'
-                        ? 'bg-[#0c234b] text-white shadow-sm ring-1 ring-amber-400/40'
-                        : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950'
-                    }`}
-                  >
-                    <TrendingUp className={`w-4 h-4 shrink-0 ${activeTab === 'overview' ? 'text-amber-400' : 'text-slate-500'}`} />
-                    <span className="truncate">Executive Overview</span>
-                  </button>
+                  {[
+                    { id: 'overview',     label: 'Executive Overview',      Icon: TrendingUp, on: 'text-amber-400' },
+                    { id: 'students',     label: 'Student Registrations',   Icon: Users,      on: 'text-sky-400' },
+                    { id: 'courses',      label: 'Course Details & Master', Icon: BookOpen,   on: 'text-emerald-400' },
+                    { id: 'events',       label: 'Event Page Management',   Icon: Calendar,   on: 'text-amber-400' },
+                    { id: 'franchise',    label: 'Franchise Enquiries',     Icon: Building,   on: 'text-indigo-400' },
+                    { id: 'payments',     label: 'Payment Sectors',         Icon: CreditCard, on: 'text-emerald-400' },
+                    { id: 'schools',      label: 'Branches & Centres',      Icon: School,     on: 'text-orange-400' },
+                    { id: 'certificates', label: 'Certificate Desk',        Icon: Award,      on: 'text-amber-400' },
+                  ].map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => handleTabSelect(item.id)}
+                      className={`w-full flex items-center gap-2.5 px-3 py-3 lg:py-2.5 rounded-xl text-xs font-black transition cursor-pointer text-left ${
+                        activeTab === item.id
+                          ? 'bg-[#0c234b] text-white shadow-sm ring-1 ring-amber-400/40'
+                          : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950'
+                      }`}
+                    >
+                      <item.Icon className={`w-4 h-4 shrink-0 ${activeTab === item.id ? item.on : 'text-slate-500'}`} />
+                      <span className="truncate">{item.label}</span>
+                    </button>
+                  ))}
 
                   <button
                     type="button"
-                    onClick={() => handleTabSelect('students')}
-                    className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-black transition cursor-pointer text-left ${
-                      activeTab === 'students'
-                        ? 'bg-[#0c234b] text-white shadow-sm ring-1 ring-amber-400/40'
-                        : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950'
-                    }`}
+                    onClick={() => setActivePage ? setActivePage('achievements') : handleTabSelect('achievements')}
+                    className="w-full flex items-center justify-between gap-2 px-3 py-3 lg:py-2.5 rounded-xl text-xs font-black transition cursor-pointer text-left text-slate-700 hover:bg-amber-50 hover:text-amber-900 border border-transparent hover:border-amber-300/60"
                   >
-                    <Users className={`w-4 h-4 shrink-0 ${activeTab === 'students' ? 'text-sky-400' : 'text-slate-500'}`} />
-                    <span className="truncate">Student Registrations</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleTabSelect('courses')}
-                    className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-black transition cursor-pointer text-left ${
-                      activeTab === 'courses'
-                        ? 'bg-[#0c234b] text-white shadow-sm ring-1 ring-amber-400/40'
-                        : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950'
-                    }`}
-                  >
-                    <BookOpen className={`w-4 h-4 shrink-0 ${activeTab === 'courses' ? 'text-emerald-400' : 'text-slate-500'}`} />
-                    <span className="truncate">Course Details & Master</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleTabSelect('events')}
-                    className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-black transition cursor-pointer text-left ${
-                      activeTab === 'events'
-                        ? 'bg-[#0c234b] text-white shadow-sm ring-1 ring-amber-400/40'
-                        : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950'
-                    }`}
-                  >
-                    <Calendar className={`w-4 h-4 shrink-0 ${activeTab === 'events' ? 'text-amber-400' : 'text-slate-500'}`} />
-                    <span className="truncate">Event Page Management</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleTabSelect('franchise')}
-                    className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-black transition cursor-pointer text-left ${
-                      activeTab === 'franchise'
-                        ? 'bg-[#0c234b] text-white shadow-sm ring-1 ring-amber-400/40'
-                        : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950'
-                    }`}
-                  >
-                    <Building className={`w-4 h-4 shrink-0 ${activeTab === 'franchise' ? 'text-indigo-400' : 'text-slate-500'}`} />
-                    <span className="truncate">Franchise Enquiries</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleTabSelect('payments')}
-                    className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-black transition cursor-pointer text-left ${
-                      activeTab === 'payments'
-                        ? 'bg-[#0c234b] text-white shadow-sm ring-1 ring-amber-400/40'
-                        : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950'
-                    }`}
-                  >
-                    <CreditCard className={`w-4 h-4 shrink-0 ${activeTab === 'payments' ? 'text-emerald-400' : 'text-slate-500'}`} />
-                    <span className="truncate">Payment Sectors</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleTabSelect('schools')}
-                    className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-black transition cursor-pointer text-left ${
-                      activeTab === 'schools'
-                        ? 'bg-[#0c234b] text-white shadow-sm ring-1 ring-amber-400/40'
-                        : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950'
-                    }`}
-                  >
-                    <School className={`w-4 h-4 shrink-0 ${activeTab === 'schools' ? 'text-orange-400' : 'text-slate-500'}`} />
-                    <span className="truncate">Branches & Centres</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleTabSelect('certificates')}
-                    className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-black transition cursor-pointer text-left ${
-                      activeTab === 'certificates'
-                        ? 'bg-[#0c234b] text-white shadow-sm ring-1 ring-amber-400/40'
-                        : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950'
-                    }`}
-                  >
-                    <Award className={`w-4 h-4 shrink-0 ${activeTab === 'certificates' ? 'text-amber-400' : 'text-slate-500'}`} />
-                    <span className="truncate">Certificate Desk</span>
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <Trophy className="w-4 h-4 shrink-0 text-amber-500" />
+                      <span className="truncate">Website Achievements</span>
+                    </div>
+                    <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-800 whitespace-nowrap">
+                      Live Web ↗
+                    </span>
                   </button>
                 </>
               ) : (
                 <>
-                  <button
-                    type="button"
-                    onClick={() => handleTabSelect('branch_overview')}
-                    className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-black transition cursor-pointer text-left ${
-                      activeTab === 'branch_overview'
-                        ? 'bg-[#0c234b] text-white shadow-sm ring-1 ring-amber-400/40'
-                        : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950'
-                    }`}
-                  >
-                    <Building className={`w-4 h-4 shrink-0 ${activeTab === 'branch_overview' ? 'text-amber-400' : 'text-slate-500'}`} />
-                    <span className="truncate">Branch Overview</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleTabSelect('branch_students')}
-                    className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-black transition cursor-pointer text-left ${
-                      activeTab === 'branch_students'
-                        ? 'bg-[#0c234b] text-white shadow-sm ring-1 ring-amber-400/40'
-                        : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950'
-                    }`}
-                  >
-                    <Users className={`w-4 h-4 shrink-0 ${activeTab === 'branch_students' ? 'text-sky-400' : 'text-slate-500'}`} />
-                    <span className="truncate">Concern Branch Students</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleTabSelect('branch_batches')}
-                    className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-black transition cursor-pointer text-left ${
-                      activeTab === 'branch_batches'
-                        ? 'bg-[#0c234b] text-white shadow-sm ring-1 ring-amber-400/40'
-                        : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950'
-                    }`}
-                  >
-                    <Clock className={`w-4 h-4 shrink-0 ${activeTab === 'branch_batches' ? 'text-amber-400' : 'text-slate-500'}`} />
-                    <span className="truncate">Available Batches & Timings</span>
-                  </button>
-
-
-                  <button
-                    type="button"
-                    onClick={() => handleTabSelect('branch_fees')}
-                    className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-black transition cursor-pointer text-left ${
-                      activeTab === 'branch_fees'
-                        ? 'bg-[#0c234b] text-white shadow-sm ring-1 ring-amber-400/40'
-                        : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950'
-                    }`}
-                  >
-                    <CreditCard className={`w-4 h-4 shrink-0 ${activeTab === 'branch_fees' ? 'text-amber-400' : 'text-slate-500'}`} />
-                    <span className="truncate">Branch Fee Collections</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleTabSelect('branch_certificates')}
-                    className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-black transition cursor-pointer text-left ${
-                      activeTab === 'branch_certificates'
-                        ? 'bg-[#0c234b] text-white shadow-sm ring-1 ring-amber-400/40'
-                        : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950'
-                    }`}
-                  >
-                    <Award className={`w-4 h-4 shrink-0 ${activeTab === 'branch_certificates' ? 'text-amber-400' : 'text-slate-500'}`} />
-                    <span className="truncate">Branch Certificate Desk</span>
-                  </button>
-
+                  {[
+                    { id: 'branch_overview',     label: 'Branch Overview',        Icon: Building,   on: 'text-emerald-300', badge: 'Active',                 badgeOn: 'bg-white/20 text-white',          badgeOff: 'bg-white/20 text-white' },
+                    { id: 'branch_students',     label: 'Concern Branch Students', Icon: Users,      on: 'text-sky-300',     badge: branchStudents.length,    badgeOn: 'bg-sky-400 text-slate-950',       badgeOff: 'bg-sky-50 text-sky-800' },
+                    { id: 'branch_batches',      label: 'Batches & Attendance',   Icon: Clock,      on: 'text-amber-300',   badge: '3 Batches',              badgeOn: 'bg-amber-100 text-amber-900',     badgeOff: 'bg-amber-100 text-amber-900' },
+                    { id: 'branch_fees',         label: 'Branch Fee Collections', Icon: CreditCard, on: 'text-emerald-300', badge: branchRevenueFormatted,   badgeOn: 'bg-emerald-300 text-slate-950',   badgeOff: 'bg-emerald-50 text-emerald-800' },
+                    { id: 'branch_certificates', label: 'Branch Certificate Desk', Icon: Award,      on: 'text-amber-300',   badge: 'Official',               badgeOn: 'bg-amber-100 text-amber-900',     badgeOff: 'bg-amber-100 text-amber-900' },
+                    { id: 'branch_notices',      label: 'HQ Directives & Notices', Icon: FileText,   on: 'text-teal-300',    badge: '2 New',                  badgeOn: 'bg-teal-100 text-teal-900',       badgeOff: 'bg-teal-100 text-teal-900' },
+                  ].map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => handleTabSelect(item.id)}
+                      className={`w-full flex items-center justify-between gap-2 px-3 py-3 lg:py-2.5 rounded-xl text-xs font-black transition cursor-pointer text-left ${
+                        activeTab === item.id
+                          ? 'bg-emerald-800 text-white shadow-sm ring-1 ring-emerald-300'
+                          : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <item.Icon className={`w-4 h-4 shrink-0 ${activeTab === item.id ? item.on : 'text-slate-500'}`} />
+                        <span className="truncate">{item.label}</span>
+                      </div>
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold whitespace-nowrap ${activeTab === item.id ? item.badgeOn : item.badgeOff}`}>
+                        {item.badge}
+                      </span>
+                    </button>
+                  ))}
                 </>
               )}
             </nav>
 
           </div>
 
+          {/* Pinned Bottom Helpline & Session Card (Branch Head only) */}
+          {currentAdminRole === 'Branch Head' && (
+            <div className="p-3.5 sm:p-4 border-t border-slate-100 bg-slate-50/70 mt-auto">
+              <div className="p-3 bg-white rounded-xl border border-slate-200 text-[11px] space-y-1 shadow-xs">
+                <div className="flex items-center justify-between font-bold text-slate-700">
+                  <span>Academic Session</span>
+                  <span className="text-emerald-700 font-black">2026-2027</span>
+                </div>
+                <div className="flex items-center justify-between text-slate-500">
+                  <span>Helpline Support</span>
+                  <span className="font-mono font-bold text-slate-800">98652 19131</span>
+                </div>
+                <div className="pt-1 flex items-center justify-between text-[10px] text-slate-400">
+                  <span>B★SEL Board Portal</span>
+                  <span className="flex items-center gap-1 text-emerald-600 font-bold">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    Online
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
 
         </aside>
 
         {/* =========================================================================
             RIGHT MAIN CONTENT: TAB PANELS & WORKSPACE
             ========================================================================= */}
-        <main className="flex-1 min-w-0 w-full p-4 sm:p-6 lg:p-8 space-y-5 bg-slate-100">
+        <main className="flex-1 min-w-0 w-full p-3 sm:p-6 lg:p-8 space-y-4 sm:space-y-5 bg-slate-100">
 
-            {/* BRANCH HEAD CONTEXT BANNER (Rendered when viewing as Branch Head; styled in Super Admin blue theme) */}
+            {/* BRANCH HEAD CONTEXT BANNER */}
             {currentAdminRole === 'Branch Head' && (
-              <div className="bg-gradient-to-r from-[#081d3d] via-[#0c234b] to-[#123068] text-white p-4 sm:p-5 rounded-2xl shadow-md border-2 border-amber-400/40 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 animate-in fade-in duration-200">
-                <div className="flex items-center gap-3.5">
-                  <div className="w-12 h-12 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-amber-400 shrink-0 shadow-sm">
-                    <Building className="w-6 h-6" />
+              <div className="bg-gradient-to-r from-emerald-900 via-teal-900 to-[#081d3d] text-white p-3.5 sm:p-5 rounded-2xl shadow-md border-2 border-emerald-400/70 grid grid-cols-1 md:grid-cols-[1fr_auto] items-start md:items-center gap-4 animate-in fade-in duration-200">
+                <div className="flex items-start sm:items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-emerald-500/20 border border-emerald-400 flex items-center justify-center text-emerald-300 shrink-0">
+                    <Building className="w-5 h-5 sm:w-6 sm:h-6" />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h1 className="text-base sm:text-lg font-black text-white">{activeBranch}</h1>
+                      <h1 className="text-base sm:text-lg font-black text-white break-words">{activeBranch}</h1>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-400 text-slate-950">
+                        Concern Branch Active Desk
+                      </span>
                     </div>
-                    <p className="text-xs text-sky-200 mt-0.5">
-                      Centre Director: <strong className="text-amber-300">Mrs. Thangam Sivaji</strong> &nbsp;|&nbsp; 
-                      Branch Code: <strong className="text-white">TSI-01</strong>
-                    </p>
+                    <div className="grid grid-cols-1 min-[420px]:grid-cols-2 sm:flex sm:flex-wrap gap-x-4 gap-y-0.5 text-xs text-emerald-200 mt-1">
+                      <div>Centre Director: <strong className="text-amber-300">Mrs. Thangam Sivaji</strong></div>
+                      <div>Branch Code: <strong className="text-white">TSI-01</strong></div>
+                      <div>Helpline: <strong className="text-white">98652 19131</strong></div>
+                      <div>Location: <span className="text-emerald-100">Surandai, Tenkasi</span></div>
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 flex-wrap self-end md:self-auto">
+                <div className="grid grid-cols-1 min-[420px]:grid-cols-2 md:flex items-center gap-2 w-full md:w-auto">
                   <button
                     type="button"
                     onClick={() => {
                       setNewStudent(prev => ({ ...prev, branch: activeBranch, institution: activeBranch }));
                       setShowAddStudentModal(true);
                     }}
-                    className="px-3.5 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded-xl text-xs font-black transition flex items-center gap-1.5 shadow-sm cursor-pointer"
+                    className="px-3.5 py-2.5 md:py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>Enroll Student to This Branch</span>
@@ -1330,7 +1403,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                       setNewPayment(prev => ({ ...prev, branch: activeBranch }));
                       setShowAddPaymentModal(true);
                     }}
-                    className="px-3.5 py-2 bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-xl text-xs font-black transition flex items-center gap-1.5 shadow-sm cursor-pointer"
+                    className="px-3.5 py-2.5 md:py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
                   >
                     <CreditCard className="w-3.5 h-3.5" />
                     <span>Record Branch Fee</span>
@@ -1343,88 +1416,88 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
             SUPER ADMIN: TAB 1 - EXECUTIVE OVERVIEW
             ========================================================================= */}
         {currentAdminRole === 'Super Admin' && activeTab === 'overview' && (
-          <div className="space-y-5 animate-in fade-in duration-200">
+          <div className="space-y-4 sm:space-y-5 animate-in fade-in duration-200">
             {/* KPI Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
-              
-              <div className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
-                <div>
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Total Students (All Branches)</span>
-                  <div className="text-2xl font-black text-slate-950 mt-1">{totalStudentsCount}</div>
-                  <span className="text-[11px] font-bold text-emerald-700 flex items-center gap-1 mt-0.5">
-                    <TrendingUp className="w-3 h-3" /> All districts active
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-2.5 sm:gap-3.5">
+
+              <div className="bg-white p-3 sm:p-4.5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <span className="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Total Students (All Branches)</span>
+                  <div className="text-xl sm:text-2xl font-black text-slate-950 mt-1">{totalStudentsCount}</div>
+                  <span className="text-[10px] sm:text-[11px] font-bold text-emerald-700 flex items-center gap-1 mt-0.5">
+                    <TrendingUp className="w-3 h-3 shrink-0" /> All districts active
                   </span>
                 </div>
-                <div className="w-11 h-11 rounded-xl bg-sky-100 text-[#0c234b] flex items-center justify-center font-bold">
+                <div className="hidden sm:flex w-11 h-11 rounded-xl bg-sky-100 text-[#0c234b] items-center justify-center font-bold shrink-0">
                   <Users className="w-5 h-5" />
                 </div>
               </div>
 
-              <div className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
-                <div>
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Master Courses</span>
-                  <div className="text-2xl font-black text-slate-950 mt-1">{totalCoursesCount}</div>
-                  <span className="text-[11px] font-bold text-sky-700 flex items-center gap-1 mt-0.5">
-                    <CheckCircle2 className="w-3 h-3" /> Skill & Tech Modules
+              <div className="bg-white p-3 sm:p-4.5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <span className="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Master Courses</span>
+                  <div className="text-xl sm:text-2xl font-black text-slate-950 mt-1">{totalCoursesCount}</div>
+                  <span className="text-[10px] sm:text-[11px] font-bold text-sky-700 flex items-center gap-1 mt-0.5">
+                    <CheckCircle2 className="w-3 h-3 shrink-0" /> Skill & Tech Modules
                   </span>
                 </div>
-                <div className="w-11 h-11 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">
+                <div className="hidden sm:flex w-11 h-11 rounded-xl bg-emerald-100 text-emerald-800 items-center justify-center font-bold shrink-0">
                   <BookOpen className="w-5 h-5" />
                 </div>
               </div>
 
-              <div className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
-                <div>
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Event Competitions</span>
-                  <div className="text-2xl font-black text-slate-950 mt-1">{totalEventsCount}</div>
-                  <span className="text-[11px] font-bold text-amber-700 flex items-center gap-1 mt-0.5">
-                    <Calendar className="w-3 h-3" /> State & National
+              <div className="bg-white p-3 sm:p-4.5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <span className="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Event Competitions</span>
+                  <div className="text-xl sm:text-2xl font-black text-slate-950 mt-1">{totalEventsCount}</div>
+                  <span className="text-[10px] sm:text-[11px] font-bold text-amber-700 flex items-center gap-1 mt-0.5">
+                    <Calendar className="w-3 h-3 shrink-0" /> State & National
                   </span>
                 </div>
-                <div className="w-11 h-11 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold">
+                <div className="hidden sm:flex w-11 h-11 rounded-xl bg-amber-100 text-amber-800 items-center justify-center font-bold shrink-0">
                   <Calendar className="w-5 h-5" />
                 </div>
               </div>
 
-              <div className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
-                <div>
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Franchise Enquiries</span>
-                  <div className="text-2xl font-black text-slate-950 mt-1">{totalFranchiseCount}</div>
-                  <span className="text-[11px] font-bold text-indigo-700 flex items-center gap-1 mt-0.5">
-                    <Building className="w-3 h-3" /> Incoming pipeline
+              <div className="bg-white p-3 sm:p-4.5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <span className="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Franchise Enquiries</span>
+                  <div className="text-xl sm:text-2xl font-black text-slate-950 mt-1">{totalFranchiseCount}</div>
+                  <span className="text-[10px] sm:text-[11px] font-bold text-indigo-700 flex items-center gap-1 mt-0.5">
+                    <Building className="w-3 h-3 shrink-0" /> Incoming pipeline
                   </span>
                 </div>
-                <div className="w-11 h-11 rounded-xl bg-indigo-100 text-indigo-800 flex items-center justify-center font-bold">
+                <div className="hidden sm:flex w-11 h-11 rounded-xl bg-indigo-100 text-indigo-800 items-center justify-center font-bold shrink-0">
                   <Building className="w-5 h-5" />
                 </div>
               </div>
 
-              <div className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
-                <div>
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Total Payment Sectors</span>
-                  <div className="text-2xl font-black text-emerald-800 mt-1">{totalRevenueFormatted}</div>
-                  <span className="text-[11px] font-bold text-emerald-700 flex items-center gap-1 mt-0.5">
-                    <ShieldCheck className="w-3 h-3" /> 100% Reconciled
+              <div className="col-span-2 lg:col-span-1 bg-white p-3 sm:p-4.5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <span className="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Total Payment Sectors</span>
+                  <div className="text-xl sm:text-2xl font-black text-emerald-800 mt-1">{totalRevenueFormatted}</div>
+                  <span className="text-[10px] sm:text-[11px] font-bold text-emerald-700 flex items-center gap-1 mt-0.5">
+                    <ShieldCheck className="w-3 h-3 shrink-0" /> 100% Reconciled
                   </span>
                 </div>
-                <div className="w-11 h-11 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">
+                <div className="hidden sm:flex w-11 h-11 rounded-xl bg-emerald-100 text-emerald-800 items-center justify-center font-bold shrink-0">
                   <CreditCard className="w-5 h-5" />
                 </div>
               </div>
 
             </div>
 
-            {/* Quick Action Bar for Super Admin */}
-            <div className="bg-gradient-to-r from-[#0c234b] to-[#163e7c] text-white p-4 rounded-2xl flex flex-wrap items-center justify-between gap-3 shadow-sm">
+            {/* Quick Action Bar */}
+            <div className="bg-gradient-to-r from-[#0c234b] to-[#163e7c] text-white p-3.5 sm:p-4 rounded-2xl grid grid-cols-1 lg:grid-cols-[auto_1fr] items-center gap-3 shadow-sm">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-amber-400" />
                 <span className="text-sm font-black">Executive Master Launchpad:</span>
               </div>
-              <div className="flex items-center gap-2 flex-wrap">
+              <div className="grid grid-cols-1 min-[420px]:grid-cols-2 lg:flex lg:flex-wrap lg:justify-end items-center gap-2">
                 <button
                   type="button"
                   onClick={() => setShowAddCourseModal(true)}
-                  className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-black transition flex items-center gap-1.5 cursor-pointer"
+                  className="px-3 py-2.5 lg:py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>Add New Course</span>
@@ -1433,7 +1506,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                 <button
                   type="button"
                   onClick={() => setShowAddEventModal(true)}
-                  className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl text-xs font-black transition flex items-center gap-1.5 cursor-pointer"
+                  className="px-3 py-2.5 lg:py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>Create Competition / Event</span>
@@ -1442,7 +1515,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                 <button
                   type="button"
                   onClick={() => setActiveTab('franchise')}
-                  className="px-3 py-1.5 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl text-xs font-black transition flex items-center gap-1.5 cursor-pointer"
+                  className="px-3 py-2.5 lg:py-1.5 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <Building className="w-3.5 h-3.5" />
                   <span>Review Franchise Leads</span>
@@ -1451,7 +1524,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                 <button
                   type="button"
                   onClick={() => setShowAddStudentModal(true)}
-                  className="px-3 py-1.5 bg-white/20 hover:bg-white/30 text-white rounded-xl text-xs font-black transition flex items-center gap-1.5 cursor-pointer"
+                  className="px-3 py-2.5 lg:py-1.5 bg-white/20 hover:bg-white/30 text-white rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <Users className="w-3.5 h-3.5" />
                   <span>Register Student</span>
@@ -1459,19 +1532,19 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
               </div>
             </div>
 
-            {/* Two-Column Overview Matrix: Branches Network & Payment Sectors Breakdown */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-              
+            {/* Two-Column Overview Matrix */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
+
               {/* Branch Network Performance */}
-              <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3.5">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-sm font-black text-slate-950 flex items-center gap-2">
-                    <Building className="w-4 h-4 text-sky-600" />
-                    <span>Regional Branch Network Performance</span>
+              <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3.5">
+                <div className="flex items-center justify-between gap-2">
+                  <h2 className="text-sm font-black text-slate-950 flex items-center gap-2 min-w-0">
+                    <Building className="w-4 h-4 text-sky-600 shrink-0" />
+                    <span className="truncate">Regional Branch Network Performance</span>
                   </h2>
                   <button
                     onClick={() => setActiveTab('schools')}
-                    className="text-xs font-bold text-sky-700 hover:underline flex items-center gap-1"
+                    className="text-xs font-bold text-sky-700 hover:underline flex items-center gap-1 shrink-0"
                   >
                     <span>View All</span>
                     <ArrowRight className="w-3 h-3" />
@@ -1481,9 +1554,9 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                 <div className="divide-y divide-slate-100">
                   {schoolsList.slice(0, 4).map((school, idx) => (
                     <div key={idx} className="py-2.5 flex items-center justify-between gap-3">
-                      <div>
-                        <div className="text-xs font-black text-slate-900">{school.name}</div>
-                        <div className="text-[11px] text-slate-500 flex items-center gap-2 mt-0.5">
+                      <div className="min-w-0">
+                        <div className="text-xs font-black text-slate-900 truncate">{school.name}</div>
+                        <div className="text-[11px] text-slate-500 flex items-center gap-x-2 flex-wrap mt-0.5">
                           <span>{school.city}</span>
                           <span>•</span>
                           <span>Director: <strong className="text-slate-700">{school.principal || school.coordinator}</strong></span>
@@ -1501,22 +1574,22 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
               </div>
 
               {/* Payment Sectors Summary */}
-              <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3.5">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-sm font-black text-slate-950 flex items-center gap-2">
-                    <CreditCard className="w-4 h-4 text-emerald-600" />
-                    <span>Payment Sectors Distribution</span>
+              <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3.5">
+                <div className="flex items-center justify-between gap-2">
+                  <h2 className="text-sm font-black text-slate-950 flex items-center gap-2 min-w-0">
+                    <CreditCard className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span className="truncate">Payment Sectors Distribution</span>
                   </h2>
                   <button
                     onClick={() => setActiveTab('payments')}
-                    className="text-xs font-bold text-emerald-700 hover:underline flex items-center gap-1"
+                    className="text-xs font-bold text-emerald-700 hover:underline flex items-center gap-1 shrink-0"
                   >
                     <span>Financial Ledger</span>
                     <ArrowRight className="w-3 h-3" />
                   </button>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 pt-1">
+                <div className="grid grid-cols-2 gap-2.5 sm:gap-3 pt-1">
                   <div className="p-3 bg-sky-50 rounded-xl border border-sky-100">
                     <span className="text-[10px] font-bold uppercase text-sky-800">🎓 Course Tuition Sector</span>
                     <div className="text-base font-black text-sky-950 mt-1">₹48,500</div>
@@ -1548,16 +1621,15 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
         )}
 
         {/* =========================================================================
-            SUPER ADMIN: TAB 2 - STUDENT REGISTRATIONS (MONITOR ALL BRANCHES)
+            SUPER ADMIN: TAB 2 - STUDENT REGISTRATIONS
             ========================================================================= */}
         {currentAdminRole === 'Super Admin' && activeTab === 'students' && (
           <div className="space-y-4 animate-in fade-in duration-200">
-            {/* Header & Filter Controls */}
-            <div className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-sm space-y-3.5">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="bg-white p-3.5 sm:p-4.5 rounded-2xl border border-slate-200 shadow-sm space-y-3.5">
+              <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] items-start sm:items-center gap-3">
                 <div>
                   <h2 className="text-base font-black text-slate-950 flex items-center gap-2">
-                    <Users className="w-5 h-5 text-sky-600" />
+                    <Users className="w-5 h-5 text-sky-600 shrink-0" />
                     <span>Central Student Registration Monitor</span>
                   </h2>
                   <p className="text-xs text-slate-500 mt-0.5">
@@ -1565,21 +1637,18 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                   </p>
                 </div>
 
-                <div className="flex items-center gap-2 flex-wrap">
-                  <button
-                    type="button"
-                    onClick={() => setShowAddStudentModal(true)}
-                    className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black transition flex items-center gap-1.5 shadow-sm cursor-pointer"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>Register New Student</span>
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowAddStudentModal(true)}
+                  className="w-full sm:w-auto px-3.5 py-2.5 sm:py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Register New Student</span>
+                </button>
               </div>
 
               {/* Filters Row */}
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5 pt-1">
-                {/* Search */}
                 <div className="relative">
                   <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
@@ -1587,15 +1656,14 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                     value={studentSearch}
                     onChange={(e) => setStudentSearch(e.target.value)}
                     placeholder="Search candidate name, ID, phone..."
-                    className="w-full pl-9 pr-3 py-2 text-xs border border-slate-300 rounded-xl focus:border-sky-600 outline-none"
+                    className="w-full pl-9 pr-3 py-2.5 sm:py-2 text-xs border border-slate-300 rounded-xl focus:border-sky-600 outline-none"
                   />
                 </div>
 
-                {/* Branch Filter */}
                 <select
                   value={studentBranchFilter}
                   onChange={(e) => setStudentBranchFilter(e.target.value)}
-                  className="px-3 py-2 text-xs border border-slate-300 rounded-xl focus:border-sky-600 outline-none cursor-pointer bg-white"
+                  className="px-3 py-2.5 sm:py-2 text-xs border border-slate-300 rounded-xl focus:border-sky-600 outline-none cursor-pointer bg-white"
                 >
                   <option value="All">All Branches</option>
                   <option value="Tenkasi">Tenkasi Regional Branch</option>
@@ -1603,11 +1671,10 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                   <option value="Coimbatore">Coimbatore Branch</option>
                 </select>
 
-                {/* Course Filter */}
                 <select
                   value={studentCourseFilter}
                   onChange={(e) => setStudentCourseFilter(e.target.value)}
-                  className="px-3 py-2 text-xs border border-slate-300 rounded-xl focus:border-sky-600 outline-none cursor-pointer bg-white"
+                  className="px-3 py-2.5 sm:py-2 text-xs border border-slate-300 rounded-xl focus:border-sky-600 outline-none cursor-pointer bg-white"
                 >
                   <option value="All">All Courses</option>
                   <option value="Abacus">Abacus</option>
@@ -1618,11 +1685,10 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                   <option value="Canva">Canva Design</option>
                 </select>
 
-                {/* Fee Status Filter */}
                 <select
                   value={studentPaymentFilter}
                   onChange={(e) => setStudentPaymentFilter(e.target.value)}
-                  className="px-3 py-2 text-xs border border-slate-300 rounded-xl focus:border-sky-600 outline-none cursor-pointer bg-white"
+                  className="px-3 py-2.5 sm:py-2 text-xs border border-slate-300 rounded-xl focus:border-sky-600 outline-none cursor-pointer bg-white"
                 >
                   <option value="All">All Fee Statuses</option>
                   <option value="Paid">Fee Paid / Verified</option>
@@ -1631,130 +1697,342 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
               </div>
             </div>
 
-            {/* Students Roster Table */}
+            {/* Students Roster — card grid on phones, table from md up */}
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-[#081d3d] text-white uppercase text-[10px] tracking-wider font-black">
-                    <tr>
-                      <th className="py-3 px-4">Student Details</th>
-                      <th className="py-3 px-3">Parent & Contact</th>
-                      <th className="py-3 px-3">Concern Branch</th>
-                      <th className="py-3 px-3">Course & Level</th>
-                      <th className="py-3 px-3">Fee Status</th>
-                      <th className="py-3 px-3 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 font-medium">
-                    {filteredStudentsSuperAdmin.length === 0 ? (
-                      <tr>
-                        <td colSpan="6" className="py-8 text-center text-slate-500">
-                          No students matching your filter criteria.
-                        </td>
-                      </tr>
-                    ) : (
-                      filteredStudentsSuperAdmin.map((student, idx) => (
-                        <tr key={student.userId} className="hover:bg-slate-50/80 transition">
-                          <td className="py-3 px-4">
-                            <div className="flex items-center gap-3">
-                              {/* Student Passport Photo Thumbnail */}
-                              <div 
-                                onClick={() => handleOpenMarksheet(student, idx)}
-                                className="relative w-10 h-10 sm:w-11 sm:h-11 rounded-xl overflow-hidden border-2 border-amber-400/90 shadow-xs shrink-0 bg-slate-100 cursor-pointer hover:border-amber-500 hover:scale-105 transition group"
-                                title="Click to view official marksheet"
-                              >
-                                <img
-                                  src={getStudentPhotoUrl(student, idx)}
-                                  alt={student.studentName}
-                                  className="w-full h-full object-cover object-top"
-                                />
-                              </div>
-                              <div className="min-w-0">
-                                <div className="font-extrabold text-slate-900 capitalize truncate">{student.studentName || 'Student Name'}</div>
-                                <div className="text-[10px] text-slate-500 flex items-center gap-1.5 mt-0.5">
-                                  <span className="font-mono font-bold text-sky-800">{student.registerNumber || student.userId}</span>
-                                  <span>•</span>
-                                  <span>ID: {student.userId}</span>
-                                </div>
-                              </div>
-                            </div>
-                          </td>
 
-                          <td className="py-3 px-3">
-                            <div className="text-slate-800 font-semibold">{student.parentName || 'Guardian'}</div>
-                            <div className="text-[11px] text-slate-500 mt-0.5 flex items-center gap-1">
-                              <Phone className="w-3 h-3 text-emerald-600" />
-                              <span>{student.phone || '98400 00000'}</span>
-                            </div>
-                          </td>
+<div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
 
-                          <td className="py-3 px-3">
-                            <span className="inline-block px-2.5 py-0.5 rounded-md text-[10px] font-black bg-blue-50 text-blue-900 border border-blue-200">
-                              {student.branch || student.institution || 'Tenkasi Branch'}
-                            </span>
-                          </td>
+  {/* Student Table */}
+  <div className="overflow-x-auto">
+    {paginatedStudents.length > 0 ? (
+      <table className="w-full min-w-[1050px] text-left border-collapse">
 
-                          <td className="py-3 px-3">
-                            <div className="font-bold text-slate-900">{student.program || student.courseName || 'Abacus'}</div>
-                            <div className="text-[10px] font-black text-amber-700 mt-0.5 uppercase tracking-wide">
-                              {student.grade || 'Level 1'}
-                            </div>
-                          </td>
+        {/* Table Header */}
+        <thead className="bg-[#0B1F43] text-white">
+          <tr>
+            <th className="px-4 py-4 text-[11px] font-black uppercase w-[28%]">
+              Student Details
+            </th>
+            <th className="px-4 py-4 text-[11px] font-black uppercase">
+              Parent & Contact
+            </th>
+            <th className="px-4 py-4 text-[11px] font-black uppercase">
+              Concern & Branch
+            </th>
+            <th className="px-4 py-4 text-[11px] font-black uppercase">
+              Course & Level
+            </th>
+            <th className="px-4 py-4 text-[11px] font-black uppercase">
+              Fee Status
+            </th>
+            <th className="px-4 py-4 text-[11px] font-black uppercase text-center">
+              Actions
+            </th>
+          </tr>
+        </thead>
 
-                          <td className="py-3 px-3">
-                            <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${
-                              student.feePaymentType === 'Paid' || student.feePaymentType === 'Pay Now'
-                                ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                                : 'bg-amber-100 text-amber-800 border border-amber-300'
-                            }`}>
-                              <CheckCircle2 className="w-3 h-3" />
-                              <span>{student.feeAmount || '₹450'} • {student.feePaymentType === 'Paid' ? 'Paid' : 'Pending'}</span>
-                            </span>
-                          </td>
+        {/* Student Records */}
+        <tbody className="divide-y divide-slate-100">
 
-                          <td className="py-3 px-3 text-right">
-                            <div className="flex items-center justify-end gap-1.5 flex-wrap sm:flex-nowrap">
-                              {/* Admission Form Button */}
-                              <button
-                                type="button"
-                                onClick={() => setViewingAdmissionStudent(student)}
-                                className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-lg text-[10px] transition cursor-pointer flex items-center gap-1 shadow-xs"
-                                title="View & Print Official Admission Form"
-                              >
-                                <GraduationCap className="w-3 h-3 text-emerald-200" />
-                                <span>Admission Form</span>
-                              </button>
+          {paginatedStudents.map((student, idx) => {
 
-                              {/* Marksheet Button */}
-                              <button
-                                type="button"
-                                onClick={() => handleOpenMarksheet(student, idx)}
-                                className="px-2.5 py-1 bg-[#081d3d] hover:bg-[#123068] text-white font-black rounded-lg text-[10px] transition cursor-pointer flex items-center gap-1 shadow-xs border border-sky-400/30"
-                                title="View & Print Official Marksheet"
-                              >
-                                <FileText className="w-3 h-3 text-amber-300" />
-                                <span>Marksheet</span>
-                              </button>
+            const studentName =
+              student.studentName || student.name || "N/A";
 
-                              {/* Certificate Generator */}
-                              <button
-                                type="button"
-                                onClick={() => handleOpenCertForStudent(student)}
-                                className="px-2.5 py-1 bg-amber-400 hover:bg-amber-500 text-slate-950 font-black rounded-lg text-[10px] transition cursor-pointer flex items-center gap-1 shadow-xs"
-                                title="Generate Certificate"
-                              >
-                                <Award className="w-3 h-3" />
-                                <span>Cert</span>
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+            const studentCode =
+              student.studentCode ||
+              student.admissionNumber ||
+              student.userId ||
+              "N/A";
+
+            const registerNumber =
+              student.registerNumber ||
+              student.userId ||
+              "N/A";
+
+            const parentName =
+              student.parentName ||
+              student.fatherName ||
+              student.motherName ||
+              "N/A";
+
+            const phone =
+              student.phone ||
+              student.parentPhone ||
+              student.mobile ||
+              "N/A";
+
+            const branch =
+              student.branch ||
+              student.branchName ||
+              "N/A";
+
+            const course =
+              student.program ||
+              student.courseName ||
+              student.course ||
+              "N/A";
+
+            const level =
+              student.level ||
+              student.grade ||
+              student.courseLevel ||
+              "N/A";
+
+            const feeAmount =
+              student.feeAmount ??
+              student.courseFee ??
+              student.amount ??
+              0;
+
+            const paymentStatus =
+              student.feePaymentType || "Pending";
+
+            const isPaid =
+              paymentStatus === "Paid" ||
+              paymentStatus === "Pay Now";
+
+            return (
+              <tr
+                key={student.uid || student.userId || idx}
+                className="hover:bg-slate-50/70 transition-colors"
+              >
+
+                {/* STUDENT DETAILS */}
+                <td className="px-4 py-4">
+                  <div className="flex items-center gap-3 min-w-[260px]">
+
+                    <img
+                      src={getStudentPhotoUrl(student)}
+                      alt={studentName}
+                      onError={(e) => {
+                        e.currentTarget.src = "/default-avatar.png";
+                      }}
+                      className="w-11 h-11 shrink-0 rounded-xl object-cover border-2 border-amber-400"
+                    />
+
+                    <div className="min-w-0">
+                      <p className="text-xs font-black text-slate-900">
+                        {studentName}
+                      </p>
+
+                      <p className="mt-1 text-[10px] font-mono font-bold text-slate-500">
+                        {studentCode}
+                      </p>
+
+                      <p className="mt-0.5 text-[10px] text-slate-700 break-all">
+                        <span className="font-bold">•</span>
+                        &nbsp; ID: {registerNumber}
+                      </p>
+                    </div>
+
+                  </div>
+                </td>
+
+                {/* PARENT & CONTACT */}
+                <td className="px-4 py-4">
+                  <div className="min-w-[100px]">
+                    <p className="text-xs font-semibold text-slate-800">
+                      {parentName}
+                    </p>
+
+                    <p className="mt-1 text-[11px] text-slate-600 flex items-center gap-1">
+                      <span className="text-emerald-600">☎</span>
+                      {phone}
+                    </p>
+                  </div>
+                </td>
+
+                {/* CONCERN & BRANCH */}
+                <td className="px-4 py-4">
+                  <span className="inline-block max-w-[125px] rounded-lg border border-blue-200 bg-blue-50 px-2.5 py-2 text-[11px] font-bold leading-tight text-blue-900">
+                    {branch}
+                  </span>
+                </td>
+
+                {/* COURSE & LEVEL */}
+                <td className="px-4 py-4">
+                  <div className="min-w-[100px]">
+                    <p className="text-xs font-bold leading-snug text-slate-900">
+                      {course}
+                    </p>
+
+                    <p className="mt-1 text-[10px] font-black uppercase text-amber-700">
+                      {level}
+                    </p>
+                  </div>
+                </td>
+
+                {/* FEE STATUS */}
+                <td className="px-4 py-4">
+                  <div
+                    className={`inline-flex min-w-[85px] flex-col items-center justify-center rounded-full border px-3 py-1.5 ${
+                      isPaid
+                        ? "border-emerald-300 bg-emerald-100 text-emerald-800"
+                        : "border-amber-300 bg-amber-100 text-amber-800"
+                    }`}
+                  >
+                    <span className="text-[11px] font-black">
+                      ₹{Number(feeAmount).toLocaleString("en-IN")}
+                    </span>
+
+                    <span className="text-[10px] font-black uppercase">
+                      {isPaid ? "✓ PAID" : "PENDING"}
+                    </span>
+                  </div>
+                </td>
+
+                {/* ACTIONS */}
+                <td className="px-4 py-4">
+                  <div className="flex min-w-[260px] items-center justify-center gap-1.5">
+
+                    {/* Admission Form */}
+                    <button
+                      type="button"
+                      onClick={() => handleOpenAdmissionForm(student)}
+                      className="rounded-lg bg-emerald-600 px-2.5 py-2 text-[10px] font-black leading-tight text-white transition hover:bg-emerald-700"
+                    >
+                      Admission
+                      <br />
+                      Form
+                    </button>
+
+                    {/* Marksheet */}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleOpenMarksheet(
+                          student,
+                          startStudentIndex + idx
+                        )
+                      }
+                      className="rounded-lg bg-[#0B1F43] px-2.5 py-2 text-[10px] font-black text-white transition hover:bg-blue-900"
+                    >
+                      📄 Marksheet
+                    </button>
+
+                    {/* Certificate */}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleOpenCertForStudent(student)
+                      }
+                      className="rounded-lg bg-amber-400 px-2.5 py-2 text-[10px] font-black text-slate-950 transition hover:bg-amber-500"
+                    >
+                      🏅 Cert
+                    </button>
+
+                  </div>
+                </td>
+
+              </tr>
+            );
+          })}
+
+        </tbody>
+      </table>
+    ) : (
+      <div className="py-12 text-center text-sm font-medium text-slate-500">
+        No students found.
+      </div>
+    )}
+  </div>
+
+  {/* PAGINATION */}
+  {filteredStudentsSuperAdmin.length > 0 && (
+    <div className="flex flex-col gap-4 border-t border-slate-200 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+
+      {/* Results Information */}
+      <p className="text-sm text-slate-500">
+        Showing{" "}
+        <span className="font-bold text-slate-800">
+          {startStudentIndex + 1}
+        </span>
+        {" "}to{" "}
+        <span className="font-bold text-slate-800">
+          {Math.min(
+            startStudentIndex + studentsPerPage,
+            filteredStudentsSuperAdmin.length
+          )}
+        </span>
+        {" "}of{" "}
+        <span className="font-bold text-slate-800">
+          {filteredStudentsSuperAdmin.length}
+        </span>
+        {" "}students
+      </p>
+
+      {/* Pagination Buttons */}
+      <div className="flex flex-wrap items-center justify-center gap-2">
+
+        <button
+          type="button"
+          onClick={() => setStudentCurrentPage(1)}
+          disabled={studentCurrentPage === 1}
+          className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          First
+        </button>
+
+        <button
+          type="button"
+          onClick={() =>
+            setStudentCurrentPage(prev => Math.max(prev - 1, 1))
+          }
+          disabled={studentCurrentPage === 1}
+          className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          Previous
+        </button>
+
+        {Array.from(
+          { length: totalStudentPages },
+          (_, index) => index + 1
+        ).map(page => (
+          <button
+            key={page}
+            type="button"
+            onClick={() => setStudentCurrentPage(page)}
+            className={`h-9 min-w-9 rounded-lg px-3 text-sm font-bold transition ${
+              studentCurrentPage === page
+                ? "bg-blue-600 text-white shadow-sm"
+                : "border border-slate-200 text-slate-600 hover:bg-slate-100"
+            }`}
+          >
+            {page}
+          </button>
+        ))}
+
+        <button
+          type="button"
+          onClick={() =>
+            setStudentCurrentPage(prev =>
+              Math.min(prev + 1, totalStudentPages)
+            )
+          }
+          disabled={studentCurrentPage === totalStudentPages}
+          className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          Next
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setStudentCurrentPage(totalStudentPages)}
+          disabled={studentCurrentPage === totalStudentPages}
+          className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          Last
+        </button>
+
+      </div>
+    </div>
+  )}
+
+</div>
+
+ 
+</div>
           </div>
         )}
 
@@ -1763,11 +2041,10 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
             ========================================================================= */}
         {currentAdminRole === 'Super Admin' && activeTab === 'courses' && (
           <div className="space-y-4 animate-in fade-in duration-200">
-            {/* Header & Add Button */}
-            <div className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="bg-white p-3.5 sm:p-4.5 rounded-2xl border border-slate-200 shadow-sm grid grid-cols-1 lg:grid-cols-[1fr_auto] items-start lg:items-center gap-3">
               <div>
                 <h2 className="text-base font-black text-slate-950 flex items-center gap-2">
-                  <BookOpen className="w-5 h-5 text-emerald-600" />
+                  <BookOpen className="w-5 h-5 text-emerald-600 shrink-0" />
                   <span>Master Courses & Curriculum Management</span>
                 </h2>
                 <p className="text-xs text-slate-500 mt-0.5">
@@ -1775,11 +2052,11 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                 </p>
               </div>
 
-              <div className="flex items-center gap-2 flex-wrap">
+              <div className="grid grid-cols-2 sm:flex items-center gap-2 w-full lg:w-auto">
                 <button
                   type="button"
                   onClick={() => setShowAddCourseModal(true)}
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black transition flex items-center gap-1.5 shadow-sm cursor-pointer"
+                  className="px-4 py-2.5 sm:py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Add New Course</span>
@@ -1793,7 +2070,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                       showToast('Courses reset to default syllabus.');
                     }
                   }}
-                  className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition flex items-center gap-1 cursor-pointer"
+                  className="px-3 py-2.5 sm:py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 cursor-pointer"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
                   <span>Reset Default</span>
@@ -1801,14 +2078,14 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
               </div>
             </div>
 
-            {/* Category Filter & Search */}
-            <div className="flex flex-wrap items-center justify-between gap-2.5">
-              <div className="flex items-center gap-1.5 flex-wrap">
+            {/* Category Filter (swipeable on phones) & Search */}
+            <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] items-center gap-2.5">
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 -mx-1 px-1 md:flex-wrap md:overflow-visible">
                 {['All', 'Skill Development', 'Creative Arts', 'Languages', 'Digital & Technology'].map((cat) => (
                   <button
                     key={cat}
                     onClick={() => setCourseCategoryFilter(cat)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                    className={`shrink-0 whitespace-nowrap px-3 py-2 sm:py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
                       courseCategoryFilter === cat
                         ? 'bg-[#0c234b] text-white shadow-xs'
                         : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
@@ -1819,31 +2096,31 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                 ))}
               </div>
 
-              <div className="relative min-w-[220px]">
+              <div className="relative w-full md:min-w-[220px]">
                 <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
                   value={courseSearch}
                   onChange={(e) => setCourseSearch(e.target.value)}
                   placeholder="Filter courses..."
-                  className="w-full pl-9 pr-3 py-1.5 text-xs bg-white border border-slate-300 rounded-xl outline-none"
+                  className="w-full pl-9 pr-3 py-2.5 sm:py-1.5 text-xs bg-white border border-slate-300 rounded-xl outline-none"
                 />
               </div>
             </div>
 
             {/* Course Grid Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredCourses.map((course) => (
-                <div key={course.id} className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4.5 flex flex-col justify-between hover:shadow-md transition">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
+              {paginatedCourses.map((course) => (
+                <div key={course.id} className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-4.5 flex flex-col justify-between hover:shadow-md transition">
                   <div>
                     <div className="flex items-start justify-between gap-2">
-                      <div>
+                      <div className="min-w-0">
                         <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">
                           Code: {course.code || 'BSEL'} • {course.category || 'Skill'}
                         </span>
-                        <h3 className="text-base font-black text-slate-950 mt-0.5">{course.name}</h3>
+                        <h3 className="text-base font-black text-slate-950 mt-0.5 break-words">{course.name}</h3>
                       </div>
-                      <span className="px-2 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded text-[11px] font-black">
+                      <span className="px-2 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded text-[11px] font-black shrink-0">
                         {course.fee || '₹450'}
                       </span>
                     </div>
@@ -1863,7 +2140,6 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                       </div>
                     </div>
 
-                    {/* Learning Outcomes Snippet */}
                     <div className="mt-3 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
                       <span className="text-[10px] uppercase font-black text-slate-500 block mb-1">Key Outcomes:</span>
                       <ul className="text-[11px] text-slate-700 space-y-0.5 list-disc list-inside">
@@ -1874,7 +2150,6 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                     </div>
                   </div>
 
-                  {/* Actions */}
                   <div className="flex items-center justify-between gap-2 mt-4 pt-3 border-t border-slate-100">
                     <span className="text-[11px] font-bold text-sky-700">
                       {course.enrolledStudents || 12} enrolled
@@ -1884,7 +2159,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                       <button
                         type="button"
                         onClick={() => handleStartEditCourse(course)}
-                        className="px-3 py-1 text-xs font-bold bg-slate-100 hover:bg-[#081d3d] text-slate-700 hover:text-white rounded-lg transition flex items-center gap-1 cursor-pointer shadow-2xs"
+                        className="px-3 py-2 sm:py-1 text-xs font-bold bg-slate-100 hover:bg-[#081d3d] text-slate-700 hover:text-white rounded-lg transition flex items-center gap-1 cursor-pointer shadow-2xs"
                         title="Edit course syllabus, fee, and outcomes"
                       >
                         <Edit3 className="w-3.5 h-3.5" />
@@ -1894,7 +2169,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                       <button
                         type="button"
                         onClick={() => handleDeleteCourse(course.id, course.name)}
-                        className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
+                        className="p-2 sm:p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
                         title="Remove Course"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -1904,6 +2179,105 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                 </div>
               ))}
             </div>
+
+            {/* COURSE PAGINATION */}
+{filteredCourses.length > 0 && (
+  <div className="bg-white rounded-2xl border border-slate-200 shadow-sm px-4 py-4 sm:px-6">
+
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+
+      {/* Results Information */}
+      <p className="text-sm text-slate-500">
+        Showing{" "}
+        <span className="font-bold text-slate-800">
+          {startCourseIndex + 1}
+        </span>
+        {" "}to{" "}
+        <span className="font-bold text-slate-800">
+          {Math.min(
+            startCourseIndex + coursesPerPage,
+            filteredCourses.length
+          )}
+        </span>
+        {" "}of{" "}
+        <span className="font-bold text-slate-800">
+          {filteredCourses.length}
+        </span>
+        {" "}courses
+      </p>
+
+      {/* Pagination Controls */}
+      <div className="flex flex-wrap items-center justify-center gap-2">
+
+        {/* First */}
+        <button
+          type="button"
+          onClick={() => setCourseCurrentPage(1)}
+          disabled={courseCurrentPage === 1}
+          className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          First
+        </button>
+
+        {/* Previous */}
+        <button
+          type="button"
+          onClick={() =>
+            setCourseCurrentPage(prev => Math.max(prev - 1, 1))
+          }
+          disabled={courseCurrentPage === 1}
+          className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          Previous
+        </button>
+
+        {/* Page Numbers */}
+        {Array.from(
+          { length: totalCoursePages },
+          (_, index) => index + 1
+        ).map(page => (
+          <button
+            key={page}
+            type="button"
+            onClick={() => setCourseCurrentPage(page)}
+            className={`h-9 min-w-9 rounded-lg px-3 text-sm font-bold transition ${
+              courseCurrentPage === page
+                ? "bg-blue-600 text-white shadow-sm"
+                : "border border-slate-200 text-slate-600 hover:bg-slate-100"
+            }`}
+          >
+            {page}
+          </button>
+        ))}
+
+        {/* Next */}
+        <button
+          type="button"
+          onClick={() =>
+            setCourseCurrentPage(prev =>
+              Math.min(prev + 1, totalCoursePages)
+            )
+          }
+          disabled={courseCurrentPage === totalCoursePages}
+          className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          Next
+        </button>
+
+        {/* Last */}
+        <button
+          type="button"
+          onClick={() => setCourseCurrentPage(totalCoursePages)}
+          disabled={courseCurrentPage === totalCoursePages}
+          className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          Last
+        </button>
+
+      </div>
+    </div>
+  </div>
+)}
           </div>
         )}
 
@@ -1912,10 +2286,10 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
             ========================================================================= */}
         {currentAdminRole === 'Super Admin' && activeTab === 'events' && (
           <div className="space-y-4 animate-in fade-in duration-200">
-            <div className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="bg-white p-3.5 sm:p-4.5 rounded-2xl border border-slate-200 shadow-sm grid grid-cols-1 lg:grid-cols-[1fr_auto] items-start lg:items-center gap-3">
               <div>
                 <h2 className="text-base font-black text-slate-950 flex items-center gap-2">
-                  <Calendar className="w-5 h-5 text-amber-500" />
+                  <Calendar className="w-5 h-5 text-amber-500 shrink-0" />
                   <span>Public Event Page Management</span>
                 </h2>
                 <p className="text-xs text-slate-500 mt-0.5">
@@ -1923,11 +2297,11 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                 </p>
               </div>
 
-              <div className="flex items-center gap-2 flex-wrap">
+              <div className="grid grid-cols-2 sm:flex items-center gap-2 w-full lg:w-auto">
                 <button
                   type="button"
                   onClick={() => setShowAddEventModal(true)}
-                  className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl text-xs font-black transition flex items-center gap-1.5 shadow-sm cursor-pointer"
+                  className="px-4 py-2.5 sm:py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Publish New Event</span>
@@ -1941,7 +2315,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                       showToast('Events reset to official default schedule.');
                     }
                   }}
-                  className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition flex items-center gap-1 cursor-pointer"
+                  className="px-3 py-2.5 sm:py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 cursor-pointer"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
                   <span>Reset Default</span>
@@ -1949,11 +2323,11 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
               </div>
             </div>
 
-            {/* Event List Table */}
+            {/* Event List — card grid on phones, table from md up */}
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-[#081d3d] text-white uppercase text-[10px] tracking-wider font-black">
+                <table className="block md:table w-full text-left text-xs">
+                  <thead className="hidden md:table-header-group bg-[#081d3d] text-white uppercase text-[10px] tracking-wider font-black">
                     <tr>
                       <th className="py-3 px-4">S.No & Event</th>
                       <th className="py-3 px-3">Category</th>
@@ -1964,48 +2338,51 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                       <th className="py-3 px-3 text-right">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 font-medium">
-                    {eventsList.map((event) => (
-                      <tr key={event.sNo} className="hover:bg-slate-50 transition">
-                        <td className="py-3 px-4">
+                  <tbody className="block md:table-row-group divide-y divide-slate-100 font-medium">
+                    {paginatedEvents.map((event) => (
+                      <tr
+                        key={event.sNo}
+                        className="grid grid-cols-2 gap-x-3 gap-y-2.5 p-3.5 md:table-row md:p-0 hover:bg-slate-50 transition [&>td]:block [&>td]:min-w-0 [&>td]:p-0 md:[&>td]:table-cell md:[&>td]:px-3 md:[&>td]:py-3 [&>td]:before:content-[attr(data-label)] [&>td]:before:block [&>td]:before:mb-0.5 [&>td]:before:text-[9px] [&>td]:before:font-black [&>td]:before:uppercase [&>td]:before:tracking-wider [&>td]:before:text-slate-400 md:[&>td]:before:hidden"
+                      >
+                        <td className="col-span-2 md:pl-4">
                           <span className="font-mono font-bold text-slate-400 mr-1.5">#{event.sNo}</span>
                           <strong className="text-slate-950 text-xs">{event.eventName}</strong>
                         </td>
-                        <td className="py-3 px-3">
+                        <td data-label="Category">
                           <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-sky-50 text-sky-800 border border-sky-200">
                             {event.category}
                           </span>
                         </td>
-                        <td className="py-3 px-3">
+                        <td data-label="Location & Venue">
                           <div className="text-slate-900 font-bold">{event.place}</div>
                           <div className="text-[10px] text-slate-500 truncate max-w-[200px]">{event.venue}</div>
                         </td>
-                        <td className="py-3 px-3 font-semibold text-slate-800">
+                        <td data-label="Event Date" className="font-semibold text-slate-800">
                           {event.date}
                         </td>
-                        <td className="py-3 px-3 font-black text-emerald-700">
+                        <td data-label="Reg. Fee" className="font-black text-emerald-700">
                           {event.fee}
                         </td>
-                        <td className="py-3 px-3">
+                        <td data-label="Status" className="col-span-2 md:col-auto">
                           <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-100 text-emerald-800 border border-emerald-300">
                             {event.status || 'Registration Open'}
                           </span>
                         </td>
-                        <td className="py-3 px-3 text-right">
-                          <div className="flex items-center justify-end gap-1.5">
+                        <td className="col-span-2 md:text-right">
+                          <div className="flex items-center md:justify-end gap-1.5">
                             <button
                               type="button"
                               onClick={() => setEditingEvent(event)}
-                              className="px-2 py-1 text-slate-700 hover:text-white bg-slate-100 hover:bg-[#081d3d] rounded-lg transition cursor-pointer flex items-center gap-1 text-[11px] font-bold shadow-2xs"
+                              className="px-3 py-2 md:px-2 md:py-1 text-slate-700 hover:text-white bg-slate-100 hover:bg-[#081d3d] rounded-lg transition cursor-pointer flex items-center gap-1 text-[11px] font-bold shadow-2xs"
                               title="Edit Event Details"
                             >
                               <Edit3 className="w-3.5 h-3.5" />
-                              <span className="hidden sm:inline">Edit</span>
+                              <span>Edit</span>
                             </button>
                             <button
                               type="button"
                               onClick={() => handleDeleteEvent(event.sNo, event.eventName)}
-                              className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
+                              className="p-2 md:p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
                               title="Delete Event"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -2015,7 +2392,103 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                       </tr>
                     ))}
                   </tbody>
+
                 </table>
+                {/* EVENT PAGINATION */}
+{eventsList.length > 0 && (
+  <div className="flex flex-col gap-4 border-t border-slate-200 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+
+    {/* Results Information */}
+    <p className="text-sm font-medium text-slate-600">
+      Showing{" "}
+      <span className="font-bold text-slate-900">
+        {startEventIndex + 1}
+      </span>
+      {" "}to{" "}
+      <span className="font-bold text-slate-900">
+        {Math.min(
+          startEventIndex + eventsPerPage,
+          eventsList.length
+        )}
+      </span>
+      {" "}of{" "}
+      <span className="font-bold text-slate-900">
+        {eventsList.length}
+      </span>
+      {" "}events
+    </p>
+
+    {/* Pagination Buttons */}
+    <div className="flex flex-wrap items-center justify-center gap-2">
+
+      {/* First */}
+      <button
+        type="button"
+        onClick={() => setEventCurrentPage(1)}
+        disabled={eventCurrentPage === 1}
+        className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        First
+      </button>
+
+      {/* Previous */}
+      <button
+        type="button"
+        onClick={() =>
+          setEventCurrentPage((prev) => Math.max(prev - 1, 1))
+        }
+        disabled={eventCurrentPage === 1}
+        className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        Previous
+      </button>
+
+      {/* Page Numbers */}
+      {Array.from(
+        { length: totalEventPages },
+        (_, index) => index + 1
+      ).map((page) => (
+        <button
+          key={page}
+          type="button"
+          onClick={() => setEventCurrentPage(page)}
+          className={`h-9 min-w-9 rounded-lg px-3 text-sm font-bold transition ${
+            eventCurrentPage === page
+              ? "bg-blue-600 text-white shadow-sm"
+              : "border border-slate-200 text-slate-600 hover:bg-slate-100"
+          }`}
+        >
+          {page}
+        </button>
+      ))}
+
+      {/* Next */}
+      <button
+        type="button"
+        onClick={() =>
+          setEventCurrentPage((prev) =>
+            Math.min(prev + 1, totalEventPages)
+          )
+        }
+        disabled={eventCurrentPage === totalEventPages}
+        className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        Next
+      </button>
+
+      {/* Last */}
+      <button
+        type="button"
+        onClick={() => setEventCurrentPage(totalEventPages)}
+        disabled={eventCurrentPage === totalEventPages}
+        className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        Last
+      </button>
+
+    </div>
+  </div>
+)}
               </div>
             </div>
           </div>
@@ -2026,10 +2499,10 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
             ========================================================================= */}
         {currentAdminRole === 'Super Admin' && activeTab === 'franchise' && (
           <div className="space-y-4 animate-in fade-in duration-200">
-            <div className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="bg-white p-3.5 sm:p-4.5 rounded-2xl border border-slate-200 shadow-sm grid grid-cols-1 lg:grid-cols-[1fr_auto] items-start lg:items-center gap-3">
               <div>
                 <h2 className="text-base font-black text-slate-950 flex items-center gap-2">
-                  <Building className="w-5 h-5 text-indigo-600" />
+                  <Building className="w-5 h-5 text-indigo-600 shrink-0" />
                   <span>Franchise Partner Enquiries & Applications</span>
                 </h2>
                 <p className="text-xs text-slate-500 mt-0.5">
@@ -2037,13 +2510,12 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                 </p>
               </div>
 
-              {/* Status Filter */}
-              <div className="flex items-center gap-2">
+              <div className="grid grid-cols-[auto_1fr] sm:flex items-center gap-2 w-full lg:w-auto">
                 <span className="text-xs font-bold text-slate-500">Filter Status:</span>
                 <select
                   value={franchiseStatusFilter}
                   onChange={(e) => setFranchiseStatusFilter(e.target.value)}
-                  className="px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-xl font-bold outline-none cursor-pointer"
+                  className="w-full sm:w-auto px-3 py-2.5 sm:py-1.5 text-xs bg-white border border-slate-300 rounded-xl font-bold outline-none cursor-pointer"
                 >
                   <option value="All">All Leads ({franchiseList.length})</option>
                   <option value="New Franchise Lead">New Franchise Lead</option>
@@ -2054,107 +2526,280 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
               </div>
             </div>
 
-            {/* Franchise Leads Cards / Table */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {filteredFranchiseLeads.map((lead) => (
-                <div key={lead.refId} className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4.5 flex flex-col justify-between hover:shadow-md transition">
-                  <div className="space-y-2.5">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono text-[10px] font-black text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">
-                            {lead.refId}
-                          </span>
-                          <span className="text-[10px] text-slate-400">{lead.date}</span>
-                        </div>
-                        <h3 className="text-base font-black text-slate-950 mt-1">{lead.name}</h3>
-                      </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch">
+  {paginatedFranchiseLeads.map((lead) => (
+    <div
+      key={lead.refId}
+      className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 flex flex-col h-full min-w-0 hover:shadow-md transition"
+    >
+      {/* Card Content */}
+      <div className="flex-1 flex flex-col gap-3">
 
-                      <select
-                        value={lead.status}
-                        onChange={(e) => handleUpdateFranchiseStatus(lead.refId, e.target.value, lead.notes)}
-                        className={`text-[10px] font-black uppercase rounded-lg px-2.5 py-1 border outline-none cursor-pointer ${
-                          lead.status === 'Approved Franchise Branch' 
-                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300' 
-                            : lead.status === 'Site Inspection Scheduled'
-                            ? 'bg-amber-100 text-amber-800 border-amber-300'
-                            : 'bg-sky-100 text-sky-800 border-sky-300'
-                        }`}
-                      >
-                        <option value="New Franchise Lead">New Franchise Lead</option>
-                        <option value="In Discussion">In Discussion</option>
-                        <option value="Site Inspection Scheduled">Site Inspection Scheduled</option>
-                        <option value="Approved Franchise Branch">Approved Franchise Branch</option>
-                        <option value="Archived">Archived / Rejected</option>
-                      </select>
-                    </div>
+        {/* Status */}
+        <div className="w-full">
+          <select
+            value={lead.status}
+            onChange={(e) =>
+              handleUpdateFranchiseStatus(
+                lead.refId,
+                e.target.value,
+                lead.notes
+              )
+            }
+            className={`w-full text-[10px] sm:text-[11px] font-black uppercase rounded-lg px-3 py-2 border outline-none cursor-pointer ${
+              lead.status === 'Approved Franchise Branch'
+                ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                : lead.status === 'Site Inspection Scheduled'
+                ? 'bg-amber-100 text-amber-800 border-amber-300'
+                : 'bg-sky-100 text-sky-800 border-sky-300'
+            }`}
+          >
+            <option value="New Franchise Lead">New Franchise Lead</option>
+            <option value="In Discussion">In Discussion</option>
+            <option value="Site Inspection Scheduled">
+              Site Inspection Scheduled
+            </option>
+            <option value="Approved Franchise Branch">
+              Approved Franchise Branch
+            </option>
+            <option value="Archived">Archived / Rejected</option>
+          </select>
+        </div>
 
-                    {/* Contact & Location */}
-                    <div className="grid grid-cols-2 gap-2 text-[11px] pt-1">
-                      <div>
-                        <span className="text-slate-400 block text-[10px] uppercase font-bold">Contact</span>
-                        <div className="font-bold text-slate-800">{lead.phone}</div>
-                        <div className="text-slate-500 truncate">{lead.email}</div>
-                      </div>
-                      <div>
-                        <span className="text-slate-400 block text-[10px] uppercase font-bold">Proposed Center</span>
-                        <div className="font-bold text-slate-800">{lead.city}, {lead.district}</div>
-                        <div className="text-slate-500">{lead.state || 'Tamil Nadu'}</div>
-                      </div>
-                    </div>
+        {/* Reference ID and Date */}
+        <div className="flex items-center justify-between gap-2">
+          <span className="font-mono text-[10px] font-black text-indigo-700 bg-indigo-50 px-2 py-1 rounded border border-indigo-200">
+            {lead.refId}
+          </span>
 
-                    {/* Background & Space */}
-                    <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-[11px] space-y-1">
-                      <div>
-                        <strong className="text-slate-700">Profession:</strong> {lead.profession || 'Educator / Entrepreneur'}
-                      </div>
-                      <div>
-                        <strong className="text-slate-700">Space:</strong> {lead.spaceAvailable || '1,200 sq ft'} &nbsp;|&nbsp; 
-                        <strong className="text-slate-700">Budget:</strong> {lead.investmentBudget || '₹3 - ₹5 Lakhs'}
-                      </div>
-                      {lead.notes && (
-                        <div className="text-indigo-900 bg-indigo-50/70 p-1.5 rounded text-[10px] italic border border-indigo-100">
-                          Note: {lead.notes}
-                        </div>
-                      )}
-                    </div>
-                  </div>
+          <span className="text-[10px] text-slate-400 font-medium whitespace-nowrap">
+            {lead.date}
+          </span>
+        </div>
 
-                  {/* Actions Bar */}
-                  <div className="flex items-center justify-between gap-2 mt-4 pt-3 border-t border-slate-100">
-                    <span className="text-[11px] font-bold text-slate-500">
-                      Timeline: <strong className="text-slate-700">{lead.launchTimeline || 'Immediate'}</strong>
-                    </span>
+        {/* Lead Name */}
+        <div>
+          <h3 className="text-lg font-black text-slate-950 leading-snug break-words">
+            {lead.name}
+          </h3>
+        </div>
 
-                    <div className="flex items-center gap-2">
-                      {lead.status !== 'Approved Franchise Branch' && (
-                        <button
-                          type="button"
-                          onClick={() => handleApproveFranchiseToBranch(lead)}
-                          className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-black transition cursor-pointer flex items-center gap-1 shadow-xs"
-                        >
-                          <Check className="w-3.5 h-3.5" />
-                          <span>Approve Branch</span>
-                        </button>
-                      )}
+        {/* Contact and Proposed Center */}
+        <div className="grid grid-cols-2 gap-3 pt-1">
 
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (window.confirm(`Delete enquiry ${lead.refId}?`)) {
-                            setFranchiseList(deleteFranchiseLead(lead.refId));
-                            showToast(`Enquiry ${lead.refId} removed.`);
-                          }
-                        }}
-                        className="p-1 text-slate-400 hover:text-rose-600 transition"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
+          <div className="min-w-0">
+            <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wide block mb-1">
+              Contact
+            </span>
+
+            <div className="text-[11px] font-bold text-slate-800 break-words">
+              {lead.phone}
             </div>
+
+            <div className="text-[11px] text-slate-500 truncate">
+              {lead.email}
+            </div>
+          </div>
+
+          <div className="min-w-0">
+            <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wide block mb-1">
+              Proposed Center
+            </span>
+
+            <div className="text-[11px] font-bold text-slate-800 break-words">
+              {lead.city}, {lead.district}
+            </div>
+
+            <div className="text-[11px] text-slate-500">
+              {lead.state || 'Tamil Nadu'}
+            </div>
+          </div>
+
+        </div>
+
+        {/* Additional Information */}
+        <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 text-[11px] space-y-2">
+
+          <div className="leading-relaxed">
+            <strong className="text-slate-700">Profession:</strong>{' '}
+            <span className="text-slate-600">
+              {lead.profession || 'Educator / Entrepreneur'}
+            </span>
+          </div>
+
+          <div className="leading-relaxed">
+            <strong className="text-slate-700">Space:</strong>{' '}
+            <span className="text-slate-600">
+              {lead.spaceAvailable || '1,200 sq ft'}
+            </span>
+
+            <span className="text-slate-300 mx-1">|</span>
+
+            <strong className="text-slate-700">Budget:</strong>{' '}
+            <span className="text-slate-600">
+              {lead.investmentBudget || '₹3 - ₹5 Lakhs'}
+            </span>
+          </div>
+
+          {lead.notes && (
+            <div className="text-indigo-900 bg-indigo-50 p-2 rounded-lg text-[10px] leading-relaxed italic border border-indigo-100">
+              <strong>Note:</strong> {lead.notes}
+            </div>
+          )}
+
+        </div>
+
+      </div>
+
+      {/* Card Footer */}
+      <div className="mt-4 pt-3 border-t border-slate-100 flex flex-col gap-3">
+
+        <div className="flex items-center justify-between gap-2">
+
+          <div className="text-[11px] font-bold text-slate-500">
+            Timeline:
+            <span className="text-slate-700 ml-1">
+              {lead.launchTimeline || 'Immediate'}
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              if (window.confirm(`Delete enquiry ${lead.refId}?`)) {
+                setFranchiseList(deleteFranchiseLead(lead.refId));
+                showToast(`Enquiry ${lead.refId} removed.`);
+              }
+            }}
+            className="p-1.5 text-slate-400 hover:text-rose-600 transition cursor-pointer shrink-0"
+            title="Delete Enquiry"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+
+        </div>
+
+        {lead.status !== 'Approved Franchise Branch' && (
+          <button
+            type="button"
+            onClick={() => handleApproveFranchiseToBranch(lead)}
+            className="w-full px-3 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-black transition cursor-pointer flex items-center justify-center gap-2 shadow-sm"
+          >
+            <Check className="w-3.5 h-3.5" />
+            Approve Branch
+          </button>
+        )}
+
+        {lead.status === 'Approved Franchise Branch' && (
+          <div className="w-full px-3 py-2.5 bg-emerald-50 text-emerald-700 rounded-lg text-xs font-bold flex items-center justify-center gap-2 border border-emerald-100">
+            <Check className="w-3.5 h-3.5" />
+            Branch Approved
+          </div>
+        )}
+
+      </div>
+
+    </div>
+  ))}
+</div>
+            {/* FRANCHISE PAGINATION */}
+{filteredFranchiseLeads.length > 0 && (
+  <div className="bg-white rounded-2xl border border-slate-200 shadow-sm px-4 py-4 sm:px-6">
+
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+
+      {/* Results Information */}
+      <p className="text-sm font-medium text-slate-600">
+        Showing{" "}
+        <span className="font-bold text-slate-900">
+          {startFranchiseIndex + 1}
+        </span>
+        {" "}to{" "}
+        <span className="font-bold text-slate-900">
+          {Math.min(
+            startFranchiseIndex + franchisePerPage,
+            filteredFranchiseLeads.length
+          )}
+        </span>
+        {" "}of{" "}
+        <span className="font-bold text-slate-900">
+          {filteredFranchiseLeads.length}
+        </span>
+        {" "}enquiries
+      </p>
+
+      {/* Pagination Buttons */}
+      <div className="flex flex-wrap items-center justify-center gap-2">
+
+        {/* First */}
+        <button
+          type="button"
+          onClick={() => setFranchiseCurrentPage(1)}
+          disabled={franchiseCurrentPage === 1}
+          className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          First
+        </button>
+
+        {/* Previous */}
+        <button
+          type="button"
+          onClick={() =>
+            setFranchiseCurrentPage((prev) => Math.max(prev - 1, 1))
+          }
+          disabled={franchiseCurrentPage === 1}
+          className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          Previous
+        </button>
+
+        {/* Page Numbers */}
+        {Array.from(
+          { length: totalFranchisePages },
+          (_, index) => index + 1
+        ).map((page) => (
+          <button
+            key={page}
+            type="button"
+            onClick={() => setFranchiseCurrentPage(page)}
+            className={`h-9 min-w-9 rounded-lg px-3 text-sm font-bold transition ${
+              franchiseCurrentPage === page
+                ? "bg-blue-600 text-white shadow-sm"
+                : "border border-slate-200 text-slate-600 hover:bg-slate-100"
+            }`}
+          >
+            {page}
+          </button>
+        ))}
+
+        {/* Next */}
+        <button
+          type="button"
+          onClick={() =>
+            setFranchiseCurrentPage((prev) =>
+              Math.min(prev + 1, totalFranchisePages)
+            )
+          }
+          disabled={franchiseCurrentPage === totalFranchisePages}
+          className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          Next
+        </button>
+
+        {/* Last */}
+        <button
+          type="button"
+          onClick={() => setFranchiseCurrentPage(totalFranchisePages)}
+          disabled={franchiseCurrentPage === totalFranchisePages}
+          className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          Last
+        </button>
+
+      </div>
+    </div>
+  </div>
+)}
           </div>
         )}
 
@@ -2163,11 +2808,10 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
             ========================================================================= */}
         {currentAdminRole === 'Super Admin' && activeTab === 'payments' && (
           <div className="space-y-4 animate-in fade-in duration-200">
-            {/* Header */}
-            <div className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="bg-white p-3.5 sm:p-4.5 rounded-2xl border border-slate-200 shadow-sm grid grid-cols-1 sm:grid-cols-[1fr_auto] items-start sm:items-center gap-3">
               <div>
                 <h2 className="text-base font-black text-slate-950 flex items-center gap-2">
-                  <CreditCard className="w-5 h-5 text-emerald-600" />
+                  <CreditCard className="w-5 h-5 text-emerald-600 shrink-0" />
                   <span>Central Payment Sectors & Financial Management</span>
                 </h2>
                 <p className="text-xs text-slate-500 mt-0.5">
@@ -2175,57 +2819,55 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                 </p>
               </div>
 
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowAddPaymentModal(true)}
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black transition flex items-center gap-1.5 shadow-sm cursor-pointer"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Record Payment / Receipt</span>
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => setShowAddPaymentModal(true)}
+                className="w-full sm:w-auto px-4 py-2.5 sm:py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Record Payment / Receipt</span>
+              </button>
             </div>
 
             {/* 4 Financial Sector Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
+              <div className="bg-white p-3 sm:p-3.5 rounded-xl border border-slate-200 shadow-xs">
                 <div className="text-[10px] font-bold text-slate-400 uppercase">Sector 1</div>
                 <div className="text-xs font-black text-sky-900 mt-0.5">Course Tuition & Admissions</div>
-                <div className="text-xl font-black text-slate-950 mt-1">₹48,500</div>
+                <div className="text-lg sm:text-xl font-black text-slate-950 mt-1">₹48,500</div>
                 <span className="text-[10px] text-slate-500">Student level admissions</span>
               </div>
 
-              <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
+              <div className="bg-white p-3 sm:p-3.5 rounded-xl border border-slate-200 shadow-xs">
                 <div className="text-[10px] font-bold text-slate-400 uppercase">Sector 2</div>
                 <div className="text-xs font-black text-amber-900 mt-0.5">Competition & Events</div>
-                <div className="text-xl font-black text-slate-950 mt-1">₹38,000</div>
+                <div className="text-lg sm:text-xl font-black text-slate-950 mt-1">₹38,000</div>
                 <span className="text-[10px] text-slate-500">State Championship tickets</span>
               </div>
 
-              <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
+              <div className="bg-white p-3 sm:p-3.5 rounded-xl border border-slate-200 shadow-xs">
                 <div className="text-[10px] font-bold text-slate-400 uppercase">Sector 3</div>
                 <div className="text-xs font-black text-purple-900 mt-0.5">Toolkits & Courseware</div>
-                <div className="text-xl font-black text-slate-950 mt-1">₹23,000</div>
+                <div className="text-lg sm:text-xl font-black text-slate-950 mt-1">₹23,000</div>
                 <span className="text-[10px] text-slate-500">Workbooks & Abacus frames</span>
               </div>
 
-              <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
+              <div className="bg-white p-3 sm:p-3.5 rounded-xl border border-slate-200 shadow-xs">
                 <div className="text-[10px] font-bold text-slate-400 uppercase">Sector 4</div>
                 <div className="text-xs font-black text-emerald-900 mt-0.5">Franchise Affiliation</div>
-                <div className="text-xl font-black text-slate-950 mt-1">₹75,000</div>
+                <div className="text-lg sm:text-xl font-black text-slate-950 mt-1">₹75,000</div>
                 <span className="text-[10px] text-slate-500">3 Branch Licenses</span>
               </div>
             </div>
 
             {/* Filter Bar */}
-            <div className="bg-white p-3 rounded-xl border border-slate-200 flex flex-wrap items-center justify-between gap-2.5">
-              <div className="flex items-center gap-2 flex-wrap">
+            <div className="bg-white p-3 rounded-xl border border-slate-200 grid grid-cols-1 md:grid-cols-[1fr_auto] items-center gap-2.5">
+              <div className="grid grid-cols-1 min-[420px]:grid-cols-[auto_1fr_1fr] md:flex items-center gap-2">
                 <span className="text-xs font-bold text-slate-500">Filter Sector:</span>
                 <select
                   value={paymentSectorFilter}
                   onChange={(e) => setPaymentSectorFilter(e.target.value)}
-                  className="px-2.5 py-1 text-xs border border-slate-300 rounded-lg outline-none font-bold bg-white"
+                  className="px-2.5 py-2 md:py-1 text-xs border border-slate-300 rounded-lg outline-none font-bold bg-white"
                 >
                   <option value="All">All Sectors</option>
                   <option value="Course Tuition">Course Tuition</option>
@@ -2237,7 +2879,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                 <select
                   value={paymentBranchFilter}
                   onChange={(e) => setPaymentBranchFilter(e.target.value)}
-                  className="px-2.5 py-1 text-xs border border-slate-300 rounded-lg outline-none font-bold bg-white"
+                  className="px-2.5 py-2 md:py-1 text-xs border border-slate-300 rounded-lg outline-none font-bold bg-white"
                 >
                   <option value="All">All Branches</option>
                   <option value="Tenkasi">Tenkasi Regional Branch</option>
@@ -2251,11 +2893,11 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
               </div>
             </div>
 
-            {/* Payment Transactions Table */}
+            {/* Payment Transactions — card grid on phones, table from md up */}
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-[#081d3d] text-white uppercase text-[10px] tracking-wider font-black">
+                <table className="block md:table w-full text-left text-xs">
+                  <thead className="hidden md:table-header-group bg-[#081d3d] text-white uppercase text-[10px] tracking-wider font-black">
                     <tr>
                       <th className="py-3 px-4">Txn / Receipt No</th>
                       <th className="py-3 px-3">Payer Name</th>
@@ -2267,39 +2909,42 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                       <th className="py-3 px-3 text-right">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 font-medium">
-                    {filteredPayments.map((payment) => (
-                      <tr key={payment.id} className="hover:bg-slate-50 transition">
-                        <td className="py-3 px-4 font-mono font-bold text-slate-800">
+                  <tbody className="block md:table-row-group divide-y divide-slate-100 font-medium">
+                    {paginatedPayments.map((payment) => (
+                      <tr
+                        key={payment.id}
+                        className="grid grid-cols-2 gap-x-3 gap-y-2.5 p-3.5 md:table-row md:p-0 hover:bg-slate-50 transition [&>td]:block [&>td]:min-w-0 [&>td]:p-0 md:[&>td]:table-cell md:[&>td]:px-3 md:[&>td]:py-3 [&>td]:before:content-[attr(data-label)] [&>td]:before:block [&>td]:before:mb-0.5 [&>td]:before:text-[9px] [&>td]:before:font-black [&>td]:before:uppercase [&>td]:before:tracking-wider [&>td]:before:text-slate-400 md:[&>td]:before:hidden"
+                      >
+                        <td className="col-span-2 md:pl-4 font-mono font-bold text-slate-800">
                           <div>{payment.id}</div>
                           <div className="text-[10px] text-slate-400">{payment.receiptNo}</div>
                         </td>
 
-                        <td className="py-3 px-3">
+                        <td data-label="Payer Name">
                           <div className="font-extrabold text-slate-900">{payment.payerName}</div>
                           <div className="text-[10px] text-slate-500">{payment.date}</div>
                         </td>
 
-                        <td className="py-3 px-3 text-slate-700">
+                        <td data-label="Branch" className="text-slate-700">
                           {payment.branch}
                         </td>
 
-                        <td className="py-3 px-3">
+                        <td data-label="Payment Sector">
                           <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-800">
                             {payment.sector}
                           </span>
                         </td>
 
-                        <td className="py-3 px-3 font-black text-emerald-800 text-sm">
+                        <td data-label="Amount" className="font-black text-emerald-800 text-sm">
                           {payment.amount}
                         </td>
 
-                        <td className="py-3 px-3">
+                        <td data-label="Mode & UTR">
                           <div className="font-bold text-slate-800">{payment.paymentMode}</div>
-                          <div className="font-mono text-[10px] text-slate-500">{payment.refNo}</div>
+                          <div className="font-mono text-[10px] text-slate-500 break-all">{payment.refNo}</div>
                         </td>
 
-                        <td className="py-3 px-3">
+                        <td data-label="Status">
                           <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${
                             payment.status === 'Verified'
                               ? 'bg-emerald-100 text-emerald-800'
@@ -2309,13 +2954,13 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                           </span>
                         </td>
 
-                        <td className="py-3 px-3 text-right">
-                          <div className="flex items-center justify-end gap-1.5">
+                        <td className="col-span-2 md:text-right">
+                          <div className="flex items-center md:justify-end gap-1.5">
                             {payment.status !== 'Verified' && (
                               <button
                                 type="button"
                                 onClick={() => handleVerifyPayment(payment.id)}
-                                className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[10px] font-bold transition"
+                                className="px-3 py-2 md:px-2.5 md:py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[10px] font-bold transition"
                               >
                                 Verify
                               </button>
@@ -2324,7 +2969,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                             <button
                               type="button"
                               onClick={() => setSelectedReceiptForPrint(payment)}
-                              className="p-1 text-slate-600 hover:text-sky-700 hover:bg-sky-50 rounded transition"
+                              className="p-2 md:p-1 text-slate-600 hover:text-sky-700 hover:bg-sky-50 rounded transition"
                               title="Print Receipt"
                             >
                               <Printer className="w-4 h-4" />
@@ -2338,7 +2983,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                                   showToast('Payment record removed.');
                                 }
                               }}
-                              className="p-1 text-slate-400 hover:text-rose-600 transition"
+                              className="p-2 md:p-1 text-slate-400 hover:text-rose-600 transition"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -2348,6 +2993,101 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                     ))}
                   </tbody>
                 </table>
+                {/* PAYMENT PAGINATION */}
+{filteredPayments.length > 0 && (
+  <div className="flex flex-col gap-4 border-t border-slate-200 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+
+    {/* Results Information */}
+    <p className="text-sm font-medium text-slate-600">
+      Showing{" "}
+      <span className="font-bold text-slate-900">
+        {startPaymentIndex + 1}
+      </span>
+      {" "}to{" "}
+      <span className="font-bold text-slate-900">
+        {Math.min(
+          startPaymentIndex + paymentsPerPage,
+          filteredPayments.length
+        )}
+      </span>
+      {" "}of{" "}
+      <span className="font-bold text-slate-900">
+        {filteredPayments.length}
+      </span>
+      {" "}payments
+    </p>
+
+    {/* Pagination Buttons */}
+    <div className="flex flex-wrap items-center justify-center gap-2">
+
+      {/* First */}
+      <button
+        type="button"
+        onClick={() => setPaymentCurrentPage(1)}
+        disabled={paymentCurrentPage === 1}
+        className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        First
+      </button>
+
+      {/* Previous */}
+      <button
+        type="button"
+        onClick={() =>
+          setPaymentCurrentPage((prev) => Math.max(prev - 1, 1))
+        }
+        disabled={paymentCurrentPage === 1}
+        className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        Previous
+      </button>
+
+      {/* Page Numbers */}
+      {Array.from(
+        { length: totalPaymentPages },
+        (_, index) => index + 1
+      ).map((page) => (
+        <button
+          key={page}
+          type="button"
+          onClick={() => setPaymentCurrentPage(page)}
+          className={`h-9 min-w-9 rounded-lg px-3 text-sm font-bold transition ${
+            paymentCurrentPage === page
+              ? "bg-blue-600 text-white shadow-sm"
+              : "border border-slate-200 text-slate-600 hover:bg-slate-100"
+          }`}
+        >
+          {page}
+        </button>
+      ))}
+
+      {/* Next */}
+      <button
+        type="button"
+        onClick={() =>
+          setPaymentCurrentPage((prev) =>
+            Math.min(prev + 1, totalPaymentPages)
+          )
+        }
+        disabled={paymentCurrentPage === totalPaymentPages}
+        className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        Next
+      </button>
+
+      {/* Last */}
+      <button
+        type="button"
+        onClick={() => setPaymentCurrentPage(totalPaymentPages)}
+        disabled={paymentCurrentPage === totalPaymentPages}
+        className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        Last
+      </button>
+
+    </div>
+  </div>
+)}
               </div>
             </div>
           </div>
@@ -2358,10 +3098,10 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
             ========================================================================= */}
         {currentAdminRole === 'Super Admin' && activeTab === 'schools' && (
           <div className="space-y-4 animate-in fade-in duration-200">
-            <div className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="bg-white p-3.5 sm:p-4.5 rounded-2xl border border-slate-200 shadow-sm grid grid-cols-1 sm:grid-cols-[1fr_auto] items-start sm:items-center gap-3">
               <div>
                 <h2 className="text-base font-black text-slate-950 flex items-center gap-2">
-                  <School className="w-5 h-5 text-orange-500" />
+                  <School className="w-5 h-5 text-orange-500 shrink-0" />
                   <span>Authorized Branches & Partner Schools Network</span>
                 </h2>
                 <p className="text-xs text-slate-500 mt-0.5">
@@ -2372,16 +3112,16 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
               <button
                 type="button"
                 onClick={() => setShowAddSchoolModal(true)}
-                className="px-4 py-2 bg-[#0c234b] hover:bg-[#163e7c] text-white rounded-xl text-xs font-black transition flex items-center gap-1.5 shadow-sm cursor-pointer"
+                className="w-full sm:w-auto px-4 py-2.5 sm:py-2 bg-[#0c234b] hover:bg-[#163e7c] text-white rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
               >
                 <Plus className="w-4 h-4 text-amber-400" />
                 <span>Affiliate New Centre</span>
               </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {schoolsList.map((school) => (
-                <div key={school.code} className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between hover:shadow-md transition">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
+              {paginatedSchools.map((school) => (
+                <div key={school.code} className="bg-white p-4 sm:p-4.5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between hover:shadow-md transition">
                   <div className="space-y-2">
                     <div className="flex items-start justify-between gap-2">
                       <span className="font-mono text-[10px] font-black text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
@@ -2392,9 +3132,9 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                       </span>
                     </div>
 
-                    <h3 className="text-sm font-black text-slate-950">{school.name}</h3>
+                    <h3 className="text-sm font-black text-slate-950 break-words">{school.name}</h3>
                     <div className="text-xs text-slate-500 flex items-center gap-1">
-                      <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                      <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                       <span>{school.city}</span>
                     </div>
 
@@ -2416,7 +3156,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                         setActiveBranch(school.name);
                         handleRoleSwitch('Branch Head');
                       }}
-                      className="px-2.5 py-1 text-xs font-black bg-emerald-50 text-emerald-800 hover:bg-emerald-100 rounded-lg transition"
+                      className="px-2.5 py-2 sm:py-1 text-xs font-black bg-emerald-50 text-emerald-800 hover:bg-emerald-100 rounded-lg transition whitespace-nowrap"
                     >
                       Open Branch Desk →
                     </button>
@@ -2424,6 +3164,78 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                 </div>
               ))}
             </div>
+            {totalSchoolPages > 1 && (
+  <div className="bg-white px-4 py-3 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
+    <p className="text-xs font-semibold text-slate-500">
+      Showing{" "}
+      <span className="text-slate-900">
+        {startSchoolIndex + 1}
+      </span>
+      {" "}to{" "}
+      <span className="text-slate-900">
+        {Math.min(startSchoolIndex + schoolsPerPage, schoolsList.length)}
+      </span>
+      {" "}of{" "}
+      <span className="text-slate-900">{schoolsList.length}</span>
+      {" "}schools
+    </p>
+
+    <div className="flex items-center gap-1.5">
+      <button
+        type="button"
+        onClick={() => setSchoolCurrentPage(1)}
+        disabled={schoolCurrentPage === 1}
+        className="px-3 py-2 text-xs font-bold rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
+      >
+        First
+      </button>
+
+      <button
+        type="button"
+        onClick={() => setSchoolCurrentPage((prev) => Math.max(prev - 1, 1))}
+        disabled={schoolCurrentPage === 1}
+        className="px-3 py-2 text-xs font-bold rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
+      >
+        Previous
+      </button>
+
+      {Array.from({ length: totalSchoolPages }, (_, index) => index + 1).map((page) => (
+        <button
+          key={page}
+          type="button"
+          onClick={() => setSchoolCurrentPage(page)}
+          className={`w-8 h-8 text-xs font-black rounded-lg transition ${
+            schoolCurrentPage === page
+              ? "bg-[#0c234b] text-white shadow-sm"
+              : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+          }`}
+        >
+          {page}
+        </button>
+      ))}
+
+      <button
+        type="button"
+        onClick={() =>
+          setSchoolCurrentPage((prev) => Math.min(prev + 1, totalSchoolPages))
+        }
+        disabled={schoolCurrentPage === totalSchoolPages}
+        className="px-3 py-2 text-xs font-bold rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
+      >
+        Next
+      </button>
+
+      <button
+        type="button"
+        onClick={() => setSchoolCurrentPage(totalSchoolPages)}
+        disabled={schoolCurrentPage === totalSchoolPages}
+        className="px-3 py-2 text-xs font-bold rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
+      >
+        Last
+      </button>
+    </div>
+  </div>
+)}
           </div>
         )}
 
@@ -2431,13 +3243,12 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
             SUPER ADMIN: TAB 8 - CERTIFICATE GENERATOR & DESK
             ========================================================================= */}
         {currentAdminRole === 'Super Admin' && activeTab === 'certificates' && (
-          <div className="space-y-5 animate-in fade-in duration-200">
-            {/* Certificate Editor Controls */}
-            <div className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="space-y-4 sm:space-y-5 animate-in fade-in duration-200">
+            <div className="bg-white p-3.5 sm:p-4.5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+              <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] items-start lg:items-center gap-3">
                 <div>
                   <h2 className="text-base font-black text-slate-950 flex items-center gap-2">
-                    <Award className="w-5 h-5 text-amber-500" />
+                    <Award className="w-5 h-5 text-amber-500 shrink-0" />
                     <span>Official Certificate Generator & Verification Desk</span>
                   </h2>
                   <p className="text-xs text-slate-500 mt-0.5">
@@ -2446,24 +3257,24 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                 </div>
 
                 {/* Verification Lookup */}
-                <form onSubmit={handleVerifyCertificate} className="flex items-center gap-1.5 w-full sm:w-auto">
+                <form onSubmit={handleVerifyCertificate} className="grid grid-cols-[1fr_auto] items-center gap-1.5 w-full lg:w-auto">
                   <input
                     type="text"
                     value={verifyCertInput}
                     onChange={(e) => setVerifyCertInput(e.target.value)}
                     placeholder="Enter Certificate No or Reg No..."
-                    className="px-3 py-1.5 text-xs border border-slate-300 rounded-xl outline-none"
+                    className="min-w-0 px-3 py-2.5 sm:py-1.5 text-xs border border-slate-300 rounded-xl outline-none"
                   />
                   <button
                     type="submit"
-                    className="px-3 py-1.5 bg-[#0c234b] text-white text-xs font-black rounded-xl hover:bg-[#163e7c] transition"
+                    className="px-4 py-2.5 sm:px-3 sm:py-1.5 bg-[#0c234b] text-white text-xs font-black rounded-xl hover:bg-[#163e7c] transition"
                   >
                     Verify
                   </button>
                 </form>
               </div>
 
-              {/* Live Form inputs to customize certificate parameters */}
+              {/* Live Form inputs */}
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 pt-2 border-t border-slate-100 text-xs">
                 <div>
                   <label className="font-bold text-slate-600 block mb-1">Candidate Name</label>
@@ -2471,7 +3282,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                     type="text"
                     value={certData.studentName}
                     onChange={(e) => setCertData(prev => ({ ...prev, studentName: e.target.value }))}
-                    className="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg outline-none font-semibold"
+                    className="w-full px-2.5 py-2 sm:py-1.5 border border-slate-300 rounded-lg outline-none font-semibold"
                   />
                 </div>
 
@@ -2481,26 +3292,26 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                     type="text"
                     value={certData.courseName}
                     onChange={(e) => setCertData(prev => ({ ...prev, courseName: e.target.value }))}
-                    className="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg outline-none font-semibold"
+                    className="w-full px-2.5 py-2 sm:py-1.5 border border-slate-300 rounded-lg outline-none font-semibold"
                   />
                 </div>
 
                 <div>
                   <label className="font-bold text-slate-600 block mb-1">Level / Grade</label>
-                  <div className="flex gap-1.5">
+                  <div className="grid grid-cols-2 gap-1.5">
                     <input
                       type="text"
                       value={certData.level}
                       onChange={(e) => setCertData(prev => ({ ...prev, level: e.target.value }))}
                       placeholder="Level"
-                      className="w-1/2 px-2.5 py-1.5 border border-slate-300 rounded-lg outline-none font-semibold"
+                      className="min-w-0 px-2.5 py-2 sm:py-1.5 border border-slate-300 rounded-lg outline-none font-semibold"
                     />
                     <input
                       type="text"
                       value={certData.grade}
                       onChange={(e) => setCertData(prev => ({ ...prev, grade: e.target.value }))}
                       placeholder="Grade"
-                      className="w-1/2 px-2.5 py-1.5 border border-slate-300 rounded-lg outline-none font-semibold"
+                      className="min-w-0 px-2.5 py-2 sm:py-1.5 border border-slate-300 rounded-lg outline-none font-semibold"
                     />
                   </div>
                 </div>
@@ -2511,41 +3322,44 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                     type="text"
                     value={certData.registrationNo}
                     onChange={(e) => setCertData(prev => ({ ...prev, registrationNo: e.target.value }))}
-                    className="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg outline-none font-mono font-bold"
+                    className="w-full px-2.5 py-2 sm:py-1.5 border border-slate-300 rounded-lg outline-none font-mono font-bold"
                   />
                 </div>
               </div>
 
               {verifyResult && (
-                <div className="p-3 bg-emerald-50 border border-emerald-300 rounded-xl flex items-center justify-between text-xs text-emerald-900">
+                <div className="p-3 bg-emerald-50 border border-emerald-300 rounded-xl grid grid-cols-1 sm:grid-cols-[1fr_auto] items-center gap-2 text-xs text-emerald-900">
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                    <span><strong>{verifyResult.candidateName}</strong> — {verifyResult.course} ({verifyResult.regNo}) • {verifyResult.status}</span>
+                    <span className="break-words"><strong>{verifyResult.candidateName}</strong> — {verifyResult.course} ({verifyResult.regNo}) • {verifyResult.status}</span>
                   </div>
-                  <button onClick={() => setVerifyResult(null)} className="text-emerald-700 font-bold hover:underline">Dismiss</button>
+                  <button onClick={() => setVerifyResult(null)} className="text-emerald-700 font-bold hover:underline text-left sm:text-right">Dismiss</button>
                 </div>
               )}
             </div>
 
-            {/* Live Certificate Preview Canvas */}
-            <div className="flex justify-center overflow-x-auto py-2">
-              <Certificate
-                studentName={certData.studentName}
-                courseName={certData.courseName}
-                programPrefix={certData.programPrefix}
-                level={certData.level}
-                grade={certData.grade}
-                duration={certData.duration}
-                registrationNo={certData.registrationNo}
-                certificateNo={certData.certificateNo}
-                centreName={certData.centreName}
-                centreCode={certData.centreCode}
-                centreAddress={certData.centreAddress}
-                issueDate={certData.issueDate}
-                certificateType={certData.certificateType}
-                studentPhoto={certData.studentPhoto}
-                showControls={true}
-              />
+            {/* Live Certificate Preview (swipe sideways on phones) */}
+            <p className="md:hidden text-[11px] text-slate-500 text-center -mb-2">Swipe sideways to view the full certificate</p>
+            <div className="overflow-x-auto py-2">
+              <div className="mx-auto w-max">
+                <Certificate
+                  studentName={certData.studentName}
+                  courseName={certData.courseName}
+                  programPrefix={certData.programPrefix}
+                  level={certData.level}
+                  grade={certData.grade}
+                  duration={certData.duration}
+                  registrationNo={certData.registrationNo}
+                  certificateNo={certData.certificateNo}
+                  centreName={certData.centreName}
+                  centreCode={certData.centreCode}
+                  centreAddress={certData.centreAddress}
+                  issueDate={certData.issueDate}
+                  certificateType={certData.certificateType}
+                  studentPhoto={certData.studentPhoto}
+                  showControls={true}
+                />
+              </div>
             </div>
           </div>
         )}
@@ -2554,64 +3368,75 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
             BRANCH HEAD: TAB 1 - BRANCH OVERVIEW
             ========================================================================= */}
         {currentAdminRole === 'Branch Head' && activeTab === 'branch_overview' && (
-          <div className="space-y-5 animate-in fade-in duration-200">
-            {/* Branch Metrics */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              
-              <div className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
-                <div>
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Branch Enrolled Students</span>
-                  <div className="text-2xl font-black text-slate-950 mt-1">{branchStudents.length}</div>
-                  <span className="text-[11px] font-bold text-sky-700 flex items-center gap-1 mt-0.5">
-                    <CheckCircle2 className="w-3 h-3" /> Enrolled in {activeBranch}
+          <div className="space-y-4 sm:space-y-5 animate-in fade-in duration-200">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
+
+              <div className="bg-white p-3 sm:p-4.5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <span className="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Branch Enrolled Students</span>
+                  <div className="text-xl sm:text-2xl font-black text-slate-950 mt-1">{branchStudents.length}</div>
+                  <span className="text-[10px] sm:text-[11px] font-bold text-emerald-700 flex items-center gap-1 mt-0.5">
+                    <CheckCircle2 className="w-3 h-3 shrink-0" /> <span className="truncate">Enrolled in {activeBranch}</span>
                   </span>
                 </div>
-                <div className="w-11 h-11 rounded-xl bg-sky-100 text-[#0c234b] flex items-center justify-center font-bold">
+                <div className="hidden sm:flex w-11 h-11 rounded-xl bg-emerald-100 text-emerald-800 items-center justify-center font-bold shrink-0">
                   <Users className="w-5 h-5" />
                 </div>
               </div>
 
-              <div className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
-                <div>
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Active Batches</span>
-                  <div className="text-2xl font-black text-slate-950 mt-1">{branchBatches.length} Batches</div>
-                  <span className="text-[11px] font-bold text-sky-700 flex items-center gap-1 mt-0.5">
-                    <Clock className="w-3 h-3" /> Scheduled class slots
+              <div className="bg-white p-3 sm:p-4.5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <span className="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Active Batches</span>
+                  <div className="text-xl sm:text-2xl font-black text-slate-950 mt-1">3 Batches</div>
+                  <span className="text-[10px] sm:text-[11px] font-bold text-sky-700 flex items-center gap-1 mt-0.5">
+                    <Clock className="w-3 h-3 shrink-0" /> Weekend & Weekday
                   </span>
                 </div>
-                <div className="w-11 h-11 rounded-xl bg-sky-100 text-sky-800 flex items-center justify-center font-bold">
+                <div className="hidden sm:flex w-11 h-11 rounded-xl bg-sky-100 text-sky-800 items-center justify-center font-bold shrink-0">
                   <Clock className="w-5 h-5" />
                 </div>
               </div>
 
-              <div className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
-                <div>
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Branch Fees Collected</span>
-                  <div className="text-2xl font-black text-slate-950 mt-1">{branchRevenueFormatted}</div>
-                  <span className="text-[11px] font-bold text-sky-700 flex items-center gap-1 mt-0.5">
-                    <ShieldCheck className="w-3 h-3" /> Branch desk collections
+              <div className="bg-white p-3 sm:p-4.5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <span className="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Branch Fees Collected</span>
+                  <div className="text-xl sm:text-2xl font-black text-emerald-800 mt-1">{branchRevenueFormatted}</div>
+                  <span className="text-[10px] sm:text-[11px] font-bold text-emerald-700 flex items-center gap-1 mt-0.5">
+                    <ShieldCheck className="w-3 h-3 shrink-0" /> Branch desk collections
                   </span>
                 </div>
-                <div className="w-11 h-11 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold">
+                <div className="hidden sm:flex w-11 h-11 rounded-xl bg-emerald-100 text-emerald-800 items-center justify-center font-bold shrink-0">
                   <CreditCard className="w-5 h-5" />
+                </div>
+              </div>
+
+              <div className="bg-white p-3 sm:p-4.5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <span className="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Branch Attendance</span>
+                  <div className="text-xl sm:text-2xl font-black text-slate-950 mt-1">96.5%</div>
+                  <span className="text-[10px] sm:text-[11px] font-bold text-teal-700 flex items-center gap-1 mt-0.5">
+                    <TrendingUp className="w-3 h-3 shrink-0" /> Excellent regularity
+                  </span>
+                </div>
+                <div className="hidden sm:flex w-11 h-11 rounded-xl bg-teal-100 text-teal-800 items-center justify-center font-bold shrink-0">
+                  <Check className="w-5 h-5" />
                 </div>
               </div>
 
             </div>
 
-            {/* Branch Students Quick List & Schedule */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-              
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5">
+
               {/* Branch Students Quick List */}
-              <div className="lg:col-span-2 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-sm font-black text-slate-950 flex items-center gap-2">
-                    <Users className="w-4 h-4 text-sky-600" />
-                    <span>Recent Students Enrolled in {activeBranch}</span>
+              <div className="lg:col-span-2 bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <h2 className="text-sm font-black text-slate-950 flex items-center gap-2 min-w-0">
+                    <Users className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span className="truncate">Recent Students Enrolled in {activeBranch}</span>
                   </h2>
                   <button
                     onClick={() => setActiveTab('branch_students')}
-                    className="text-xs font-bold text-sky-700 hover:underline flex items-center gap-1"
+                    className="text-xs font-bold text-emerald-700 hover:underline flex items-center gap-1 shrink-0"
                   >
                     <span>Full Branch Roster</span>
                     <ArrowRight className="w-3 h-3" />
@@ -2620,23 +3445,23 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
 
                 <div className="divide-y divide-slate-100">
                   {branchStudents.map((st) => (
-                    <div key={st.userId} className="py-2.5 flex items-center justify-between gap-3">
-                      <div>
-                        <div className="text-xs font-black text-slate-900 capitalize">{st.studentName}</div>
-                        <div className="text-[11px] text-slate-500 flex items-center gap-2 mt-0.5">
-                          <span className="font-mono text-sky-900 font-bold">{st.registerNumber || st.userId}</span>
+                    <div key={st.userId} className="py-2.5 grid grid-cols-1 min-[420px]:grid-cols-[1fr_auto] items-center gap-2 min-[420px]:gap-3">
+                      <div className="min-w-0">
+                        <div className="text-xs font-black text-slate-900 capitalize truncate">{st.studentName}</div>
+                        <div className="text-[11px] text-slate-500 flex items-center gap-x-2 flex-wrap mt-0.5">
+                          <span className="font-mono text-emerald-800 font-bold">{st.registerNumber || st.userId}</span>
                           <span>•</span>
                           <span>Course: <strong className="text-slate-700">{st.program}</strong></span>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="px-2 py-0.5 bg-sky-50 text-sky-800 border border-sky-200 text-[10px] font-black rounded">
+                        <span className="px-2 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-black rounded">
                           {st.grade || 'Level 1'}
                         </span>
                         <button
                           type="button"
                           onClick={() => handleOpenCertForStudent(st)}
-                          className="px-2.5 py-1 bg-amber-400 hover:bg-amber-500 text-slate-950 rounded text-[10px] font-black"
+                          className="px-2.5 py-1.5 sm:py-1 bg-amber-400 hover:bg-amber-500 text-slate-950 rounded text-[10px] font-black"
                         >
                           Certificate
                         </button>
@@ -2647,42 +3472,27 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
               </div>
 
               {/* Weekly Branch Schedule */}
-              <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-sm font-black text-slate-950 flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-amber-500" />
-                    <span>Weekly Branch Schedule</span>
-                  </h2>
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('branch_batches')}
-                    className="text-xs font-bold text-sky-700 hover:underline flex items-center gap-1 cursor-pointer"
-                  >
-                    <span>Manage Batches</span>
-                    <ArrowRight className="w-3 h-3" />
-                  </button>
-                </div>
+              <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                <h2 className="text-sm font-black text-slate-950 flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-amber-500" />
+                  <span>Weekly Branch Schedule</span>
+                </h2>
 
-                <div className="space-y-2.5 text-xs">
-                  {branchBatches.length === 0 ? (
-                    <div className="p-4 text-center text-slate-400 text-xs">
-                      No active batches found for this branch.
-                    </div>
-                  ) : (
-                    branchBatches.slice(0, 4).map((b) => (
-                      <div key={b.id} className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-start justify-between gap-2">
-                        <div>
-                          <div className="font-bold text-slate-900">{b.name}</div>
-                          <div className="text-slate-500 text-[11px] mt-0.5">
-                            {b.days}: <strong className="text-sky-950">{b.startTime} - {b.endTime}</strong>
-                          </div>
-                        </div>
-                        <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-sky-100 text-sky-800 shrink-0">
-                          {b.program}
-                        </span>
-                      </div>
-                    ))
-                  )}
+                <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-2.5 text-xs">
+                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                    <div className="font-bold text-slate-900">Abacus Level 1 & 2 (Batch A)</div>
+                    <div className="text-slate-500 text-[11px] mt-0.5">Saturday & Sunday: 09:30 AM - 11:30 AM</div>
+                  </div>
+
+                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                    <div className="font-bold text-slate-900">Drawing & Fine Arts (Batch B)</div>
+                    <div className="text-slate-500 text-[11px] mt-0.5">Saturday & Sunday: 02:00 PM - 04:00 PM</div>
+                  </div>
+
+                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                    <div className="font-bold text-slate-900">Handwriting & Phonics (Batch C)</div>
+                    <div className="text-slate-500 text-[11px] mt-0.5">Tuesday & Thursday: 05:00 PM - 06:30 PM</div>
+                  </div>
                 </div>
               </div>
 
@@ -2695,24 +3505,46 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
             ========================================================================= */}
         {currentAdminRole === 'Branch Head' && activeTab === 'branch_students' && (
           <div className="space-y-4 animate-in fade-in duration-200">
+            <div className="bg-white p-3.5 sm:p-4.5 rounded-2xl border border-slate-200 shadow-sm grid grid-cols-1 sm:grid-cols-[1fr_auto] items-start sm:items-center gap-3">
+              <div>
+                <h2 className="text-base font-black text-slate-950 flex items-center gap-2">
+                  <Users className="w-5 h-5 text-emerald-600 shrink-0" />
+                  <span className="break-words">{activeBranch} — Student Details & Records</span>
+                </h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Managing students exclusively enrolled in {activeBranch}. Update levels, grades, parent contacts, and print certificates.
+                </p>
+              </div>
 
-            {/* Search */}
-            <div className="relative max-w-md">
+              <button
+                type="button"
+                onClick={() => {
+                  setNewStudent(prev => ({ ...prev, branch: activeBranch, institution: activeBranch }));
+                  setShowAddStudentModal(true);
+                }}
+                className="w-full sm:w-auto px-4 py-2.5 sm:py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Enroll Student in This Branch</span>
+              </button>
+            </div>
+
+            <div className="relative w-full sm:max-w-md">
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 value={branchStudentSearch}
                 onChange={(e) => setBranchStudentSearch(e.target.value)}
                 placeholder="Search branch students by name, reg no..."
-                className="w-full pl-9 pr-3 py-2 text-xs bg-white border border-slate-300 rounded-xl outline-none"
+                className="w-full pl-9 pr-3 py-2.5 sm:py-2 text-xs bg-white border border-slate-300 rounded-xl outline-none"
               />
             </div>
 
-            {/* Branch Students Table */}
+            {/* Branch Students — card grid on phones, table from md up */}
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-[#081d3d] text-white uppercase text-[10px] tracking-wider font-black">
+                <table className="block md:table w-full text-left text-xs">
+                  <thead className="hidden md:table-header-group bg-[#081d3d] text-white uppercase text-[10px] tracking-wider font-black">
                     <tr>
                       <th className="py-3 px-4">Student & Reg No</th>
                       <th className="py-3 px-3">Parent & Phone</th>
@@ -2722,60 +3554,53 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                       <th className="py-3 px-3 text-right">Branch Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 font-medium">
+                  <tbody className="block md:table-row-group divide-y divide-slate-100 font-medium">
                     {branchStudents.length === 0 ? (
-                      <tr>
-                        <td colSpan="6" className="py-8 text-center text-slate-500">
+                      <tr className="block md:table-row">
+                        <td colSpan="6" className="block md:table-cell py-8 px-3 text-center text-slate-500">
                           No students currently enrolled under {activeBranch}. Click "+ Enroll Student in This Branch" above.
                         </td>
                       </tr>
                     ) : (
                       branchStudents.map((st) => (
-                        <tr key={st.userId} className="hover:bg-slate-50 transition">
-                          <td className="py-3 px-4">
+                        <tr
+                          key={st.userId}
+                          className="grid grid-cols-2 gap-x-3 gap-y-2.5 p-3.5 md:table-row md:p-0 hover:bg-slate-50 transition [&>td]:block [&>td]:min-w-0 [&>td]:p-0 md:[&>td]:table-cell md:[&>td]:px-3 md:[&>td]:py-3 [&>td]:before:content-[attr(data-label)] [&>td]:before:block [&>td]:before:mb-0.5 [&>td]:before:text-[9px] [&>td]:before:font-black [&>td]:before:uppercase [&>td]:before:tracking-wider [&>td]:before:text-slate-400 md:[&>td]:before:hidden"
+                        >
+                          <td className="col-span-2 md:pl-4">
                             <div className="font-extrabold text-slate-900 capitalize">{st.studentName}</div>
-                            <div className="text-[10px] text-sky-900 font-mono font-bold mt-0.5">
+                            <div className="text-[10px] text-emerald-800 font-mono font-bold mt-0.5">
                               {st.registerNumber || st.userId}
                             </div>
                           </td>
 
-                          <td className="py-3 px-3">
+                          <td data-label="Parent & Phone">
                             <div className="text-slate-800">{st.parentName || 'Guardian'}</div>
                             <div className="text-[10px] text-slate-500">{st.phone}</div>
                           </td>
 
-                          <td className="py-3 px-3 font-bold text-slate-900">
+                          <td data-label="Enrolled Course" className="font-bold text-slate-900">
                             {st.program}
                           </td>
 
-                          <td className="py-3 px-3">
+                          <td data-label="Current Level">
                             <span className="px-2 py-0.5 bg-amber-50 text-amber-800 border border-amber-200 font-black rounded text-[10px]">
                               {st.grade || 'Level 1'}
                             </span>
                           </td>
 
-                          <td className="py-3 px-3">
-                            <span className="px-2 py-0.5 bg-sky-100 text-sky-900 font-black rounded-full text-[10px] uppercase">
+                          <td data-label="Fee Status">
+                            <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 font-black rounded-full text-[10px] uppercase">
                               {st.feeAmount || '₹450'} • {st.feePaymentType || 'Paid'}
                             </span>
                           </td>
 
-                          <td className="py-3 px-3 text-right">
-                            <div className="flex items-center justify-end gap-1.5 flex-wrap sm:flex-nowrap">
-                              <button
-                                type="button"
-                                onClick={() => setViewingAdmissionStudent(st)}
-                                className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-lg text-[10px] transition cursor-pointer flex items-center gap-1 shadow-xs"
-                                title="View & Print Official Admission Form"
-                              >
-                                <GraduationCap className="w-3 h-3 text-emerald-200" />
-                                <span>Admission Form</span>
-                              </button>
-
+                          <td className="col-span-2 md:text-right">
+                            <div className="flex items-center md:justify-end gap-1.5">
                               <button
                                 type="button"
                                 onClick={() => handleOpenCertForStudent(st)}
-                                className="px-2.5 py-1 bg-amber-400 hover:bg-amber-500 text-slate-950 font-black rounded text-[10px] flex items-center gap-1"
+                                className="px-2.5 py-2 md:py-1 bg-amber-400 hover:bg-amber-500 text-slate-950 font-black rounded text-[10px] flex items-center gap-1"
                               >
                                 <Award className="w-3 h-3" />
                                 <span>Certificate</span>
@@ -2784,7 +3609,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                               <button
                                 type="button"
                                 onClick={() => setEditingStudent(st)}
-                                className="p-1 text-slate-600 hover:text-sky-700 hover:bg-sky-50 rounded"
+                                className="p-2 md:p-1 text-slate-600 hover:text-sky-700 hover:bg-sky-50 rounded"
                                 title="Update Student Record"
                               >
                                 <Edit3 className="w-4 h-4" />
@@ -2793,7 +3618,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                               <button
                                 type="button"
                                 onClick={() => handleDeleteStudent(st.userId, st.studentName)}
-                                className="p-1 text-slate-400 hover:text-rose-600"
+                                className="p-2 md:p-1 text-slate-400 hover:text-rose-600"
                               >
                                 <Trash2 className="w-4 h-4" />
                               </button>
@@ -2810,167 +3635,84 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
         )}
 
         {/* =========================================================================
-            BRANCH HEAD: TAB 3 - AVAILABLE BATCHES & CLASS TIMINGS
+            BRANCH HEAD: TAB 3 - BATCHES & ATTENDANCE
             ========================================================================= */}
         {currentAdminRole === 'Branch Head' && activeTab === 'branch_batches' && (
           <div className="space-y-4 animate-in fade-in duration-200">
-            {/* Top Toolbar */}
-            <div className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-sky-100 text-sky-900 flex items-center justify-center font-bold shrink-0">
-                  <Clock className="w-5 h-5" />
-                </div>
-                <div>
-                  <h2 className="text-base font-black text-slate-950 flex items-center gap-2">
-                    <span>Available Batches & Class Timings</span>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-amber-100 text-amber-900">
-                      {branchBatches.length} Configured
-                    </span>
-                  </h2>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    Manage branch batch schedules, timings, days, and intake capacity for {activeBranch}.
-                  </p>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setEditingBatch(null);
-                  setBatchForm({
-                    name: '',
-                    program: coursesList[0]?.name || 'Abacus',
-                    days: 'Saturday & Sunday',
-                    startTime: '09:30 AM',
-                    endTime: '11:30 AM',
-                    room: 'Classroom 1',
-                    maxCapacity: 15,
-                    enrolledCount: 0,
-                    instructor: '',
-                    status: 'Active',
-                    notes: ''
-                  });
-                  setShowAddBatchModal(true);
-                }}
-                className="px-4 py-2 bg-[#081d3d] hover:bg-[#123068] text-white rounded-xl text-xs font-black transition flex items-center gap-1.5 shadow-sm cursor-pointer"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Create New Batch</span>
-              </button>
-            </div>
-
-            {/* Batch Cards Grid */}
-            {branchBatches.length === 0 ? (
-              <div className="bg-white p-12 text-center rounded-2xl border border-slate-200 shadow-sm">
-                <Clock className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-                <h3 className="text-sm font-black text-slate-700">No Batches Configured</h3>
-                <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
-                  Click "Create New Batch" above to set up your first classroom timing slot.
+            <div className="bg-white p-3.5 sm:p-4.5 rounded-2xl border border-slate-200 shadow-sm grid grid-cols-1 lg:grid-cols-[1fr_auto] items-start lg:items-center gap-3">
+              <div>
+                <h2 className="text-base font-black text-slate-950 flex items-center gap-2">
+                  <Clock className="w-5 h-5 text-amber-500 shrink-0" />
+                  <span>Branch Batches & Daily Attendance Register</span>
+                </h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Select your batch timing and mark attendance for today's classroom learners.
                 </p>
               </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                {branchBatches.map((batch) => (
-                  <div 
-                    key={batch.id} 
-                    className="bg-white rounded-2xl border border-slate-200 p-4.5 shadow-sm hover:shadow-md transition flex flex-col justify-between space-y-4"
-                  >
-                    <div>
-                      {/* Top Badges */}
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-sky-100 text-sky-900">
-                          {batch.program}
-                        </span>
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${
-                          batch.status === 'Active' 
-                            ? 'bg-emerald-100 text-emerald-800' 
-                            : batch.status === 'Full' 
-                            ? 'bg-rose-100 text-rose-800' 
-                            : 'bg-amber-100 text-amber-800'
-                        }`}>
-                          {batch.status}
-                        </span>
-                      </div>
 
-                      {/* Batch Name */}
-                      <h3 className="text-sm font-black text-slate-950 mb-1 leading-snug">
-                        {batch.name}
-                      </h3>
-                      {batch.batchCode && (
-                        <div className="text-[10px] font-mono text-slate-400 mb-3">
-                          Batch Code: {batch.batchCode}
-                        </div>
-                      )}
+              <div className="grid grid-cols-1 sm:grid-cols-[auto_1fr] lg:flex items-center gap-1.5 sm:gap-2 w-full lg:w-auto">
+                <span className="text-xs font-bold text-slate-600">Active Batch:</span>
+                <select
+                  value={selectedBatch}
+                  onChange={(e) => setSelectedBatch(e.target.value)}
+                  className="w-full lg:w-auto px-3 py-2.5 sm:py-1.5 text-xs bg-white border border-slate-300 rounded-xl font-bold outline-none cursor-pointer"
+                >
+                  <option value="Batch 1 - Weekend Morning">Batch 1: Abacus Juniors (Sat & Sun 09:30 AM)</option>
+                  <option value="Batch 2 - Weekend Afternoon">Batch 2: Drawing & Art (Sat & Sun 02:00 PM)</option>
+                  <option value="Batch 3 - Weekday Evening">Batch 3: Handwriting (Tue & Thu 05:00 PM)</option>
+                </select>
+              </div>
+            </div>
 
-                      {/* Timing & Details Box */}
-                      <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-2 text-xs">
-                        <div className="flex items-center gap-2 text-slate-700 font-bold">
-                          <Calendar className="w-4 h-4 text-sky-600 shrink-0" />
-                          <span>{batch.days}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-slate-900 font-black">
-                          <Clock className="w-4 h-4 text-amber-500 shrink-0" />
-                          <span>{batch.startTime} — {batch.endTime}</span>
-                        </div>
-                        <div className="flex items-center justify-between pt-1 border-t border-slate-200/60 text-[11px] text-slate-500">
-                          <span>Room: <strong className="text-slate-800">{batch.room || 'General Room'}</strong></span>
-                          {batch.instructor && (
-                            <span>Faculty: <strong className="text-slate-800">{batch.instructor}</strong></span>
-                          )}
-                        </div>
-                      </div>
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-3.5 sm:p-4.5 space-y-3">
+              <div className="grid grid-cols-1 min-[420px]:grid-cols-[1fr_auto] items-center gap-2">
+                <span className="text-xs font-black text-slate-800">
+                  Attendance for Today ({new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}):
+                </span>
+                <button
+                  type="button"
+                  onClick={() => showToast('Attendance saved for this session!')}
+                  className="px-3 py-2 sm:py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-black transition"
+                >
+                  Save Attendance
+                </button>
+              </div>
 
-                      {batch.notes && (
-                        <p className="text-[11px] text-slate-500 italic mt-2.5 line-clamp-2">
-                          "{batch.notes}"
-                        </p>
-                      )}
+              <div className="divide-y divide-slate-100">
+                {branchStudents.map((st) => (
+                  <div key={st.userId} className="py-2.5 grid grid-cols-1 sm:grid-cols-[1fr_auto] items-center gap-2 sm:gap-3">
+                    <div className="min-w-0">
+                      <div className="text-xs font-extrabold text-slate-900 capitalize truncate">{st.studentName}</div>
+                      <div className="text-[10px] text-slate-500">Reg: {st.registerNumber || st.userId} • {st.program}</div>
                     </div>
 
-                    {/* Bottom Controls */}
-                    <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-                      <span className="text-[11px] font-bold text-slate-500">
-                        Intake: <strong className="text-slate-900">{batch.enrolledCount || 0} / {batch.maxCapacity || 15}</strong>
-                      </span>
-
-                      <div className="flex items-center gap-1.5">
+                    <div className="grid grid-cols-3 sm:flex items-center gap-1.5">
+                      {['Present', 'Absent', 'Late'].map((status) => (
                         <button
+                          key={status}
                           type="button"
                           onClick={() => {
-                            setEditingBatch(batch);
-                            setBatchForm({
-                              name: batch.name,
-                              program: batch.program,
-                              days: batch.days,
-                              startTime: batch.startTime,
-                              endTime: batch.endTime,
-                              room: batch.room || '',
-                              maxCapacity: batch.maxCapacity || 15,
-                              enrolledCount: batch.enrolledCount || 0,
-                              instructor: batch.instructor || '',
-                              status: batch.status || 'Active',
-                              notes: batch.notes || ''
-                            });
-                            setShowAddBatchModal(true);
+                            setAttendanceRecords(prev => ({ ...prev, [st.userId]: status }));
+                            showToast(`Marked ${st.studentName} as ${status}`);
                           }}
-                          className="px-2.5 py-1 text-slate-700 hover:text-sky-700 hover:bg-sky-50 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer"
+                          className={`px-3 py-2 sm:py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
+                            (attendanceRecords[st.userId] || 'Present') === status
+                              ? status === 'Present'
+                                ? 'bg-emerald-600 text-white shadow-xs'
+                                : status === 'Absent'
+                                ? 'bg-rose-600 text-white shadow-xs'
+                                : 'bg-amber-500 text-white shadow-xs'
+                              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                          }`}
                         >
-                          <Edit3 className="w-3.5 h-3.5" />
-                          <span>Edit</span>
+                          {status}
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteBatch(batch.id, batch.name)}
-                          className="px-2 py-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg text-xs font-bold transition cursor-pointer"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
+                      ))}
                     </div>
                   </div>
                 ))}
               </div>
-            )}
+            </div>
           </div>
         )}
 
@@ -2979,12 +3721,35 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
             ========================================================================= */}
         {currentAdminRole === 'Branch Head' && activeTab === 'branch_fees' && (
           <div className="space-y-4 animate-in fade-in duration-200">
+            <div className="bg-white p-3.5 sm:p-4.5 rounded-2xl border border-slate-200 shadow-sm grid grid-cols-1 sm:grid-cols-[1fr_auto] items-start sm:items-center gap-3">
+              <div>
+                <h2 className="text-base font-black text-slate-950 flex items-center gap-2">
+                  <CreditCard className="w-5 h-5 text-emerald-600 shrink-0" />
+                  <span className="break-words">{activeBranch} — Fee Collections & Receipts</span>
+                </h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Record tuition payments collected at the branch desk and print official parent receipts.
+                </p>
+              </div>
 
-            {/* Branch Payments Table */}
+              <button
+                type="button"
+                onClick={() => {
+                  setNewPayment(prev => ({ ...prev, branch: activeBranch }));
+                  setShowAddPaymentModal(true);
+                }}
+                className="w-full sm:w-auto px-4 py-2.5 sm:py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Record Fee Payment at Branch</span>
+              </button>
+            </div>
+
+            {/* Branch Payments — card grid on phones, table from md up */}
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-[#081d3d] text-white uppercase text-[10px] tracking-wider font-black">
+                <table className="block md:table w-full text-left text-xs">
+                  <thead className="hidden md:table-header-group bg-[#081d3d] text-white uppercase text-[10px] tracking-wider font-black">
                     <tr>
                       <th className="py-3 px-4">Receipt / Date</th>
                       <th className="py-3 px-3">Student Name</th>
@@ -2995,41 +3760,44 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                       <th className="py-3 px-3 text-right">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 font-medium">
+                  <tbody className="block md:table-row-group divide-y divide-slate-100 font-medium">
                     {branchPayments.map((p) => (
-                      <tr key={p.id} className="hover:bg-slate-50 transition">
-                        <td className="py-3 px-4">
+                      <tr
+                        key={p.id}
+                        className="grid grid-cols-2 gap-x-3 gap-y-2.5 p-3.5 md:table-row md:p-0 hover:bg-slate-50 transition [&>td]:block [&>td]:min-w-0 [&>td]:p-0 md:[&>td]:table-cell md:[&>td]:px-3 md:[&>td]:py-3 [&>td]:before:content-[attr(data-label)] [&>td]:before:block [&>td]:before:mb-0.5 [&>td]:before:text-[9px] [&>td]:before:font-black [&>td]:before:uppercase [&>td]:before:tracking-wider [&>td]:before:text-slate-400 md:[&>td]:before:hidden"
+                      >
+                        <td className="col-span-2 md:pl-4">
                           <div className="font-mono font-bold text-slate-800">{p.receiptNo || p.id}</div>
                           <div className="text-[10px] text-slate-400">{p.date}</div>
                         </td>
 
-                        <td className="py-3 px-3 font-extrabold text-slate-900 capitalize">
+                        <td data-label="Student Name" className="font-extrabold text-slate-900 capitalize">
                           {p.payerName}
                         </td>
 
-                        <td className="py-3 px-3 text-slate-700">
+                        <td data-label="Course / Purpose" className="text-slate-700">
                           {p.program}
                         </td>
 
-                        <td className="py-3 px-3 font-black text-slate-900">
+                        <td data-label="Amount" className="font-black text-emerald-800">
                           {p.amount}
                         </td>
 
-                        <td className="py-3 px-3 text-slate-700">
+                        <td data-label="Mode" className="text-slate-700">
                           {p.paymentMode}
                         </td>
 
-                        <td className="py-3 px-3">
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-sky-100 text-sky-900">
+                        <td data-label="Status">
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-100 text-emerald-800">
                             {p.status}
                           </span>
                         </td>
 
-                        <td className="py-3 px-3 text-right">
+                        <td className="col-span-2 md:text-right">
                           <button
                             type="button"
                             onClick={() => setSelectedReceiptForPrint(p)}
-                            className="px-2.5 py-1 text-slate-700 hover:text-sky-700 hover:bg-sky-50 rounded text-xs font-bold transition flex items-center gap-1 ml-auto"
+                            className="px-2.5 py-2 md:py-1 text-slate-700 hover:text-sky-700 hover:bg-sky-50 bg-slate-50 md:bg-transparent rounded text-xs font-bold transition flex items-center gap-1 md:ml-auto"
                           >
                             <Printer className="w-3.5 h-3.5" />
                             <span>Receipt</span>
@@ -3049,26 +3817,25 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
             ========================================================================= */}
         {currentAdminRole === 'Branch Head' && activeTab === 'branch_certificates' && (
           <div className="space-y-4 animate-in fade-in duration-200">
-            <div className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="bg-white p-3.5 sm:p-4.5 rounded-2xl border border-slate-200 shadow-sm grid grid-cols-1 lg:grid-cols-[1fr_auto] items-start lg:items-center gap-3">
               <div>
                 <h2 className="text-base font-black text-slate-950 flex items-center gap-2">
-                  <Award className="w-5 h-5 text-amber-500" />
-                  <span>{activeBranch} — Official Certificate Desk</span>
+                  <Award className="w-5 h-5 text-amber-500 shrink-0" />
+                  <span className="break-words">{activeBranch} — Official Certificate Desk</span>
                 </h2>
                 <p className="text-xs text-slate-500 mt-0.5">
                   Issue certificates with Centre Director signature ({activeBranch}) and Board accreditation seal.
                 </p>
               </div>
 
-              {/* Quick Select from Branch Students */}
-              <div className="flex items-center gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-[auto_1fr] lg:flex items-center gap-1.5 sm:gap-2 w-full lg:w-auto">
                 <span className="text-xs font-bold text-slate-600">Select Branch Student:</span>
                 <select
                   onChange={(e) => {
                     const st = branchStudents.find(s => s.userId === e.target.value);
                     if (st) handleOpenCertForStudent(st);
                   }}
-                  className="px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-xl font-bold outline-none cursor-pointer"
+                  className="w-full lg:w-auto px-3 py-2.5 sm:py-1.5 text-xs bg-white border border-slate-300 rounded-xl font-bold outline-none cursor-pointer"
                 >
                   <option value="">-- Choose Branch Candidate --</option>
                   {branchStudents.map(s => (
@@ -3078,149 +3845,397 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
               </div>
             </div>
 
-            {/* Certificate Canvas */}
-            <div className="flex justify-center overflow-x-auto py-2">
-              <Certificate
-                studentName={certData.studentName}
-                courseName={certData.courseName}
-                programPrefix={certData.programPrefix}
-                level={certData.level}
-                grade={certData.grade}
-                duration={certData.duration}
-                registrationNo={certData.registrationNo}
-                certificateNo={certData.certificateNo}
-                centreName={activeBranch}
-                centreCode={certData.centreCode}
-                centreAddress={certData.centreAddress}
-                issueDate={certData.issueDate}
-                certificateType={certData.certificateType}
-                studentPhoto={certData.studentPhoto}
-                showControls={true}
-              />
+            <p className="md:hidden text-[11px] text-slate-500 text-center -mb-2">Swipe sideways to view the full certificate</p>
+            <div className="overflow-x-auto py-2">
+              <div className="mx-auto w-max">
+                <Certificate
+                  studentName={certData.studentName}
+                  courseName={certData.courseName}
+                  programPrefix={certData.programPrefix}
+                  level={certData.level}
+                  grade={certData.grade}
+                  duration={certData.duration}
+                  registrationNo={certData.registrationNo}
+                  certificateNo={certData.certificateNo}
+                  centreName={activeBranch}
+                  centreCode={certData.centreCode}
+                  centreAddress={certData.centreAddress}
+                  issueDate={certData.issueDate}
+                  certificateType={certData.certificateType}
+                  studentPhoto={certData.studentPhoto}
+                  showControls={true}
+                />
+              </div>
             </div>
           </div>
         )}
 
+        {/* =========================================================================
+            BRANCH HEAD: TAB 6 - HQ CIRCULARS & NOTICES
+            ========================================================================= */}
+        {currentAdminRole === 'Branch Head' && activeTab === 'branch_notices' && (
+          <div className="space-y-4 animate-in fade-in duration-200">
+            <div className="bg-white p-3.5 sm:p-4.5 rounded-2xl border border-slate-200 shadow-sm">
+              <h2 className="text-base font-black text-slate-950 flex items-center gap-2">
+                <FileText className="w-5 h-5 text-teal-600 shrink-0" />
+                <span>Headquarters Directives & Academic Circulars</span>
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Official notices dispatched by the B★SEL Central Secretariat to {activeBranch}.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3">
+              <div className="bg-white p-4 sm:p-4.5 rounded-2xl border border-slate-200 shadow-sm space-y-1.5">
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <span className="px-2.5 py-0.5 bg-amber-100 text-amber-900 font-bold rounded text-[10px] uppercase">
+                    Circular #BSEL/CIR/2026/04
+                  </span>
+                  <span className="text-xs text-slate-400">28 Oct 2026</span>
+                </div>
+                <h3 className="text-sm font-black text-slate-950">14th State Level Abacus Championship 2026 Confirmation</h3>
+                <p className="text-xs text-slate-600">
+                  All Centre Directors are requested to finalize candidate registrations for Level 1 through Level 8 abacus learners by 5th Nov 2026. Hall tickets and seating allotments will be published automatically in the branch portal.
+                </p>
+              </div>
+
+              <div className="bg-white p-4 sm:p-4.5 rounded-2xl border border-slate-200 shadow-sm space-y-1.5">
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <span className="px-2.5 py-0.5 bg-sky-100 text-sky-900 font-bold rounded text-[10px] uppercase">
+                    Circular #BSEL/CIR/2026/03
+                  </span>
+                  <span className="text-xs text-slate-400">15 Oct 2026</span>
+                </div>
+                <h3 className="text-sm font-black text-slate-950">Updated Mindsparc Abacus Workbooks Dispatch</h3>
+                <p className="text-xs text-slate-600">
+                  New student toolkit shipments containing 17-rod wooden abacus frames and Level 1 practice exercise books have been dispatched via courier to {activeBranch}.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
           </main>
       </div>
 
       {/* =========================================================================
-          MODAL: OFFICIAL EXAMINATION MARKSHEET (SUPER ADMIN & ALL DESKS)
+          MODAL: OFFICIAL EXAMINATION MARKSHEET
           ========================================================================= */}
-      {(showMarksheetModal || selectedMarksheetStudent) && selectedMarksheetStudent && (
-        <OfficialMarksheetView
-          student={selectedMarksheetStudent}
-          onClose={() => {
-            setShowMarksheetModal(false);
-            setSelectedMarksheetStudent(null);
-          }}
-        />
-      )}
+      {showMarksheetModal && selectedMarksheetStudent && (
+        <div className="fixed inset-0 z-[55] bg-black/75 backdrop-blur-xs flex items-start sm:items-center justify-center p-2 sm:p-4 md:p-6 overflow-y-auto">
+          <div className="bg-white w-full max-w-3xl rounded-2xl shadow-2xl border-2 border-amber-400/60 overflow-hidden animate-in zoom-in-95 duration-150 my-auto">
 
-      {/* =========================================================================
-          MODAL: OFFICIAL CERTIFICATE PREVIEW (SUPER ADMIN & ALL DESKS)
-          ========================================================================= */}
-      {previewCertModalData && (
-        <CertificateModal
-          isOpen={Boolean(previewCertModalData)}
-          initialData={previewCertModalData}
-          onClose={() => setPreviewCertModalData(null)}
-        />
-      )}
-
-      {/* =========================================================================
-          MODAL: OFFICIAL STUDENT ADMISSION FORM (SUPER ADMIN & BRANCH HEAD)
-          ========================================================================= */}
-      {viewingAdmissionStudent && (
-        <StudentAdmissionFormView
-          student={viewingAdmissionStudent}
-          onClose={() => setViewingAdmissionStudent(null)}
-        />
-      )}
-
-      {/* =========================================================================
-          MODAL 1: OFFICIAL STUDENT ADMISSION FORM (SAME AS WEBSITE ADMISSION FORM)
-          ========================================================================= */}
-      <AdmissionModal
-        isOpen={showAddStudentModal}
-        onClose={() => {
-          setShowAddStudentModal(false);
-          setUsersList(getRegisteredUsers());
-          setPaymentsList(getStoredPayments());
-        }}
-        setActivePage={setActivePage}
-        initialBranch={currentAdminRole === 'Branch Head' ? activeBranch : null}
-        lockBranch={currentAdminRole === 'Branch Head'}
-        onSuccess={(account) => {
-          setUsersList(getRegisteredUsers());
-          if (account) {
-            addStoredPayment({
-              payerName: account.studentName || account.name,
-              studentId: account.userId,
-              branch: account.branch || activeBranch,
-              sector: 'Course Tuition',
-              program: account.program || account.courseName,
-              amount: account.feeAmount || '₹450',
-              paymentMode: account.paymentMode || 'UPI / QR Code',
-              refNo: account.receiptRefNo || `REC-${Date.now().toString().slice(-5)}`,
-              status: 'Verified',
-              verifiedBy: currentAdminRole === 'Branch Head' ? `${activeBranch} Head` : 'Super Admin',
-              notes: `Admission enrollment fee for ${account.program || account.courseName}`
-            });
-            setPaymentsList(getStoredPayments());
-          }
-        }}
-      />
-
-      {/* =========================================================================
-          MODAL: CREATE / EDIT BRANCH BATCH & CLASS TIMING
-          ========================================================================= */}
-      {showAddBatchModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
-          <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-150 my-auto">
-            <div className="bg-[#081d3d] text-white p-4 flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-amber-400 text-slate-950 flex items-center justify-center font-bold">
-                  <Clock className="w-4 h-4" />
+            {/* Top Toolbar */}
+            <div className="bg-gradient-to-r from-[#081d3d] via-[#0c234b] to-[#123068] text-white p-3 sm:p-4 grid grid-cols-[1fr_auto] items-center gap-3 border-b-2 border-amber-400 print:hidden">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-8 h-8 rounded-lg bg-amber-400 text-slate-950 flex items-center justify-center font-black shrink-0">
+                  <FileText className="w-4 h-4" />
                 </div>
-                <div>
-                  <h3 className="text-sm font-black">
-                    {editingBatch ? 'Edit Batch Timing & Schedule' : `Create New Batch for ${activeBranch}`}
+                <div className="min-w-0">
+                  <h3 className="text-sm font-black text-white flex items-center gap-2 flex-wrap">
+                    <span>Official Statement of Marks</span>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-emerald-500 text-white">
+                      Verified Record
+                    </span>
                   </h3>
-                  <p className="text-[11px] text-slate-300">Set classroom schedule, days, and intake capacity</p>
+                  <p className="hidden sm:block text-[11px] text-slate-300">
+                    B★SEL Board Autonomous Skill Examination Directorate • Academic Year 2026–2027
+                  </p>
                 </div>
               </div>
-              <button 
-                onClick={() => {
-                  setShowAddBatchModal(false);
-                  setEditingBatch(null);
-                }} 
-                className="text-white/80 hover:text-white cursor-pointer"
+
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  className="px-3 sm:px-3.5 py-2 sm:py-1.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-black rounded-xl text-xs transition cursor-pointer flex items-center gap-1.5 shadow-sm"
+                  title="Print official marksheet"
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Print Marksheet</span>
+                  <span className="sm:hidden">Print</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowMarksheetModal(false)}
+                  className="p-1.5 text-white/80 hover:text-white hover:bg-white/10 rounded-xl transition cursor-pointer"
+                  title="Close"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Printable Marksheet Container */}
+            <div className="p-2.5 sm:p-6 md:p-8 bg-amber-50/20 text-slate-900 overflow-y-auto max-h-[80vh] print:max-h-none print:p-0 print:bg-white">
+              <div className="bg-white border-4 border-[#0c234b] p-3.5 sm:p-7 md:p-8 rounded-xl shadow-md relative overflow-hidden">
+
+                <div className="absolute inset-1.5 sm:inset-2 border border-amber-500/60 pointer-events-none rounded-lg"></div>
+
+                <div className="absolute top-2.5 left-2.5 w-3 h-3 border-t-2 border-l-2 border-amber-600 pointer-events-none"></div>
+                <div className="absolute top-2.5 right-2.5 w-3 h-3 border-t-2 border-r-2 border-amber-600 pointer-events-none"></div>
+                <div className="absolute bottom-2.5 left-2.5 w-3 h-3 border-b-2 border-l-2 border-amber-600 pointer-events-none"></div>
+                <div className="absolute bottom-2.5 right-2.5 w-3 h-3 border-b-2 border-r-2 border-amber-600 pointer-events-none"></div>
+
+                {/* Header Banner */}
+                <div className="text-center pb-4 border-b-2 border-amber-500/80 relative">
+                  <div className="grid grid-cols-1 sm:grid-cols-[auto_1fr_auto] items-center justify-items-center gap-3">
+                    <div className="flex items-center justify-center">
+                      <Logo />
+                    </div>
+
+                    <div className="text-center px-2">
+                      <h1 className="text-sm sm:text-lg md:text-xl font-black text-[#081d3d] uppercase tracking-wide font-serif">
+                        Board of Skills and Educational Learning
+                      </h1>
+                      <div className="text-[11px] sm:text-xs font-black text-amber-700 uppercase tracking-widest mt-0.5">
+                        (B★SEL Autonomous National Council)
+                      </div>
+                      <p className="text-[10px] text-slate-600 mt-1">
+                        Registered & Authorized Skill Assessment Authority • ISO 9001:2015 Certified
+                      </p>
+                      <p className="text-[9.5px] text-slate-500 break-words">
+                        Head Office: Tenkasi, Tamil Nadu, India • Email: bsel.mindsparc@gmail.com • Ph: 98652 19131
+                      </p>
+                    </div>
+
+                    <div className="hidden sm:flex flex-col items-center">
+                      <div className="w-12 h-12 rounded-full border-2 border-amber-500 bg-amber-50 flex items-center justify-center font-black text-[#081d3d] text-xs shadow-xs">
+                        ★ B★SEL ★
+                      </div>
+                      <span className="text-[9px] font-bold text-slate-600 mt-1 uppercase">Official Seal</span>
+                    </div>
+                  </div>
+
+                  <div className="mt-3.5 bg-gradient-to-r from-[#081d3d] via-[#0c234b] to-[#081d3d] text-amber-300 py-1.5 px-3 sm:px-4 rounded-md text-[11px] sm:text-sm font-black uppercase tracking-[0.12em] sm:tracking-[0.18em] shadow-xs inline-block border border-amber-400">
+                    STATEMENT OF MARKS & EVALUATION RECORD
+                  </div>
+                </div>
+
+                {/* Candidate & Assessment Metadata */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 py-4 border-b border-slate-200">
+                  <div className="md:col-span-3 grid grid-cols-1 min-[420px]:grid-cols-2 gap-x-4 gap-y-2 text-xs order-2 md:order-1">
+                    <div>
+                      <span className="text-[10px] uppercase font-bold text-slate-500 block">Candidate Name</span>
+                      <span className="font-extrabold text-slate-900 text-sm uppercase break-words">{selectedMarksheetStudent.studentName}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] uppercase font-bold text-slate-500 block">Register Number</span>
+                      <span className="font-mono font-bold text-sky-800 text-sm">{selectedMarksheetStudent.registerNumber || selectedMarksheetStudent.userId}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] uppercase font-bold text-slate-500 block">Course / Program</span>
+                      <span className="font-bold text-slate-900">{selectedMarksheetStudent.program || selectedMarksheetStudent.courseName || 'Abacus'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] uppercase font-bold text-slate-500 block">Examination Level</span>
+                      <span className="font-bold text-amber-700 uppercase">{selectedMarksheetStudent.grade || 'Level 1'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] uppercase font-bold text-slate-500 block">Study & Examination Centre</span>
+                      <span className="font-semibold text-slate-800">{selectedMarksheetStudent.branch || selectedMarksheetStudent.institution || 'Tenkasi Regional Branch'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] uppercase font-bold text-slate-500 block">Centre Code / Serial No.</span>
+                      <span className="font-mono font-bold text-slate-700">545454 • {selectedMarksheetStudent.marksheetNo}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col items-center justify-center gap-2 shrink-0 order-1 md:order-2">
+                    <div className="w-24 h-28 rounded-lg overflow-hidden border-2 border-amber-500 shadow-sm bg-slate-50 p-1 flex flex-col items-center justify-center">
+                      <img
+                        src={selectedMarksheetStudent.photoUrl}
+                        alt="Student"
+                        className="w-full h-full object-cover rounded"
+                      />
+                    </div>
+                    <div className="text-[9px] font-bold text-slate-500 text-center uppercase tracking-wider">
+                      Student Photo
+                    </div>
+                  </div>
+                </div>
+
+                {/* Marks Breakdown Table (scrolls sideways on phones) */}
+                <div className="py-4">
+                  <div className="overflow-x-auto">
+                    <table className="w-full min-w-[520px] text-left text-xs border border-slate-300">
+                      <thead className="bg-[#081d3d] text-white uppercase text-[10px] tracking-wider font-black">
+                        <tr>
+                          <th className="py-2.5 px-3 border border-slate-300 text-center w-12">Sl.</th>
+                          <th className="py-2.5 px-3 border border-slate-300">Subject / Examination Component</th>
+                          <th className="py-2.5 px-3 border border-slate-300 text-center w-24">Max Marks</th>
+                          <th className="py-2.5 px-3 border border-slate-300 text-center w-24">Min Pass</th>
+                          <th className="py-2.5 px-3 border border-slate-300 text-center w-24">Marks Secured</th>
+                          <th className="py-2.5 px-3 border border-slate-300 text-center w-20">Grade</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-200 font-semibold text-slate-800">
+                        {selectedMarksheetStudent.subjects?.map((sub, sIdx) => (
+                          <tr key={sub.id} className={sIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/60'}>
+                            <td className="py-2.5 px-3 border border-slate-300 text-center font-bold text-slate-500">{sIdx + 1}</td>
+                            <td className="py-2.5 px-3 border border-slate-300 font-bold text-slate-900">{sub.name}</td>
+                            <td className="py-2.5 px-3 border border-slate-300 text-center">{sub.max}</td>
+                            <td className="py-2.5 px-3 border border-slate-300 text-center text-slate-500">{sub.min}</td>
+                            <td className="py-2.5 px-3 border border-slate-300 text-center font-black text-sky-900">{sub.marks}</td>
+                            <td className="py-2.5 px-3 border border-slate-300 text-center">
+                              <span className="px-2 py-0.5 rounded text-[10px] font-black bg-emerald-100 text-emerald-900">
+                                {sub.grade}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+
+                        <tr className="bg-amber-100/70 text-slate-950 font-black text-xs border-t-2 border-slate-400">
+                          <td colSpan="2" className="py-2.5 px-3 border border-slate-300 uppercase tracking-wider text-right pr-4">
+                            Grand Total
+                          </td>
+                          <td className="py-2.5 px-3 border border-slate-300 text-center font-black">
+                            {selectedMarksheetStudent.totalMax}
+                          </td>
+                          <td className="py-2.5 px-3 border border-slate-300 text-center font-bold text-slate-600">
+                            40
+                          </td>
+                          <td className="py-2.5 px-3 border border-slate-300 text-center font-black text-emerald-900 text-sm">
+                            {selectedMarksheetStudent.totalMarks}
+                          </td>
+                          <td className="py-2.5 px-3 border border-slate-300 text-center">
+                            <span className="px-2 py-0.5 rounded text-[10px] font-black bg-emerald-700 text-white">
+                              PASS
+                            </span>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Result Summary */}
+                <div className="grid grid-cols-3 gap-2 sm:gap-3 py-3 border-y border-slate-200 bg-slate-50/80 p-3 rounded-lg text-xs">
+                  <div>
+                    <span className="text-[10px] font-bold text-slate-500 uppercase block">Percentage</span>
+                    <span className="text-base font-black text-sky-900">{selectedMarksheetStudent.percentage}%</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold text-slate-500 uppercase block">Overall Grade</span>
+                    <span className="text-base font-black text-amber-700">{selectedMarksheetStudent.overallGrade}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold text-slate-500 uppercase block">Final Result Status</span>
+                    <span className="text-[10px] sm:text-xs font-black text-emerald-800 uppercase bg-emerald-100 px-2 py-0.5 rounded border border-emerald-300 inline-block mt-0.5">
+                      {selectedMarksheetStudent.resultText}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Footer Signatures & QR Verification */}
+                <div className="pt-6 sm:pt-8 grid grid-cols-1 sm:grid-cols-3 items-center justify-items-center gap-5 sm:gap-6 text-center text-xs">
+                  <div className="space-y-1">
+                    <div className="font-serif italic font-bold text-sm text-slate-800 border-b border-slate-400 pb-1 px-4">
+                      Sankar / Centre Director
+                    </div>
+                    <div className="font-bold text-[11px] text-slate-900 uppercase">Centre Director</div>
+                    <div className="text-[9.5px] text-slate-500">{selectedMarksheetStudent.branch || 'test branch'}</div>
+                  </div>
+
+                  <div className="flex items-center gap-2.5 border border-amber-300 bg-amber-50/50 p-2 rounded-lg">
+                    <div className="w-12 h-12 bg-white border border-amber-400 p-0.5 rounded shrink-0">
+                      <svg viewBox="0 0 100 100" className="w-full h-full text-[#0c234b]">
+                        <rect x="5" y="5" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="5" />
+                        <rect x="12" y="12" width="14" height="14" fill="currentColor" />
+                        <rect x="67" y="5" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="5" />
+                        <rect x="74" y="12" width="14" height="14" fill="currentColor" />
+                        <rect x="5" y="67" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="5" />
+                        <rect x="12" y="74" width="14" height="14" fill="currentColor" />
+                        <rect x="42" y="8" width="6" height="6" fill="currentColor" />
+                        <rect x="52" y="15" width="6" height="6" fill="currentColor" />
+                        <rect x="40" y="24" width="6" height="6" fill="currentColor" />
+                        <rect x="50" y="32" width="6" height="6" fill="currentColor" />
+                        <rect x="42" y="44" width="16" height="16" fill="currentColor" />
+                      </svg>
+                    </div>
+                    <div className="text-left text-[9.5px] text-slate-600">
+                      <div className="font-black text-slate-900 uppercase">Digitally Authenticated</div>
+                      <div>B★SEL Registry Verification</div>
+                      <div className="font-mono text-slate-500">ID: {selectedMarksheetStudent.userId}</div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <div className="font-serif italic font-bold text-sm text-slate-800 border-b border-slate-400 pb-1 px-4">
+                      AAshwini / Secretary
+                    </div>
+                    <div className="font-bold text-[11px] text-slate-900 uppercase">Authorized Signatory</div>
+                    <div className="text-[9.5px] text-slate-500">Board of Skills & Educational Learning</div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            <div className="bg-slate-50 p-3 flex items-center justify-end border-t border-slate-200 print:hidden">
+              <button
+                type="button"
+                onClick={() => setShowMarksheetModal(false)}
+                className="w-full sm:w-auto px-4 py-2.5 sm:py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold rounded-xl text-xs transition cursor-pointer"
               >
+                Close Marksheet
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================================
+          MODAL 1: REGISTER NEW STUDENT
+          ========================================================================= */}
+      {showAddStudentModal && (
+        <div className="fixed inset-0 z-[55] bg-black/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-2 sm:p-5 overflow-y-auto">
+          <div className="bg-white w-full max-w-xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-150 my-auto">
+            <div className="bg-[#081d3d] text-white p-4 flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <h3 className="text-sm font-black break-words">
+                  {currentAdminRole === 'Branch Head' ? `Enroll Student in ${activeBranch}` : 'Register New Student (Central Registry)'}
+                </h3>
+                <p className="text-[11px] text-slate-300">Generates official B★SEL registration number & credentials</p>
+              </div>
+              <button onClick={() => setShowAddStudentModal(false)} className="text-white/80 hover:text-white shrink-0 p-1">
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <form onSubmit={handleSaveBatch} className="p-5 space-y-3.5 text-xs">
-              <div>
-                <label className="font-bold text-slate-700 block mb-1">Batch Title / Name *</label>
-                <input
-                  type="text"
-                  required
-                  value={batchForm.name}
-                  onChange={(e) => setBatchForm(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder="e.g. Abacus Foundation & Speed (Batch A)"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-sky-500 font-semibold"
-                />
-              </div>
 
+            <form onSubmit={handleCreateStudent} className="p-4 sm:p-5 space-y-3.5 text-xs">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">Candidate Full Name *</label>
+                  <input
+                    type="text"
+                    required
+                    value={newStudent.studentName}
+                    onChange={(e) => setNewStudent(prev => ({ ...prev, studentName: e.target.value }))}
+                    placeholder="e.g. Sivaji Pandian"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-xl outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">Parent / Guardian Name</label>
+                  <input
+                    type="text"
+                    value={newStudent.parentName}
+                    onChange={(e) => setNewStudent(prev => ({ ...prev, parentName: e.target.value }))}
+                    placeholder="e.g. M. Sivaji"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-xl outline-none"
+                  />
+                </div>
+
                 <div>
                   <label className="font-bold text-slate-700 block mb-1">Course Program *</label>
                   <select
-                    value={batchForm.program}
-                    onChange={(e) => setBatchForm(prev => ({ ...prev, program: e.target.value }))}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none bg-white font-bold"
+                    value={newStudent.program}
+                    onChange={(e) => setNewStudent(prev => ({ ...prev, program: e.target.value }))}
+                    className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-xl outline-none bg-white font-bold"
                   >
                     {coursesList.map(c => (
                       <option key={c.id} value={c.name}>{c.name}</option>
@@ -3229,153 +4244,103 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                 </div>
 
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Schedule Days *</label>
+                  <label className="font-bold text-slate-700 block mb-1">Grade / Level</label>
                   <select
-                    value={batchForm.days}
-                    onChange={(e) => setBatchForm(prev => ({ ...prev, days: e.target.value }))}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none bg-white font-bold"
+                    value={newStudent.grade}
+                    onChange={(e) => setNewStudent(prev => ({ ...prev, grade: e.target.value }))}
+                    className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-xl outline-none bg-white"
                   >
-                    <option value="Saturday & Sunday">Saturday & Sunday (Weekend)</option>
-                    <option value="Tuesday & Thursday">Tuesday & Thursday (Weekday Evening)</option>
-                    <option value="Monday, Wednesday & Friday">Monday, Wednesday & Friday</option>
-                    <option value="Daily (Monday to Friday)">Daily (Monday to Friday)</option>
-                    <option value="Sundays Only">Sundays Only (Special Batch)</option>
-                    <option value="Flexible / Online">Flexible / Hybrid Schedule</option>
+                    <option value="Level 1">Level 1</option>
+                    <option value="Level 2">Level 2</option>
+                    <option value="Level 3">Level 3</option>
+                    <option value="Level 4">Level 4</option>
+                    <option value="Grade 4">Grade 4</option>
+                    <option value="Grade 5">Grade 5</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Class Start Time *</label>
+                  <label className="font-bold text-slate-700 block mb-1">Phone / Mobile *</label>
                   <input
-                    type="text"
+                    type="tel"
                     required
-                    value={batchForm.startTime}
-                    onChange={(e) => setBatchForm(prev => ({ ...prev, startTime: e.target.value }))}
-                    placeholder="e.g. 09:30 AM"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-sky-500 font-bold"
+                    value={newStudent.phone}
+                    onChange={(e) => setNewStudent(prev => ({ ...prev, phone: e.target.value }))}
+                    placeholder="10-digit mobile number"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-xl outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Class End Time *</label>
+                  <label className="font-bold text-slate-700 block mb-1">Assigned Branch *</label>
                   <input
                     type="text"
-                    required
-                    value={batchForm.endTime}
-                    onChange={(e) => setBatchForm(prev => ({ ...prev, endTime: e.target.value }))}
-                    placeholder="e.g. 11:30 AM"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-sky-500 font-bold"
+                    readOnly={currentAdminRole === 'Branch Head'}
+                    value={currentAdminRole === 'Branch Head' ? activeBranch : newStudent.branch}
+                    onChange={(e) => setNewStudent(prev => ({ ...prev, branch: e.target.value, institution: e.target.value }))}
+                    className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-xl outline-none bg-slate-50 font-bold text-slate-800"
                   />
-                </div>
-
-                <div>
-                  <label className="font-bold text-slate-700 block mb-1">Classroom / Room / Lab</label>
-                  <input
-                    type="text"
-                    value={batchForm.room}
-                    onChange={(e) => setBatchForm(prev => ({ ...prev, room: e.target.value }))}
-                    placeholder="e.g. Lab 1 / Room 2"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="font-bold text-slate-700 block mb-1">Assigned Faculty / Trainer</label>
-                  <input
-                    type="text"
-                    value={batchForm.instructor}
-                    onChange={(e) => setBatchForm(prev => ({ ...prev, instructor: e.target.value }))}
-                    placeholder="e.g. Mrs. Thangam Sivaji"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="font-bold text-slate-700 block mb-1">Max Intake Capacity</label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="100"
-                    value={batchForm.maxCapacity}
-                    onChange={(e) => setBatchForm(prev => ({ ...prev, maxCapacity: Number(e.target.value) }))}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="font-bold text-slate-700 block mb-1">Batch Status</label>
-                  <select
-                    value={batchForm.status}
-                    onChange={(e) => setBatchForm(prev => ({ ...prev, status: e.target.value }))}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none bg-white font-bold"
-                  >
-                    <option value="Active">Active (Ongoing)</option>
-                    <option value="Enrolling Soon">Enrolling Soon</option>
-                    <option value="Full">Full (Closed)</option>
-                    <option value="Completed">Completed</option>
-                  </select>
                 </div>
               </div>
 
               <div>
-                <label className="font-bold text-slate-700 block mb-1">Batch Notes / Remarks</label>
-                <textarea
-                  rows={2}
-                  value={batchForm.notes}
-                  onChange={(e) => setBatchForm(prev => ({ ...prev, notes: e.target.value }))}
-                  placeholder="Additional student instructions, prerequisites, or session notes..."
-                  className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none resize-none"
+                <label className="font-bold text-slate-700 block mb-1">Student Residential Address</label>
+                <input
+                  type="text"
+                  value={newStudent.address}
+                  onChange={(e) => setNewStudent(prev => ({ ...prev, address: e.target.value }))}
+                  placeholder="Street address, city, district"
+                  className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-xl outline-none"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+              <div className="grid grid-cols-2 sm:flex items-center sm:justify-end gap-2 pt-3 border-t border-slate-100">
                 <button
                   type="button"
-                  onClick={() => {
-                    setShowAddBatchModal(false);
-                    setEditingBatch(null);
-                  }}
-                  className="px-4 py-2 border border-slate-300 text-slate-700 rounded-xl font-bold hover:bg-slate-100 transition cursor-pointer"
+                  onClick={() => setShowAddStudentModal(false)}
+                  className="px-4 py-2.5 sm:py-2 border border-slate-300 text-slate-700 rounded-xl font-bold hover:bg-slate-100 transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-[#081d3d] hover:bg-[#123068] text-white rounded-xl font-black transition cursor-pointer"
+                  className="px-5 py-2.5 sm:py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black transition"
                 >
-                  {editingBatch ? 'Save Changes' : 'Create Batch'}
+                  Enroll & Generate ID
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
+
+      {/* =========================================================================
+          MODAL 2B: EDIT EXISTING COURSE
+          ========================================================================= */}
       {editingCourse && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
+        <div className="fixed inset-0 z-[55] bg-black/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-2 sm:p-5 overflow-y-auto">
           <div className="bg-white w-full max-w-xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-150 my-auto">
-            
-            {/* Header */}
-            <div className="bg-[#081d3d] text-white p-4 flex items-center justify-between">
-              <div>
+
+            <div className="bg-[#081d3d] text-white p-4 flex items-center justify-between gap-3">
+              <div className="min-w-0">
                 <h3 className="text-sm font-black flex items-center gap-2">
-                  <Edit3 className="w-4 h-4 text-amber-400" />
-                  <span>Edit Course Details — {editingCourse.name}</span>
+                  <Edit3 className="w-4 h-4 text-amber-400 shrink-0" />
+                  <span className="break-words">Edit Course Details — {editingCourse.name}</span>
                 </h3>
                 <p className="text-[11px] text-slate-300">
                   Update syllabus, fee structure, age group, levels, and outcomes
                 </p>
               </div>
-              <button 
+              <button
                 type="button"
-                onClick={() => setEditingCourse(null)} 
-                className="text-white/80 hover:text-white cursor-pointer p-1"
+                onClick={() => setEditingCourse(null)}
+                className="text-white/80 hover:text-white cursor-pointer p-1 shrink-0"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Form */}
-            <form onSubmit={handleUpdateCourse} className="p-5 space-y-3.5 text-xs max-h-[80vh] overflow-y-auto">
+            <form onSubmit={handleUpdateCourse} className="p-4 sm:p-5 space-y-3.5 text-xs max-h-[80vh] overflow-y-auto">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="font-bold text-slate-700 block mb-1">Course Name *</label>
@@ -3384,7 +4349,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                     required
                     value={editingCourse.name || ''}
                     onChange={(e) => setEditingCourse(prev => ({ ...prev, name: e.target.value }))}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none focus:border-emerald-600 font-bold"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-xl outline-none focus:border-emerald-600 font-bold"
                   />
                 </div>
 
@@ -3394,7 +4359,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                     type="text"
                     value={editingCourse.code || ''}
                     onChange={(e) => setEditingCourse(prev => ({ ...prev, code: e.target.value.toUpperCase() }))}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none font-mono uppercase"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-xl outline-none font-mono uppercase"
                   />
                 </div>
 
@@ -3403,7 +4368,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                   <select
                     value={editingCourse.category || 'Skill Development'}
                     onChange={(e) => setEditingCourse(prev => ({ ...prev, category: e.target.value }))}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none bg-white font-bold"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-xl outline-none bg-white font-bold"
                   >
                     <option value="Skill Development">Skill Development</option>
                     <option value="Digital & Technology">Digital & Technology</option>
@@ -3419,7 +4384,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                     value={editingCourse.fee || ''}
                     onChange={(e) => setEditingCourse(prev => ({ ...prev, fee: e.target.value }))}
                     placeholder="e.g. ₹450"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none font-bold"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-xl outline-none font-bold"
                   />
                 </div>
 
@@ -3430,7 +4395,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                     value={editingCourse.ageGroup || ''}
                     onChange={(e) => setEditingCourse(prev => ({ ...prev, ageGroup: e.target.value }))}
                     placeholder="e.g. 5 - 14 Years"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-xl outline-none"
                   />
                 </div>
 
@@ -3441,7 +4406,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                     value={editingCourse.levels || ''}
                     onChange={(e) => setEditingCourse(prev => ({ ...prev, levels: e.target.value }))}
                     placeholder="e.g. 8 Structured Levels"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-xl outline-none"
                   />
                 </div>
 
@@ -3452,7 +4417,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                     value={editingCourse.duration || ''}
                     onChange={(e) => setEditingCourse(prev => ({ ...prev, duration: e.target.value }))}
                     placeholder="e.g. 3 Months per Level"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-xl outline-none"
                   />
                 </div>
 
@@ -3461,7 +4426,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                   <select
                     value={editingCourse.status || 'Active'}
                     onChange={(e) => setEditingCourse(prev => ({ ...prev, status: e.target.value }))}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none bg-white font-bold"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-xl outline-none bg-white font-bold"
                   >
                     <option value="Active">Active (Accepting Enrollments)</option>
                     <option value="Upcoming">Upcoming / In Review</option>
@@ -3518,17 +4483,17 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+              <div className="grid grid-cols-2 sm:flex items-center sm:justify-end gap-2 pt-3 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setEditingCourse(null)}
-                  className="px-4 py-2 border border-slate-300 text-slate-700 rounded-xl font-bold hover:bg-slate-100 transition cursor-pointer"
+                  className="px-4 py-2.5 sm:py-2 border border-slate-300 text-slate-700 rounded-xl font-bold hover:bg-slate-100 transition cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-[#081d3d] hover:bg-[#123068] text-white rounded-xl font-black transition cursor-pointer flex items-center gap-1.5"
+                  className="px-5 py-2.5 sm:py-2 bg-[#081d3d] hover:bg-[#123068] text-white rounded-xl font-black transition cursor-pointer flex items-center justify-center gap-1.5"
                 >
                   <Check className="w-4 h-4 text-emerald-400" />
                   <span>Save Changes</span>
@@ -3538,20 +4503,24 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
           </div>
         </div>
       )}
+
+      {/* =========================================================================
+          MODAL 2: ADD NEW COURSE
+          ========================================================================= */}
       {showAddCourseModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
-          <div className="bg-white w-full max-w-xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-150">
-            <div className="bg-[#081d3d] text-white p-4 flex items-center justify-between">
-              <div>
+        <div className="fixed inset-0 z-[55] bg-black/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-2 sm:p-5 overflow-y-auto">
+          <div className="bg-white w-full max-w-xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-150 my-auto">
+            <div className="bg-[#081d3d] text-white p-4 flex items-center justify-between gap-3">
+              <div className="min-w-0">
                 <h3 className="text-sm font-black">Add New Course to Master Curriculum</h3>
                 <p className="text-[11px] text-slate-300">Creates new syllabus, sets duration, outcomes, and tuition fee</p>
               </div>
-              <button onClick={() => setShowAddCourseModal(false)} className="text-white/80 hover:text-white">
+              <button onClick={() => setShowAddCourseModal(false)} className="text-white/80 hover:text-white shrink-0 p-1">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleCreateCourse} className="p-5 space-y-3.5 text-xs">
+            <form onSubmit={handleCreateCourse} className="p-4 sm:p-5 space-y-3.5 text-xs">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="font-bold text-slate-700 block mb-1">Course Name *</label>
@@ -3561,7 +4530,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                     value={newCourse.name}
                     onChange={(e) => setNewCourse(prev => ({ ...prev, name: e.target.value }))}
                     placeholder="e.g. Vedic Mathematics"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-xl outline-none"
                   />
                 </div>
 
@@ -3572,7 +4541,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                     value={newCourse.code}
                     onChange={(e) => setNewCourse(prev => ({ ...prev, code: e.target.value.toUpperCase() }))}
                     placeholder="e.g. VM"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none font-mono uppercase"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-xl outline-none font-mono uppercase"
                   />
                 </div>
 
@@ -3581,7 +4550,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                   <select
                     value={newCourse.category}
                     onChange={(e) => setNewCourse(prev => ({ ...prev, category: e.target.value }))}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none bg-white font-bold"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-xl outline-none bg-white font-bold"
                   >
                     <option value="Skill Development">Skill Development</option>
                     <option value="Digital & Technology">Digital & Technology</option>
@@ -3597,7 +4566,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                     value={newCourse.fee}
                     onChange={(e) => setNewCourse(prev => ({ ...prev, fee: e.target.value }))}
                     placeholder="e.g. ₹500"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none font-bold"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-xl outline-none font-bold"
                   />
                 </div>
 
@@ -3608,7 +4577,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                     value={newCourse.ageGroup}
                     onChange={(e) => setNewCourse(prev => ({ ...prev, ageGroup: e.target.value }))}
                     placeholder="e.g. 6 - 15 Years"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-xl outline-none"
                   />
                 </div>
 
@@ -3619,7 +4588,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                     value={newCourse.levels}
                     onChange={(e) => setNewCourse(prev => ({ ...prev, levels: e.target.value }))}
                     placeholder="e.g. 4 Progressive Levels"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-xl outline-none"
                   />
                 </div>
               </div>
@@ -3635,17 +4604,17 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+              <div className="grid grid-cols-2 sm:flex items-center sm:justify-end gap-2 pt-3 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setShowAddCourseModal(false)}
-                  className="px-4 py-2 border border-slate-300 text-slate-700 rounded-xl font-bold hover:bg-slate-100 transition"
+                  className="px-4 py-2.5 sm:py-2 border border-slate-300 text-slate-700 rounded-xl font-bold hover:bg-slate-100 transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black transition"
+                  className="px-5 py-2.5 sm:py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black transition"
                 >
                   Publish Course
                 </button>
@@ -3656,22 +4625,22 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
       )}
 
       {/* =========================================================================
-          MODAL 3: ADD NEW EVENT (SUPER ADMIN)
+          MODAL 3: ADD NEW EVENT
           ========================================================================= */}
       {showAddEventModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
-          <div className="bg-white w-full max-w-xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-150">
-            <div className="bg-[#081d3d] text-white p-4 flex items-center justify-between">
-              <div>
+        <div className="fixed inset-0 z-[55] bg-black/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-2 sm:p-5 overflow-y-auto">
+          <div className="bg-white w-full max-w-xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-150 my-auto">
+            <div className="bg-[#081d3d] text-white p-4 flex items-center justify-between gap-3">
+              <div className="min-w-0">
                 <h3 className="text-sm font-black">Publish New Event / Championship</h3>
                 <p className="text-[11px] text-slate-300">Syncs immediately to the public Events page and student registration desk</p>
               </div>
-              <button onClick={() => setShowAddEventModal(false)} className="text-white/80 hover:text-white">
+              <button onClick={() => setShowAddEventModal(false)} className="text-white/80 hover:text-white shrink-0 p-1">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleCreateEvent} className="p-5 space-y-3.5 text-xs">
+            <form onSubmit={handleCreateEvent} className="p-4 sm:p-5 space-y-3.5 text-xs">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="sm:col-span-2">
                   <label className="font-bold text-slate-700 block mb-1">Event / Competition Name *</label>
@@ -3681,7 +4650,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                     value={newEvent.eventName}
                     onChange={(e) => setNewEvent(prev => ({ ...prev, eventName: e.target.value }))}
                     placeholder="e.g. 15th National Mental Arithmetic Olympiad"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none font-bold"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-xl outline-none font-bold"
                   />
                 </div>
 
@@ -3690,7 +4659,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                   <select
                     value={newEvent.category}
                     onChange={(e) => setNewEvent(prev => ({ ...prev, category: e.target.value }))}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none bg-white font-bold"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-xl outline-none bg-white font-bold"
                   >
                     <option value="Abacus">Abacus</option>
                     <option value="Drawing & Art">Drawing & Art</option>
@@ -3709,7 +4678,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                     value={newEvent.fee}
                     onChange={(e) => setNewEvent(prev => ({ ...prev, fee: e.target.value }))}
                     placeholder="₹450"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none font-bold"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-xl outline-none font-bold"
                   />
                 </div>
 
@@ -3720,7 +4689,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                     value={newEvent.date}
                     onChange={(e) => setNewEvent(prev => ({ ...prev, date: e.target.value }))}
                     placeholder="e.g. 25 Jan 2027"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-xl outline-none"
                   />
                 </div>
 
@@ -3731,7 +4700,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                     value={newEvent.lastDate}
                     onChange={(e) => setNewEvent(prev => ({ ...prev, lastDate: e.target.value }))}
                     placeholder="e.g. 15 Jan 2027"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-xl outline-none"
                   />
                 </div>
 
@@ -3742,7 +4711,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                     value={newEvent.place}
                     onChange={(e) => setNewEvent(prev => ({ ...prev, place: e.target.value }))}
                     placeholder="e.g. CHENNAI (TAMIL NADU)"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-xl outline-none"
                   />
                 </div>
 
@@ -3753,7 +4722,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                     value={newEvent.venue}
                     onChange={(e) => setNewEvent(prev => ({ ...prev, venue: e.target.value }))}
                     placeholder="Auditorium / Stadium name"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-xl outline-none"
                   />
                 </div>
               </div>
@@ -3765,21 +4734,21 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                   value={newEvent.eligibility}
                   onChange={(e) => setNewEvent(prev => ({ ...prev, eligibility: e.target.value }))}
                   placeholder="e.g. Age 5 to 14 Years (Level 1 to 8)"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
+                  className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-xl outline-none"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+              <div className="grid grid-cols-2 sm:flex items-center sm:justify-end gap-2 pt-3 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setShowAddEventModal(false)}
-                  className="px-4 py-2 border border-slate-300 text-slate-700 rounded-xl font-bold hover:bg-slate-100 transition"
+                  className="px-4 py-2.5 sm:py-2 border border-slate-300 text-slate-700 rounded-xl font-bold hover:bg-slate-100 transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl font-black transition"
+                  className="px-5 py-2.5 sm:py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl font-black transition"
                 >
                   Publish to Events Page
                 </button>
@@ -3790,34 +4759,32 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
       )}
 
       {/* =========================================================================
-          MODAL 3B: EDIT EXISTING EVENT / CHAMPIONSHIP (SUPER ADMIN)
+          MODAL 3B: EDIT EXISTING EVENT / CHAMPIONSHIP
           ========================================================================= */}
       {editingEvent && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
+        <div className="fixed inset-0 z-[55] bg-black/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-2 sm:p-5 overflow-y-auto">
           <div className="bg-white w-full max-w-xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-150 my-auto">
-            
-            {/* Header */}
-            <div className="bg-[#081d3d] text-white p-4 flex items-center justify-between">
-              <div>
+
+            <div className="bg-[#081d3d] text-white p-4 flex items-center justify-between gap-3">
+              <div className="min-w-0">
                 <h3 className="text-sm font-black flex items-center gap-2">
-                  <Edit3 className="w-4 h-4 text-amber-400" />
-                  <span>Edit Event — #{editingEvent.sNo} {editingEvent.eventName}</span>
+                  <Edit3 className="w-4 h-4 text-amber-400 shrink-0" />
+                  <span className="break-words">Edit Event — #{editingEvent.sNo} {editingEvent.eventName}</span>
                 </h3>
                 <p className="text-[11px] text-slate-300">
                   Update competition dates, venue, eligibility, fee, and registration status
                 </p>
               </div>
-              <button 
+              <button
                 type="button"
-                onClick={() => setEditingEvent(null)} 
-                className="text-white/80 hover:text-white cursor-pointer p-1"
+                onClick={() => setEditingEvent(null)}
+                className="text-white/80 hover:text-white cursor-pointer p-1 shrink-0"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Form */}
-            <form onSubmit={handleUpdateEvent} className="p-5 space-y-3.5 text-xs max-h-[80vh] overflow-y-auto">
+            <form onSubmit={handleUpdateEvent} className="p-4 sm:p-5 space-y-3.5 text-xs max-h-[80vh] overflow-y-auto">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="sm:col-span-2">
                   <label className="font-bold text-slate-700 block mb-1">Event / Competition Name *</label>
@@ -3826,7 +4793,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                     required
                     value={editingEvent.eventName || ''}
                     onChange={(e) => setEditingEvent(prev => ({ ...prev, eventName: e.target.value }))}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none font-bold focus:border-amber-500"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-xl outline-none font-bold focus:border-amber-500"
                   />
                 </div>
 
@@ -3835,7 +4802,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                   <select
                     value={editingEvent.category || 'Abacus'}
                     onChange={(e) => setEditingEvent(prev => ({ ...prev, category: e.target.value }))}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none bg-white font-bold"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-xl outline-none bg-white font-bold"
                   >
                     <option value="Abacus">Abacus</option>
                     <option value="Drawing & Art">Drawing & Art</option>
@@ -3854,7 +4821,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                     value={editingEvent.fee || ''}
                     onChange={(e) => setEditingEvent(prev => ({ ...prev, fee: e.target.value }))}
                     placeholder="₹450"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none font-bold"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-xl outline-none font-bold"
                   />
                 </div>
 
@@ -3865,7 +4832,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                     value={editingEvent.date || ''}
                     onChange={(e) => setEditingEvent(prev => ({ ...prev, date: e.target.value }))}
                     placeholder="e.g. 15 Jan 2027"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-xl outline-none"
                   />
                 </div>
 
@@ -3876,7 +4843,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                     value={editingEvent.lastDate || ''}
                     onChange={(e) => setEditingEvent(prev => ({ ...prev, lastDate: e.target.value }))}
                     placeholder="e.g. 05 Jan 2027"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-xl outline-none"
                   />
                 </div>
 
@@ -3887,7 +4854,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                     value={editingEvent.place || ''}
                     onChange={(e) => setEditingEvent(prev => ({ ...prev, place: e.target.value }))}
                     placeholder="e.g. CHENNAI (TAMIL NADU)"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-xl outline-none"
                   />
                 </div>
 
@@ -3896,7 +4863,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                   <select
                     value={editingEvent.status || 'Registration Open'}
                     onChange={(e) => setEditingEvent(prev => ({ ...prev, status: e.target.value }))}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none bg-white font-bold"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-xl outline-none bg-white font-bold"
                   >
                     <option value="Registration Open">Registration Open</option>
                     <option value="Limited Seats">Limited Seats</option>
@@ -3913,7 +4880,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                     value={editingEvent.venue || ''}
                     onChange={(e) => setEditingEvent(prev => ({ ...prev, venue: e.target.value }))}
                     placeholder="Auditorium / Stadium name"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-xl outline-none"
                   />
                 </div>
               </div>
@@ -3925,7 +4892,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                   value={editingEvent.eligibility || ''}
                   onChange={(e) => setEditingEvent(prev => ({ ...prev, eligibility: e.target.value }))}
                   placeholder="e.g. Age 5 to 14 Years (Level 1 to 8)"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
+                  className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-xl outline-none"
                 />
               </div>
 
@@ -3940,17 +4907,17 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+              <div className="grid grid-cols-2 sm:flex items-center sm:justify-end gap-2 pt-3 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setEditingEvent(null)}
-                  className="px-4 py-2 border border-slate-300 text-slate-700 rounded-xl font-bold hover:bg-slate-100 transition cursor-pointer"
+                  className="px-4 py-2.5 sm:py-2 border border-slate-300 text-slate-700 rounded-xl font-bold hover:bg-slate-100 transition cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl font-black transition cursor-pointer flex items-center gap-1.5"
+                  className="px-5 py-2.5 sm:py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl font-black transition cursor-pointer flex items-center justify-center gap-1.5"
                 >
                   <Check className="w-4 h-4" />
                   <span>Save Changes</span>
@@ -3962,22 +4929,22 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
       )}
 
       {/* =========================================================================
-          MODAL 4: RECORD PAYMENT / ISSUE RECEIPT (SUPER ADMIN & BRANCH HEAD)
+          MODAL 4: RECORD PAYMENT / ISSUE RECEIPT
           ========================================================================= */}
       {showAddPaymentModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
-          <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-150">
-            <div className="bg-[#081d3d] text-white p-4 flex items-center justify-between">
-              <div>
+        <div className="fixed inset-0 z-[55] bg-black/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-2 sm:p-5 overflow-y-auto">
+          <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-150 my-auto">
+            <div className="bg-[#081d3d] text-white p-4 flex items-center justify-between gap-3">
+              <div className="min-w-0">
                 <h3 className="text-sm font-black">Record Payment & Generate Official Receipt</h3>
                 <p className="text-[11px] text-slate-300">Creates an authenticated transaction in the Payment Sector ledger</p>
               </div>
-              <button onClick={() => setShowAddPaymentModal(false)} className="text-white/80 hover:text-white">
+              <button onClick={() => setShowAddPaymentModal(false)} className="text-white/80 hover:text-white shrink-0 p-1">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleCreateOfflinePayment} className="p-5 space-y-3.5 text-xs">
+            <form onSubmit={handleCreateOfflinePayment} className="p-4 sm:p-5 space-y-3.5 text-xs">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="font-bold text-slate-700 block mb-1">Payer / Candidate Name *</label>
@@ -3987,7 +4954,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                     value={newPayment.payerName}
                     onChange={(e) => setNewPayment(prev => ({ ...prev, payerName: e.target.value }))}
                     placeholder="e.g. Sivaji Pandian"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-xl outline-none"
                   />
                 </div>
 
@@ -3996,7 +4963,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                   <select
                     value={newPayment.sector}
                     onChange={(e) => setNewPayment(prev => ({ ...prev, sector: e.target.value }))}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none bg-white font-bold"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-xl outline-none bg-white font-bold"
                   >
                     <option value="Course Tuition">Course Tuition</option>
                     <option value="Competition & Events">Competition & Events</option>
@@ -4013,7 +4980,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                     value={newPayment.amount}
                     onChange={(e) => setNewPayment(prev => ({ ...prev, amount: e.target.value }))}
                     placeholder="₹450"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none font-bold"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-xl outline-none font-bold"
                   />
                 </div>
 
@@ -4022,7 +4989,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                   <select
                     value={newPayment.paymentMode}
                     onChange={(e) => setNewPayment(prev => ({ ...prev, paymentMode: e.target.value }))}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none bg-white"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-xl outline-none bg-white"
                   >
                     <option value="Cash at Centre">Cash at Centre</option>
                     <option value="UPI / QR Code">UPI / QR Code</option>
@@ -4039,7 +5006,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                     value={newPayment.refNo}
                     onChange={(e) => setNewPayment(prev => ({ ...prev, refNo: e.target.value }))}
                     placeholder="Transaction reference"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none font-mono"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-xl outline-none font-mono"
                   />
                 </div>
 
@@ -4050,7 +5017,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                     readOnly={currentAdminRole === 'Branch Head'}
                     value={currentAdminRole === 'Branch Head' ? activeBranch : newPayment.branch}
                     onChange={(e) => setNewPayment(prev => ({ ...prev, branch: e.target.value }))}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none bg-slate-50 font-bold"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-xl outline-none bg-slate-50 font-bold"
                   />
                 </div>
               </div>
@@ -4062,21 +5029,21 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                   value={newPayment.program}
                   onChange={(e) => setNewPayment(prev => ({ ...prev, program: e.target.value }))}
                   placeholder="e.g. Abacus Level 1 Admission Fee"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
+                  className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-xl outline-none"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+              <div className="grid grid-cols-2 sm:flex items-center sm:justify-end gap-2 pt-3 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setShowAddPaymentModal(false)}
-                  className="px-4 py-2 border border-slate-300 text-slate-700 rounded-xl font-bold hover:bg-slate-100 transition"
+                  className="px-4 py-2.5 sm:py-2 border border-slate-300 text-slate-700 rounded-xl font-bold hover:bg-slate-100 transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-[#081d3d] hover:bg-[#123068] text-white rounded-xl font-black transition"
+                  className="px-5 py-2.5 sm:py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black transition"
                 >
                   Record & Issue Receipt
                 </button>
@@ -4090,25 +5057,23 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
           MODAL 5: PRINTABLE OFFICIAL FEE RECEIPT
           ========================================================================= */}
       {selectedReceiptForPrint && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
-          <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-150">
-            {/* Header */}
-            <div className="bg-[#081d3d] text-white p-4.5 flex items-center justify-between border-b-2 border-amber-400">
-              <div className="flex items-center gap-2">
+        <div className="fixed inset-0 z-[55] bg-black/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-2 sm:p-5 overflow-y-auto">
+          <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-150 my-auto">
+            <div className="bg-[#081d3d] text-white p-4 flex items-center justify-between gap-3 border-b-2 border-amber-400">
+              <div className="flex items-center gap-2 min-w-0">
                 <Logo lightText={true} />
-                <span className="text-xs font-black uppercase text-amber-300 tracking-wider">Official Fee Receipt</span>
+                <span className="text-[11px] sm:text-xs font-black uppercase text-amber-300 tracking-wider">Official Fee Receipt</span>
               </div>
-              <button onClick={() => setSelectedReceiptForPrint(null)} className="text-white/80 hover:text-white">
+              <button onClick={() => setSelectedReceiptForPrint(null)} className="text-white/80 hover:text-white shrink-0 p-1">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Receipt Content */}
-            <div className="p-6 space-y-4 text-xs font-sans">
-              <div className="flex justify-between border-b border-slate-200 pb-3">
-                <div>
+            <div className="p-4 sm:p-6 space-y-4 text-xs font-sans">
+              <div className="grid grid-cols-2 gap-3 border-b border-slate-200 pb-3">
+                <div className="min-w-0">
                   <span className="text-[10px] uppercase font-bold text-slate-400">Receipt Number</span>
-                  <div className="text-sm font-black font-mono text-slate-900">{selectedReceiptForPrint.receiptNo || selectedReceiptForPrint.id}</div>
+                  <div className="text-sm font-black font-mono text-slate-900 break-all">{selectedReceiptForPrint.receiptNo || selectedReceiptForPrint.id}</div>
                 </div>
                 <div className="text-right">
                   <span className="text-[10px] uppercase font-bold text-slate-400">Date of Payment</span>
@@ -4138,28 +5103,26 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                 </div>
               </div>
 
-              {/* Amount Box */}
-              <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-200 flex items-center justify-between">
+              <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-200 grid grid-cols-1 min-[420px]:grid-cols-2 items-center gap-2">
                 <div>
                   <span className="text-[10px] font-black uppercase tracking-wider text-emerald-800">Total Fee Paid</span>
                   <div className="text-2xl font-black text-emerald-900">{selectedReceiptForPrint.amount}</div>
                 </div>
-                <div className="text-right">
+                <div className="min-[420px]:text-right min-w-0">
                   <span className="text-[10px] uppercase font-bold text-emerald-700 block">Mode: {selectedReceiptForPrint.paymentMode}</span>
-                  <span className="font-mono text-[10px] text-emerald-800">Ref: {selectedReceiptForPrint.refNo}</span>
+                  <span className="font-mono text-[10px] text-emerald-800 break-all">Ref: {selectedReceiptForPrint.refNo}</span>
                 </div>
               </div>
 
-              {/* Verification Stamp */}
-              <div className="pt-3 border-t border-slate-200 flex items-center justify-between text-[11px] text-slate-500">
+              <div className="pt-3 border-t border-slate-200 grid grid-cols-1 min-[420px]:grid-cols-[1fr_auto] items-center gap-3 text-[11px] text-slate-500">
                 <div className="flex items-center gap-1.5 text-emerald-700 font-bold">
-                  <ShieldCheck className="w-4 h-4" />
+                  <ShieldCheck className="w-4 h-4 shrink-0" />
                   <span>Authenticated by {selectedReceiptForPrint.verifiedBy || 'B★SEL Desk'}</span>
                 </div>
                 <button
                   type="button"
                   onClick={() => window.print()}
-                  className="px-3 py-1.5 bg-[#081d3d] hover:bg-[#123068] text-white rounded-lg font-black text-xs transition flex items-center gap-1.5"
+                  className="px-3 py-2.5 sm:py-1.5 bg-[#081d3d] hover:bg-[#123068] text-white rounded-lg font-black text-xs transition flex items-center justify-center gap-1.5"
                 >
                   <Printer className="w-3.5 h-3.5" />
                   <span>Print Receipt</span>
@@ -4174,19 +5137,19 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
           MODAL 6: EDIT STUDENT
           ========================================================================= */}
       {editingStudent && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
-          <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-150">
-            <div className="bg-[#081d3d] text-white p-4 flex items-center justify-between">
-              <div>
-                <h3 className="text-sm font-black">Edit Student Profile: {editingStudent.studentName}</h3>
-                <p className="text-[11px] text-slate-300">ID: {editingStudent.userId} • Reg: {editingStudent.registerNumber || editingStudent.registrationNo}</p>
+        <div className="fixed inset-0 z-[55] bg-black/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-2 sm:p-5 overflow-y-auto">
+          <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-150 my-auto">
+            <div className="bg-[#081d3d] text-white p-4 flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <h3 className="text-sm font-black break-words">Edit Student Profile: {editingStudent.studentName}</h3>
+                <p className="text-[11px] text-slate-300 break-all">ID: {editingStudent.userId} • Reg: {editingStudent.registerNumber || editingStudent.registrationNo}</p>
               </div>
-              <button onClick={() => setEditingStudent(null)} className="text-white/80 hover:text-white">
+              <button onClick={() => setEditingStudent(null)} className="text-white/80 hover:text-white shrink-0 p-1">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleUpdateStudent} className="p-5 space-y-3.5 text-xs">
+            <form onSubmit={handleUpdateStudent} className="p-4 sm:p-5 space-y-3.5 text-xs">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="font-bold text-slate-700 block mb-1">Student Name</label>
@@ -4195,7 +5158,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                     required
                     value={editingStudent.studentName}
                     onChange={(e) => setEditingStudent(prev => ({ ...prev, studentName: e.target.value }))}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-xl outline-none"
                   />
                 </div>
 
@@ -4205,7 +5168,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                     type="text"
                     value={editingStudent.parentName || ''}
                     onChange={(e) => setEditingStudent(prev => ({ ...prev, parentName: e.target.value }))}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-xl outline-none"
                   />
                 </div>
 
@@ -4215,7 +5178,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                     type="text"
                     value={editingStudent.phone || ''}
                     onChange={(e) => setEditingStudent(prev => ({ ...prev, phone: e.target.value }))}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-xl outline-none"
                   />
                 </div>
 
@@ -4225,7 +5188,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                     type="text"
                     value={editingStudent.program || ''}
                     onChange={(e) => setEditingStudent(prev => ({ ...prev, program: e.target.value, courseName: e.target.value }))}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none font-bold"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-xl outline-none font-bold"
                   />
                 </div>
 
@@ -4235,7 +5198,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                     type="text"
                     value={editingStudent.grade || ''}
                     onChange={(e) => setEditingStudent(prev => ({ ...prev, grade: e.target.value }))}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none font-bold"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-xl outline-none font-bold"
                   />
                 </div>
 
@@ -4245,22 +5208,22 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                     type="text"
                     value={editingStudent.branch || editingStudent.institution || ''}
                     onChange={(e) => setEditingStudent(prev => ({ ...prev, branch: e.target.value, institution: e.target.value }))}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none font-bold"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-xl outline-none font-bold"
                   />
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+              <div className="grid grid-cols-2 sm:flex items-center sm:justify-end gap-2 pt-3 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setEditingStudent(null)}
-                  className="px-4 py-2 border border-slate-300 text-slate-700 rounded-xl font-bold hover:bg-slate-100 transition"
+                  className="px-4 py-2.5 sm:py-2 border border-slate-300 text-slate-700 rounded-xl font-bold hover:bg-slate-100 transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black transition"
+                  className="px-5 py-2.5 sm:py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black transition"
                 >
                   Save Changes
                 </button>
@@ -4271,17 +5234,17 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
       )}
 
       {/* =========================================================================
-          MODAL 7: AFFILIATE NEW CENTRE / SCHOOL (SUPER ADMIN)
+          MODAL 7: AFFILIATE NEW CENTRE / SCHOOL
           ========================================================================= */}
       {showAddSchoolModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
-          <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-150">
-            <div className="bg-[#081d3d] text-white p-4 flex items-center justify-between">
-              <div>
+        <div className="fixed inset-0 z-[55] bg-black/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-2 sm:p-5 overflow-y-auto">
+          <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-150 my-auto">
+            <div className="bg-[#081d3d] text-white p-4 flex items-center justify-between gap-3">
+              <div className="min-w-0">
                 <h3 className="text-sm font-black">Affiliate New Branch / Exam Centre</h3>
                 <p className="text-[11px] text-slate-300">Assigns unique B★SEL Centre Code and sets Centre Director credentials</p>
               </div>
-              <button onClick={() => setShowAddSchoolModal(false)} className="text-white/80 hover:text-white">
+              <button onClick={() => setShowAddSchoolModal(false)} className="text-white/80 hover:text-white shrink-0 p-1">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -4301,7 +5264,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
               saveStoredSchools(updated);
               setShowAddSchoolModal(false);
               showToast(`Affiliated "${created.name}" with Centre Code ${nextCode}!`);
-            }} className="p-5 space-y-3.5 text-xs">
+            }} className="p-4 sm:p-5 space-y-3.5 text-xs">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="sm:col-span-2">
                   <label className="font-bold text-slate-700 block mb-1">Institution / Branch Name *</label>
@@ -4311,7 +5274,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                     value={newSchool.name}
                     onChange={(e) => setNewSchool(prev => ({ ...prev, name: e.target.value, branchName: e.target.value }))}
                     placeholder="e.g. B★SEL Madurai Regional Academy"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none font-bold"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-xl outline-none font-bold"
                   />
                 </div>
 
@@ -4323,7 +5286,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                     value={newSchool.city}
                     onChange={(e) => setNewSchool(prev => ({ ...prev, city: e.target.value }))}
                     placeholder="e.g. Madurai, Tamil Nadu"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-xl outline-none"
                   />
                 </div>
 
@@ -4334,7 +5297,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                     value={newSchool.phone}
                     onChange={(e) => setNewSchool(prev => ({ ...prev, phone: e.target.value }))}
                     placeholder="e.g. 98401 23456"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-xl outline-none"
                   />
                 </div>
 
@@ -4345,7 +5308,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                     value={newSchool.principal}
                     onChange={(e) => setNewSchool(prev => ({ ...prev, principal: e.target.value }))}
                     placeholder="e.g. Dr. S. Ranganathan"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-xl outline-none"
                   />
                 </div>
 
@@ -4356,22 +5319,22 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                     value={newSchool.coordinator}
                     onChange={(e) => setNewSchool(prev => ({ ...prev, coordinator: e.target.value }))}
                     placeholder="e.g. Mrs. K. Malathi"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-xl outline-none"
                   />
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+              <div className="grid grid-cols-2 sm:flex items-center sm:justify-end gap-2 pt-3 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setShowAddSchoolModal(false)}
-                  className="px-4 py-2 border border-slate-300 text-slate-700 rounded-xl font-bold hover:bg-slate-100 transition"
+                  className="px-4 py-2.5 sm:py-2 border border-slate-300 text-slate-700 rounded-xl font-bold hover:bg-slate-100 transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-[#081d3d] hover:bg-[#123068] text-white rounded-xl font-black transition"
+                  className="px-5 py-2.5 sm:py-2 bg-[#081d3d] hover:bg-[#123068] text-white rounded-xl font-black transition"
                 >
                   Affiliate Branch
                 </button>
@@ -4382,5 +5345,6 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
       )}
 
     </div>
-  );
+);
+  
 }
