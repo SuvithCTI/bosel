@@ -19,7 +19,7 @@ export default function Logo({ size = 'default', lightText = false, showTagline 
           : 'w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14'
       }`}>
         <img 
-          src="/bsel_logo.jpg" 
+          src="/bsel_logo.png" 
           alt="B★SEL Official Logo"
           className="w-full h-full object-contain"
           loading="eager"

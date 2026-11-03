@@ -306,7 +306,7 @@ export default function StudentDashboard({
           <div className="flex min-w-0 shrink-0 items-center gap-2.5 sm:gap-3">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white sm:h-11 sm:w-11">
               <img
-                src="/bsel_logo.jpg"
+                src="/bsel_logo.png"
                 alt="B★SEL Logo"
                 className="h-full w-full object-contain"
               />

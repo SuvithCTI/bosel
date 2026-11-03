@@ -3,6 +3,7 @@ import { Upload, Download, Loader2, Sparkles } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import risingStarsEmblem from '../assets/rising_stars_emblem.png';
+import bselLogo from '../assets/bsel_logo.png';
 
 export default function Certificate({
   studentName = '',
@@ -350,22 +351,32 @@ export default function Certificate({
             {/* Main Logos & Plaque Row */}
             <div className="flex items-center justify-between gap-1 sm:gap-2 px-1 sm:px-2 pt-0.5">
               
-              {/* 1. LEFT: B★SEL Official Typography */}
-              <div className="flex flex-col text-left justify-center shrink-0 select-none">
-                <div 
-                  className="font-extrabold tracking-widest text-[#0c234b] flex items-center gap-0.5 sm:gap-1 leading-none"
-                  style={{ fontFamily: "'Cinzel', 'Playfair Display', Georgia, serif", fontSize: 'clamp(20px, 2.7vw, 32px)' }}
-                >
-                  <span className="font-bold">B</span>
-                  <span className="text-[#c59b27] font-black text-[1.15em] inline-block -translate-y-[1px]">★</span>
-                  <span className="font-bold">SEL</span>
+              {/* 1. LEFT: B★SEL Official Emblem & Typography */}
+              <div className="flex items-center gap-1.5 sm:gap-2 text-left shrink-0 select-none">
+                {/* Official B★SEL Shield Emblem */}
+                <img 
+                  src={bselLogo} 
+                  alt="B★SEL Emblem" 
+                  className="h-10 sm:h-12 md:h-14 w-auto object-contain shrink-0 drop-shadow-xs"
+                  loading="eager"
+                />
+
+                <div className="flex flex-col text-left justify-center">
+                  <div 
+                    className="font-extrabold tracking-widest text-[#0c234b] flex items-center gap-0.5 sm:gap-1 leading-none"
+                    style={{ fontFamily: "'Cinzel', 'Playfair Display', Georgia, serif", fontSize: 'clamp(17px, 2.3vw, 28px)' }}
+                  >
+                    <span className="font-bold">B</span>
+                    <span className="text-[#c59b27] font-black text-[1.15em] inline-block -translate-y-[1px]">★</span>
+                    <span className="font-bold">SEL</span>
+                  </div>
+                  <span 
+                    className="text-[5.5px] sm:text-[7px] md:text-[8px] font-bold uppercase tracking-[0.06em] text-[#0c234b] mt-1 whitespace-nowrap"
+                    style={{ fontFamily: "'Cinzel', serif" }}
+                  >
+                    BOARD OF SKILLS AND EDUCATIONAL LEARNING
+                  </span>
                 </div>
-                <span 
-                  className="text-[5.5px] sm:text-[7px] md:text-[8px] font-bold uppercase tracking-[0.06em] text-[#0c234b] mt-1 whitespace-nowrap"
-                  style={{ fontFamily: "'Cinzel', serif" }}
-                >
-                  BOARD OF SKILLS AND EDUCATIONAL LEARNING
-                </span>
               </div>
 
               {/* 2. CENTER: Official Deep Navy Plaque with Double Gold Border */}
@@ -841,12 +852,8 @@ export default function Certificate({
                   </div>
 
                   {/* Badge 3: B★SEL Registered Board Stamp */}
-                  <div className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 rounded-full bg-white border border-[#0284c7] shadow-2xs flex items-center justify-center p-0.5">
-                    <svg viewBox="0 0 30 30" className="w-full h-full">
-                      <circle cx="15" cy="15" r="13.5" fill="#ffffff" stroke="#0284c7" strokeWidth="1" />
-                      <circle cx="15" cy="15" r="11" fill="none" stroke="#0369a1" strokeWidth="0.6" strokeDasharray="1.2 1.2" />
-                      <text x="15" y="17" textAnchor="middle" fontSize="5.5" fontWeight="bold" fill="#0369a1" fontFamily="'Cinzel', serif">B★SEL</text>
-                    </svg>
+                  <div className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 rounded-full bg-white border border-[#0284c7] shadow-2xs flex items-center justify-center p-0.5 overflow-hidden">
+                    <img src={bselLogo} alt="B★SEL Stamp" className="w-full h-full object-contain" />
                   </div>
 
                   {/* Badge 4: Government Recognition Emblem (MSME / Ashoka Emblem) */}

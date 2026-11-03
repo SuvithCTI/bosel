@@ -3131,6 +3131,11 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                 <div className="absolute bottom-2.5 left-2.5 w-3 h-3 border-b-2 border-l-2 border-amber-600 pointer-events-none"></div>
                 <div className="absolute bottom-2.5 right-2.5 w-3 h-3 border-b-2 border-r-2 border-amber-600 pointer-events-none"></div>
 
+                {/* Watermark Crest Background */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.04] select-none">
+                  <img src="/bsel_logo.png" alt="" className="w-80 h-80 object-contain" />
+                </div>
+
                 {/* Header Banner */}
                 <div className="text-center pb-4 border-b-2 border-amber-500/80 relative">
                   <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
@@ -3154,8 +3159,8 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                     </div>
 
                     <div className="shrink-0 hidden sm:flex flex-col items-center">
-                      <div className="w-12 h-12 rounded-full border-2 border-amber-500 bg-amber-50 flex items-center justify-center font-black text-[#081d3d] text-xs shadow-xs">
-                        ★ B★SEL ★
+                      <div className="w-12 h-12 rounded-full border-2 border-amber-500 bg-white p-1 flex items-center justify-center shadow-xs overflow-hidden">
+                        <img src="/bsel_logo.png" alt="Official Seal" className="w-full h-full object-contain" />
                       </div>
                       <span className="text-[9px] font-bold text-slate-600 mt-1 uppercase">Official Seal</span>
                     </div>
