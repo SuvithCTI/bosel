@@ -37,8 +37,14 @@ export default function App() {
         return params.get('page');
       }
 
+      if (window.location.pathname.startsWith('/admin')) {
+        return 'admin';
+      }
+
       if (window.location.hash) {
-        return window.location.hash.replace('#', '');
+        const cleanHash = window.location.hash.replace(/^#\/?/, '');
+        if (cleanHash.startsWith('admin')) return 'admin';
+        return cleanHash;
       }
     }
 

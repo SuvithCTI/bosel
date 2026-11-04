@@ -1,0 +1,21 @@
+{
+  "name": "besel-backend",
+  "version": "1.0.0",
+  "description": "BSEL Academy Node.js Backend with Neon PostgreSQL and Amazon S3 Cloud Storage",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js",
+    "init-db": "node db/init.js"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.758.0",
+    "@aws-sdk/s3-request-presigner": "^3.758.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "multer": "^1.4.5-lts.1",
+    "pg": "^8.13.3"
+  }
+}

@@ -7,14 +7,16 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "server": "node server/index.js",
+    "server:dev": "node --watch server/index.js"
   },
   "dependencies": {
     "@mediapipe/selfie_segmentation": "^0.1.1675465747",
     "@tailwindcss/vite": "^4.3.3",
     "framer-motion": "^14.7.1",
     "html2canvas": "^1.4.1",
-    "html2canvas-pro": "^2.6.0",
+    "html2canvas-pro": "^2.6.1",
     "jspdf": "^4.2.1",
     "lucide-react": "^1.64.0",
     "react": "^19.3.1",
