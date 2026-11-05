@@ -23,7 +23,7 @@ export default function AdminBranchCertificatesPage({
     centreCode: certData?.centreCode || '101',
     centreAddress: certData?.centreAddress || 'Branch Address',
     issueDate: certData?.issueDate || '01-01-2026',
-    certificateType: certData?.certificateType || 'COMPETITION',
+    certificateType: certData?.certificateType || 'COMPLETION',
     studentPhoto: certData?.studentPhoto || null
   };
 

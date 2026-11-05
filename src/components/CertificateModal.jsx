@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Award } from 'lucide-react';
 import Certificate from './Certificate';
+import { getCoursePrefix } from '../utils/authStorage';
 
 export default function CertificateModal({
   isOpen = true,
@@ -64,8 +65,15 @@ export default function CertificateModal({
     return 'AB27-001';
   });
 
+  const coursePrefix = getCoursePrefix(courseName);
+  const cleanLvlDigits = String(level).replace(/\D/g, '') || '1';
+  const regDigits = String(registrationNo).replace(/\D/g, '');
+  const seqDigits = regDigits ? String(parseInt(regDigits.slice(-3), 10) || 1).padStart(4, '0') : '0001';
+
   const certificateNo =
-    initialData.certificateNo || 'BSEL/ABACUS/L1/0007';
+    (initialData.certificateNo && !initialData.certificateNo.includes('BSEL/ABACUS/L1/0007'))
+      ? initialData.certificateNo
+      : `BSEL/${coursePrefix}/L${cleanLvlDigits}/${seqDigits}`;
 
   const [centreName, setCentreName] = useState(
     initialData.centreName || 'test branch'

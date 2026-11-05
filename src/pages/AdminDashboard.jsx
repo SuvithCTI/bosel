@@ -5,7 +5,6 @@ import {
   Award, 
   School, 
   Plus, 
-  Trash2, 
   Edit3, 
   Search, 
   Filter, 
@@ -69,7 +68,8 @@ import {
   updateUserProfile,
   getActiveSession,
   setActiveSession,
-  clearActiveSession
+  clearActiveSession,
+  getCoursePrefix
 } from '../utils/authStorage';
 import { 
   getStoredEvents, 
@@ -376,19 +376,19 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
   // LIVE CERTIFICATE DESK STATE
   // -------------------------------------------------------------
   const [certData, setCertData] = useState({
-    studentName: 'sivaji',
-    courseName: 'Abacus',
+    studentName: '',
+    courseName: '',
     programPrefix: 'MINDSPARC',
     level: 'Level 1',
-    grade: 'B',
+    grade: 'A+',
     duration: '6 Months',
-    registrationNo: 'AB27-001',
-    certificateNo: 'BSEL/ABACUS/L1/0007',
-    centreName: 'test branch',
-    centreCode: '545454',
-    centreAddress: 'second street, surandai,keelasurandai,tenkasi',
-    issueDate: '05-10-2026',
-    certificateType: 'COMPETITION',
+    registrationNo: '',
+    certificateNo: '',
+    centreName: '',
+    centreCode: '',
+    centreAddress: '',
+    issueDate: new Date().toLocaleDateString('en-GB'),
+    certificateType: 'COMPLETION',
     studentPhoto: null
   });
 
@@ -737,20 +737,31 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
   // 6. Certificate Handlers
   const handleOpenCertForStudent = (student) => {
     const regNo = getStudentRegisterNumber(student);
+    const courseName = student.program || student.courseName || 'Abacus';
+    const coursePrefix = getCoursePrefix(courseName);
+    const cleanLevel = String(student.grade || student.level || '1').replace(/\D/g, '') || '1';
+    const regDigits = String(regNo).replace(/\D/g, '');
+    const seqDigits = regDigits ? String(parseInt(regDigits.slice(-3), 10) || 1).padStart(4, '0') : '0001';
+    const certNo = (student.results?.[0]?.certificateNo && !student.results[0].certificateNo.includes('BSEL/ABACUS/L1/0007'))
+      ? student.results[0].certificateNo
+      : (student.certificateNo && !student.certificateNo.includes('BSEL/ABACUS/L1/0007'))
+      ? student.certificateNo
+      : `BSEL/${coursePrefix}/L${cleanLevel}/${seqDigits}`;
+
     const studentCertData = {
       studentName: student.studentName || 'Candidate Name',
-      courseName: student.program || student.courseName || 'Abacus',
+      courseName: courseName,
       programPrefix: 'MINDSPARC',
       level: student.grade || 'Level 1',
       grade: student.results?.[0]?.rank || 'A',
       duration: student.duration || '6 Months',
       registrationNo: regNo,
-      certificateNo: student.results?.[0]?.certificateNo || `BSEL/CERT/2026-${String(student.userId || '').replace(/\D/g, '').slice(-4) || '9012'}`,
+      certificateNo: certNo,
       centreName: student.branch || student.institution || activeBranch || 'test branch',
       centreCode: '545454',
       centreAddress: student.address || 'second street, surandai,keelasurandai,tenkasi',
       issueDate: student.enrolmentDate || '05-10-2026',
-      certificateType: 'COMPETITION',
+      certificateType: 'COMPLETION',
       studentPhoto: getStudentPhotoUrl(student) || student.studentPhoto || null
     };
 
@@ -768,12 +779,22 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
     const totalMarks = subjects.reduce((sum, s) => sum + s.marks, 0);
     const percentage = ((totalMarks / totalMax) * 100).toFixed(1);
 
+    const courseName = student.program || student.courseName || 'Abacus';
+    const coursePrefix = getCoursePrefix(courseName);
+    const cleanLevel = String(student.grade || student.level || '1').replace(/\D/g, '') || '1';
+    const regDigits = String(regNo).replace(/\D/g, '');
+    const seqDigits = regDigits ? String(parseInt(regDigits.slice(-3), 10) || 1).padStart(4, '0') : '0001';
+    const certNo = (student.certificateNo && !student.certificateNo.includes('BSEL/ABACUS/L1/0007'))
+      ? student.certificateNo
+      : `BSEL/${coursePrefix}/L${cleanLevel}/${seqDigits}`;
+
     setSelectedMarksheetStudent({
       ...student,
       photoUrl: photo,
       studentPhoto: photo,
       registerNumber: regNo,
       registrationNo: regNo,
+      certificateNo: certNo,
       subjects,
       totalMax,
       totalMarks,
@@ -830,20 +851,31 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
       const safeRegNo = (regNo || 'REG').trim().replace(/[^a-zA-Z0-9]/g, '_');
       const filename = `BSEL_Merged_Certificate_Marksheet_${safeStudent}_${safeRegNo}.pdf`;
 
+      const courseName = student.program || student.courseName || 'Abacus';
+      const coursePrefix = getCoursePrefix(courseName);
+      const cleanLevel = String(student.grade || student.level || '1').replace(/\D/g, '') || '1';
+      const regDigits = String(regNo).replace(/\D/g, '');
+      const seqDigits = regDigits ? String(parseInt(regDigits.slice(-3), 10) || 1).padStart(4, '0') : '0001';
+      const certNo = (student.results?.[0]?.certificateNo && !student.results[0].certificateNo.includes('BSEL/ABACUS/L1/0007'))
+        ? student.results[0].certificateNo
+        : (student.certificateNo && !student.certificateNo.includes('BSEL/ABACUS/L1/0007'))
+        ? student.certificateNo
+        : `BSEL/${coursePrefix}/L${cleanLevel}/${seqDigits}`;
+
       const certData = {
         studentName: student.studentName || 'Candidate Name',
-        courseName: student.program || student.courseName || 'Abacus',
+        courseName: courseName,
         programPrefix: 'MINDSPARC',
         level: student.grade || 'Level 1',
         grade: student.results?.[0]?.rank || 'A',
         duration: student.duration || '6 Months',
         registrationNo: regNo,
-        certificateNo: student.results?.[0]?.certificateNo || `BSEL/CERT/2026-${String(student.userId || '').replace(/\D/g, '').slice(-4) || '9012'}`,
+        certificateNo: certNo,
         centreName: student.branch || student.institution || activeBranch || 'test branch',
         centreCode: '545454',
         centreAddress: student.address || 'second street, surandai,keelasurandai,tenkasi',
         issueDate: student.enrolmentDate || '05-10-2026',
-        certificateType: 'COMPETITION',
+        certificateType: 'COMPLETION',
         studentPhoto: photo
       };
 
@@ -858,6 +890,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
         studentPhoto: photo,
         registerNumber: regNo,
         registrationNo: regNo,
+        certificateNo: certNo,
         subjects,
         totalMax,
         totalMarks,
@@ -1108,7 +1141,6 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
 
           {/* Controls */}
           <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-end">
-
             {/* View Live Website Button */}
             <button
               onClick={() => setActivePage('home')}

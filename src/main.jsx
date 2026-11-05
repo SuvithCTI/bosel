@@ -3,6 +3,29 @@ import { createRoot } from 'react-dom/client';
 import './index.css';
 import App from './App.jsx';
 
+// Automatic one-time purge of all local storage data
+const STORAGE_PURGE_KEY = 'bsel_storage_purged_v5';
+try {
+  if (typeof window !== 'undefined') {
+    window.clearAllBselData = () => {
+      localStorage.clear();
+      console.info('[BSEL] All localStorage cleared.');
+      window.location.reload();
+    };
+
+    const params = new URLSearchParams(window.location.search);
+    const forceClear = params.get('clear') === 'true' || params.get('reset') === 'true' || window.location.hash === '#clear';
+
+    if (forceClear || !localStorage.getItem(STORAGE_PURGE_KEY)) {
+      localStorage.clear();
+      localStorage.setItem(STORAGE_PURGE_KEY, 'true');
+      console.info('[BSEL] All local storage data has been cleared.');
+    }
+  }
+} catch (e) {
+  console.error('LocalStorage purge error:', e);
+}
+
 class ErrorBoundary extends Component {
   constructor(props) {
     super(props);
@@ -44,8 +67,7 @@ class ErrorBoundary extends Component {
                 type="button"
                 onClick={() => {
                   try {
-                    localStorage.removeItem('bsel_courses_data');
-                    localStorage.removeItem('bsel_partner_schools');
+                    localStorage.clear();
                   } catch {
                     // ignore
                   }

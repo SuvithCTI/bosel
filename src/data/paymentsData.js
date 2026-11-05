@@ -1,74 +1,6 @@
 // Central Payment Sectors & Financial Management for B★SEL
 export const DEFAULT_PAYMENTS = [
   {
-    id: 'TXN-2026-9041',
-    receiptNo: 'RCPT-TN-84910',
-    payerName: 'Arjun Subramanian',
-    studentId: 'BSEL-9840123456',
-    branch: 'Chennai Central Branch',
-    sector: 'Course Tuition',
-    program: 'Abacus Speed Arithmetic',
-    amount: '₹450',
-    amountNum: 450,
-    paymentMode: 'UPI / GPay',
-    refNo: 'UPI-940128472910',
-    date: '15 Jan 2026',
-    status: 'Verified',
-    verifiedBy: 'Finance Desk',
-    notes: 'Level 4 regular batch tuition fee'
-  },
-  {
-    id: 'TXN-2026-9042',
-    receiptNo: 'RCPT-TSI-84911',
-    payerName: 'sivaji',
-    studentId: 'BSEL-9865219131',
-    branch: 'Tenkasi Regional Branch',
-    sector: 'Course Tuition',
-    program: 'Abacus (Level 1)',
-    amount: '₹450',
-    amountNum: 450,
-    paymentMode: 'UPI / QR Code',
-    refNo: 'UPI-849201934812',
-    date: '05 Oct 2026',
-    status: 'Verified',
-    verifiedBy: 'Tenkasi Branch Head',
-    notes: 'Level 1 admission and exam fee'
-  },
-  {
-    id: 'TXN-2026-9043',
-    receiptNo: 'RCPT-TSI-84912',
-    payerName: 'Kavya Maran',
-    studentId: 'BSEL-9442188771',
-    branch: 'Tenkasi Regional Branch',
-    sector: 'Course Tuition',
-    program: 'Drawing & Fine Arts',
-    amount: '₹400',
-    amountNum: 400,
-    paymentMode: 'Cash at Centre',
-    refNo: 'CASH-REC-TSI-044',
-    date: '20 Jan 2026',
-    status: 'Verified',
-    verifiedBy: 'Tenkasi Branch Head',
-    notes: 'Term 1 arts fee with colors kit'
-  },
-  {
-    id: 'TXN-2026-9044',
-    receiptNo: 'RCPT-CBE-84913',
-    payerName: 'Dharun Kumar',
-    studentId: 'BSEL-9443322110',
-    branch: 'Coimbatore Branch',
-    sector: 'Course Tuition',
-    program: 'Python for Young Coders',
-    amount: '₹650',
-    amountNum: 650,
-    paymentMode: 'UPI / PhonePe',
-    refNo: 'UPI-392019482019',
-    date: '18 Jan 2026',
-    status: 'Verified',
-    verifiedBy: 'Finance Desk',
-    notes: 'Python foundation term enrollment'
-  },
-  {
     id: 'TXN-2026-9045',
     receiptNo: 'RCPT-EVT-84914',
     payerName: 'Deepak Rajan',
@@ -147,7 +79,34 @@ export const getStoredPayments = () => {
       return DEFAULT_PAYMENTS;
     }
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) && parsed.length > 0 ? parsed : DEFAULT_PAYMENTS;
+    const list = Array.isArray(parsed) && parsed.length > 0 ? parsed : DEFAULT_PAYMENTS;
+    const oldIdsToRemove = new Set([
+      'bsel-9865219131',
+      'bsel-9442188771',
+      'bsel-9840123456',
+      'bsel-9443322110',
+      'sch-coord-101'
+    ]);
+    const oldNamesToRemove = new Set([
+      'sivaji',
+      'kavya maran',
+      'arjun subramanian',
+      'dharun kumar'
+    ]);
+    const cleaned = list.filter(p => {
+      if (!p) return false;
+      const lowerId = (p.studentId || '').toLowerCase();
+      const lowerName = (p.payerName || '').trim().toLowerCase();
+      if (oldIdsToRemove.has(lowerId)) return false;
+      if (oldNamesToRemove.has(lowerName)) return false;
+      return true;
+    });
+    if (cleaned.length !== list.length) {
+      try {
+        localStorage.setItem('bsel_payment_records', JSON.stringify(cleaned));
+      } catch {}
+    }
+    return cleaned;
   } catch {
     return DEFAULT_PAYMENTS;
   }

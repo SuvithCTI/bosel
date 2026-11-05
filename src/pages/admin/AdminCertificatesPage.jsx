@@ -29,7 +29,7 @@ export default function AdminCertificatesPage({
     centreCode: certData?.centreCode || '101',
     centreAddress: certData?.centreAddress || 'Main Campus',
     issueDate: certData?.issueDate || '01-01-2026',
-    certificateType: certData?.certificateType || 'COMPETITION',
+    certificateType: certData?.certificateType || 'COMPLETION',
     studentPhoto: certData?.studentPhoto || null
   };
 
