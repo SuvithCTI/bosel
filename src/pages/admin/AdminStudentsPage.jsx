@@ -8,7 +8,10 @@ import {
   CheckCircle2,
   GraduationCap,
   FileText,
-  Award
+  Award,
+  Receipt,
+  Ticket,
+  FileSpreadsheet
 } from 'lucide-react';
 import {
   getStudentPhotoUrl,
@@ -27,6 +30,9 @@ export default function AdminStudentsPage({
   handleStartMergeSelected,
   handleOpenMarksheet,
   handleOpenCertForStudent,
+  handleOpenReceiptForStudent,
+  handleOpenEventRegForStudent,
+  handleOpenQuestionPaperForStudent,
   setViewingAdmissionStudent,
   studentSearch,
   setStudentSearch,
@@ -249,9 +255,9 @@ export default function AdminStudentsPage({
                             <div className="flex items-center gap-3">
                               {/* Student Passport Photo Thumbnail */}
                               <div 
-                                onClick={() => handleOpenMarksheet(student, idx)}
+                                onClick={() => setViewingAdmissionStudent(student)}
                                 className="relative w-10 h-10 sm:w-11 sm:h-11 rounded-xl overflow-hidden border-2 border-amber-400/90 shadow-xs shrink-0 bg-slate-100 cursor-pointer hover:border-amber-500 hover:scale-105 transition group"
-                                title="Click to view official marksheet"
+                                title="Click to view official admission form"
                               >
                                 <img
                                   src={getStudentPhotoUrl(student, idx)}
@@ -315,26 +321,37 @@ export default function AdminStudentsPage({
                                 <span>Admission Form</span>
                               </button>
 
-                              {/* Marksheet Button */}
+                              {/* Receipt Button */}
                               <button
                                 type="button"
-                                onClick={() => handleOpenMarksheet(student, idx)}
-                                className="px-2.5 py-1 bg-[#081d3d] hover:bg-[#123068] text-white font-black rounded-lg text-[10px] transition cursor-pointer flex items-center gap-1 shadow-xs border border-sky-400/30"
-                                title="View & Print Official Marksheet"
+                                onClick={() => handleOpenReceiptForStudent ? handleOpenReceiptForStudent(student) : null}
+                                className="px-2.5 py-1 bg-sky-700 hover:bg-sky-800 text-white font-black rounded-lg text-[10px] transition cursor-pointer flex items-center gap-1 shadow-xs"
+                                title="View & Print Official Fee Receipt"
                               >
-                                <FileText className="w-3 h-3 text-amber-300" />
-                                <span>Marksheet</span>
+                                <Receipt className="w-3 h-3 text-sky-200" />
+                                <span>Receipt</span>
                               </button>
 
-                              {/* Certificate Generator */}
+                              {/* Event Registration Button */}
                               <button
                                 type="button"
-                                onClick={() => handleOpenCertForStudent(student)}
-                                className="px-2.5 py-1 bg-amber-400 hover:bg-amber-500 text-slate-950 font-black rounded-lg text-[10px] transition cursor-pointer flex items-center gap-1 shadow-xs"
-                                title="Generate Certificate"
+                                onClick={() => handleOpenEventRegForStudent ? handleOpenEventRegForStudent(student) : null}
+                                className="px-2.5 py-1 bg-purple-700 hover:bg-purple-800 text-white font-black rounded-lg text-[10px] transition cursor-pointer flex items-center gap-1 shadow-xs"
+                                title="View & Print Event Registration & Hall Ticket"
                               >
-                                <Award className="w-3 h-3" />
-                                <span>Cert</span>
+                                <Ticket className="w-3 h-3 text-purple-200" />
+                                <span>Event Registration</span>
+                              </button>
+
+                              {/* Question Paper Button */}
+                              <button
+                                type="button"
+                                onClick={() => handleOpenQuestionPaperForStudent ? handleOpenQuestionPaperForStudent(student) : null}
+                                className="px-2.5 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-lg text-[10px] transition cursor-pointer flex items-center gap-1 shadow-xs"
+                                title="View & Print Official Examination Question Paper"
+                              >
+                                <FileSpreadsheet className="w-3 h-3 text-slate-950" />
+                                <span>Qn Paper</span>
                               </button>
                             </div>
                           </td>

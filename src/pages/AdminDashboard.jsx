@@ -334,6 +334,9 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
   const [isMergeMode, setIsMergeMode] = useState(false);
   const [selectedStudentIds, setSelectedStudentIds] = useState([]);
   const [viewingAdmissionStudent, setViewingAdmissionStudent] = useState(null);
+  const [viewingReceiptStudent, setViewingReceiptStudent] = useState(null);
+  const [viewingEventRegStudent, setViewingEventRegStudent] = useState(null);
+  const [viewingQuestionPaperStudent, setViewingQuestionPaperStudent] = useState(null);
   const [previewCertModalData, setPreviewCertModalData] = useState(null);
 
   const [showAddCourseModal, setShowAddCourseModal] = useState(false);
@@ -352,6 +355,9 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
     showAddStudentModal || 
     showMarksheetModal ||
     viewingAdmissionStudent ||
+    viewingReceiptStudent ||
+    viewingEventRegStudent ||
+    viewingQuestionPaperStudent ||
     previewCertModalData ||
     editingStudent || 
     viewingStudentReceipt || 
@@ -757,6 +763,22 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
     setCertData(studentCertData);
     setPreviewCertModalData(studentCertData);
     showToast(`Opened Certificate for ${student.studentName}!`);
+  };
+
+  // 6B. Student Action Handlers (Receipt, Event Registration, Question Paper)
+  const handleOpenReceiptForStudent = (student) => {
+    setViewingReceiptStudent(student);
+    showToast(`Loaded Official Fee Receipt for ${student.studentName || 'Student'}!`);
+  };
+
+  const handleOpenEventRegForStudent = (student) => {
+    setViewingEventRegStudent(student);
+    showToast(`Loaded Event Registration Slip for ${student.studentName || 'Student'}!`);
+  };
+
+  const handleOpenQuestionPaperForStudent = (student) => {
+    setViewingQuestionPaperStudent(student);
+    showToast(`Loaded Examination Question Paper for ${student.studentName || 'Student'}!`);
   };
 
   // 7. Marksheet Handler
@@ -1447,6 +1469,9 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
             handleStartMergeSelected={handleStartMergeSelected}
             handleOpenMarksheet={handleOpenMarksheet}
             handleOpenCertForStudent={handleOpenCertForStudent}
+            handleOpenReceiptForStudent={handleOpenReceiptForStudent}
+            handleOpenEventRegForStudent={handleOpenEventRegForStudent}
+            handleOpenQuestionPaperForStudent={handleOpenQuestionPaperForStudent}
             setViewingAdmissionStudent={setViewingAdmissionStudent}
             studentSearch={studentSearch}
             setStudentSearch={setStudentSearch}
@@ -1574,6 +1599,9 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
             setViewingAdmissionStudent={setViewingAdmissionStudent}
             handleOpenMarksheet={handleOpenMarksheet}
             handleOpenCertForStudent={handleOpenCertForStudent}
+            handleOpenReceiptForStudent={handleOpenReceiptForStudent}
+            handleOpenEventRegForStudent={handleOpenEventRegForStudent}
+            handleOpenQuestionPaperForStudent={handleOpenQuestionPaperForStudent}
             setEditingStudent={setEditingStudent}
             handleDeleteStudent={handleDeleteStudent}
           />
@@ -1641,6 +1669,12 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
         setViewingMergedPdfStudent={setViewingMergedPdfStudent}
         viewingAdmissionStudent={viewingAdmissionStudent}
         setViewingAdmissionStudent={setViewingAdmissionStudent}
+        viewingReceiptStudent={viewingReceiptStudent}
+        setViewingReceiptStudent={setViewingReceiptStudent}
+        viewingEventRegStudent={viewingEventRegStudent}
+        setViewingEventRegStudent={setViewingEventRegStudent}
+        viewingQuestionPaperStudent={viewingQuestionPaperStudent}
+        setViewingQuestionPaperStudent={setViewingQuestionPaperStudent}
         previewCertModalData={previewCertModalData}
         setPreviewCertModalData={setPreviewCertModalData}
         showAddCourseModal={showAddCourseModal}

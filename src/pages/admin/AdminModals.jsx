@@ -11,6 +11,9 @@ import {
 import OfficialMarksheetView from '../../components/OfficialMarksheetView';
 import CertificateModal from '../../components/CertificateModal';
 import StudentAdmissionFormView from '../../components/StudentAdmissionFormView';
+import StudentReceiptView from '../../components/StudentReceiptView';
+import EventRegisterModal from '../../components/EventRegisterModal';
+import StudentQuestionPaperView from '../../components/StudentQuestionPaperView';
 import AdmissionModal from '../../components/AdmissionModal';
 import MergedStudentPdfModal from '../../components/MergedStudentPdfModal';
 import Logo from '../../components/Logo';
@@ -44,6 +47,12 @@ export default function AdminModals({
   setViewingMergedPdfStudent,
   viewingAdmissionStudent,
   setViewingAdmissionStudent,
+  viewingReceiptStudent,
+  setViewingReceiptStudent,
+  viewingEventRegStudent,
+  setViewingEventRegStudent,
+  viewingQuestionPaperStudent,
+  setViewingQuestionPaperStudent,
   previewCertModalData,
   setPreviewCertModalData,
   showAddCourseModal,
@@ -123,7 +132,36 @@ export default function AdminModals({
           student={viewingAdmissionStudent}
           onClose={() => setViewingAdmissionStudent(null)}
         />
+      )}
 
+      {/* =========================================================================
+          MODAL: OFFICIAL STUDENT FEE PAYMENT RECEIPT
+          ========================================================================= */}
+      {viewingReceiptStudent && (
+        <StudentReceiptView
+          student={viewingReceiptStudent}
+          onClose={() => setViewingReceiptStudent(null)}
+        />
+      )}
+
+      {/* =========================================================================
+          MODAL: OFFICIAL EVENT REGISTRATION (SAME AS WEBSITE EVENT REGISTRATION)
+          ========================================================================= */}
+      {viewingEventRegStudent && (
+        <EventRegisterModal
+          student={viewingEventRegStudent}
+          onClose={() => setViewingEventRegStudent(null)}
+        />
+      )}
+
+      {/* =========================================================================
+          MODAL: OFFICIAL EXAMINATION QUESTION PAPER
+          ========================================================================= */}
+      {viewingQuestionPaperStudent && (
+        <StudentQuestionPaperView
+          student={viewingQuestionPaperStudent}
+          onClose={() => setViewingQuestionPaperStudent(null)}
+        />
       )}
 
       {/* =========================================================================

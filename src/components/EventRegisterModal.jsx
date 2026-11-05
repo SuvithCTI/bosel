@@ -18,24 +18,45 @@ import {
 } from 'lucide-react';
 
 import Certificate from './Certificate';
+import { getStoredEvents } from '../data/eventsData';
+import { getStudentPhotoUrl } from '../utils/studentDataHelpers';
+import { getRegisteredUsers } from '../utils/authStorage';
 
-export default function EventRegisterModal({ event, onClose }) {
-  const [formData, setFormData] = useState({
-    studentName: '',
-    dob: '',
-    parentName: '',
-    phone: '',
-    email: '',
-    schoolName: '',
-    city: '',
-    levelCategory: 'Level 1 (Sub-Junior / Age 5-7)',
-    acceptTerms: true,
+export default function EventRegisterModal({ event: initialEvent, onClose, student }) {
+  const availableEvents = getStoredEvents();
+  const [selectedEvent, setSelectedEvent] = useState(() => {
+    if (initialEvent) return initialEvent;
+    if (student) {
+      const prog = (student.program || student.courseName || '').toLowerCase();
+      const matched = availableEvents.find(e => 
+        (e.category && prog.includes(e.category.toLowerCase())) ||
+        (e.eventName && e.eventName.toLowerCase().includes(prog))
+      );
+      return matched || availableEvents[0];
+    }
+    return availableEvents[0] || {};
   });
+
+  const event = selectedEvent || initialEvent || availableEvents[0] || {};
+
+  const [formData, setFormData] = useState(() => ({
+    studentName: student?.studentName || student?.name || '',
+    dob: student?.dob || '2018-05-14',
+    parentName: student?.parentName || '',
+    phone: student?.phone || '',
+    email: student?.email || '',
+    schoolName: student?.branch || student?.institution || '',
+    city: student?.city || (student?.address ? student.address.split(',').pop().trim() : '') || 'Tenkasi',
+    levelCategory: student?.grade ? `Level ${student.grade.replace(/\D/g, '') || '1'} (${student.grade})` : 'Level 1 (Sub-Junior / Age 5-7)',
+    acceptTerms: true,
+  }));
 
   const [currentStep, setCurrentStep] = useState('form');
   const [ticketId, setTicketId] = useState('');
   const [txnId, setTxnId] = useState('');
-  const [studentPhoto, setStudentPhoto] = useState(null);
+  const [studentPhoto, setStudentPhoto] = useState(() => {
+    return student ? getStudentPhotoUrl(student) : null;
+  });
 
   const [paymentMethod, setPaymentMethod] = useState('upi');
   const [upiId, setUpiId] = useState('');
@@ -61,6 +82,30 @@ export default function EventRegisterModal({ event, onClose }) {
   );
 
   useEffect(() => {
+    if (initialEvent) {
+      setSelectedEvent(initialEvent);
+    }
+  }, [initialEvent]);
+
+  useEffect(() => {
+    if (student) {
+      setFormData(prev => ({
+        ...prev,
+        studentName: student.studentName || student.name || prev.studentName,
+        parentName: student.parentName || prev.parentName,
+        phone: student.phone || prev.phone,
+        email: student.email || prev.email,
+        schoolName: student.branch || student.institution || prev.schoolName,
+        city: student.city || (student.address ? student.address.split(',').pop().trim() : '') || prev.city,
+        levelCategory: student.grade ? `Level ${student.grade.replace(/\D/g, '') || '1'} (${student.grade})` : prev.levelCategory
+      }));
+      if (getStudentPhotoUrl(student)) {
+        setStudentPhoto(getStudentPhotoUrl(student));
+      }
+    }
+  }, [student]);
+
+  useEffect(() => {
     if (event) {
       document.body.style.overflow = 'hidden';
     }
@@ -70,7 +115,7 @@ export default function EventRegisterModal({ event, onClose }) {
     };
   }, [event]);
 
-  if (!event) return null;
+  if (!event || !event.eventName) return null;
 
   const handleFormSubmit = (e) => {
     e.preventDefault();
@@ -128,6 +173,35 @@ export default function EventRegisterModal({ event, onClose }) {
           // Ignore localStorage errors
         }
 
+        if (student && student.userId) {
+          try {
+            const users = getRegisteredUsers();
+            const idx = users.findIndex((u) => u.userId === student.userId);
+            if (idx !== -1) {
+              const currentEvents = users[idx].events || [];
+              const newEvt = {
+                name: event.eventName,
+                date: event.date,
+                status: 'Hall Ticket Issued',
+                seat: 'Hall A / Bench 14',
+                rollNo: ticketId,
+                venue: event.venue || event.place,
+              };
+              users[idx].events = [
+                newEvt,
+                ...currentEvents.filter((e) => e.name !== event.eventName),
+              ];
+              localStorage.setItem(
+                'bsel_registered_users',
+                JSON.stringify(users)
+              );
+              window.dispatchEvent(new Event('bsel_users_updated'));
+            }
+          } catch (err) {
+            console.error('Error saving event registration:', err);
+          }
+        }
+
         setCurrentStep('payment_success');
       }
     }, 1600);
@@ -140,8 +214,11 @@ export default function EventRegisterModal({ event, onClose }) {
     }));
   };
 
-  const inputClass =
-    'w-full h-10 sm:h-10 px-3 text-sm text-slate-950 font-semibold border border-slate-300 rounded-lg bg-white focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none transition';
+  const isStudentPreset = Boolean(student);
+
+  const inputClass = isStudentPreset
+    ? 'w-full h-10 sm:h-10 px-3 text-sm text-slate-700 font-semibold border border-slate-200 rounded-lg bg-slate-100/90 cursor-not-allowed select-none focus:outline-none'
+    : 'w-full h-10 sm:h-10 px-3 text-sm text-slate-950 font-semibold border border-slate-300 rounded-lg bg-white focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none transition';
 
   const labelClass =
     'block text-[11px] sm:text-xs font-bold text-slate-800 mb-1';
@@ -325,10 +402,43 @@ export default function EventRegisterModal({ event, onClose }) {
                   school ID records.
                 </div>
 
+                {/* Competition / Event Selection */}
+                {availableEvents && availableEvents.length > 1 && (
+                  <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-1">
+                    <label className="block text-[11px] font-black uppercase tracking-wider text-slate-800">
+                      Select Competition / Event *
+                    </label>
+                    <select
+                      value={event.eventName}
+                      onChange={(e) => {
+                        const found = availableEvents.find(
+                          (ev) => ev.eventName === e.target.value
+                        );
+                        if (found) setSelectedEvent(found);
+                      }}
+                      className="w-full h-9 px-3 text-xs text-slate-900 font-bold border border-slate-300 rounded-lg bg-white focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                    >
+                      {availableEvents.map((ev) => (
+                        <option key={ev.eventName} value={ev.eventName}>
+                          {ev.eventName} ({ev.category}) • Fee: {ev.fee} • {ev.place}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
                 <div className="space-y-2.5">
-                  <h4 className="text-[11px] sm:text-xs font-black uppercase tracking-wider text-slate-700">
-                    Student & Contact Details
-                  </h4>
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-[11px] sm:text-xs font-black uppercase tracking-wider text-slate-700">
+                      Student & Contact Details
+                    </h4>
+                    {isStudentPreset && (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-500 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full">
+                        <Lock className="w-2.5 h-2.5 text-slate-400" />
+                        Locked (Student Record)
+                      </span>
+                    )}
+                  </div>
 
                   {/* Student Name + DOB */}
 
@@ -340,9 +450,10 @@ export default function EventRegisterModal({ event, onClose }) {
                       <input
                         type="text"
                         required
+                        readOnly={isStudentPreset}
                         value={formData.studentName}
                         onChange={(e) =>
-                          updateForm('studentName', e.target.value)
+                          !isStudentPreset && updateForm('studentName', e.target.value)
                         }
                         className={inputClass}
                       />
@@ -353,9 +464,11 @@ export default function EventRegisterModal({ event, onClose }) {
                       <input
                         type="date"
                         required
+                        readOnly={isStudentPreset}
+                        disabled={isStudentPreset}
                         value={formData.dob}
                         onChange={(e) =>
-                          updateForm('dob', e.target.value)
+                          !isStudentPreset && updateForm('dob', e.target.value)
                         }
                         className={inputClass}
                       />
@@ -372,9 +485,10 @@ export default function EventRegisterModal({ event, onClose }) {
                       <input
                         type="text"
                         required
+                        readOnly={isStudentPreset}
                         value={formData.parentName}
                         onChange={(e) =>
-                          updateForm('parentName', e.target.value)
+                          !isStudentPreset && updateForm('parentName', e.target.value)
                         }
                         className={inputClass}
                       />
@@ -387,9 +501,10 @@ export default function EventRegisterModal({ event, onClose }) {
                       <input
                         type="tel"
                         required
+                        readOnly={isStudentPreset}
                         value={formData.phone}
                         onChange={(e) =>
-                          updateForm('phone', e.target.value)
+                          !isStudentPreset && updateForm('phone', e.target.value)
                         }
                         className={inputClass}
                       />
@@ -405,9 +520,10 @@ export default function EventRegisterModal({ event, onClose }) {
                     <input
                       type="text"
                       required
+                      readOnly={isStudentPreset}
                       value={formData.schoolName}
                       onChange={(e) =>
-                        updateForm('schoolName', e.target.value)
+                        !isStudentPreset && updateForm('schoolName', e.target.value)
                       }
                       className={inputClass}
                     />
@@ -421,9 +537,10 @@ export default function EventRegisterModal({ event, onClose }) {
                         Competition Level
                       </label>
                       <select
+                        disabled={isStudentPreset}
                         value={formData.levelCategory}
                         onChange={(e) =>
-                          updateForm('levelCategory', e.target.value)
+                          !isStudentPreset && updateForm('levelCategory', e.target.value)
                         }
                         className={inputClass}
                       >
@@ -441,9 +558,10 @@ export default function EventRegisterModal({ event, onClose }) {
                       <input
                         type="text"
                         required
+                        readOnly={isStudentPreset}
                         value={formData.city}
                         onChange={(e) =>
-                          updateForm('city', e.target.value)
+                          !isStudentPreset && updateForm('city', e.target.value)
                         }
                         className={inputClass}
                       />
@@ -458,9 +576,10 @@ export default function EventRegisterModal({ event, onClose }) {
                     </label>
                     <input
                       type="email"
+                      readOnly={isStudentPreset}
                       value={formData.email}
                       onChange={(e) =>
-                        updateForm('email', e.target.value)
+                        !isStudentPreset && updateForm('email', e.target.value)
                       }
                       className={inputClass}
                     />
@@ -985,7 +1104,15 @@ export default function EventRegisterModal({ event, onClose }) {
                 </div>
               </div>
 
-             
+              <div className="flex items-center justify-center gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="w-full sm:w-auto px-6 py-2.5 bg-[#0F2B5C] hover:bg-slate-900 active:scale-95 text-white rounded-xl text-xs font-bold transition cursor-pointer shadow-md"
+                >
+                  Done / Close
+                </button>
+              </div>
             </div>
           )}
 

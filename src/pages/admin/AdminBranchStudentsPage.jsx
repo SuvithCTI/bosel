@@ -7,6 +7,9 @@ import {
   GraduationCap,
   FileText,
   Award,
+  Receipt,
+  Ticket,
+  FileSpreadsheet,
   Edit3,
   Trash2
 } from 'lucide-react';
@@ -24,6 +27,9 @@ export default function AdminBranchStudentsPage({
   setViewingAdmissionStudent,
   handleOpenMarksheet,
   handleOpenCertForStudent,
+  handleOpenReceiptForStudent,
+  handleOpenEventRegForStudent,
+  handleOpenQuestionPaperForStudent,
   setEditingStudent,
   handleDeleteStudent
 }) {
@@ -106,13 +112,37 @@ export default function AdminBranchStudentsPage({
                                 <span>Admission Form</span>
                               </button>
 
+                              {/* Receipt Button */}
                               <button
                                 type="button"
-                                onClick={() => handleOpenCertForStudent(st)}
-                                className="px-2.5 py-1 bg-amber-400 hover:bg-amber-500 text-slate-950 font-black rounded text-[10px] flex items-center gap-1"
+                                onClick={() => handleOpenReceiptForStudent ? handleOpenReceiptForStudent(st) : null}
+                                className="px-2.5 py-1 bg-sky-700 hover:bg-sky-800 text-white font-black rounded-lg text-[10px] transition cursor-pointer flex items-center gap-1 shadow-xs"
+                                title="View & Print Official Fee Receipt"
                               >
-                                <Award className="w-3 h-3" />
-                                <span>Certificate</span>
+                                <Receipt className="w-3 h-3 text-sky-200" />
+                                <span>Receipt</span>
+                              </button>
+
+                              {/* Event Registration Button */}
+                              <button
+                                type="button"
+                                onClick={() => handleOpenEventRegForStudent ? handleOpenEventRegForStudent(st) : null}
+                                className="px-2.5 py-1 bg-purple-700 hover:bg-purple-800 text-white font-black rounded-lg text-[10px] transition cursor-pointer flex items-center gap-1 shadow-xs"
+                                title="View & Print Event Registration & Hall Ticket"
+                              >
+                                <Ticket className="w-3 h-3 text-purple-200" />
+                                <span>Event Registration</span>
+                              </button>
+
+                              {/* Question Paper Button */}
+                              <button
+                                type="button"
+                                onClick={() => handleOpenQuestionPaperForStudent ? handleOpenQuestionPaperForStudent(st) : null}
+                                className="px-2.5 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-lg text-[10px] transition cursor-pointer flex items-center gap-1 shadow-xs"
+                                title="View & Print Official Examination Question Paper"
+                              >
+                                <FileSpreadsheet className="w-3 h-3 text-slate-950" />
+                                <span>Qn Paper</span>
                               </button>
 
                               <button
