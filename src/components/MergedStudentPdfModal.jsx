@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { ArrowLeft, Download, Printer, Loader2, CheckCircle2, AlertCircle, FileDown, Users } from 'lucide-react';
 import Certificate from './Certificate';
 import OfficialMarksheetView from './OfficialMarksheetView';
-import { exportMergedLandscapeAndPortraitPdf } from '../utils/pdfExport';
+import { exportMergedLandscapeAndPortraitPdf, triggerDirectPdfDownload } from '../utils/pdfExport';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas-pro';
 
@@ -191,7 +191,7 @@ export default function MergedStudentPdfModal({
       }
 
       const masterFilename = `BSEL_Combined_Student_Records_${students.length}_Students.pdf`;
-      pdf.save(masterFilename);
+      triggerDirectPdfDownload(pdf, masterFilename);
 
       setDownloadSuccess(true);
       setCurrentStep('Combined PDF downloaded!');
@@ -210,15 +210,19 @@ export default function MergedStudentPdfModal({
     }
   };
 
-  // If exactly 1 student is passed, automatically trigger the download after 600ms
+  // If autoDownload is requested (e.g. from 'Download merged PDF'), trigger download after templates mount
   useEffect(() => {
-    if (students.length === 1) {
+    if (data?.autoDownload) {
       const timer = setTimeout(() => {
-        handleDownloadSingle(students[0]);
-      }, 600);
+        if (students.length === 1) {
+          handleDownloadSingle(students[0]);
+        } else {
+          handleDownloadCombinedMasterPdf();
+        }
+      }, 650);
       return () => clearTimeout(timer);
     }
-  }, []);
+  }, [data?.autoDownload]);
 
   const handlePrint = () => {
     window.print();

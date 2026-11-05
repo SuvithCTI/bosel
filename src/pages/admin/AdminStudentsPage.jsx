@@ -1,4 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
+import { getStoredCourses } from '../../data/coursesData';
+import { getStoredSchools } from '../../data/schoolsData';
+import { getAllDistrictBranches } from '../../data/districtsData';
+import CompactSelect from '../../components/CompactSelect';
 import {
   Users,
   FileDown,
@@ -6,6 +10,7 @@ import {
   Search,
   Phone,
   CheckCircle2,
+  Clock,
   GraduationCap,
   FileText,
   Award,
@@ -17,7 +22,6 @@ import {
   getStudentPhotoUrl,
   getStudentRegisterNumber
 } from '../../utils/studentDataHelpers';
-
 export default function AdminStudentsPage({
   filteredStudentsSuperAdmin,
   isMergeMode,
@@ -42,8 +46,43 @@ export default function AdminStudentsPage({
   setStudentCourseFilter,
   studentPaymentFilter,
   setStudentPaymentFilter,
-  setShowAddStudentModal
+  setShowAddStudentModal,
+  schoolsList = [],
+  coursesList = [],
+  usersList = []
 }) {
+  // Comprehensive list of all official courses across B★SEL
+  // Comprehensive list of all 16 official courses across B★SEL
+  const allCourses = useMemo(() => [
+    { value: 'All', label: 'All Courses' },
+    { value: 'Abacus', label: 'Abacus Speed Arithmetic' },
+    { value: 'Handwriting', label: 'Handwriting & Calligraphy' },
+    { value: 'Phonics', label: 'Phonics & Language Syntax' },
+    { value: 'Drawing', label: 'Drawing & Art' },
+    { value: 'Memory', label: 'Memory Challenge & Brain Training' },
+    { value: 'Bharatanatyam', label: 'Classical Dance (Bharatanatyam)' },
+    { value: 'MS Office', label: 'MS Office (Word, Excel, PowerPoint)' },
+    { value: 'HTML', label: 'HTML5 Web Architecture' },
+    { value: 'CSS', label: 'CSS3 Interactive Design' },
+    { value: 'Python', label: 'Python for Young Coders' },
+    { value: 'Computer', label: 'Computer Fundamentals & OS' },
+    { value: 'Photoshop', label: 'Photoshop & Creative Suite' },
+    { value: 'AI', label: 'AI & Prompt Engineering' },
+    { value: 'Canva', label: 'Canva Graphic Design' },
+    { value: 'Spoken English', label: 'Language & Public Speaking' },
+    { value: 'Athletics', label: 'Athletics & Physical Conditioning' }
+  ], []);
+  // Strictly the 38 Tamil Nadu district names
+  const allBranches = useMemo(() => [
+    { value: 'All', label: 'All Branches' },
+    ...getAllDistrictBranches()
+  ], []);
+  // Fee status options
+  const feeStatusOptions = useMemo(() => [
+    { value: 'All', label: 'All Fee Statuses' },
+    { value: 'Paid', label: 'Fee Paid / Verified' },
+    { value: 'Pending', label: 'Fee Pending' }
+  ], []);
   return (
           <div className="space-y-4 animate-in fade-in duration-200">
             {/* Header & Filter Controls */}
@@ -58,7 +97,6 @@ export default function AdminStudentsPage({
                     Monitoring all student enrollments across regional branches, fee status, and official B★SEL register numbers.
                   </p>
                 </div>
-
                 <div className="flex items-center gap-2 flex-wrap">
                   {/* Merge as PDF button placed near Register New Student */}
                   <button
@@ -79,7 +117,6 @@ export default function AdminStudentsPage({
                       </span>
                     )}
                   </button>
-
                   <button
                     type="button"
                     onClick={() => setShowAddStudentModal(true)}
@@ -90,61 +127,45 @@ export default function AdminStudentsPage({
                   </button>
                 </div>
               </div>
-
               {/* Filters Row */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5 pt-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 pt-1 items-center">
                 {/* Search */}
                 <div className="relative">
-                  <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                   <input
                     type="text"
                     value={studentSearch}
                     onChange={(e) => setStudentSearch(e.target.value)}
-                    placeholder="Search candidate name, ID, phone..."
-                    className="w-full pl-9 pr-3 py-2 text-xs border border-slate-300 rounded-xl focus:border-sky-600 outline-none"
+                    placeholder="Search candidate, ID, phone..."
+                    className="w-full pl-8 pr-2.5 py-1.5 text-xs border border-slate-200 rounded-lg focus:border-sky-500 focus:ring-1 focus:ring-sky-100 outline-none bg-slate-50/50 hover:bg-white focus:bg-white transition"
                   />
                 </div>
-
-                {/* Branch Filter */}
-                <select
+                {/* Branch Filter with reduced popup height */}
+                <CompactSelect
                   value={studentBranchFilter}
-                  onChange={(e) => setStudentBranchFilter(e.target.value)}
-                  className="px-3 py-2 text-xs border border-slate-300 rounded-xl focus:border-sky-600 outline-none cursor-pointer bg-white"
-                >
-                  <option value="All">All Branches</option>
-                  <option value="Tenkasi">Tenkasi Regional Branch</option>
-                  <option value="Chennai">Chennai Central Branch</option>
-                  <option value="Coimbatore">Coimbatore Branch</option>
-                </select>
-
-                {/* Course Filter */}
-                <select
+                  onChange={setStudentBranchFilter}
+                  options={allBranches}
+                  placeholder="All Branches"
+                  maxHeight="max-h-48"
+                />
+                {/* Course Filter with reduced popup height */}
+                <CompactSelect
                   value={studentCourseFilter}
-                  onChange={(e) => setStudentCourseFilter(e.target.value)}
-                  className="px-3 py-2 text-xs border border-slate-300 rounded-xl focus:border-sky-600 outline-none cursor-pointer bg-white"
-                >
-                  <option value="All">All Courses</option>
-                  <option value="Abacus">Abacus</option>
-                  <option value="Drawing">Drawing & Art</option>
-                  <option value="Handwriting">Handwriting</option>
-                  <option value="Python">Python Coding</option>
-                  <option value="AI">AI & Prompt</option>
-                  <option value="Canva">Canva Design</option>
-                </select>
-
-                {/* Fee Status Filter */}
-                <select
+                  onChange={setStudentCourseFilter}
+                  options={allCourses}
+                  placeholder="All Courses"
+                  maxHeight="max-h-48"
+                />
+                {/* Fee Status Filter with reduced popup height */}
+                <CompactSelect
                   value={studentPaymentFilter}
-                  onChange={(e) => setStudentPaymentFilter(e.target.value)}
-                  className="px-3 py-2 text-xs border border-slate-300 rounded-xl focus:border-sky-600 outline-none cursor-pointer bg-white"
-                >
-                  <option value="All">All Fee Statuses</option>
-                  <option value="Paid">Fee Paid / Verified</option>
-                  <option value="Pending">Fee Pending</option>
-                </select>
+                  onChange={setStudentPaymentFilter}
+                  options={feeStatusOptions}
+                  placeholder="All Fee Statuses"
+                  maxHeight="max-h-48"
+                />
               </div>
             </div>
-
             {/* Merge as PDF Selection Action Banner */}
             {isMergeMode && (
               <div className="bg-gradient-to-r from-[#081d3d] to-[#123068] text-white p-3.5 rounded-2xl border border-amber-400/40 shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in duration-150">
@@ -160,12 +181,10 @@ export default function AdminStudentsPage({
                       Select All ({filteredStudentsSuperAdmin.length})
                     </span>
                   </label>
-
                   <div className="text-xs font-medium text-slate-200">
                     <span className="font-black text-amber-400">{selectedStudentIds.length}</span> of {filteredStudentsSuperAdmin.length} candidate(s) selected
                   </div>
                 </div>
-
                 <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
                   <button
                     type="button"
@@ -177,7 +196,6 @@ export default function AdminStudentsPage({
                   >
                     Cancel
                   </button>
-
                   <button
                     type="button"
                     disabled={selectedStudentIds.length === 0}
@@ -190,10 +208,9 @@ export default function AdminStudentsPage({
                 </div>
               </div>
             )}
-
-            {/* Students Roster Table */}
+                                    {/* Students Roster Table */}
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-              <div className="overflow-x-auto">
+              <div className="w-full overflow-hidden">
                 <table className="w-full text-left text-xs">
                   <thead className="bg-[#081d3d] text-white uppercase text-[10px] tracking-wider font-black">
                     <tr>
@@ -212,10 +229,10 @@ export default function AdminStudentsPage({
                       )}
                       <th className="py-3 px-4">Student Details</th>
                       <th className="py-3 px-3">Parent & Contact</th>
-                      <th className="py-3 px-3">Concern Branch</th>
+                      <th className="py-3 px-3">Branch</th>
                       <th className="py-3 px-3">Course & Level</th>
                       <th className="py-3 px-3">Fee Status</th>
-                      <th className="py-3 px-3 text-right">Actions</th>
+                      <th className="py-3 px-4 text-center">Documents</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 font-medium">
@@ -251,13 +268,14 @@ export default function AdminStudentsPage({
                               />
                             </td>
                           )}
+
+                          {/* Student Details */}
                           <td className="py-3 px-4">
                             <div className="flex items-center gap-3">
-                              {/* Student Passport Photo Thumbnail */}
                               <div 
                                 onClick={() => setViewingAdmissionStudent(student)}
-                                className="relative w-10 h-10 sm:w-11 sm:h-11 rounded-xl overflow-hidden border-2 border-amber-400/90 shadow-xs shrink-0 bg-slate-100 cursor-pointer hover:border-amber-500 hover:scale-105 transition group"
-                                title="Click to view official admission form"
+                                className="relative w-9 h-9 rounded-lg overflow-hidden border border-slate-200 shadow-2xs shrink-0 bg-slate-100 cursor-pointer hover:border-sky-500 hover:scale-105 transition"
+                                title="View Admission Form"
                               >
                                 <img
                                   src={getStudentPhotoUrl(student, idx)}
@@ -265,18 +283,17 @@ export default function AdminStudentsPage({
                                   className="w-full h-full object-cover object-top"
                                 />
                               </div>
-                              <div className="min-w-0">
-                                <div className="font-extrabold text-slate-900 capitalize truncate">{student.studentName || 'Student Name'}</div>
-                                <div className="text-[10px] text-slate-500 flex items-center gap-1.5 mt-0.5">
-                                  <span className="font-mono font-bold text-sky-800">{student.registerNumber || student.userId}</span>
-                                  <span>•</span>
-                                  <span>ID: {student.userId}</span>
+                              <div>
+                                <div className="font-bold text-slate-900 capitalize text-xs">{student.studentName || 'Student Name'}</div>
+                                <div className="text-[11px] text-slate-500 flex items-center gap-1.5 mt-0.5">
+                                  <span className="font-bold text-sky-700">{student.registerNumber || student.userId}</span>
                                 </div>
                               </div>
                             </div>
                           </td>
 
-                          <td className="py-3 px-3">
+                          {/* Parent & Contact */}
+                          <td className="py-3 px-3 whitespace-nowrap">
                             <div className="text-slate-800 font-semibold">{student.parentName || 'Guardian'}</div>
                             <div className="text-[11px] text-slate-500 mt-0.5 flex items-center gap-1">
                               <Phone className="w-3 h-3 text-emerald-600" />
@@ -284,73 +301,75 @@ export default function AdminStudentsPage({
                             </div>
                           </td>
 
-                          <td className="py-3 px-3">
-                            <span className="inline-block px-2.5 py-0.5 rounded-md text-[10px] font-black bg-blue-50 text-blue-900 border border-blue-200">
-                              {student.branch || student.institution || 'Tenkasi Branch'}
+                          {/* Branch */}
+                          <td className="py-3 px-3 whitespace-nowrap">
+                            <span className="inline-block px-2.5 py-0.5 rounded-full text-[10.5px] font-bold bg-sky-50 text-sky-700 border border-sky-200">
+                              {student.branch || student.institution || 'Tenkasi'}
                             </span>
                           </td>
 
-                          <td className="py-3 px-3">
+                          {/* Course & Level */}
+                          <td className="py-3 px-3 whitespace-nowrap">
                             <div className="font-bold text-slate-900">{student.program || student.courseName || 'Abacus'}</div>
                             <div className="text-[10px] font-black text-amber-700 mt-0.5 uppercase tracking-wide">
                               {student.grade || 'Level 1'}
                             </div>
                           </td>
 
-                          <td className="py-3 px-3">
-                            <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${
-                              student.feePaymentType === 'Paid' || student.feePaymentType === 'Pay Now'
-                                ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                                : 'bg-amber-100 text-amber-800 border border-amber-300'
-                            }`}>
-                              <CheckCircle2 className="w-3 h-3" />
-                              <span>{student.feeAmount || '₹450'} • {student.feePaymentType === 'Paid' ? 'Paid' : 'Pending'}</span>
-                            </span>
+                          {/* Fee Status */}
+                          <td className="py-3 px-3 whitespace-nowrap">
+                            {(() => {
+                              const isPaid = student.feePaymentType === 'Paid' || student.feePaymentType === 'Pay Now';
+                              return (
+                                <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${
+                                  isPaid
+                                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                    : 'bg-amber-50 text-amber-700 border border-amber-200'
+                                }`}>
+                                  {isPaid ? <CheckCircle2 className="w-3 h-3 text-emerald-600" /> : <Clock className="w-3 h-3 text-amber-600" />}
+                                  <span>{student.feeAmount || '₹500'} • {isPaid ? 'PAID' : 'PENDING'}</span>
+                                </span>
+                              );
+                            })()}
                           </td>
 
-                          <td className="py-3 px-3 text-right" onClick={(e) => e.stopPropagation()}>
-                            <div className="flex items-center justify-end gap-1.5 flex-wrap sm:flex-nowrap">
-                              {/* Admission Form Button */}
+                          {/* Documents Actions (2 Columns, Increased Button Size) */}
+                          <td className="py-3 px-3 text-center" onClick={(e) => e.stopPropagation()}>
+                            <div className="grid grid-cols-2 gap-1.5 w-[210px] mx-auto">
                               <button
                                 type="button"
                                 onClick={() => setViewingAdmissionStudent(student)}
-                                className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-lg text-[10px] transition cursor-pointer flex items-center gap-1 shadow-xs"
-                                title="View & Print Official Admission Form"
+                                className="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 hover:border-emerald-300 font-bold rounded-lg text-xs transition cursor-pointer flex items-center justify-center gap-1.5 shadow-xs whitespace-nowrap"
+                                title="View Admission Form"
                               >
-                                <GraduationCap className="w-3 h-3 text-emerald-200" />
-                                <span>Admission Form</span>
+                                <GraduationCap className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                                <span>Admission</span>
                               </button>
-
-                              {/* Receipt Button */}
                               <button
                                 type="button"
-                                onClick={() => handleOpenReceiptForStudent ? handleOpenReceiptForStudent(student) : null}
-                                className="px-2.5 py-1 bg-sky-700 hover:bg-sky-800 text-white font-black rounded-lg text-[10px] transition cursor-pointer flex items-center gap-1 shadow-xs"
-                                title="View & Print Official Fee Receipt"
+                                onClick={() => handleOpenReceiptForStudent?.(student)}
+                                className="px-2.5 py-1.5 bg-sky-50 hover:bg-sky-100 text-sky-800 border border-sky-200 hover:border-sky-300 font-bold rounded-lg text-xs transition cursor-pointer flex items-center justify-center gap-1.5 shadow-xs whitespace-nowrap"
+                                title="View Fee Receipt"
                               >
-                                <Receipt className="w-3 h-3 text-sky-200" />
+                                <Receipt className="w-3.5 h-3.5 text-sky-600 shrink-0" />
                                 <span>Receipt</span>
                               </button>
-
-                              {/* Event Registration Button */}
                               <button
                                 type="button"
-                                onClick={() => handleOpenEventRegForStudent ? handleOpenEventRegForStudent(student) : null}
-                                className="px-2.5 py-1 bg-purple-700 hover:bg-purple-800 text-white font-black rounded-lg text-[10px] transition cursor-pointer flex items-center gap-1 shadow-xs"
-                                title="View & Print Event Registration & Hall Ticket"
+                                onClick={() => handleOpenEventRegForStudent?.(student)}
+                                className="px-2.5 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-800 border border-purple-200 hover:border-purple-300 font-bold rounded-lg text-xs transition cursor-pointer flex items-center justify-center gap-1.5 shadow-xs whitespace-nowrap"
+                                title="View Event Registration"
                               >
-                                <Ticket className="w-3 h-3 text-purple-200" />
-                                <span>Event Registration</span>
+                                <Ticket className="w-3.5 h-3.5 text-purple-600 shrink-0" />
+                                <span>Event</span>
                               </button>
-
-                              {/* Question Paper Button */}
                               <button
                                 type="button"
-                                onClick={() => handleOpenQuestionPaperForStudent ? handleOpenQuestionPaperForStudent(student) : null}
-                                className="px-2.5 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-lg text-[10px] transition cursor-pointer flex items-center gap-1 shadow-xs"
-                                title="View & Print Official Examination Question Paper"
+                                onClick={() => handleOpenQuestionPaperForStudent?.(student)}
+                                className="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 hover:border-amber-300 font-bold rounded-lg text-xs transition cursor-pointer flex items-center justify-center gap-1.5 shadow-xs whitespace-nowrap"
+                                title="View Question Paper"
                               >
-                                <FileSpreadsheet className="w-3 h-3 text-slate-950" />
+                                <FileSpreadsheet className="w-3.5 h-3.5 text-amber-600 shrink-0" />
                                 <span>Qn Paper</span>
                               </button>
                             </div>
