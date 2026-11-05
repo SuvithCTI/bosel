@@ -400,7 +400,7 @@ export default function MergedStudentPdfModal({
           </div>
 
           <div ref={marksheetContainerRef} className="w-full flex justify-center overflow-x-auto">
-            <div className="w-full max-w-[682px]">
+            <div className="w-full max-w-[724px]">
               <OfficialMarksheetView student={currentStudentPackage.marksheetData} standalone={true} defaultShowMarks={true} />
             </div>
           </div>

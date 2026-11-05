@@ -5,7 +5,6 @@ import {
   Award, 
   School, 
   Plus, 
-  Trash2, 
   Edit3, 
   Search, 
   Filter, 
@@ -53,7 +52,10 @@ import AdminBranchStudentsPage from './admin/AdminBranchStudentsPage';
 import AdminBranchBatchesPage from './admin/AdminBranchBatchesPage';
 import AdminBranchFeesPage from './admin/AdminBranchFeesPage';
 import AdminBranchCertificatesPage from './admin/AdminBranchCertificatesPage';
+import AdminBranchStudentDetailsPage from './admin/AdminBranchStudentDetailsPage';
 import AdminModals from './admin/AdminModals';
+
+import BranchStudentMarksheetPage from './admin/BranchStudentMarksheetPage';
 
 import StudentAdmissionFormView from '../components/StudentAdmissionFormView';
 import OfficialMarksheetView from '../components/OfficialMarksheetView';
@@ -69,7 +71,8 @@ import {
   updateUserProfile,
   getActiveSession,
   setActiveSession,
-  clearActiveSession
+  clearActiveSession,
+  getCoursePrefix
 } from '../utils/authStorage';
 import { 
   getStoredEvents, 
@@ -382,19 +385,19 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
   // LIVE CERTIFICATE DESK STATE
   // -------------------------------------------------------------
   const [certData, setCertData] = useState({
-    studentName: 'sivaji',
-    courseName: 'Abacus',
+    studentName: '',
+    courseName: '',
     programPrefix: 'MINDSPARC',
     level: 'Level 1',
-    grade: 'B',
+    grade: 'A+',
     duration: '6 Months',
-    registrationNo: 'AB27-001',
-    certificateNo: 'BSEL/ABACUS/L1/0007',
-    centreName: 'test branch',
-    centreCode: '545454',
-    centreAddress: 'second street, surandai,keelasurandai,tenkasi',
-    issueDate: '05-10-2026',
-    certificateType: 'COMPETITION',
+    registrationNo: '',
+    certificateNo: '',
+    centreName: '',
+    centreCode: '',
+    centreAddress: '',
+    issueDate: new Date().toLocaleDateString('en-GB'),
+    certificateType: 'COMPLETION',
     studentPhoto: null
   });
 
@@ -743,20 +746,31 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
   // 6. Certificate Handlers
   const handleOpenCertForStudent = (student) => {
     const regNo = getStudentRegisterNumber(student);
+    const courseName = student.program || student.courseName || 'Abacus';
+    const coursePrefix = getCoursePrefix(courseName);
+    const cleanLevel = String(student.grade || student.level || '1').replace(/\D/g, '') || '1';
+    const regDigits = String(regNo).replace(/\D/g, '');
+    const seqDigits = regDigits ? String(parseInt(regDigits.slice(-3), 10) || 1).padStart(4, '0') : '0001';
+    const certNo = (student.results?.[0]?.certificateNo && !student.results[0].certificateNo.includes('BSEL/ABACUS/L1/0007'))
+      ? student.results[0].certificateNo
+      : (student.certificateNo && !student.certificateNo.includes('BSEL/ABACUS/L1/0007'))
+      ? student.certificateNo
+      : `BSEL/${coursePrefix}/L${cleanLevel}/${seqDigits}`;
+
     const studentCertData = {
       studentName: student.studentName || 'Candidate Name',
-      courseName: student.program || student.courseName || 'Abacus',
+      courseName: courseName,
       programPrefix: 'MINDSPARC',
       level: student.grade || 'Level 1',
       grade: student.results?.[0]?.rank || 'A',
       duration: student.duration || '6 Months',
       registrationNo: regNo,
-      certificateNo: student.results?.[0]?.certificateNo || `BSEL/CERT/2026-${String(student.userId || '').replace(/\D/g, '').slice(-4) || '9012'}`,
+      certificateNo: certNo,
       centreName: student.branch || student.institution || activeBranch || 'test branch',
       centreCode: '545454',
       centreAddress: student.address || 'second street, surandai,keelasurandai,tenkasi',
       issueDate: student.enrolmentDate || '05-10-2026',
-      certificateType: 'COMPETITION',
+      certificateType: 'COMPLETION',
       studentPhoto: getStudentPhotoUrl(student) || student.studentPhoto || null
     };
 
@@ -790,12 +804,22 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
     const totalMarks = subjects.reduce((sum, s) => sum + s.marks, 0);
     const percentage = ((totalMarks / totalMax) * 100).toFixed(1);
 
+    const courseName = student.program || student.courseName || 'Abacus';
+    const coursePrefix = getCoursePrefix(courseName);
+    const cleanLevel = String(student.grade || student.level || '1').replace(/\D/g, '') || '1';
+    const regDigits = String(regNo).replace(/\D/g, '');
+    const seqDigits = regDigits ? String(parseInt(regDigits.slice(-3), 10) || 1).padStart(4, '0') : '0001';
+    const certNo = (student.certificateNo && !student.certificateNo.includes('BSEL/ABACUS/L1/0007'))
+      ? student.certificateNo
+      : `BSEL/${coursePrefix}/L${cleanLevel}/${seqDigits}`;
+
     setSelectedMarksheetStudent({
       ...student,
       photoUrl: photo,
       studentPhoto: photo,
       registerNumber: regNo,
       registrationNo: regNo,
+      certificateNo: certNo,
       subjects,
       totalMax,
       totalMarks,
@@ -852,20 +876,31 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
       const safeRegNo = (regNo || 'REG').trim().replace(/[^a-zA-Z0-9]/g, '_');
       const filename = `BSEL_Merged_Certificate_Marksheet_${safeStudent}_${safeRegNo}.pdf`;
 
+      const courseName = student.program || student.courseName || 'Abacus';
+      const coursePrefix = getCoursePrefix(courseName);
+      const cleanLevel = String(student.grade || student.level || '1').replace(/\D/g, '') || '1';
+      const regDigits = String(regNo).replace(/\D/g, '');
+      const seqDigits = regDigits ? String(parseInt(regDigits.slice(-3), 10) || 1).padStart(4, '0') : '0001';
+      const certNo = (student.results?.[0]?.certificateNo && !student.results[0].certificateNo.includes('BSEL/ABACUS/L1/0007'))
+        ? student.results[0].certificateNo
+        : (student.certificateNo && !student.certificateNo.includes('BSEL/ABACUS/L1/0007'))
+        ? student.certificateNo
+        : `BSEL/${coursePrefix}/L${cleanLevel}/${seqDigits}`;
+
       const certData = {
         studentName: student.studentName || 'Candidate Name',
-        courseName: student.program || student.courseName || 'Abacus',
+        courseName: courseName,
         programPrefix: 'MINDSPARC',
         level: student.grade || 'Level 1',
         grade: student.results?.[0]?.rank || 'A',
         duration: student.duration || '6 Months',
         registrationNo: regNo,
-        certificateNo: student.results?.[0]?.certificateNo || `BSEL/CERT/2026-${String(student.userId || '').replace(/\D/g, '').slice(-4) || '9012'}`,
+        certificateNo: certNo,
         centreName: student.branch || student.institution || activeBranch || 'test branch',
         centreCode: '545454',
         centreAddress: student.address || 'second street, surandai,keelasurandai,tenkasi',
         issueDate: student.enrolmentDate || '05-10-2026',
-        certificateType: 'COMPETITION',
+        certificateType: 'COMPLETION',
         studentPhoto: photo
       };
 
@@ -880,6 +915,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
         studentPhoto: photo,
         registerNumber: regNo,
         registrationNo: regNo,
+        certificateNo: certNo,
         subjects,
         totalMax,
         totalMarks,
@@ -1130,7 +1166,6 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
 
           {/* Controls */}
           <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-end">
-
             {/* View Live Website Button */}
             <button
               onClick={() => setActivePage('home')}
@@ -1190,7 +1225,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                 {currentAdminRole === 'Super Admin' ? 'Executive Desks' : 'Branch Management'}
               </span>
               <span className="text-[10px] font-bold text-slate-400">
-                {currentAdminRole === 'Super Admin' ? '8 Modules' : '5 Modules'}
+                {currentAdminRole === 'Super Admin' ? '9 Modules' : '6 Modules'}
               </span>
             </div>
 
@@ -1222,6 +1257,19 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                   >
                     <Users className={`w-4 h-4 shrink-0 ${activeTab === 'students' ? 'text-sky-400' : 'text-slate-500'}`} />
                     <span className="truncate">Student Registrations</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleTabSelect('student_details')}
+                    className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-black transition cursor-pointer text-left ${
+                      activeTab === 'student_details'
+                        ? 'bg-[#0c234b] text-white shadow-sm ring-1 ring-amber-400/40'
+                        : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950'
+                    }`}
+                  >
+                    <FileText className={`w-4 h-4 shrink-0 ${activeTab === 'student_details' ? 'text-amber-400' : 'text-slate-500'}`} />
+                    <span className="truncate">Student Details</span>
                   </button>
 
                   <button
@@ -1328,6 +1376,19 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
 
                   <button
                     type="button"
+                    onClick={() => handleTabSelect('branch_student_details')}
+                    className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-black transition cursor-pointer text-left ${
+                      activeTab === 'branch_student_details'
+                        ? 'bg-[#0c234b] text-white shadow-sm ring-1 ring-amber-400/40'
+                        : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950'
+                    }`}
+                  >
+                    <FileText className={`w-4 h-4 shrink-0 ${activeTab === 'branch_student_details' ? 'text-amber-400' : 'text-slate-500'}`} />
+                    <span className="truncate">Student Details</span>
+                  </button>
+
+                  <button
+                    type="button"
                     onClick={() => handleTabSelect('branch_students')}
                     className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-black transition cursor-pointer text-left ${
                       activeTab === 'branch_students'
@@ -1338,6 +1399,25 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                     <Users className={`w-4 h-4 shrink-0 ${activeTab === 'branch_students' ? 'text-sky-400' : 'text-slate-500'}`} />
                     <span className="truncate">Concern Branch Students</span>
                   </button>
+                  {/* Student Marksheet */}
+<button
+  type="button"
+  onClick={() => handleTabSelect('branch_marksheet')}
+  className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-black transition cursor-pointer text-left ${
+    activeTab === 'branch_marksheet'
+      ? 'bg-[#0c234b] text-white shadow-sm ring-1 ring-amber-400/40'
+      : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950'
+  }`}
+>
+  <FileText
+    className={`w-4 h-4 shrink-0 ${
+      activeTab === 'branch_marksheet'
+        ? 'text-amber-400'
+        : 'text-slate-500'
+    }`}
+  />
+  <span className="truncate">Student Marksheet</span>
+</button>
 
                   <button
                     type="button"
@@ -1485,6 +1565,18 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
           />
         )}
 
+        {/* SUPER ADMIN: TAB - STUDENT DETAILS (WEBSITE SUBMISSIONS) */}
+        {currentAdminRole === 'Super Admin' && activeTab === 'student_details' && (
+          <AdminBranchStudentDetailsPage
+            activeBranch="All branches"
+            setViewingAdmissionStudent={setViewingAdmissionStudent}
+            handleOpenMarksheet={handleOpenMarksheet}
+            handleOpenCertForStudent={handleOpenCertForStudent}
+            showToast={showToast}
+            schoolsList={schoolsList}
+          />
+        )}
+
         {/* SUPER ADMIN: TAB 3 - COURSE MANAGEMENT */}
         {currentAdminRole === 'Super Admin' && activeTab === 'courses' && (
           <AdminCoursesPage
@@ -1587,6 +1679,27 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
             handleOpenCertForStudent={handleOpenCertForStudent}
           />
         )}
+
+        {/* BRANCH HEAD: TAB - STUDENT DETAILS (WEBSITE SUBMISSIONS) */}
+        {currentAdminRole === 'Branch Head' && activeTab === 'branch_student_details' && (
+          <AdminBranchStudentDetailsPage
+            activeBranch={activeBranch}
+            setViewingAdmissionStudent={setViewingAdmissionStudent}
+            handleOpenMarksheet={handleOpenMarksheet}
+            handleOpenCertForStudent={handleOpenCertForStudent}
+            showToast={showToast}
+            schoolsList={schoolsList}
+          />
+        )}
+        {/* BRANCH HEAD: STUDENT MARKSHEET */}
+{currentAdminRole === 'Branch Head' &&
+  activeTab === 'branch_marksheet' && (
+    <BranchStudentMarksheetPage
+      activeBranch={activeBranch}
+      branchStudents={branchStudents}
+      onBack={() => handleTabSelect('branch_overview')}
+    />
+)}
 
         {/* BRANCH HEAD: TAB 2 - REGIONAL STUDENTS */}
         {currentAdminRole === 'Branch Head' && activeTab === 'branch_students' && (
