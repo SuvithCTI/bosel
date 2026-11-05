@@ -56,6 +56,8 @@ import AdminBranchCertificatesPage from './admin/AdminBranchCertificatesPage';
 import AdminBranchStudentDetailsPage from './admin/AdminBranchStudentDetailsPage';
 import AdminModals from './admin/AdminModals';
 
+import BranchStudentMarksheetPage from './admin/BranchStudentMarksheetPage';
+
 import StudentAdmissionFormView from '../components/StudentAdmissionFormView';
 import OfficialMarksheetView from '../components/OfficialMarksheetView';
 import MergedStudentPdfModal from '../components/MergedStudentPdfModal';
@@ -1343,6 +1345,25 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                     <Users className={`w-4 h-4 shrink-0 ${activeTab === 'branch_students' ? 'text-sky-400' : 'text-slate-500'}`} />
                     <span className="truncate">Concern Branch Students</span>
                   </button>
+                  {/* Student Marksheet */}
+<button
+  type="button"
+  onClick={() => handleTabSelect('branch_marksheet')}
+  className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-black transition cursor-pointer text-left ${
+    activeTab === 'branch_marksheet'
+      ? 'bg-[#0c234b] text-white shadow-sm ring-1 ring-amber-400/40'
+      : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950'
+  }`}
+>
+  <FileText
+    className={`w-4 h-4 shrink-0 ${
+      activeTab === 'branch_marksheet'
+        ? 'text-amber-400'
+        : 'text-slate-500'
+    }`}
+  />
+  <span className="truncate">Student Marksheet</span>
+</button>
 
                   <button
                     type="button"
@@ -1613,6 +1634,15 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
             schoolsList={schoolsList}
           />
         )}
+        {/* BRANCH HEAD: STUDENT MARKSHEET */}
+{currentAdminRole === 'Branch Head' &&
+  activeTab === 'branch_marksheet' && (
+    <BranchStudentMarksheetPage
+      activeBranch={activeBranch}
+      branchStudents={branchStudents}
+      onBack={() => handleTabSelect('branch_overview')}
+    />
+)}
 
         {/* BRANCH HEAD: TAB 2 - REGIONAL STUDENTS */}
         {currentAdminRole === 'Branch Head' && activeTab === 'branch_students' && (
