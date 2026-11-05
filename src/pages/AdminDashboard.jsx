@@ -52,7 +52,10 @@ import AdminBranchStudentsPage from './admin/AdminBranchStudentsPage';
 import AdminBranchBatchesPage from './admin/AdminBranchBatchesPage';
 import AdminBranchFeesPage from './admin/AdminBranchFeesPage';
 import AdminBranchCertificatesPage from './admin/AdminBranchCertificatesPage';
+import AdminBranchStudentDetailsPage from './admin/AdminBranchStudentDetailsPage';
 import AdminModals from './admin/AdminModals';
+
+import BranchStudentMarksheetPage from './admin/BranchStudentMarksheetPage';
 
 import StudentAdmissionFormView from '../components/StudentAdmissionFormView';
 import OfficialMarksheetView from '../components/OfficialMarksheetView';
@@ -1200,7 +1203,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                 {currentAdminRole === 'Super Admin' ? 'Executive Desks' : 'Branch Management'}
               </span>
               <span className="text-[10px] font-bold text-slate-400">
-                {currentAdminRole === 'Super Admin' ? '8 Modules' : '5 Modules'}
+                {currentAdminRole === 'Super Admin' ? '9 Modules' : '6 Modules'}
               </span>
             </div>
 
@@ -1232,6 +1235,19 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                   >
                     <Users className={`w-4 h-4 shrink-0 ${activeTab === 'students' ? 'text-sky-400' : 'text-slate-500'}`} />
                     <span className="truncate">Student Registrations</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleTabSelect('student_details')}
+                    className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-black transition cursor-pointer text-left ${
+                      activeTab === 'student_details'
+                        ? 'bg-[#0c234b] text-white shadow-sm ring-1 ring-amber-400/40'
+                        : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950'
+                    }`}
+                  >
+                    <FileText className={`w-4 h-4 shrink-0 ${activeTab === 'student_details' ? 'text-amber-400' : 'text-slate-500'}`} />
+                    <span className="truncate">Student Details</span>
                   </button>
 
                   <button
@@ -1338,6 +1354,19 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
 
                   <button
                     type="button"
+                    onClick={() => handleTabSelect('branch_student_details')}
+                    className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-black transition cursor-pointer text-left ${
+                      activeTab === 'branch_student_details'
+                        ? 'bg-[#0c234b] text-white shadow-sm ring-1 ring-amber-400/40'
+                        : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950'
+                    }`}
+                  >
+                    <FileText className={`w-4 h-4 shrink-0 ${activeTab === 'branch_student_details' ? 'text-amber-400' : 'text-slate-500'}`} />
+                    <span className="truncate">Student Details</span>
+                  </button>
+
+                  <button
+                    type="button"
                     onClick={() => handleTabSelect('branch_students')}
                     className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-black transition cursor-pointer text-left ${
                       activeTab === 'branch_students'
@@ -1348,6 +1377,25 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                     <Users className={`w-4 h-4 shrink-0 ${activeTab === 'branch_students' ? 'text-sky-400' : 'text-slate-500'}`} />
                     <span className="truncate">Concern Branch Students</span>
                   </button>
+                  {/* Student Marksheet */}
+<button
+  type="button"
+  onClick={() => handleTabSelect('branch_marksheet')}
+  className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-black transition cursor-pointer text-left ${
+    activeTab === 'branch_marksheet'
+      ? 'bg-[#0c234b] text-white shadow-sm ring-1 ring-amber-400/40'
+      : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950'
+  }`}
+>
+  <FileText
+    className={`w-4 h-4 shrink-0 ${
+      activeTab === 'branch_marksheet'
+        ? 'text-amber-400'
+        : 'text-slate-500'
+    }`}
+  />
+  <span className="truncate">Student Marksheet</span>
+</button>
 
                   <button
                     type="button"
@@ -1492,6 +1540,18 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
           />
         )}
 
+        {/* SUPER ADMIN: TAB - STUDENT DETAILS (WEBSITE SUBMISSIONS) */}
+        {currentAdminRole === 'Super Admin' && activeTab === 'student_details' && (
+          <AdminBranchStudentDetailsPage
+            activeBranch="All branches"
+            setViewingAdmissionStudent={setViewingAdmissionStudent}
+            handleOpenMarksheet={handleOpenMarksheet}
+            handleOpenCertForStudent={handleOpenCertForStudent}
+            showToast={showToast}
+            schoolsList={schoolsList}
+          />
+        )}
+
         {/* SUPER ADMIN: TAB 3 - COURSE MANAGEMENT */}
         {currentAdminRole === 'Super Admin' && activeTab === 'courses' && (
           <AdminCoursesPage
@@ -1594,6 +1654,27 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
             handleOpenCertForStudent={handleOpenCertForStudent}
           />
         )}
+
+        {/* BRANCH HEAD: TAB - STUDENT DETAILS (WEBSITE SUBMISSIONS) */}
+        {currentAdminRole === 'Branch Head' && activeTab === 'branch_student_details' && (
+          <AdminBranchStudentDetailsPage
+            activeBranch={activeBranch}
+            setViewingAdmissionStudent={setViewingAdmissionStudent}
+            handleOpenMarksheet={handleOpenMarksheet}
+            handleOpenCertForStudent={handleOpenCertForStudent}
+            showToast={showToast}
+            schoolsList={schoolsList}
+          />
+        )}
+        {/* BRANCH HEAD: STUDENT MARKSHEET */}
+{currentAdminRole === 'Branch Head' &&
+  activeTab === 'branch_marksheet' && (
+    <BranchStudentMarksheetPage
+      activeBranch={activeBranch}
+      branchStudents={branchStudents}
+      onBack={() => handleTabSelect('branch_overview')}
+    />
+)}
 
         {/* BRANCH HEAD: TAB 2 - REGIONAL STUDENTS */}
         {currentAdminRole === 'Branch Head' && activeTab === 'branch_students' && (
