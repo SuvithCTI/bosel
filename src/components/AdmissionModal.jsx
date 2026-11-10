@@ -804,7 +804,7 @@ export default function AdmissionModal({
       return false;
     }
     if (!formData.parentName.trim()) {
-      alert('Please enter Father / Guardian Name.');
+      alert('Please enter Father or Mother Name.');
       return false;
     }
     if (!formData.dob) {
@@ -1140,7 +1140,7 @@ export default function AdmissionModal({
                   </div>
 
                   <div className="bg-slate-50/70 p-2 rounded-lg border border-slate-100">
-                    <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider block">Father / Guardian</span>
+                    <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider block">Father / Mother</span>
                     <strong className="text-slate-900 font-extrabold block text-xs truncate mt-0.5">{formData.parentName || 'Not provided'}</strong>
                   </div>
 
@@ -1456,7 +1456,7 @@ export default function AdmissionModal({
                   <span>Section 2: Candidate Personal Information</span>
                 </span>
 
-                {/* 4. Student Name & Father / Guardian Name */}
+                {/* 4. Student Name & Father or Mother Name */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
                   <div>
                     <label className="block text-[11px] sm:text-xs font-black text-slate-800 mb-0.5 sm:mb-1">
@@ -1474,12 +1474,12 @@ export default function AdmissionModal({
 
                   <div>
                     <label className="block text-[11px] sm:text-xs font-black text-slate-800 mb-0.5 sm:mb-1">
-                      Father / Guardian Name *
+                      Father or Mother Name *
                     </label>
                     <input
                       type="text"
                       required
-                      placeholder="Father / Guardian full name"
+                      placeholder="Father or Mother full name"
                       value={formData.parentName}
                       onChange={(e) => setFormData({ ...formData, parentName: e.target.value, fatherName: e.target.value })}
                       className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-sky-500 focus:outline-none text-base sm:text-sm shadow-2xs"

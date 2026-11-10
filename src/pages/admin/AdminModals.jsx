@@ -1225,7 +1225,7 @@ export default function AdminModals({
                 </div>
 
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Parent Name</label>
+                  <label className="font-bold text-slate-700 block mb-1">Father or Mother Name</label>
                   <input
                     type="text"
                     value={editingStudent.parentName || ''}
