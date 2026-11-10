@@ -1409,22 +1409,16 @@ export default function AdmissionModal({
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             {/* Course Select */}
                             <div>
-                              <div className="flex items-center justify-between mb-0.5">
-                                <label className="block text-[10px] font-bold text-slate-600">
-                                  Select Course *
-                                </label>
-                                {isCourseLocked && (
-                                  <span className="text-[9.5px] font-black text-sky-800 bg-sky-100 px-1.5 py-0.5 rounded flex items-center gap-1">
-                                    <Lock className="w-2.5 h-2.5 text-sky-700" />
-                                    <span>Program Locked</span>
-                                  </span>
-                                )}
-                              </div>
+                              <label className="block text-[10px] font-bold text-slate-600 mb-0.5">
+                                Select Course *
+                              </label>
                               {isCourseLocked ? (
-                                <div className="w-full px-2.5 py-1.5 bg-slate-100 border border-slate-300 rounded-lg text-slate-900 font-black text-xs flex items-center justify-between min-h-[34px]">
-                                  <span className="truncate">{courseEntry.courseName}</span>
-                                  <Lock className="w-3 h-3 text-slate-400 shrink-0 ml-1.5" />
-                                </div>
+                                <input
+                                  type="text"
+                                  readOnly
+                                  value={courseEntry.courseName}
+                                  className="w-full px-2.5 py-1.5 bg-slate-100 border border-slate-300 rounded-lg text-slate-900 font-bold text-xs cursor-default select-none focus:outline-none"
+                                />
                               ) : (
                                 <select
                                   value={courseEntry.courseName}
