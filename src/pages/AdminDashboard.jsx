@@ -2334,9 +2334,43 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
 
   return (
 
-    <div className="min-h-screen bg-slate-100 font-sans text-slate-900 pb-12">
+    <div className="admin-mobile min-h-screen bg-slate-100 font-sans text-slate-900 pb-12">
 
       
+
+      <style>{`
+        @media (max-width: 640px) {
+          .admin-mobile { font-size: 11px; }
+          .admin-mobile main { padding: 10px !important; gap: 12px !important; }
+          .admin-mobile h1 { font-size: 16px !important; line-height: 1.3 !important; }
+          .admin-mobile h2 { font-size: 14px !important; line-height: 1.35 !important; }
+          .admin-mobile h3 { font-size: 12px !important; line-height: 1.4 !important; }
+          .admin-mobile p, .admin-mobile label { font-size: 10px; line-height: 1.4; }
+          .admin-mobile button { font-size: 10px; }
+          .admin-mobile main button { padding: 7px 9px; border-radius: 8px; }
+          .admin-mobile input, .admin-mobile select, .admin-mobile textarea {
+            min-height: 34px; padding: 7px 9px !important; font-size: 11px !important;
+          }
+          .admin-mobile aside button { padding: 9px 10px !important; font-size: 11px !important; }
+          .admin-mobile .rounded-2xl { border-radius: 12px; }
+          .admin-mobile .rounded-xl { border-radius: 9px; }
+          .admin-mobile th { padding: 9px 8px !important; font-size: 9px !important; white-space: nowrap; }
+          .admin-mobile td { padding: 9px 8px !important; font-size: 10px !important; }
+          .admin-mobile :has(> table) { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+          .admin-mobile table { min-width: 720px; }
+          .admin-mobile header { min-height: 48px; }
+          .admin-mobile header > div { padding: 7px 10px !important; gap: 7px !important; }
+          .admin-mobile header button { font-size: 10px !important; padding: 6px 8px !important; }
+          .admin-mobile header svg { width: 14px; height: 14px; }
+          .admin-mobile .space-y-5 > :not([hidden]) ~ :not([hidden]) { margin-top: 12px; }
+        }
+        @media (max-width: 380px) {
+          .admin-mobile main { padding: 7px !important; }
+          .admin-mobile h1 { font-size: 14px !important; }
+          .admin-mobile h2 { font-size: 12px !important; }
+          .admin-mobile main button { font-size: 9px; padding: 6px 7px; }
+        }
+      `}</style>
 
       {/* Toast Notification */}
 
@@ -2360,15 +2394,12 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
 
           ========================================================================= */}
 
-      <header 
-
+      <header
         ref={headerRef}
-
-        className="bg-gradient-to-r from-[#081d3d] via-[#0c234b] to-[#123068] text-white border-b-4 border-amber-400 sticky top-0 z-40 shadow-lg shrink-0"
-
+        className="fixed top-0 left-0 right-0 z-[60] w-full bg-gradient-to-r from-[#081d3d] via-[#0c234b] to-[#123068] text-white border-b-4 border-amber-400 shadow-lg"
       >
 
-        <div className="w-full px-3 sm:px-5 lg:px-6 py-2.5 sm:py-3 flex flex-wrap md:flex-nowrap items-center justify-between gap-3">
+        <div className="w-full px-2.5 sm:px-5 lg:px-6 py-2 sm:py-3 flex flex-wrap md:flex-nowrap items-center justify-between gap-2 sm:gap-3">
 
           
 
@@ -2456,7 +2487,10 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
 
       {/* Main Full-Bleed Two-Column Layout: Left Fixed Sidebar & Right Workspace */}
 
-      <div className="flex-1 flex w-full relative min-h-[calc(100vh-68px)]">
+      <div
+        style={{ paddingTop: `${headerHeight}px` }}
+        className="flex-1 flex w-full relative min-h-screen"
+      >
 
 
 
@@ -2494,7 +2528,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
 
           className={`
 
-            fixed lg:sticky left-0 z-40 lg:z-30
+            fixed left-0 z-40
 
             w-72 xl:w-80 shrink-0 
 
@@ -3020,7 +3054,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
 
             ========================================================================= */}
 
-        <main className="flex-1 min-w-0 w-full p-4 sm:p-6 lg:p-8 space-y-5 bg-slate-100">
+        <main className="flex-1 min-w-0 w-full lg:ml-72 xl:ml-80 p-4 sm:p-6 lg:p-8 space-y-5 bg-slate-100">
 
 
 

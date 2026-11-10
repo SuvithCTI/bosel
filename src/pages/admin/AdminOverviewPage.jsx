@@ -28,7 +28,7 @@ export default function AdminOverviewPage({
   return (
           <div className="space-y-5 animate-in fade-in duration-200">
             {/* KPI Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
               
               <div className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
                 <div>
@@ -100,7 +100,7 @@ export default function AdminOverviewPage({
             {/* Quick Action Bar for Super Admin */}
             <div className="bg-gradient-to-r from-[#0c234b] to-[#163e7c] text-white p-4 rounded-2xl flex flex-wrap items-center justify-between gap-3 shadow-sm">
               <div className="flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-amber-400" />
+              
                 <span className="text-sm font-black">Executive Master Launchpad:</span>
               </div>
               <div className="flex items-center gap-2 flex-wrap">
