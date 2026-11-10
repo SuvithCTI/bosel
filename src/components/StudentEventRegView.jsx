@@ -14,7 +14,7 @@ export default function StudentEventRegView({ student, onClose }) {
   const cleanId = String(student.userId || '').replace(/\D/g, '').slice(-4) || '1042';
 
   // Find or generate event registration data
-  const defaultEvent = (student.events && student.events.length > 0)
+  const selectedEvent = (student.events && student.events.length > 0)
     ? student.events[0]
     : {
         name: `${student.program || 'Skill Development'} State Championship 2026`,
@@ -24,7 +24,6 @@ export default function StudentEventRegView({ student, onClose }) {
         venue: `${student.branch || 'B★SEL Erode Center'} Examination Hall`
       };
 
-  const [selectedEvent] = useState(defaultEvent);
 
   const eventRollNo = selectedEvent.rollNo || `EVT-${cleanId}-${regNo.replace(/\D/g, '') || '01'}`;
   const eventDate = selectedEvent.date || '15 Nov 2026';
