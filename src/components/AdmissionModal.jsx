@@ -316,6 +316,8 @@ export default function AdmissionModal({
         ]
       }));
       setIsCourseLocked(true);
+    } else {
+      setIsCourseLocked(false);
     }
     if (initialBranch) {
       setFormData(prev => ({
@@ -713,6 +715,7 @@ export default function AdmissionModal({
 
   // Multi-Course and Level Handlers
   const handleAddCourse = () => {
+    if (isCourseLocked) return;
     const existingNames = (formData.selectedCourses || []).map(c => c.courseName);
     const nextProg = availablePrograms.find(p => !existingNames.includes(p)) || availablePrograms[0] || 'Abacus Speed Arithmetic';
     const nextLevels = getLevelsForCourse(nextProg, coursesList);
@@ -739,6 +742,7 @@ export default function AdmissionModal({
   };
 
   const handleRemoveCourse = (indexToRemove) => {
+    if (isCourseLocked) return;
     if ((formData.selectedCourses || []).length <= 1) return;
     const updatedCourses = formData.selectedCourses.filter((_, idx) => idx !== indexToRemove);
     const totalFee = updatedCourses.reduce((sum, c) => sum + (c.fee || 450), 0);
@@ -754,6 +758,7 @@ export default function AdmissionModal({
   };
 
   const handleCourseChangeAt = (index, newProg) => {
+    if (isCourseLocked) return;
     const newLevels = getLevelsForCourse(newProg, coursesList);
     const newFee = parseCourseFee(newProg, coursesList);
 
@@ -1354,14 +1359,16 @@ export default function AdmissionModal({
                       </span>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={handleAddCourse}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 bg-sky-600 hover:bg-sky-700 active:scale-95 text-white text-[10px] sm:text-[11px] font-black rounded-lg transition shadow-xs cursor-pointer"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      <span>Add Course</span>
-                    </button>
+                    {!isCourseLocked && (
+                      <button
+                        type="button"
+                        onClick={handleAddCourse}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 bg-sky-600 hover:bg-sky-700 active:scale-95 text-white text-[10px] sm:text-[11px] font-black rounded-lg transition shadow-xs cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Add Course</span>
+                      </button>
+                    )}
                   </div>
 
                   {/* Course Cards List */}
@@ -1386,7 +1393,7 @@ export default function AdmissionModal({
                                 Fee: ₹{courseEntry.fee || 450}
                               </span>
 
-                              {(formData.selectedCourses || []).length > 1 && (
+                              {!isCourseLocked && (formData.selectedCourses || []).length > 1 && (
                                 <button
                                   type="button"
                                   onClick={() => handleRemoveCourse(idx)}
@@ -1402,18 +1409,33 @@ export default function AdmissionModal({
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             {/* Course Select */}
                             <div>
-                              <label className="block text-[10px] font-bold text-slate-600 mb-0.5">
-                                Select Course *
-                              </label>
-                              <select
-                                value={courseEntry.courseName}
-                                onChange={(e) => handleCourseChangeAt(idx, e.target.value)}
-                                className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-slate-950 font-bold text-xs focus:ring-2 focus:ring-sky-500 focus:outline-none"
-                              >
-                                {availablePrograms.map((prog, i) => (
-                                  <option key={i} value={prog}>{prog}</option>
-                                ))}
-                              </select>
+                              <div className="flex items-center justify-between mb-0.5">
+                                <label className="block text-[10px] font-bold text-slate-600">
+                                  Select Course *
+                                </label>
+                                {isCourseLocked && (
+                                  <span className="text-[9.5px] font-black text-sky-800 bg-sky-100 px-1.5 py-0.5 rounded flex items-center gap-1">
+                                    <Lock className="w-2.5 h-2.5 text-sky-700" />
+                                    <span>Program Locked</span>
+                                  </span>
+                                )}
+                              </div>
+                              {isCourseLocked ? (
+                                <div className="w-full px-2.5 py-1.5 bg-slate-100 border border-slate-300 rounded-lg text-slate-900 font-black text-xs flex items-center justify-between min-h-[34px]">
+                                  <span className="truncate">{courseEntry.courseName}</span>
+                                  <Lock className="w-3 h-3 text-slate-400 shrink-0 ml-1.5" />
+                                </div>
+                              ) : (
+                                <select
+                                  value={courseEntry.courseName}
+                                  onChange={(e) => handleCourseChangeAt(idx, e.target.value)}
+                                  className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-slate-950 font-bold text-xs focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                                >
+                                  {availablePrograms.map((prog, i) => (
+                                    <option key={i} value={prog}>{prog}</option>
+                                  ))}
+                                </select>
+                              )}
                             </div>
 
                             {/* Level Select */}
