@@ -570,33 +570,54 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
           const data = await res.json();
           if (data && Array.isArray(data.students)) {
             const currentUsers = getRegisteredUsers();
-            const remoteMapped = data.students.map(s => ({
-              userId: s.user_id,
-              studentName: s.student_name,
-              name: s.student_name,
-              parentName: s.parent_name || '',
-              email: s.email || '',
-              phone: s.phone || '',
-              grade: s.grade || '',
-              program: s.program || s.course_name || '',
-              courseName: s.course_name || '',
-              branch: s.branch || '',
-              institution: s.institution || s.branch || '',
-              address: s.address || '',
-              studentPhoto: s.photo_url || null,
-              photoUrl: s.photo_url || null,
-              registerNumber: s.register_number,
-              registrationNo: s.register_number,
-              role: 'Student',
-              enrolmentDate: s.enrolment_date || '',
-              dob: s.dob || '',
-              age: s.age || '',
-              gender: s.gender || 'Male',
-              district: s.district || '',
-              city: s.city || '',
-              pincode: s.pincode || '',
-              aadharNumber: s.aadhar_number || ''
-            }));
+            const remoteMapped = data.students.map(s => {
+              const existing = currentUsers.find(u => (u.userId || '').toLowerCase() === (s.user_id || '').toLowerCase());
+              const regParent = s.parent_name || existing?.parentName || existing?.fatherName || '';
+              const photo = s.photo_url || existing?.studentPhoto || existing?.photoUrl || null;
+              const regNo = s.register_number || existing?.registerNumber || existing?.registrationNo || '';
+              return {
+                ...(existing || {}),
+                userId: s.user_id,
+                studentName: s.student_name || existing?.studentName || '',
+                name: s.student_name || existing?.name || '',
+                parentName: regParent,
+                fatherName: regParent,
+                email: s.email || existing?.email || '',
+                phone: s.phone || existing?.phone || '',
+                alternatePhone: s.alternate_phone || existing?.alternatePhone || '',
+                grade: s.grade || existing?.grade || '',
+                program: s.program || s.course_name || existing?.program || '',
+                courseName: s.course_name || existing?.courseName || '',
+                selectedCourses: (s.selected_courses && s.selected_courses.length > 0) ? s.selected_courses : (existing?.selectedCourses || []),
+                branch: s.branch || existing?.branch || '',
+                institution: s.institution || s.branch || existing?.institution || '',
+                address: s.address || existing?.address || '',
+                village: s.village || existing?.village || '',
+                city: s.city || existing?.city || '',
+                district: s.district || existing?.district || '',
+                pincode: s.pincode || existing?.pincode || '',
+                studentPhoto: photo,
+                photoUrl: photo,
+                registerNumber: regNo,
+                registrationNo: regNo,
+                role: 'Student',
+                enrolmentDate: s.enrolment_date || existing?.enrolmentDate || '',
+                dob: s.dob || existing?.dob || '',
+                age: s.age || existing?.age || '',
+                gender: s.gender || existing?.gender || 'Male',
+                studentClass: s.student_class || existing?.studentClass || '',
+                studentStage: s.student_stage || existing?.studentStage || '',
+                aadharNumber: s.aadhar_number || existing?.aadharNumber || existing?.aadhaar || '',
+                aadhaarNumber: s.aadhar_number || existing?.aadhaarNumber || existing?.aadharNumber || '',
+                aadhaar: s.aadhar_number || existing?.aadhaar || '',
+                feePaymentType: s.fee_payment_type || existing?.feePaymentType || 'Pay Now',
+                feeAmount: s.fee_amount || existing?.feeAmount || '₹450',
+                paymentMode: s.payment_mode || existing?.paymentMode || 'UPI / QR Code',
+                receiptRefNo: s.receipt_ref_no || existing?.receiptRefNo || '',
+                paymentScreenshot: s.payment_screenshot || existing?.paymentScreenshot || null,
+                status: s.status || existing?.status || 'Confirmed'
+              };
+            });
 
             const remoteMap = new Map(remoteMapped.map(s => [s.userId.toLowerCase(), s]));
             const merged = currentUsers.map(u => {
@@ -2108,7 +2129,9 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
 
         u.phone?.toLowerCase().includes(studentSearch.toLowerCase()) ||
 
-        u.parentName?.toLowerCase().includes(studentSearch.toLowerCase());
+        u.parentName?.toLowerCase().includes(studentSearch.toLowerCase()) ||
+        u.fatherName?.toLowerCase().includes(studentSearch.toLowerCase()) ||
+        u.studentClass?.toLowerCase().includes(studentSearch.toLowerCase());
 
       
 

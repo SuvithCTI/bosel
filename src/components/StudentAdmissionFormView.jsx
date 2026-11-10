@@ -206,7 +206,7 @@ export default function StudentAdmissionFormView({ student, onClose }) {
                 STUDENT AADHAAR NUMBER
               </span>
               <span className="font-bold text-slate-800 font-mono">
-                {student.aadhaar || student.aadhaarNumber || 'XXXX XXXX 2323'}
+                {student.aadharNumber || student.aadhaarNumber || student.aadhaar || student.aadhar_number || 'Not provided'}
               </span>
             </div>
 
@@ -225,8 +225,12 @@ export default function StudentAdmissionFormView({ student, onClose }) {
             <div className="w-28 h-36 border-2 border-slate-300 p-0.5 bg-slate-50 rounded-xs shadow-xs overflow-hidden flex items-center justify-center">
               <img
                 src={studentPhoto}
-                alt={student.studentName || 'Student Photo'}
+                alt=""
                 className="w-full h-full object-cover object-top"
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.style.display = 'none';
+                }}
               />
             </div>
           </div>
@@ -280,7 +284,7 @@ export default function StudentAdmissionFormView({ student, onClose }) {
                 CLASS / GRADE
               </span>
               <span className="font-bold text-slate-800">
-                {student.grade || student.classGrade || 'Not provided'}
+                {student.studentClass || student.grade || student.classGrade || 'Not provided'}
               </span>
             </div>
 
@@ -318,7 +322,7 @@ export default function StudentAdmissionFormView({ student, onClose }) {
                 ALTERNATE NUMBER
               </span>
               <span className="font-bold text-slate-900 font-mono">
-                {student.alternatePhone || student.phone || '9898989898'}
+                {student.alternatePhone || student.phone || 'Not provided'}
               </span>
             </div>
 
@@ -363,7 +367,7 @@ export default function StudentAdmissionFormView({ student, onClose }) {
                 VILLAGE / CITY
               </span>
               <span className="font-bold text-slate-800">
-                {student.village || student.city || 'keelasurandai, surandai'}
+                {student.village ? (student.city ? `${student.village}, ${student.city}` : student.village) : (student.city || 'Not provided')}
               </span>
             </div>
 
@@ -372,7 +376,7 @@ export default function StudentAdmissionFormView({ student, onClose }) {
                 DISTRICT / PIN
               </span>
               <span className="font-bold text-slate-800">
-                {student.district || 'Tenkasi'} / {student.pincode || student.pin || '627859'}
+                {student.district || 'Not provided'} / {student.pincode || student.pin || 'Not provided'}
               </span>
             </div>
           </div>

@@ -1273,6 +1273,94 @@ export default function AdminModals({
                     className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none font-bold"
                   />
                 </div>
+
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">Student Class / Stage</label>
+                  <input
+                    type="text"
+                    value={editingStudent.studentClass || ''}
+                    onChange={(e) => setEditingStudent(prev => ({ ...prev, studentClass: e.target.value }))}
+                    placeholder="e.g. Class 1 / Sub-Junior"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">Alternate Phone</label>
+                  <input
+                    type="text"
+                    value={editingStudent.alternatePhone || ''}
+                    onChange={(e) => setEditingStudent(prev => ({ ...prev, alternatePhone: e.target.value }))}
+                    placeholder="e.g. 98400 12345"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">Aadhaar Number</label>
+                  <input
+                    type="text"
+                    value={editingStudent.aadharNumber || editingStudent.aadhaarNumber || editingStudent.aadhaar || ''}
+                    onChange={(e) => setEditingStudent(prev => ({ ...prev, aadharNumber: e.target.value, aadhaarNumber: e.target.value, aadhaar: e.target.value }))}
+                    placeholder="12 digit Aadhaar"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">Fee Amount & Status</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={editingStudent.feeAmount || '₹450'}
+                      onChange={(e) => setEditingStudent(prev => ({ ...prev, feeAmount: e.target.value }))}
+                      className="w-1/2 px-3 py-2 border border-slate-300 rounded-xl outline-none font-bold"
+                    />
+                    <select
+                      value={editingStudent.feePaymentType || 'Paid'}
+                      onChange={(e) => setEditingStudent(prev => ({ ...prev, feePaymentType: e.target.value }))}
+                      className="w-1/2 px-3 py-2 border border-slate-300 rounded-xl outline-none font-bold"
+                    >
+                      <option value="Paid">Paid</option>
+                      <option value="Pay Now">Pay Now</option>
+                      <option value="Pending">Pending</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="font-bold text-slate-700 block mb-1">Permanent Address (Village, City, District, PIN)</label>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    <input
+                      type="text"
+                      placeholder="Village"
+                      value={editingStudent.village || ''}
+                      onChange={(e) => setEditingStudent(prev => ({ ...prev, village: e.target.value }))}
+                      className="px-2.5 py-1.5 border border-slate-300 rounded-lg outline-none text-xs"
+                    />
+                    <input
+                      type="text"
+                      placeholder="City"
+                      value={editingStudent.city || ''}
+                      onChange={(e) => setEditingStudent(prev => ({ ...prev, city: e.target.value }))}
+                      className="px-2.5 py-1.5 border border-slate-300 rounded-lg outline-none text-xs"
+                    />
+                    <input
+                      type="text"
+                      placeholder="District"
+                      value={editingStudent.district || ''}
+                      onChange={(e) => setEditingStudent(prev => ({ ...prev, district: e.target.value }))}
+                      className="px-2.5 py-1.5 border border-slate-300 rounded-lg outline-none text-xs"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Pincode"
+                      value={editingStudent.pincode || ''}
+                      onChange={(e) => setEditingStudent(prev => ({ ...prev, pincode: e.target.value }))}
+                      className="px-2.5 py-1.5 border border-slate-300 rounded-lg outline-none text-xs font-mono"
+                    />
+                  </div>
+                </div>
               </div>
 
               <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
