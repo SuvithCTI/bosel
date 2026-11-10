@@ -51,22 +51,41 @@ export const api = {
     return await apiRequest('/health');
   },
 
-  // S3 / Local File Upload
-  async uploadFile(file, folder = 'general') {
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('folder', folder);
-
-    try {
-      const res = await fetch(`${API_BASE}/upload`, {
-        method: 'POST',
-        body: formData
-      });
-      if (res.ok) {
-        return await res.json();
+  // S3 / Local File Upload (supports File, Blob, and base64 Data URLs)
+  async uploadFile(fileOrDataUrl, folder = 'general') {
+    let file = fileOrDataUrl;
+    if (typeof fileOrDataUrl === 'string' && fileOrDataUrl.startsWith('data:')) {
+      try {
+        const fetchRes = await fetch(fileOrDataUrl);
+        const blob = await fetchRes.blob();
+        const ext = fileOrDataUrl.includes('image/png') ? 'png' : 'jpg';
+        file = new File([blob], `upload_${Date.now()}.${ext}`, { type: blob.type || 'image/jpeg' });
+      } catch {
+        return { success: true, url: fileOrDataUrl, storage: 'local-base64' };
       }
-    } catch {
-      // Local Base64 fallback if server unavailable
+    }
+
+    if (file instanceof Blob || file instanceof File) {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('folder', folder);
+
+      try {
+        const res = await fetch(`${API_BASE}/upload`, {
+          method: 'POST',
+          body: formData
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.url) return data;
+        }
+      } catch (err) {
+        console.debug('[Upload fallback]:', err.message);
+      }
+    }
+
+    if (typeof fileOrDataUrl === 'string') {
+      return { success: true, url: fileOrDataUrl, storage: 'local-base64' };
     }
 
     return new Promise((resolve) => {
@@ -100,6 +119,17 @@ export const api = {
         return data.student;
       }
       return addUserAccount(studentData);
+    },
+
+    async update(id, studentData) {
+      const data = await apiRequest(`/students/${encodeURIComponent(id)}`, {
+        method: 'PUT',
+        body: JSON.stringify(studentData)
+      });
+      if (data && data.success && data.student) {
+        return data.student;
+      }
+      return studentData;
     },
 
     async delete(id) {

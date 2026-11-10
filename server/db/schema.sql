@@ -188,3 +188,5 @@ CREATE INDEX IF NOT EXISTS idx_students_user_id ON students(user_id);
 CREATE INDEX IF NOT EXISTS idx_students_branch ON students(branch);
 CREATE INDEX IF NOT EXISTS idx_payments_receipt_no ON payments(receipt_no);
 CREATE INDEX IF NOT EXISTS idx_payments_student_id ON payments(student_id);
+
+

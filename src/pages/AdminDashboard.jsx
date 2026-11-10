@@ -562,6 +562,62 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
 
     window.addEventListener('bsel_batches_updated', handleBatchesUpdate);
 
+    // Initial fetch from Neon PostgreSQL to ensure all online registrations & profile updates appear
+    (async () => {
+      try {
+        const res = await fetch('/api/students');
+        if (res.ok) {
+          const data = await res.json();
+          if (data && Array.isArray(data.students)) {
+            const currentUsers = getRegisteredUsers();
+            const remoteMapped = data.students.map(s => ({
+              userId: s.user_id,
+              studentName: s.student_name,
+              name: s.student_name,
+              parentName: s.parent_name || '',
+              email: s.email || '',
+              phone: s.phone || '',
+              grade: s.grade || '',
+              program: s.program || s.course_name || '',
+              courseName: s.course_name || '',
+              branch: s.branch || '',
+              institution: s.institution || s.branch || '',
+              address: s.address || '',
+              studentPhoto: s.photo_url || null,
+              photoUrl: s.photo_url || null,
+              registerNumber: s.register_number,
+              registrationNo: s.register_number,
+              role: 'Student',
+              enrolmentDate: s.enrolment_date || '',
+              dob: s.dob || '',
+              age: s.age || '',
+              gender: s.gender || 'Male',
+              district: s.district || '',
+              city: s.city || '',
+              pincode: s.pincode || '',
+              aadharNumber: s.aadhar_number || ''
+            }));
+
+            const remoteMap = new Map(remoteMapped.map(s => [s.userId.toLowerCase(), s]));
+            const merged = currentUsers.map(u => {
+              const remote = remoteMap.get((u.userId || '').toLowerCase());
+              return remote ? { ...u, ...remote } : u;
+            });
+            remoteMapped.forEach(s => {
+              if (!merged.some(u => (u.userId || '').toLowerCase() === s.userId.toLowerCase())) {
+                merged.unshift(s);
+              }
+            });
+
+            localStorage.setItem('bsel_registered_users', JSON.stringify(merged));
+            setUsersList(merged);
+          }
+        }
+      } catch (err) {
+        console.debug('[Admin Neon sync error]:', err);
+      }
+    })();
+
 
 
     return () => {

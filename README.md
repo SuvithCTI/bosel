@@ -1,16 +1,152 @@
-# React + Vite
+# B★SEL Academy Portal
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+A modern, full-stack educational academy management platform built for **B★SEL Academy**. Features student enrolment, automated marksheet and certificate generation, branch administration, real-time profile editing, cloud photo storage via **Amazon S3**, and relational data persistence using **Neon Serverless PostgreSQL**.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 🌟 Key Features
 
-## React Compiler
+- **Student Portal & Interactive Profiles**:
+  - Direct student login via User ID or registered 10-digit mobile number.
+  - Live profile editing with instant background sync to Neon PostgreSQL.
+  - In-browser AI photo segmentation, webcam snapshot capture, and auto-upload to Amazon S3.
+  - View course enrolment, exam schedules, seat allotments, and results.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Administrative Control (Super Admin & Branch Directors)**:
+  - Role-based dashboards for Headquarters and Regional Branches (Tenkasi, Chennai, Coimbatore, etc.).
+  - Complete student lifecycle management: registration, course assignment, updates, and record removal.
+  - Course curriculum management, batch allocation, and event scheduling.
+  - Franchise enquiry management and financial receipt tracking.
 
-## Expanding the Oxlint configuration
+- **Automated Marksheets & Certificates**:
+  - High-resolution, printable student marksheet and certificate rendering with QR verification codes.
+  - Accurate signature placement, tabular score calculations, and downloadable PDF export.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+- **Cloud Infrastructure**:
+  - **Neon PostgreSQL**: Serverless relational database for persistent storage across 9 core tables (`users`, `students`, `courses`, `events`, `franchise_leads`, `payments`, `schools`, `batches`, `certificates`).
+  - **Amazon S3**: High-performance object storage for student avatars, receipts, and project assets.
+
+---
+
+## 🛠️ Tech Stack
+
+- **Frontend**:
+  - React 19, Vite, React Router v7
+  - Tailwind CSS, Lucide React, Framer Motion
+  - MediaPipe Selfie Segmentation, HTML2Canvas, JSPDF
+- **Backend**:
+  - Node.js, Express.js
+  - Neon Serverless PostgreSQL (`pg`)
+  - AWS SDK for JavaScript v3 (`@aws-sdk/client-s3`)
+  - Multer for file uploads and stream handling
+
+---
+
+## 🚀 Quick Start Guide
+
+### 1. Prerequisites
+- **Node.js**: v18.0.0 or higher
+- **npm**: v9.0.0 or higher
+
+### 2. Installation
+Clone the repository and install dependencies for both the frontend and backend:
+
+```bash
+# Clone the repository
+git clone https://github.com/your-username/besel.git
+cd besel
+
+# Install frontend dependencies
+npm install
+
+# Install backend dependencies
+cd server
+npm install
+cd ..
+```
+
+### 3. Environment Configuration
+Create a `.env` file in the root directory or inside `server/` based on `.env.example`:
+
+```bash
+cp .env.example .env
+```
+
+Configure your environment variables:
+
+```ini
+PORT=5000
+NODE_ENV=development
+
+# 1. Neon PostgreSQL Database Connection String
+DATABASE_URL=postgresql://[user]:[password]@[endpoint-id].neon.tech/[dbname]?sslmode=require
+
+# 2. Amazon S3 Credentials
+AWS_ACCESS_KEY_ID=your_aws_access_key_id
+AWS_SECRET_ACCESS_KEY=your_aws_secret_access_key
+AWS_REGION=ap-southeast-2
+AWS_BUCKET_NAME=your_s3_bucket_name
+```
+
+> **Security Note**: Never commit actual `.env` files with secret keys to git. The `.gitignore` is pre-configured to keep your credentials safe.
+
+### 4. Running the Application
+
+In development mode:
+
+```bash
+# Terminal 1: Run the backend API server (runs on http://localhost:5000)
+npm run server:dev
+
+# Terminal 2: Run the Vite frontend (runs on http://localhost:5173)
+npm run dev
+```
+
+### 5. Production Build
+To create an optimized production build of the frontend:
+
+```bash
+npm run build
+npm run preview
+```
+
+---
+
+## 📂 Project Structure
+
+```
+├── all-images/              # Consolidated project images and templates
+├── public/                  # Public static assets
+├── server/
+│   ├── config/              # Neon DB and AWS S3 client configurations
+│   ├── db/
+│   │   ├── init.js          # Database schema migration & initialization
+│   │   └── schema.sql       # PostgreSQL database table schemas
+│   ├── routes/              # Express API endpoints (auth, students, courses, upload, etc.)
+│   ├── index.js             # Express server entry point
+│   └── .env.example         # Backend environment template
+├── src/
+│   ├── components/          # Reusable UI components & modals (student, admin, certificates)
+│   ├── pages/               # Main page views (Home, Login, AdminDashboard, Registration)
+│   ├── services/            # Frontend API client and HTTP services
+│   ├── utils/               # Auth storage, session management, and helper functions
+│   ├── App.jsx              # Application router
+│   └── main.jsx             # React DOM entry point
+├── .env.example             # Root environment template
+├── .gitignore               # Strict gitignore protecting secrets and artifacts
+├── package.json             # Frontend dependencies & npm scripts
+└── README.md                # Project documentation
+```
+
+---
+
+## 🔒 Security Best Practices
+
+- All database queries utilize parameterized SQL statements to eliminate SQL injection vulnerabilities.
+- Database credentials and AWS keys are managed exclusively via environment variables and excluded from source control.
+- Image uploads to S3 are validated for MIME type, sanitised, and assigned unique cryptographically safe identifiers.
+
+---
+
+## 📄 License
+Private and Confidential. All rights reserved by **B★SEL Academy**.

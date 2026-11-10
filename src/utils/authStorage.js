@@ -464,6 +464,48 @@ export const registerStudentAccount = (formData) => {
     console.error('Error saving user to localStorage:', err);
   }
 
+  // Asynchronous background sync to Neon PostgreSQL and Amazon S3
+  if (typeof window !== 'undefined') {
+    (async () => {
+      try {
+        let s3PhotoUrl = newUser.studentPhoto;
+        // If photo is base64, attempt upload to Amazon S3
+        if (s3PhotoUrl && typeof s3PhotoUrl === 'string' && s3PhotoUrl.startsWith('data:')) {
+          try {
+            const fetchRes = await fetch(s3PhotoUrl);
+            const blob = await fetchRes.blob();
+            const fd = new FormData();
+            fd.append('file', blob, `student_${newUser.userId}.jpg`);
+            fd.append('folder', 'students');
+            const upRes = await fetch('/api/upload', { method: 'POST', body: fd });
+            if (upRes.ok) {
+              const upData = await upRes.json();
+              if (upData && upData.url) {
+                s3PhotoUrl = upData.url;
+                newUser.studentPhoto = upData.url;
+              }
+            }
+          } catch (upErr) {
+            console.debug('[S3 Photo Sync]:', upErr.message);
+          }
+        }
+
+        // Send student record to Neon PostgreSQL
+        await fetch('/api/students', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...newUser,
+            photoUrl: s3PhotoUrl,
+            studentPhoto: s3PhotoUrl
+          })
+        });
+      } catch (syncErr) {
+        console.debug('[Neon Sync offline/fallback]:', syncErr.message);
+      }
+    })();
+  }
+
   return newUser;
 };
 
@@ -629,6 +671,20 @@ export const deleteUserAccount = (userId) => {
   } catch (err) {
     console.error('Error deleting user:', err);
   }
+
+  // Neon PostgreSQL sync
+  if (typeof window !== 'undefined') {
+    (async () => {
+      try {
+        await fetch('/api/students/' + encodeURIComponent(cleanId), {
+          method: 'DELETE'
+        });
+      } catch (err) {
+        console.debug('[Neon delete sync error]:', err.message);
+      }
+    })();
+  }
+
   return filtered;
 };
 
@@ -690,6 +746,22 @@ export const updateUserProfile = (userId, updatedFields) => {
   } catch (err) {
     console.error('Error updating user profile:', err);
   }
+
+  // Neon PostgreSQL sync
+  if (typeof window !== 'undefined') {
+    (async () => {
+      try {
+        await fetch('/api/students/' + encodeURIComponent(cleanId), {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(users[index])
+        });
+      } catch (err) {
+        console.debug('[Neon update user sync error]:', err.message);
+      }
+    })();
+  }
+
   return users[index];
 };
 

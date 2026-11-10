@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 
 import CertificateModal from '../components/CertificateModal';
+import api from '../services/api';
 import StudentDashboard from '../components/student/StudentDashboard';
 
 import {
@@ -158,7 +159,7 @@ export default function LoginPage({
   // -------------------------------------------------------
   // Login
   // -------------------------------------------------------
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     setErrorMessage('');
 
@@ -172,11 +173,53 @@ export default function LoginPage({
       return;
     }
 
-    const result = validateLogin(userId.trim(), password);
+    let authUser = null;
+    const localResult = validateLogin(userId.trim(), password);
+    if (localResult.success) {
+      authUser = localResult.user;
+    }
 
-    if (!result.success) {
+    // Check Neon PostgreSQL for fresh credentials & cloud profile data
+    try {
+      const remoteRes = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: userId.trim(), password: password.trim() })
+      });
+      if (remoteRes.ok) {
+        const remoteData = await remoteRes.json();
+        if (remoteData && remoteData.user) {
+          const u = remoteData.user;
+          authUser = {
+            ...(authUser || {}),
+            ...u,
+            userId: u.user_id || u.userId || authUser?.userId || userId.trim(),
+            studentName: u.student_name || u.name || authUser?.studentName,
+            name: u.student_name || u.name || authUser?.name,
+            parentName: u.parent_name || authUser?.parentName,
+            phone: u.phone || authUser?.phone,
+            email: u.email || authUser?.email,
+            address: u.address || authUser?.address,
+            grade: u.grade || authUser?.grade,
+            program: u.program || u.course_name || authUser?.program,
+            courseName: u.course_name || u.program || authUser?.courseName,
+            branch: u.branch || authUser?.branch,
+            institution: u.institution || authUser?.institution,
+            studentPhoto: u.photo_url || u.student_photo || authUser?.studentPhoto,
+            photoUrl: u.photo_url || u.student_photo || authUser?.photoUrl,
+            registerNumber: u.register_number || authUser?.registerNumber,
+            registrationNo: u.registration_no || authUser?.registrationNo,
+            role: u.role || authUser?.role || 'Student'
+          };
+        }
+      }
+    } catch (netErr) {
+      console.debug('[Neon Auth offline fallback]:', netErr.message);
+    }
+
+    if (!authUser) {
       setErrorMessage(
-        result.message || 'Invalid User ID or password.'
+        localResult.message || 'Invalid User ID or password.'
       );
       return;
     }
@@ -192,14 +235,14 @@ export default function LoginPage({
     }
 
     // Keep the existing Super Admin navigation.
-    if (result.user.role === 'Super Admin' || result.user.role === 'Branch Head') {
-      setActiveSession(result.user);
+    if (authUser.role === 'Super Admin' || authUser.role === 'Branch Head') {
+      setActiveSession(authUser);
       setActivePage('admin');
       return;
     }
 
     // Prepare the student dashboard.
-    const student = normalizeStudent(result.user);
+    const student = normalizeStudent(authUser);
 
     setActiveSession(student);
     setCurrentUser(student);
@@ -211,7 +254,7 @@ export default function LoginPage({
   // -------------------------------------------------------
   // Update student profile
   // -------------------------------------------------------
-  const handleUpdateStudent = (updatedStudent) => {
+  const handleUpdateStudent = async (updatedStudent) => {
     if (!currentUser) {
       throw new Error('Please log in to update your profile.');
     }
@@ -226,7 +269,6 @@ export default function LoginPage({
     const safeUpdatedStudent = {
       ...currentUser,
       ...updatedStudent,
-
       id: currentUser.id || studentId,
       userId: currentUser.userId || studentId,
       role: currentUser.role,
@@ -235,11 +277,11 @@ export default function LoginPage({
     const storageKey = getStudentStorageKey(safeUpdatedStudent);
 
     const editableProfile = {
+      ...safeUpdatedStudent,
       name: safeUpdatedStudent.name,
       studentName:
         safeUpdatedStudent.studentName ||
         safeUpdatedStudent.name,
-
       parentName: safeUpdatedStudent.parentName || '',
       phone: safeUpdatedStudent.phone || '',
       email: safeUpdatedStudent.email || '',
@@ -248,7 +290,7 @@ export default function LoginPage({
     };
 
     try {
-      // Save the editable profile locally.
+      // 1. Save the editable profile locally for instant responsiveness
       localStorage.setItem(
         storageKey,
         JSON.stringify(editableProfile)
@@ -259,6 +301,19 @@ export default function LoginPage({
 
       // Refresh the dashboard.
       setCurrentUser(safeUpdatedStudent);
+
+      // 2. Persist profile changes directly to Neon PostgreSQL & Amazon S3
+      try {
+        const savedRemote = await api.students.update(studentId, safeUpdatedStudent);
+        if (savedRemote && savedRemote.photo_url) {
+          safeUpdatedStudent.studentPhoto = savedRemote.photo_url;
+          safeUpdatedStudent.photoUrl = savedRemote.photo_url;
+          setActiveSession(safeUpdatedStudent);
+          setCurrentUser({ ...safeUpdatedStudent });
+        }
+      } catch (dbErr) {
+        console.warn('[Neon Profile Sync error]:', dbErr.message);
+      }
     } catch {
       throw new Error(
         'Unable to save your profile in this browser. Please try again.'

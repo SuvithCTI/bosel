@@ -4,10 +4,13 @@ import { fileURLToPath } from 'url';
 import db from '../config/db.js';
 import dotenv from 'dotenv';
 
-dotenv.config();
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Explicitly load server/.env as well as root .env
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+dotenv.config();
 
 export async function initializeDatabase() {
   const isConnected = await db.testConnection();
