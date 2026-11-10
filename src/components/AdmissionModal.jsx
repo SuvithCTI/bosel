@@ -228,6 +228,8 @@ export default function AdmissionModal({
       }
     ],
     studentName: '', // 7. Student name
+    parentName: '', // Father / Guardian name
+    fatherName: '',
     dob: '', // 8. Date of Birth
     age: '', // 9. Age
     studentClass: '', // Auto calculated from age
@@ -801,6 +803,10 @@ export default function AdmissionModal({
       alert('Please enter Student Full Name (Field 4).');
       return false;
     }
+    if (!formData.parentName.trim()) {
+      alert('Please enter Father / Guardian Name.');
+      return false;
+    }
     if (!formData.dob) {
       alert('Please select Student Date of Birth (Field 5).');
       return false;
@@ -925,6 +931,8 @@ export default function AdmissionModal({
         }
       ],
       studentName: '',
+      parentName: '',
+      fatherName: '',
       dob: '',
       age: '',
       studentClass: '',
@@ -1129,6 +1137,11 @@ export default function AdmissionModal({
                   <div className="bg-slate-50/70 p-2 rounded-lg border border-slate-100">
                     <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider block">Branch / Centre</span>
                     <strong className="text-slate-900 font-extrabold block text-xs truncate mt-0.5">{formData.branch}</strong>
+                  </div>
+
+                  <div className="bg-slate-50/70 p-2 rounded-lg border border-slate-100">
+                    <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider block">Father / Guardian</span>
+                    <strong className="text-slate-900 font-extrabold block text-xs truncate mt-0.5">{formData.parentName || 'Not provided'}</strong>
                   </div>
 
                   <div className="bg-slate-50/70 p-2 rounded-lg border border-slate-100">
@@ -1443,18 +1456,35 @@ export default function AdmissionModal({
                   <span>Section 2: Candidate Personal Information</span>
                 </span>
 
-                {/* 4. Student Name */}
-                <div>
-                  <label className="block text-[11px] sm:text-xs font-black text-slate-800 mb-0.5 sm:mb-1">
-                    4. Student Name *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.studentName}
-                    onChange={(e) => setFormData({ ...formData, studentName: e.target.value })}
-                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-sky-500 focus:outline-none text-base sm:text-sm shadow-2xs"
-                  />
+                {/* 4. Student Name & Father / Guardian Name */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
+                  <div>
+                    <label className="block text-[11px] sm:text-xs font-black text-slate-800 mb-0.5 sm:mb-1">
+                      4. Student Name *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Student full name"
+                      value={formData.studentName}
+                      onChange={(e) => setFormData({ ...formData, studentName: e.target.value })}
+                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-sky-500 focus:outline-none text-base sm:text-sm shadow-2xs"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] sm:text-xs font-black text-slate-800 mb-0.5 sm:mb-1">
+                      Father / Guardian Name *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Father / Guardian full name"
+                      value={formData.parentName}
+                      onChange={(e) => setFormData({ ...formData, parentName: e.target.value, fatherName: e.target.value })}
+                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-sky-500 focus:outline-none text-base sm:text-sm shadow-2xs"
+                    />
+                  </div>
                 </div>
 
                 {/* 5. Date of Birth & 6. Age (2-Col on Mobile) */}

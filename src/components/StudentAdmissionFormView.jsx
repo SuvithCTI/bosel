@@ -262,7 +262,7 @@ export default function StudentAdmissionFormView({ student, onClose }) {
                 FATHER / GUARDIAN NAME
               </span>
               <span className="font-bold text-slate-800">
-                {student.parentName || 'Not provided'}
+                {student.parentName || student.fatherName || 'Not provided'}
               </span>
             </div>
 
