@@ -20,7 +20,8 @@ import {
 } from 'lucide-react';
 import {
   getStudentPhotoUrl,
-  getStudentRegisterNumber
+  getStudentRegisterNumber,
+  SAMPLE_STUDENT_PHOTOS
 } from '../../utils/studentDataHelpers';
 export default function AdminStudentsPage({
   filteredStudentsSuperAdmin,
@@ -281,6 +282,10 @@ export default function AdminStudentsPage({
                                   src={getStudentPhotoUrl(student, idx)}
                                   alt={student.studentName}
                                   className="w-full h-full object-cover object-top"
+                                  onError={(e) => {
+                                    e.currentTarget.onerror = null;
+                                    e.currentTarget.src = SAMPLE_STUDENT_PHOTOS[Math.abs(idx) % SAMPLE_STUDENT_PHOTOS.length];
+                                  }}
                                 />
                               </div>
                               <div>

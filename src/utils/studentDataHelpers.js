@@ -15,8 +15,9 @@ export const SAMPLE_STUDENT_PHOTOS = [
 ];
 
 export const getStudentPhotoUrl = (student, index = 0) => {
-  if (student?.studentPhoto) return student.studentPhoto;
-  if (student?.photo) return student.photo;
+  if (!student) return SAMPLE_STUDENT_PHOTOS[Math.abs(index) % SAMPLE_STUDENT_PHOTOS.length];
+  const url = student.photo_url || student.photoUrl || student.studentPhoto || student.photo;
+  if (url && typeof url === 'string' && url.trim().length > 0) return url.trim();
   return SAMPLE_STUDENT_PHOTOS[Math.abs(index) % SAMPLE_STUDENT_PHOTOS.length];
 };
 
