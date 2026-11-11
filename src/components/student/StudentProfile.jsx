@@ -561,25 +561,9 @@ export default function StudentProfile({
               </div>
 
               <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <p className="text-xs font-bold uppercase tracking-wider text-blue-200">
-                    Student Profile
-                  </p>
-                  {allRegNumbers.length > 1 ? (
-                    allRegNumbers.map((reg, idx) => (
-                      <span
-                        key={idx}
-                        className="inline-flex items-center gap-1 rounded-md bg-amber-400/20 px-2 py-0.5 text-[11px] font-mono font-black text-amber-300 border border-amber-300/30"
-                      >
-                        REG {idx + 1}: {reg}
-                      </span>
-                    ))
-                  ) : registerNumber ? (
-                    <span className="inline-flex items-center gap-1 rounded-md bg-amber-400/20 px-2 py-0.5 text-[11px] font-mono font-black text-amber-300 border border-amber-300/30">
-                      REG: {registerNumber}
-                    </span>
-                  ) : null}
-                </div>
+                <p className="text-xs font-bold uppercase tracking-wider text-blue-200">
+                  Student Profile
+                </p>
 
                 <h3 className="mt-1 break-words text-xl text-white font-black sm:text-2xl">
                   {form.name || 'Student Name'}
