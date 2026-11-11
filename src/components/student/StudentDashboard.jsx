@@ -18,9 +18,7 @@ import StudentCourse from './StudentCourse';
 import StudentProfile from './StudentProfile';
 import StudentNotifications from './StudentNotifications';
 
-const navigationItems = [
-  { id: 'course', label: 'My Course', icon: BookOpen },
-];
+const navigationItems = [];
 
 const NOTIFICATION_STORAGE_KEY = 'bsel_notifications';
 
@@ -395,12 +393,14 @@ export default function StudentDashboard({
           </div>
 
           {/* DESKTOP NAVIGATION */}
-          <nav
-            aria-label="Student navigation"
-            className="hidden items-center gap-2 md:flex"
-          >
-            {renderNavigationItems()}
-          </nav>
+          {navigationItems.length > 0 && (
+            <nav
+              aria-label="Student navigation"
+              className="hidden items-center gap-2 md:flex"
+            >
+              {renderNavigationItems()}
+            </nav>
+          )}
 
           {/* HEADER ACTIONS */}
           <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
@@ -693,16 +693,20 @@ export default function StudentDashboard({
                 </div>
               </div>
 
-              <p className="mb-2 px-2 text-[10px] font-extrabold uppercase tracking-[0.15em] text-slate-400">
-                Student Navigation
-              </p>
+              {navigationItems.length > 0 && (
+                <>
+                  <p className="mb-2 px-2 text-[10px] font-extrabold uppercase tracking-[0.15em] text-slate-400">
+                    Student Navigation
+                  </p>
 
-              <nav
-                aria-label="Mobile student navigation"
-                className="space-y-1.5"
-              >
-                {renderNavigationItems(true)}
-              </nav>
+                  <nav
+                    aria-label="Mobile student navigation"
+                    className="space-y-1.5"
+                  >
+                    {renderNavigationItems(true)}
+                  </nav>
+                </>
+              )}
 
               <button
                 type="button"
