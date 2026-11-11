@@ -570,45 +570,17 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
           const data = await res.json();
           if (data && Array.isArray(data.students)) {
             const currentUsers = getRegisteredUsers();
-<<<<<<< HEAD
-            const remoteMapped = data.students.map(s => ({
-              userId: s.user_id,
-              accountUserId: s.user_id.replace(/-COURSE-\d+$/i, ''),
-              admissionOnly: /-COURSE-\d+$/i.test(s.user_id),
-              studentName: s.student_name,
-              name: s.student_name,
-              parentName: s.parent_name || '',
-              email: s.email || '',
-              phone: s.phone || '',
-              grade: s.grade || '',
-              program: s.program || s.course_name || '',
-              courseName: s.course_name || '',
-              branch: s.branch || '',
-              institution: s.institution || s.branch || '',
-              address: s.address || '',
-              studentPhoto: s.photo_url || null,
-              photoUrl: s.photo_url || null,
-              registerNumber: s.register_number,
-              registrationNo: s.register_number,
-              role: 'Student',
-              enrolmentDate: s.enrolment_date || '',
-              dob: s.dob || '',
-              age: s.age || '',
-              gender: s.gender || 'Male',
-              district: s.district || '',
-              city: s.city || '',
-              pincode: s.pincode || '',
-              aadharNumber: s.aadhar_number || ''
-            }));
-=======
             const remoteMapped = data.students.map(s => {
-              const existing = currentUsers.find(u => (u.userId || '').toLowerCase() === (s.user_id || '').toLowerCase());
+              const userId = s.user_id || '';
+              const existing = currentUsers.find(u => (u.userId || '').toLowerCase() === userId.toLowerCase());
               const regParent = s.parent_name || existing?.parentName || existing?.fatherName || '';
               const photo = s.photo_url || existing?.studentPhoto || existing?.photoUrl || null;
               const regNo = s.register_number || existing?.registerNumber || existing?.registrationNo || '';
               return {
                 ...(existing || {}),
-                userId: s.user_id,
+                userId,
+                accountUserId: userId.replace(/-COURSE-\d+$/i, ''),
+                admissionOnly: /-COURSE-\d+$/i.test(userId),
                 studentName: s.student_name || existing?.studentName || '',
                 name: s.student_name || existing?.name || '',
                 parentName: regParent,
@@ -649,7 +621,6 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                 status: s.status || existing?.status || 'Confirmed'
               };
             });
->>>>>>> fb81711c3283a10820977b5a3de68bcf3f0e4d85
 
             const remoteMap = new Map(remoteMapped.map(s => [s.userId.toLowerCase(), s]));
             const merged = currentUsers.map(u => {

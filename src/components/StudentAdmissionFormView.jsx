@@ -1200,7 +1200,6 @@ export default function StudentAdmissionFormView({ student, onClose }) {
             Generated from the B★SEL admission record • {student.enrolmentDate || new Date().toISOString().replace('T', ' ').slice(0, 19)}
           </div>
         </div>
-=======
 
       </div>
 
