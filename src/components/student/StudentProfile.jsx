@@ -177,7 +177,7 @@ function ProfileField({
     Icon ? 'pl-10' : 'px-4'
   } ${
     isLocked
-      ? 'pr-9 border-slate-200 bg-slate-100/80 text-slate-700 cursor-not-allowed font-medium'
+      ? 'pr-4 border-slate-200 bg-slate-100/80 text-slate-700 cursor-not-allowed font-medium'
       : readOnly
       ? 'pr-4 border-slate-200 bg-slate-50 text-slate-600 cursor-default'
       : 'pr-4 border-slate-300 bg-white text-slate-900 focus:border-blue-800 focus:ring-2 focus:ring-blue-100'
@@ -228,10 +228,6 @@ function ProfileField({
             inputMode={inputMode}
             className={fieldClass}
           />
-        )}
-
-        {isLocked && (
-          <Lock className="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
         )}
       </div>
     </div>
@@ -1184,10 +1180,8 @@ export default function StudentProfile({
                 id="maskedAadhaar"
                 value={maskAadhaar(form.aadhaarNumber)}
                 readOnly
-                className="w-full rounded-xl border border-slate-200 bg-slate-100/80 py-3 pl-10 pr-9 text-sm text-slate-700 font-mono outline-none cursor-not-allowed"
+                className="w-full rounded-xl border border-slate-200 bg-slate-100/80 py-3 pl-10 pr-4 text-sm text-slate-700 font-mono outline-none cursor-not-allowed"
               />
-
-              <Lock className="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
             </div>
           </div>
 
