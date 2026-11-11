@@ -420,8 +420,10 @@ export default function StudentQuestionPaperView({ student, onClose }) {
   const table4Sums = abacusSums.slice(37, 50); // S38 - S50
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/85 backdrop-blur-xs flex flex-col items-center justify-start py-3 px-2 sm:px-4">
-      {/* Print stylesheet */}
+<div
+  className="fixed inset-0 z-[99999] isolate overflow-y-auto bg-slate-950/90 backdrop-blur-sm flex flex-col items-center justify-start py-3 px-2 sm:px-4"
+  style={{ minHeight: '100dvh' }}
+>      {/* Print stylesheet */}
       <style>{`
         @media print {
           body * {
@@ -454,8 +456,7 @@ export default function StudentQuestionPaperView({ student, onClose }) {
       {/* =========================================================================
           TOP ACTION TOOLBAR
           ========================================================================= */}
-      <div className="no-print w-full max-w-[840px] bg-[#0c234b] text-white px-3 sm:px-4 py-2.5 rounded-xl shadow-2xl flex flex-wrap items-center justify-between gap-2.5 sticky top-2 z-30 border border-amber-400/40 mb-3">
-        {/* Left: Back button & Title */}
+<div className="no-print w-full max-w-[840px] bg-[#0c234b] text-white px-2 sm:px-4 py-2 sm:py-2.5 rounded-xl shadow-2xl flex flex-wrap items-center justify-between gap-2 sticky top-2 z-[100000] border border-amber-400/40 mb-3">        {/* Left: Back button & Title */}
         <div className="flex items-center gap-2">
           <button
             type="button"

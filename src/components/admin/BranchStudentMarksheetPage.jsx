@@ -539,50 +539,53 @@ export default function BranchStudentMarksheetPage({
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
 
             {/* CARD HEADER */}
-            <div className="p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+<div className="p-4 sm:p-5 border-b border-slate-100">
 
-              <div className="flex items-center gap-3">
+  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
 
-                <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center">
-                  <BookOpen className="w-5 h-5" />
-                </div>
+    <div className="flex items-center gap-3">
+      <div className="w-10 h-10 shrink-0 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center">
+        <BookOpen className="w-5 h-5" />
+      </div>
 
-                <div>
+      <div>
+        <h2 className="text-sm font-black text-slate-950">
+          Subject-wise Marks
+        </h2>
 
-                  <h2 className="text-sm font-black text-slate-950">
-                    Subject-wise Marks
-                  </h2>
+        <p className="text-[11px] text-slate-500">
+          {subjects.length} subjects available for this course
+        </p>
+      </div>
+    </div>
 
-                  <p className="text-[11px] text-slate-500">
-                    {subjects.length} subjects available for this course
-                  </p>
+    {!isEditing ? (
+      <button
+        type="button"
+        onClick={handleAddMarks}
+        className="w-full sm:w-auto min-w-[140px] px-5 py-3 rounded-xl bg-[#0c234b] hover:bg-[#173d70] text-white text-xs font-black flex items-center justify-center gap-2 shadow-md transition-all"
+      >
+        {savedData ? (
+          <>
+            <Pencil className="w-4 h-4" />
+            Edit Marks
+          </>
+        ) : (
+          <>
+            <ClipboardList className="w-4 h-4" />
+            Add Marks
+          </>
+        )}
+      </button>
+    ) : (
+      <div className="w-full sm:w-auto px-4 py-3 rounded-xl bg-sky-50 border border-sky-100 text-sky-800 text-xs font-bold flex items-center justify-center gap-2">
+        <Pencil className="w-4 h-4" />
+        Marks Editing Enabled
+      </div>
+    )}
 
-                </div>
-
-              </div>
-
-              {!isEditing && (
-                <button
-                  type="button"
-                  onClick={handleAddMarks}
-                  className="px-4 py-2.5 rounded-xl bg-[#0c234b] hover:bg-[#173d70] text-white text-xs font-black flex items-center justify-center gap-2"
-                >
-                  {savedData ? (
-                    <>
-                      <Pencil className="w-4 h-4" />
-                      Edit Marks
-                    </>
-                  ) : (
-                    <>
-                      <ClipboardList className="w-4 h-4" />
-                      Add Marks
-                    </>
-                  )}
-                </button>
-              )}
-
-            </div>
-
+  </div>
+</div>
             {/* SUBJECT TABLE */}
             <div className="overflow-x-auto">
 
