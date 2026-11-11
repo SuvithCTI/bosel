@@ -150,20 +150,12 @@ function ProfileField({
 
   return (
     <div className="min-w-0">
-      <div className="mb-1.5 flex items-center justify-between">
-        <label
-          htmlFor={name}
-          className="block text-xs font-bold text-slate-700"
-        >
-          {label}
-        </label>
-        {isLocked && (
-          <span className="inline-flex items-center gap-1 rounded bg-slate-200/90 px-1.5 py-0.5 text-[10px] font-bold text-slate-600">
-            <Lock className="h-2.5 w-2.5" />
-            Locked
-          </span>
-        )}
-      </div>
+      <label
+        htmlFor={name}
+        className="mb-1.5 block text-xs font-bold text-slate-700"
+      >
+        {label}
+      </label>
 
       <div className="relative">
         {Icon && (
@@ -1093,18 +1085,12 @@ export default function StudentProfile({
           }
         >
           <div className="min-w-0">
-            <div className="mb-1.5 flex items-center justify-between">
-              <label
-                htmlFor="maskedAadhaar"
-                className="block text-xs font-bold text-slate-700"
-              >
-                Aadhaar Number
-              </label>
-              <span className="inline-flex items-center gap-1 rounded bg-slate-200/90 px-1.5 py-0.5 text-[10px] font-bold text-slate-600">
-                <Lock className="h-2.5 w-2.5" />
-                Locked
-              </span>
-            </div>
+            <label
+              htmlFor="maskedAadhaar"
+              className="mb-1.5 block text-xs font-bold text-slate-700"
+            >
+              Aadhaar Number
+            </label>
 
             <div className="relative">
               <IdCard className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
