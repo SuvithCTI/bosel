@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { Printer, X } from "lucide-react";
 
@@ -348,16 +348,91 @@ const ReceiptSVG = ({ receipt, logoHref }) => {
 };
 
 /* ------------------------------------------------------------------ */
-/*  A4 sheet constants (portrait, 10mm margins)                         */
-/*  190mm wide  ->  190 * 288/628 = 87.13mm tall per receipt            */
-/*  3 x 87.13 = 261.4mm  (fits the 277mm printable height)              */
+/*  A4 sheet layout (portrait, 10mm margins = 190mm x 277mm printable)  */
+/*  Each receipt: 190mm wide -> 190 * 288/628 = 87.13mm tall            */
+/*  3 receipts + 2 cut gaps = ~276mm -> exactly one sheet               */
 /* ------------------------------------------------------------------ */
 const PER_SHEET = 3;
 
+/**
+ * Print any number of receipts, 3 per A4 sheet.
+ * 1-3 receipts -> sheet 1, 4-6 -> sheet 2, 7-9 -> sheet 3 ... and so on.
+ * Can be called directly from anywhere (e.g. a "Print selected" button).
+ */
+export const printReceiptSheets = (items = [], logoSrc = "/bsel_logo.png") => {
+  if (!items.length) return;
+
+  const w = window.open("", "_blank", "width=900,height=1100");
+  if (!w) {
+    alert("Please allow pop-ups to print the receipts.");
+    return;
+  }
+
+  // absolute URL so the print popup (about:blank) can still load the logo
+  const logoHref = new URL(logoSrc, window.location.origin).href;
+
+  const sheets = [];
+  for (let i = 0; i < items.length; i += PER_SHEET) {
+    const chunk = items.slice(i, i + PER_SHEET);
+    const parts = [];
+    chunk.forEach((item, j) => {
+      if (j > 0) parts.push('<div class="cut"></div>');
+      parts.push(
+        '<div class="slot">' +
+          renderToStaticMarkup(<ReceiptSVG receipt={item} logoHref={logoHref} />) +
+          "</div>"
+      );
+    });
+    sheets.push(`<div class="sheet">${parts.join("")}</div>`);
+  }
+
+  w.document.write(`<!DOCTYPE html>
+<html>
+  <head>
+    <title>BSEL Fee Receipts (${items.length})</title>
+    <style>
+      @page { size: A4 portrait; margin: 10mm; }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; padding: 0; background: #fff; }
+      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+      .sheet {
+        width: 190mm;
+        height: 276mm;
+        margin: 0 auto;
+        overflow: hidden;
+        break-after: page;
+        page-break-after: always;
+      }
+      .sheet:last-child { break-after: auto; page-break-after: auto; }
+
+      .slot { width: 190mm; height: 87.13mm; }          /* 628 : 288 */
+      .slot svg { display: block; width: 100%; height: 100%; }
+      .cut { margin: 3.6mm 0; border-top: 0.3mm dashed #9ca3af; height: 0; }
+
+      @media screen {
+        body { padding: 10mm; background: #e5e7eb; }
+        .sheet { background: #fff; margin-bottom: 10mm; }
+      }
+    </style>
+  </head>
+  <body>
+    ${sheets.join("")}
+    <script>
+      window.onload = function () {
+        setTimeout(function () { window.focus(); window.print(); }, 800);
+      };
+      window.onafterprint = function () { window.close(); };
+    </script>
+  </body>
+</html>`);
+  w.document.close();
+};
+
 /* ------------------------------------------------------------------ */
 /*  Component                                                           */
-/*  - receipt   : one receipt, printed 3 times on the sheet             */
-/*  - receipts  : array of up to 3 different receipts (one per slot)    */
+/*  - receipt   : one receipt, printed 3 times on one sheet            */
+/*  - receipts  : any number of different receipts, 3 per sheet        */
 /* ------------------------------------------------------------------ */
 const BselReceipt = ({
   receipt = {},
@@ -367,83 +442,15 @@ const BselReceipt = ({
   width = 1000, // on-screen preview max width in px
   logoSrc = "/bsel_logo.png", // same file Logo.jsx uses (public/bsel_logo.png)
 }) => {
-  const previewRef = useRef(null);
+  const hasList = Array.isArray(receipts) && receipts.length > 0;
+  const items = hasList ? receipts : [receipt, receipt, receipt];
+  const sheetCount = Math.ceil(items.length / PER_SHEET);
+  const first = buildData(items[0]);
 
-  // absolute URL so the print popup (about:blank) can still load the image
   const logoHref =
     typeof window !== "undefined"
       ? new URL(logoSrc, window.location.origin).href
       : logoSrc;
-
-  // what goes on the sheet: given list (max 3) or the same receipt x3
-  const sheetItems =
-    Array.isArray(receipts) && receipts.length
-      ? receipts.slice(0, PER_SHEET)
-      : Array.from({ length: PER_SHEET }, () => receipt);
-
-  const first = buildData(sheetItems[0]);
-
-  const handlePrint = () => {
-    const w = window.open("", "_blank", "width=900,height=1100");
-    if (!w) {
-      alert("Please allow pop-ups to print the receipt.");
-      return;
-    }
-
-    // build "slot, cut-line, slot, cut-line, slot"
-    const parts = [];
-    sheetItems.forEach((item, i) => {
-      if (i > 0) parts.push('<div class="cut"></div>');
-      parts.push(
-        '<div class="slot">' +
-          renderToStaticMarkup(<ReceiptSVG receipt={item} logoHref={logoHref} />) +
-          "</div>"
-      );
-    });
-
-    w.document.write(`<!DOCTYPE html>
-<html>
-  <head>
-    <title>BSEL Fee Receipts</title>
-    <style>
-      @page { size: A4 portrait; margin: 10mm; }
-      * { box-sizing: border-box; }
-      html, body { margin: 0; padding: 0; background: #fff; }
-      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-
-      /* printable area of A4 portrait = 190mm x 277mm */
-      .sheet {
-        width: 190mm;
-        height: 276mm;
-        margin: 0 auto;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        overflow: hidden;
-        page-break-after: avoid;
-      }
-      .slot { width: 190mm; height: 87.13mm; }   /* 628 : 288 */
-      .slot svg { display: block; width: 100%; height: 100%; }
-      .cut { border-top: 0.3mm dashed #9ca3af; height: 0; width: 100%; }
-
-      @media screen {
-        body { padding: 10mm; background: #e5e7eb; }
-        .sheet { background: #fff; }
-      }
-    </style>
-  </head>
-  <body>
-    <div class="sheet">${parts.join("")}</div>
-    <script>
-      window.onload = function () {
-        setTimeout(function () { window.focus(); window.print(); }, 700);
-      };
-      window.onafterprint = function () { window.close(); };
-    </script>
-  </body>
-</html>`);
-    w.document.close();
-  };
 
   return (
     <div className="w-full bg-white">
@@ -454,14 +461,16 @@ const BselReceipt = ({
               B★SEL Official Fee Receipt
             </h2>
             <p className="text-xs text-slate-500">
-              Receipt No: {first.receiptNo || "N/A"} &middot; prints {PER_SHEET} per A4 sheet
+              Receipt No: {first.receiptNo || "N/A"} &middot; {items.length}{" "}
+              receipt{items.length > 1 ? "s" : ""} &middot; {sheetCount} A4 sheet
+              {sheetCount > 1 ? "s" : ""}
             </p>
           </div>
 
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={handlePrint}
+              onClick={() => printReceiptSheets(items, logoSrc)}
               className="flex items-center gap-2 rounded-lg bg-[#081d3d] px-4 py-2 text-xs font-bold text-white transition hover:bg-[#172b4d]"
             >
               <Printer size={15} />
@@ -482,12 +491,8 @@ const BselReceipt = ({
       )}
 
       {/* On-screen preview (first receipt) */}
-      <div
-        ref={previewRef}
-        className="mx-auto w-full bg-white"
-        style={{ maxWidth: width }}
-      >
-        <ReceiptSVG receipt={sheetItems[0]} logoHref={logoHref} />
+      <div className="mx-auto w-full bg-white" style={{ maxWidth: width }}>
+        <ReceiptSVG receipt={items[0]} logoHref={logoHref} />
       </div>
     </div>
   );
