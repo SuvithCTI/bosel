@@ -687,12 +687,6 @@ export default function StudentProfile({
           icon={BookOpen}
           title="Official Admission & Course Details"
           description="Your registered course, branch, and academic record as enrolled during admission."
-          badge={
-            <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-[10.5px] font-extrabold text-amber-900 border border-amber-300">
-              <Lock className="h-3 w-3" />
-              Non-Editable
-            </span>
-          }
         >
           {/* Lock notice alert */}
           <div className="sm:col-span-2 flex items-start gap-2.5 rounded-xl border border-amber-200/90 bg-amber-50/80 p-3 text-xs text-amber-900">
