@@ -183,25 +183,40 @@ export default function StudentCourse({
           </div>
 
           {selectedCourses.length > 1 && (
-            <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50/70 p-4 sm:p-5">
+            <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50/70 p-3.5 sm:p-5">
               <h5 className="text-xs font-black uppercase tracking-wider text-slate-700 mb-3 flex items-center gap-2">
                 <BookOpen className="h-4 w-4 text-blue-900" />
                 <span>All Enrolled Courses ({selectedCourses.length})</span>
               </h5>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {selectedCourses.map((c, idx) => (
-                  <div key={idx} className="rounded-xl border border-slate-200 bg-white p-3.5 shadow-2xs">
-                    <div className="flex items-center justify-between gap-2 mb-1.5">
-                      <span className="text-[10px] font-black uppercase text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">
-                        Course {idx + 1}
-                      </span>
-                      <span className="text-[11px] font-black text-blue-950 bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-200">
-                        {c.level || 'Level 1'}
+                  <div
+                    key={idx}
+                    className="flex flex-col justify-between rounded-xl border border-slate-200 bg-white p-3.5 shadow-2xs transition hover:border-blue-200"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="shrink-0 whitespace-nowrap rounded-md border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-amber-900">
+                          Course {idx + 1}
+                        </span>
+                        {c.registerNumber && (
+                          <span className="shrink-0 whitespace-nowrap rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 font-mono text-[10.5px] font-bold text-slate-700">
+                            #{c.registerNumber}
+                          </span>
+                        )}
+                      </div>
+
+                      <p className="mt-2 font-black text-slate-900 text-sm sm:text-base leading-snug">
+                        {c.courseName || c.name}
+                      </p>
+                    </div>
+
+                    <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center">
+                      <span className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200/80 bg-blue-50/80 px-2.5 py-1 text-[11px] font-bold text-blue-950">
+                        <GraduationCap className="h-3.5 w-3.5 shrink-0 text-blue-700" />
+                        <span className="break-words">{c.level || 'Level 1'}</span>
                       </span>
                     </div>
-                    <p className="font-extrabold text-slate-900 text-sm">
-                      {c.courseName || c.name}
-                    </p>
                   </div>
                 ))}
               </div>
