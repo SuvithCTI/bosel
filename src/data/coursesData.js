@@ -1110,7 +1110,7 @@ export const updateStoredCourse = (courseId, updatedFields) => {
   courses[index] = {
     ...courses[index],
     ...updatedFields,
-    image: updatedFields.image || existingImage
+    image: updatedFields.image !== undefined ? updatedFields.image : existingImage
   };
 
   saveStoredCourses(courses);

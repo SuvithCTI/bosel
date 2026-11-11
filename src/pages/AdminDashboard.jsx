@@ -1224,73 +1224,99 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
 
 
   const handleStartEditCourse = (course) => {
+    let levelsList = [];
+    if (Array.isArray(course.curriculum)) {
+      levelsList = course.curriculum.map((item, idx) => {
+        if (typeof item === 'string') {
+          return { id: `lvl-${idx + 1}-${Date.now()}`, title: item, topicsText: '' };
+        }
+        return {
+          id: `lvl-${idx + 1}-${Date.now()}`,
+          title: item.title || `Level ${idx + 1}`,
+          topicsText: Array.isArray(item.topics) ? item.topics.join('\n') : (item.topics || '')
+        };
+      });
+    }
 
     setEditingCourse({
-
       ...course,
-
+      image: course.image || '',
+      logo: course.logo || '',
+      fullName: course.fullName || course.name?.toUpperCase() || '',
+      levels: course.levels || (levelsList.length > 0 ? `${levelsList.length} Levels` : '6 Levels'),
+      duration: course.duration || '3 - 4 Months per Level',
+      ageGroup: course.ageGroup || '5 - 14 Years',
+      status: course.status || 'Active',
+      curriculumLevels: levelsList,
+      curriculumMode: levelsList.length > 0 ? 'structured' : 'text',
       outcomesText: Array.isArray(course.outcomes) ? course.outcomes.join('\n') : (course.outcomes || ''),
-
-      curriculumText: Array.isArray(course.curriculum) ? course.curriculum.join('\n') : (course.curriculum || '')
-
+      curriculumText: Array.isArray(course.curriculum)
+        ? course.curriculum.map(c => typeof c === 'object' ? `${c.title || ''}${c.topics?.length ? `: ${c.topics.join(', ')}` : ''}` : c).join('\n')
+        : (course.curriculum || '')
     });
-
   };
 
-
-
   const handleUpdateCourse = (e) => {
-
     e.preventDefault();
-
     if (!editingCourse) return;
 
-
-
     const outcomesArray = typeof editingCourse.outcomesText === 'string'
-
-      ? editingCourse.outcomesText.split('\n').filter(Boolean)
-
+      ? editingCourse.outcomesText.split('\n').map(s => s.trim()).filter(Boolean)
       : (Array.isArray(editingCourse.outcomes) ? editingCourse.outcomes : []);
 
+    let finalCurriculum = [];
+    if (editingCourse.curriculumMode === 'text') {
+      finalCurriculum = typeof editingCourse.curriculumText === 'string'
+        ? editingCourse.curriculumText.split('\n').map(s => s.trim()).filter(Boolean)
+        : [];
+    } else if (Array.isArray(editingCourse.curriculumLevels) && editingCourse.curriculumLevels.length > 0) {
+      finalCurriculum = editingCourse.curriculumLevels
+        .filter(lvl => lvl.title?.trim())
+        .map(lvl => {
+          const topics = typeof lvl.topicsText === 'string'
+            ? lvl.topicsText.split('\n').map(t => t.trim()).filter(Boolean)
+            : (Array.isArray(lvl.topics) ? lvl.topics : []);
+          return {
+            title: lvl.title.trim(),
+            topics
+          };
+        });
+    }
 
-
-    const curriculumArray = typeof editingCourse.curriculumText === 'string'
-
-      ? editingCourse.curriculumText.split('\n').filter(Boolean)
-
-      : (Array.isArray(editingCourse.curriculum) ? editingCourse.curriculum : []);
-
-
+    if (finalCurriculum.length === 0) {
+      finalCurriculum = Array.isArray(editingCourse.curriculum) ? editingCourse.curriculum : [];
+    }
 
     const courseToSave = {
-
       ...editingCourse,
-
-      fullName: editingCourse.fullName || editingCourse.name?.toUpperCase(),
-
+      name: editingCourse.name?.trim(),
+      fullName: (editingCourse.fullName || editingCourse.name)?.trim(),
+      code: (editingCourse.code || '').trim().toUpperCase(),
+      category: editingCourse.category || 'Skill Development',
       fee: editingCourse.fee ? (editingCourse.fee.startsWith('₹') ? editingCourse.fee : `₹${editingCourse.fee}`) : '₹450',
-
+      feeAmount: parseInt(String(editingCourse.fee || '450').replace(/\D/g, ''), 10) || 450,
+      image: editingCourse.image || '',
+      logo: editingCourse.logo || '',
+      ageGroup: editingCourse.ageGroup?.trim() || '5 - 14 Years',
+      levels: editingCourse.levels?.trim() || `${finalCurriculum.length || 6} Levels`,
+      duration: editingCourse.duration?.trim() || '3 - 4 Months per Level',
+      status: editingCourse.status || 'Active',
+      shortDesc: editingCourse.shortDesc?.trim() || editingCourse.tagline?.trim(),
+      tagline: editingCourse.shortDesc?.trim() || editingCourse.tagline?.trim(),
+      description: editingCourse.description?.trim(),
       outcomes: outcomesArray.length > 0 ? outcomesArray : (editingCourse.outcomes || []),
-
-      curriculum: curriculumArray.length > 0 ? curriculumArray : (editingCourse.curriculum || [])
-
+      curriculum: finalCurriculum.length > 0 ? finalCurriculum : (editingCourse.curriculum || [])
     };
 
     delete courseToSave.outcomesText;
-
     delete courseToSave.curriculumText;
-
-
+    delete courseToSave.curriculumLevels;
+    delete courseToSave.curriculumMode;
 
     const updated = updateStoredCourse(editingCourse.id, courseToSave);
-
     setCoursesList(updated);
-
     setEditingCourse(null);
-
-    showToast(`Course "${editingCourse.name}" updated successfully!`);
-
+    showToast(`Course "${courseToSave.name}" updated successfully!`);
   };
 
 
