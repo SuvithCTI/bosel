@@ -173,28 +173,29 @@ function ProfileField({
 }) {
   const isFieldDisabled = readOnly || isLocked;
 
-  const fieldClass = `w-full min-w-0 rounded-xl border py-3 text-sm outline-none transition ${
-    Icon ? 'pl-10' : 'px-4'
+  const fieldClass = `w-full min-w-0 rounded-xl border py-2.5 sm:py-3 text-xs sm:text-sm outline-none transition truncate ${
+    Icon ? 'pl-9 sm:pl-10' : 'px-3 sm:px-4'
   } ${
     isLocked
-      ? 'pr-4 border-slate-200 bg-slate-100/80 text-slate-700 cursor-not-allowed font-medium'
+      ? 'pr-3 sm:pr-4 border-slate-200 bg-slate-100/80 text-slate-700 cursor-not-allowed font-medium'
       : readOnly
-      ? 'pr-4 border-slate-200 bg-slate-50 text-slate-600 cursor-default'
-      : 'pr-4 border-slate-300 bg-white text-slate-900 focus:border-blue-800 focus:ring-2 focus:ring-blue-100'
+      ? 'pr-3 sm:pr-4 border-slate-200 bg-slate-50 text-slate-600 cursor-default'
+      : 'pr-3 sm:pr-4 border-slate-300 bg-white text-slate-900 focus:border-blue-800 focus:ring-2 focus:ring-blue-100'
   }`;
 
   return (
     <div className="min-w-0">
       <label
         htmlFor={name}
-        className="mb-1.5 block text-xs font-bold text-slate-700"
+        className="mb-1 sm:mb-1.5 block text-[11px] sm:text-xs font-bold text-slate-700 truncate"
+        title={label}
       >
         {label}
       </label>
 
       <div className="relative">
         {Icon && (
-          <Icon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Icon className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 sm:left-3.5 sm:h-4 sm:w-4 -translate-y-1/2 text-slate-400" />
         )}
 
         {options && !isFieldDisabled ? (
@@ -265,6 +266,7 @@ function ProfileSection({
   description,
   badge,
   children,
+  gridCols = 'grid-cols-1 sm:grid-cols-2',
 }) {
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm sm:p-6">
@@ -275,7 +277,7 @@ function ProfileSection({
         badge={badge}
       />
 
-      <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 sm:gap-5">
+      <div className={`grid ${gridCols} gap-3 sm:gap-5`}>
         {children}
       </div>
     </section>
@@ -885,6 +887,7 @@ export default function StudentProfile({
             icon={Receipt}
             title="Admission Fees & Payment Record"
             description="Fee receipt and transaction verification recorded at the time of admission."
+            gridCols="grid-cols-2"
             badge={
               <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10.5px] font-extrabold text-emerald-900 border border-emerald-300">
                 <CheckCircle2 className="h-3 w-3 text-emerald-600" />
