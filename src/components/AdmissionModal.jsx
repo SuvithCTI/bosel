@@ -19,7 +19,6 @@ import {
   MapPin,
   CreditCard,
   QrCode,
-  FileCheck2,
   User,
   Loader2,
   ExternalLink,
@@ -379,13 +378,9 @@ export default function AdmissionModal({
     d.toLowerCase().includes(districtSearch.toLowerCase().trim())
   );
 
-  const allBranchOptions = useMemo(() => {
-    const list = [...availableBranches];
-    if (!list.includes('Other')) {
-      list.push('Other');
-    }
-    return list;
-  }, [availableBranches]);
+  const allBranchOptions = availableBranches.includes('Other')
+    ? availableBranches
+    : [...availableBranches, 'Other'];
 
   const filteredBranches = allBranchOptions.filter((b) => {
     const term = branchSearch.toLowerCase().trim();
