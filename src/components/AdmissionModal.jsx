@@ -214,17 +214,19 @@ export default function AdmissionModal({
   const defaultBranch = initialBranch || (availableBranches.includes('Tenkasi') ? 'Tenkasi' : availableBranches[0]);
   const initialLevel = getLevelsForCourse(initialCourse, coursesList)[0] || 'Level 1';
   const initialSingleFee = parseCourseFee(initialCourse, coursesList);
+  const initialRegNumber = generateRegisterNumber(initialCourse);
 
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0], // 1. Date
-    registerNumber: generateRegisterNumber(initialCourse), // 2. Register number [non-editable]
+    registerNumber: initialRegNumber, // 2. Register number [non-editable]
     branch: defaultBranch, // 3. Branch
     courseName: initialCourse, // 4. Course Name (kept for backward compat)
     selectedCourses: [
       {
         courseName: initialCourse,
         level: initialLevel,
-        fee: initialSingleFee
+        fee: initialSingleFee,
+        registerNumber: initialRegNumber
       }
     ],
     studentName: '', // 7. Student name
@@ -737,23 +739,29 @@ export default function AdmissionModal({
     const nextLevels = getLevelsForCourse(nextProg, coursesList);
     const nextFee = parseCourseFee(nextProg, coursesList);
 
+    const existingRegs = (formData.selectedCourses || []).map(c => c.registerNumber).filter(Boolean);
+    const newReg = generateRegisterNumber(nextProg, existingRegs);
+
     const updatedCourses = [
       ...(formData.selectedCourses || []),
       {
         courseName: nextProg,
         level: nextLevels[0] || 'Level 1',
-        fee: nextFee
+        fee: nextFee,
+        registerNumber: newReg
       }
     ];
 
     const totalFee = updatedCourses.reduce((sum, c) => sum + (c.fee || 450), 0);
-    const joinedNames = updatedCourses.map(c => c.courseName).join(', ');
+    const joinedNames = updatedCourses.map(c => c.courseName).join(' & ');
+    const allRegs = updatedCourses.map(c => c.registerNumber).join(', ');
 
     setFormData(prev => ({
       ...prev,
       selectedCourses: updatedCourses,
       courseName: joinedNames,
-      feeAmount: `₹${totalFee}`
+      feeAmount: `₹${totalFee}`,
+      registerNumber: allRegs
     }));
   };
 
@@ -762,14 +770,15 @@ export default function AdmissionModal({
     if ((formData.selectedCourses || []).length <= 1) return;
     const updatedCourses = formData.selectedCourses.filter((_, idx) => idx !== indexToRemove);
     const totalFee = updatedCourses.reduce((sum, c) => sum + (c.fee || 450), 0);
-    const joinedNames = updatedCourses.map(c => c.courseName).join(', ');
+    const joinedNames = updatedCourses.map(c => c.courseName).join(' & ');
+    const allRegs = updatedCourses.map(c => c.registerNumber).join(', ');
 
     setFormData(prev => ({
       ...prev,
       selectedCourses: updatedCourses,
       courseName: joinedNames,
       feeAmount: `₹${totalFee}`,
-      registerNumber: generateRegisterNumber(updatedCourses[0]?.courseName || 'Abacus')
+      registerNumber: allRegs || generateRegisterNumber(updatedCourses[0]?.courseName || 'Abacus')
     }));
   };
 
@@ -778,27 +787,32 @@ export default function AdmissionModal({
     const newLevels = getLevelsForCourse(newProg, coursesList);
     const newFee = parseCourseFee(newProg, coursesList);
 
+    const otherRegs = (formData.selectedCourses || []).filter((_, idx) => idx !== index).map(c => c.registerNumber).filter(Boolean);
+    const newReg = generateRegisterNumber(newProg, otherRegs);
+
     const updatedCourses = (formData.selectedCourses || []).map((c, idx) => {
       if (idx === index) {
         return {
           ...c,
           courseName: newProg,
           level: newLevels[0] || 'Level 1',
-          fee: newFee
+          fee: newFee,
+          registerNumber: newReg
         };
       }
       return c;
     });
 
     const totalFee = updatedCourses.reduce((sum, c) => sum + (c.fee || 450), 0);
-    const joinedNames = updatedCourses.map(c => c.courseName).join(', ');
+    const joinedNames = updatedCourses.map(c => c.courseName).join(' & ');
+    const allRegs = updatedCourses.map(c => c.registerNumber).join(', ');
 
     setFormData(prev => ({
       ...prev,
       selectedCourses: updatedCourses,
       courseName: joinedNames,
       feeAmount: `₹${totalFee}`,
-      registerNumber: index === 0 ? generateRegisterNumber(newProg) : prev.registerNumber
+      registerNumber: allRegs
     }));
   };
 
@@ -1176,7 +1190,14 @@ export default function AdmissionModal({
                     {(formData.selectedCourses && formData.selectedCourses.length > 0 ? formData.selectedCourses : [{ courseName: formData.courseName, level: 'Level 1', fee: 450 }]).map((c, idx) => (
                       <div key={idx} className="bg-white border border-slate-200 rounded-lg p-2.5 flex items-center justify-between gap-2 shadow-2xs">
                         <div className="min-w-0">
-                          <p className="font-extrabold text-slate-900 text-xs truncate">{c.courseName}</p>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <p className="font-extrabold text-slate-900 text-xs truncate">{c.courseName}</p>
+                            {c.registerNumber && (
+                              <span className="px-1.5 py-0.2 rounded bg-amber-50 text-amber-900 border border-amber-200 font-mono font-bold text-[10px]">
+                                {c.registerNumber}
+                              </span>
+                            )}
+                          </div>
                           <span className="inline-block mt-0.5 text-[10px] font-bold text-sky-800 bg-sky-50 px-2 py-0.5 rounded border border-sky-200">
                             {c.level}
                           </span>

@@ -25,12 +25,38 @@ import {
   CreditCard,
   Layers,
 } from 'lucide-react';
+import { generateRegisterNumber } from '../../utils/authStorage';
 
 // Get profile information from the student object.
 const getProfileValues = (student = {}) => {
-  const selectedList = Array.isArray(student.selectedCourses) && student.selectedCourses.length > 0
+  const rawList = Array.isArray(student.selectedCourses) && student.selectedCourses.length > 0
     ? student.selectedCourses
-    : (Array.isArray(student.courses) ? student.courses : []);
+    : (Array.isArray(student.courses) && student.courses.length > 0 ? student.courses : []);
+
+  // Ensure each course has its unique official register number
+  const usedRegs = [];
+  const selectedList = rawList.map((c, idx) => {
+    let reg = c.registerNumber || c.registrationNo;
+    if (!reg || reg === 'Not provided' || usedRegs.includes(reg) || (idx > 0 && reg === rawList[0]?.registerNumber)) {
+      reg = generateRegisterNumber(c.courseName || c.name || 'Abacus', usedRegs);
+    }
+    usedRegs.push(reg);
+    return {
+      ...c,
+      registerNumber: reg,
+      registrationNo: reg,
+    };
+  });
+
+  const allRegNumbers = selectedList.length > 0
+    ? selectedList.map(c => c.registerNumber).filter(Boolean)
+    : (Array.isArray(student.registerNumbers) && student.registerNumbers.length > 0
+        ? student.registerNumbers
+        : (student.registerNumber || student.registrationNo ? [student.registerNumber || student.registrationNo] : []));
+
+  const derivedRegisterNumber = allRegNumbers.length > 0
+    ? allRegNumbers.join(', ')
+    : (student.registerNumber || student.registrationNo || '');
 
   const derivedCourseName = selectedList.length > 1
     ? selectedList.map(c => c.courseName || c.name).filter(Boolean).join(' & ')
@@ -42,7 +68,8 @@ const getProfileValues = (student = {}) => {
 
   return {
     date: student.date || student.enrollmentDate || student.enrolmentDate || '',
-    registerNumber: student.registerNumber || student.registrationNo || '',
+    registerNumber: derivedRegisterNumber,
+    registerNumbers: allRegNumbers,
     branch: student.branch || student.institution || student.studyCenter || 'Tenkasi',
     institution: student.institution || student.branch || student.studyCenter || 'Tenkasi',
     studyCenter: student.studyCenter || student.branch || student.institution || 'Tenkasi',
@@ -288,6 +315,12 @@ export default function StudentProfile({
     student?.registrationNo ||
     '';
 
+  const allRegNumbers = Array.isArray(form.selectedCourses) && form.selectedCourses.length > 0
+    ? form.selectedCourses.map((c) => c.registerNumber).filter(Boolean)
+    : (Array.isArray(student?.registerNumbers) && student.registerNumbers.length > 0
+        ? student.registerNumbers
+        : (registerNumber ? registerNumber.split(',').map((s) => s.trim()).filter(Boolean) : []));
+
   const handleChange = (event) => {
     const { name, value } = event.target;
 
@@ -386,6 +419,9 @@ export default function StudentProfile({
       enrollmentDate: student.enrollmentDate || student.date || form.date,
       registerNumber: student.registerNumber || form.registerNumber,
       registrationNo: student.registerNumber || student.registrationNo || form.registerNumber,
+      registerNumbers: (Array.isArray(student.registerNumbers) && student.registerNumbers.length > 0)
+        ? student.registerNumbers
+        : allRegNumbers,
       courseName: student.courseName || form.courseName,
       program: student.program || student.courseName || form.courseName,
       course: student.course || student.courseName || form.courseName,
@@ -396,9 +432,9 @@ export default function StudentProfile({
       branch: student.branch || form.branch,
       institution: student.institution || form.institution,
       studyCenter: student.studyCenter || form.studyCenter,
-      selectedCourses: (student.selectedCourses && student.selectedCourses.length > 0)
-        ? student.selectedCourses
-        : form.selectedCourses,
+      selectedCourses: (form.selectedCourses && form.selectedCourses.length > 0)
+        ? form.selectedCourses
+        : (student.selectedCourses || []),
       name: student.name || form.name,
       studentName: student.studentName || student.name || form.name,
       parentName: student.parentName || student.fatherName || form.parentName,
@@ -529,11 +565,20 @@ export default function StudentProfile({
                   <p className="text-xs font-bold uppercase tracking-wider text-blue-200">
                     Student Profile
                   </p>
-                  {registerNumber && (
+                  {allRegNumbers.length > 1 ? (
+                    allRegNumbers.map((reg, idx) => (
+                      <span
+                        key={idx}
+                        className="inline-flex items-center gap-1 rounded-md bg-amber-400/20 px-2 py-0.5 text-[11px] font-mono font-black text-amber-300 border border-amber-300/30"
+                      >
+                        REG {idx + 1}: {reg}
+                      </span>
+                    ))
+                  ) : registerNumber ? (
                     <span className="inline-flex items-center gap-1 rounded-md bg-amber-400/20 px-2 py-0.5 text-[11px] font-mono font-black text-amber-300 border border-amber-300/30">
                       REG: {registerNumber}
                     </span>
-                  )}
+                  ) : null}
                 </div>
 
                 <h3 className="mt-1 break-words text-xl text-white font-black sm:text-2xl">
@@ -568,7 +613,7 @@ export default function StudentProfile({
               <div className="flex flex-col gap-2 sm:min-w-80">
                 <span className="text-[10px] text-amber-300 font-extrabold uppercase tracking-wider flex items-center gap-1.5">
                   <GraduationCap className="h-3.5 w-3.5" />
-                  <span>Enrolled Courses ({form.selectedCourses.length})</span>
+                  <span>Enrolled Courses & Register Nos. ({form.selectedCourses.length})</span>
                 </span>
                 <div className="flex flex-col gap-2">
                   {form.selectedCourses.map((c, idx) => (
@@ -577,10 +622,15 @@ export default function StudentProfile({
                       className="rounded-xl border border-white/15 bg-white/10 p-2.5 backdrop-blur-xs flex items-center justify-between gap-3 shadow-2xs"
                     >
                       <div className="min-w-0 flex-1">
-                        <span className="text-[9.5px] text-blue-200 font-bold block uppercase tracking-wide">
-                          Course {idx + 1}
-                        </span>
-                        <p className="text-xs sm:text-sm font-black text-white truncate">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-[9.5px] text-blue-200 font-bold uppercase tracking-wide">
+                            Course {idx + 1}
+                          </span>
+                          <span className="rounded bg-amber-400/25 px-1.5 py-0.2 text-[10px] font-mono font-black text-amber-300 border border-amber-300/40">
+                            REG: {c.registerNumber || allRegNumbers[idx] || registerNumber}
+                          </span>
+                        </div>
+                        <p className="text-xs sm:text-sm font-black text-white truncate mt-0.5">
                           {c.courseName || c.name}
                         </p>
                       </div>
@@ -636,11 +686,24 @@ export default function StudentProfile({
 
             <div className="min-w-0">
               <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
-                Register No.
+                {allRegNumbers.length > 1 ? `${allRegNumbers.length} Register Nos.` : 'Register No.'}
               </p>
-              <p className="mt-1 break-words text-xs font-mono font-bold text-slate-800 sm:text-sm">
-                {displayValue(registerNumber)}
-              </p>
+              {allRegNumbers.length > 1 ? (
+                <div className="mt-1 flex flex-wrap gap-1.5">
+                  {allRegNumbers.map((reg, idx) => (
+                    <span
+                      key={idx}
+                      className="inline-block rounded-md bg-blue-50 px-2 py-0.5 text-xs font-mono font-extrabold text-blue-950 border border-blue-200"
+                    >
+                      {reg}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-1 break-words text-xs font-mono font-bold text-slate-800 sm:text-sm">
+                  {displayValue(registerNumber)}
+                </p>
+              )}
             </div>
           </div>
 
@@ -743,7 +806,7 @@ export default function StudentProfile({
           />
 
           <ProfileField
-            label="Official Register No."
+            label={allRegNumbers.length > 1 ? "Official Register Nos." : "Official Register No."}
             name="registerNumber"
             value={registerNumber}
             icon={Hash}
@@ -772,25 +835,48 @@ export default function StudentProfile({
           {Array.isArray(form.selectedCourses) && form.selectedCourses.length > 1 ? (
             <>
               {form.selectedCourses.map((c, idx) => (
-                <React.Fragment key={idx}>
-                  <ProfileField
-                    label={`Course ${idx + 1} Name`}
-                    name={`courseName_${idx}`}
-                    value={c.courseName || c.name}
-                    icon={BookOpen}
-                    readOnly
-                    isLocked
-                  />
+                <div
+                  key={idx}
+                  className="sm:col-span-2 rounded-xl border border-slate-200 bg-slate-50/70 p-4 space-y-3.5"
+                >
+                  <div className="flex items-center justify-between border-b border-slate-200 pb-2.5">
+                    <span className="text-xs font-black uppercase tracking-wider text-blue-950 flex items-center gap-1.5">
+                      <GraduationCap className="h-4 w-4 text-blue-900" />
+                      Course {idx + 1}: {c.courseName || c.name}
+                    </span>
+                    <span className="inline-flex items-center gap-1 rounded-md bg-amber-100 text-amber-900 px-2.5 py-0.5 font-mono text-xs font-black border border-amber-300">
+                      <Hash className="h-3 w-3" />
+                      {c.registerNumber || allRegNumbers[idx] || registerNumber}
+                    </span>
+                  </div>
 
-                  <ProfileField
-                    label={`Course ${idx + 1} Level`}
-                    name={`courseLevel_${idx}`}
-                    value={c.level || 'Level 1'}
-                    icon={GraduationCap}
-                    readOnly
-                    isLocked
-                  />
-                </React.Fragment>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                    <ProfileField
+                      label={`Course ${idx + 1} Official Register No.`}
+                      name={`courseReg_${idx}`}
+                      value={c.registerNumber || allRegNumbers[idx] || registerNumber}
+                      icon={Hash}
+                      readOnly
+                      isLocked
+                    />
+                    <ProfileField
+                      label={`Course ${idx + 1} Name`}
+                      name={`courseName_${idx}`}
+                      value={c.courseName || c.name}
+                      icon={BookOpen}
+                      readOnly
+                      isLocked
+                    />
+                    <ProfileField
+                      label={`Course ${idx + 1} Level`}
+                      name={`courseLevel_${idx}`}
+                      value={c.level || 'Level 1'}
+                      icon={GraduationCap}
+                      readOnly
+                      isLocked
+                    />
+                  </div>
+                </div>
               ))}
             </>
           ) : (
@@ -834,7 +920,12 @@ export default function StudentProfile({
               <div className="space-y-1.5">
                 {form.selectedCourses.map((c, idx) => (
                   <div key={idx} className="flex items-center justify-between rounded-lg bg-white px-3 py-2 border border-slate-200 text-xs">
-                    <span className="font-bold text-slate-800">{c.courseName || c.name}</span>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-bold text-slate-800">{c.courseName || c.name}</span>
+                      <span className="px-2 py-0.5 rounded bg-amber-50 text-amber-900 border border-amber-200 font-mono font-bold text-[11px]">
+                        REG: {c.registerNumber || allRegNumbers[idx] || registerNumber}
+                      </span>
+                    </div>
                     <div className="flex items-center gap-2">
                       <span className="px-2 py-0.5 rounded bg-blue-100 text-blue-900 font-bold text-[11px]">{c.level || form.courseLevel}</span>
                       {c.fee && <span className="font-mono text-emerald-700 font-black">₹{String(c.fee).replace(/\D/g, '')}</span>}

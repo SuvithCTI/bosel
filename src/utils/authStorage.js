@@ -292,28 +292,51 @@ export const getCoursePrefix = (courseName = '') => {
   return 'AB';
 };
 
-export const generateRegisterNumber = (courseName = '') => {
+export const generateRegisterNumber = (courseName = '', existingUsed = []) => {
   const prefix = getCoursePrefix(courseName);
   const currentYear = new Date().getFullYear();
   const year2Digit = String(currentYear).slice(-2); // e.g. "26" in 2026, "27" in 2027
 
   let maxSerial = 0;
+  const regPattern = new RegExp(`^${prefix}${year2Digit}-(\\d+)`, 'i');
+
+  if (Array.isArray(existingUsed)) {
+    existingUsed.forEach((r) => {
+      const match = String(r).match(regPattern);
+      if (match && match[1]) {
+        const num = parseInt(match[1], 10);
+        if (!isNaN(num) && num > maxSerial) {
+          maxSerial = num;
+        }
+      }
+    });
+  }
+
   if (typeof window !== 'undefined') {
     try {
       const raw = localStorage.getItem('bsel_registered_users');
       if (raw) {
         const users = JSON.parse(raw);
         if (Array.isArray(users)) {
-          const regPattern = new RegExp(`^${prefix}${year2Digit}-(\\d+)`, 'i');
           users.forEach((u) => {
-            const regNo = u.registerNumber || u.registrationNo || '';
-            const match = regNo.match(regPattern);
-            if (match && match[1]) {
-              const num = parseInt(match[1], 10);
-              if (!isNaN(num) && num > maxSerial) {
-                maxSerial = num;
-              }
-            }
+            const regList = [
+              u.registerNumber,
+              u.registrationNo,
+              ...(Array.isArray(u.selectedCourses) ? u.selectedCourses.map(c => c.registerNumber) : []),
+              ...(Array.isArray(u.courses) ? u.courses.map(c => c.registerNumber) : [])
+            ].filter(Boolean);
+
+            regList.forEach(regNo => {
+              String(regNo).split(',').forEach(singleReg => {
+                const match = singleReg.trim().match(regPattern);
+                if (match && match[1]) {
+                  const num = parseInt(match[1], 10);
+                  if (!isNaN(num) && num > maxSerial) {
+                    maxSerial = num;
+                  }
+                }
+              });
+            });
           });
         }
       }
@@ -406,21 +429,40 @@ export const registerStudentAccount = (formData) => {
   const combinedCourseNames = selectedCourses.map(c => c.courseName || c.name).filter(Boolean).join(' & ');
   const combinedLevels = selectedCourses.map(c => `${c.courseName || c.name}: ${c.level || 'Level 1'}`).join(' | ');
 
+  const usedRegs = [];
+  const enrichedSelectedCourses = selectedCourses.map((c, idx) => {
+    let regNo = c.registerNumber || c.registrationNo;
+    if (!regNo || regNo === 'Not provided' || usedRegs.includes(regNo) || (idx > 0 && regNo === selectedCourses[0]?.registerNumber)) {
+      regNo = generateRegisterNumber(c.courseName || c.name || 'Abacus', usedRegs);
+    }
+    usedRegs.push(regNo);
+    return {
+      ...c,
+      registerNumber: regNo,
+      registrationNo: regNo
+    };
+  });
+
+  const allRegNumbers = enrichedSelectedCourses.map(c => c.registerNumber);
+  const combinedRegNo = allRegNumbers.join(', ');
+  const primaryRegNo = allRegNumbers[0] || 'AB26-001';
+
   const certSuffix = cleanMobile.slice(-4);
-  const officialRegNo = formData.registerNumber || generateRegisterNumber(primaryCourse);
+  const officialRegNo = combinedRegNo;
 
   const studentFullName = (formData.studentName || formData.name || '').trim();
 
   // Build events & results for each enrolled course
-  const generatedEvents = selectedCourses.map((c, idx) => ({
+  const generatedEvents = enrichedSelectedCourses.map((c, idx) => ({
     name: `Annual State ${c.courseName} Assessment 2026`,
     date: '28 Nov 2026',
     status: 'Enrolment Confirmed',
     level: c.level || 'Level 1',
+    registerNumber: c.registerNumber,
     seat: `Hall ${['A', 'B', 'C'][idx % 3]} / Seat ${Math.floor(10 + Math.random() * 80)}`
   }));
 
-  const generatedResults = selectedCourses.map((c, idx) => {
+  const generatedResults = enrichedSelectedCourses.map((c, idx) => {
     const code = (c.courseName || 'BSEL')
       .replace(/[^A-Za-z]/g, '')
       .substring(0, 4)
@@ -430,6 +472,8 @@ export const registerStudentAccount = (formData) => {
       score: 'Enrolled & Verified',
       rank: 'Admitted',
       level: c.level || 'Level 1',
+      registerNumber: c.registerNumber,
+      registrationNo: c.registerNumber,
       certificateNo: `BSEL-${code}-2026-${certSuffix}-${idx + 1}`
     };
   });
@@ -439,6 +483,8 @@ export const registerStudentAccount = (formData) => {
     password: newPassword,
     registerNumber: officialRegNo,
     registrationNo: officialRegNo,
+    registerNumbers: allRegNumbers,
+    primaryRegisterNumber: primaryRegNo,
     studentName: studentFullName,
     name: studentFullName,
     parentName: (formData.parentName || formData.fatherName || '').trim(),
@@ -447,14 +493,14 @@ export const registerStudentAccount = (formData) => {
     phone: cleanMobile,
     alternatePhone: (formData.alternatePhone || '').trim(),
     alternativePhone: (formData.alternatePhone || '').trim(),
-    grade: selectedCourses.length === 1 ? selectedCourses[0].level : combinedLevels,
-    selectedCourses: selectedCourses,
-    courses: selectedCourses,
+    grade: enrichedSelectedCourses.length === 1 ? enrichedSelectedCourses[0].level : combinedLevels,
+    selectedCourses: enrichedSelectedCourses,
+    courses: enrichedSelectedCourses,
     program: combinedCourseNames,
     courseName: combinedCourseNames,
     course: combinedCourseNames,
-    courseLevel: selectedCourses.length === 1 ? (selectedCourses[0]?.level || 'Level 1') : combinedLevels,
-    level: selectedCourses.length === 1 ? (selectedCourses[0]?.level || 'Level 1') : combinedLevels,
+    courseLevel: enrichedSelectedCourses.length === 1 ? (enrichedSelectedCourses[0]?.level || 'Level 1') : combinedLevels,
+    level: enrichedSelectedCourses.length === 1 ? (enrichedSelectedCourses[0]?.level || 'Level 1') : combinedLevels,
     courseDuration: '6 Months',
     duration: '6 Months',
     branch: studentBranch,

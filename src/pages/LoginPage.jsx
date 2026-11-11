@@ -54,6 +54,9 @@ const loadSavedProfile = (student) => {
         // Registration & Admission official data
         registerNumber: student.registerNumber || parsed.registerNumber,
         registrationNo: student.registerNumber || parsed.registerNumber || parsed.registrationNo,
+        registerNumbers: (Array.isArray(student.registerNumbers) && student.registerNumbers.length > 0)
+          ? student.registerNumbers
+          : (Array.isArray(parsed.registerNumbers) ? parsed.registerNumbers : []),
         date: student.date || parsed.date || parsed.enrolmentDate,
         enrolmentDate: student.enrolmentDate || parsed.enrolmentDate || student.date,
         branch: student.branch || parsed.branch,
@@ -170,6 +173,7 @@ const normalizeStudent = (user) => {
     fatherName: user.parentName || user.fatherName || '',
     registerNumber: user.registerNumber || user.registrationNo || '',
     registrationNo: user.registerNumber || user.registrationNo || '',
+    registerNumbers: Array.isArray(user.registerNumbers) ? user.registerNumbers : [],
     dob: user.dob || user.dateOfBirth || '',
     dateOfBirth: user.dob || user.dateOfBirth || '',
     date: user.date || user.enrolmentDate || '',
