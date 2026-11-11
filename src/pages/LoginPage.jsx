@@ -40,14 +40,50 @@ const loadSavedProfile = (student) => {
     const saved = localStorage.getItem(key);
 
     if (saved) {
+      const parsed = JSON.parse(saved);
       return {
         ...student,
-        ...JSON.parse(saved),
+        ...parsed,
 
-        // Preserve authenticated account identity.
+        // Preserve authenticated account identity & immutable official admission data
         id: student.id || student.userId,
         userId: student.userId || student.id,
-        role: student.role,
+        role: student.role || 'Student',
+
+        // Registration & Admission official data
+        registerNumber: student.registerNumber || parsed.registerNumber,
+        registrationNo: student.registerNumber || parsed.registerNumber || parsed.registrationNo,
+        date: student.date || parsed.date || parsed.enrolmentDate,
+        enrolmentDate: student.enrolmentDate || parsed.enrolmentDate || student.date,
+        branch: student.branch || parsed.branch,
+        institution: student.institution || parsed.institution,
+        studyCenter: student.studyCenter || parsed.studyCenter || student.branch,
+
+        // Course details
+        courseName: student.courseName || parsed.courseName || student.course || parsed.course,
+        course: student.course || parsed.course || student.courseName || parsed.courseName,
+        program: student.program || parsed.program || student.courseName || parsed.courseName,
+        courseLevel: student.courseLevel || parsed.courseLevel || student.level || parsed.level,
+        level: student.level || parsed.level || student.courseLevel || parsed.courseLevel,
+        courseDuration: student.courseDuration || parsed.courseDuration || student.duration || parsed.duration || '6 Months',
+        duration: student.duration || parsed.duration || student.courseDuration || '6 Months',
+        selectedCourses: (student.selectedCourses && student.selectedCourses.length > 0) ? student.selectedCourses : (parsed.selectedCourses || []),
+
+        // Official student identity
+        name: student.name || parsed.name || student.studentName,
+        studentName: student.studentName || parsed.studentName || student.name,
+        parentName: student.parentName || parsed.parentName || student.fatherName || parsed.fatherName,
+        fatherName: student.fatherName || parsed.fatherName || student.parentName || parsed.parentName,
+        dateOfBirth: student.dateOfBirth || parsed.dateOfBirth || student.dob || parsed.dob,
+        dob: student.dob || parsed.dob || student.dateOfBirth || parsed.dateOfBirth,
+        gender: student.gender || parsed.gender,
+        aadhaarNumber: student.aadhaarNumber || parsed.aadhaarNumber || student.aadharNumber || parsed.aadharNumber,
+        aadharNumber: student.aadharNumber || parsed.aadharNumber || student.aadhaarNumber || parsed.aadhaarNumber,
+        studentClass: student.studentClass || parsed.studentClass,
+        studentStage: student.studentStage || parsed.studentStage,
+        feeAmount: student.feeAmount || parsed.feeAmount,
+        paymentMode: student.paymentMode || parsed.paymentMode,
+        receiptRefNo: student.receiptRefNo || parsed.receiptRefNo,
       };
     }
   } catch (error) {
@@ -64,16 +100,52 @@ const loadSavedProfile = (student) => {
 // Normalize student information
 // -------------------------------------------------------
 const normalizeStudent = (user) => {
+  const studentCourse =
+    user.courseName ||
+    user.program ||
+    user.course ||
+    (Array.isArray(user.selectedCourses) && user.selectedCourses.length > 0
+      ? user.selectedCourses.map((c) => c.courseName || c.name).join(', ')
+      : '') ||
+    'Abacus Speed Math (Level 4) & Fine Arts';
+
   const student = {
     ...user,
     name: user.studentName || user.name || 'Student',
+    studentName: user.studentName || user.name || 'Student',
     id: user.userId || user.id,
     userId: user.userId || user.id,
 
-    course:
-      user.program ||
-      user.course ||
-      'Abacus Speed Math (Level 4) & Fine Arts',
+    course: studentCourse,
+    courseName: studentCourse,
+    program: studentCourse,
+    courseLevel: user.courseLevel || user.level || user.grade || 'Level 1',
+    level: user.level || user.courseLevel || user.grade || 'Level 1',
+    courseDuration: user.courseDuration || user.duration || '6 Months',
+    duration: user.duration || user.courseDuration || '6 Months',
+
+    branch: user.branch || user.institution || user.studyCenter || 'Tenkasi',
+    institution: user.institution || user.branch || user.studyCenter || 'Tenkasi',
+    studyCenter: user.studyCenter || user.branch || user.institution || 'Tenkasi',
+
+    parentName: user.parentName || user.fatherName || '',
+    fatherName: user.parentName || user.fatherName || '',
+    registerNumber: user.registerNumber || user.registrationNo || '',
+    registrationNo: user.registerNumber || user.registrationNo || '',
+    dob: user.dob || user.dateOfBirth || '',
+    dateOfBirth: user.dob || user.dateOfBirth || '',
+    date: user.date || user.enrolmentDate || '',
+    studentClass: user.studentClass || '',
+    studentStage: user.studentStage || '',
+    gender: user.gender || 'Male',
+    aadhaarNumber: user.aadhaarNumber || user.aadharNumber || '',
+    aadharNumber: user.aadhaarNumber || user.aadharNumber || '',
+    studentPhoto: user.studentPhoto || user.photoUrl || user.photoURL || user.profilePhoto || null,
+    photoUrl: user.studentPhoto || user.photoUrl || user.photoURL || user.profilePhoto || null,
+    feeAmount: user.feeAmount || '',
+    paymentMode: user.paymentMode || '',
+    receiptRefNo: user.receiptRefNo || '',
+    selectedCourses: Array.isArray(user.selectedCourses) ? user.selectedCourses : (Array.isArray(user.courses) ? user.courses : []),
 
     events: Array.isArray(user.events) ? user.events : [],
     results: Array.isArray(user.results) ? user.results : [],
@@ -275,36 +347,74 @@ export default function LoginPage({
       throw new Error('Unable to identify the student account.');
     }
 
-    // Preserve account identity and role.
+    // Preserve account identity, official registration, and course details
     const safeUpdatedStudent = {
       ...currentUser,
       ...updatedStudent,
       id: currentUser.id || studentId,
       userId: currentUser.userId || studentId,
-      role: currentUser.role,
+      role: currentUser.role || 'Student',
+
+      // Keep official admission fields completely untampered:
+      registerNumber: currentUser.registerNumber || updatedStudent.registerNumber,
+      registrationNo: currentUser.registerNumber || updatedStudent.registerNumber,
+      course: currentUser.course || updatedStudent.course,
+      courseName: currentUser.courseName || updatedStudent.courseName,
+      program: currentUser.program || updatedStudent.program,
+      courseLevel: currentUser.courseLevel || updatedStudent.courseLevel,
+      level: currentUser.level || updatedStudent.level,
+      courseDuration: currentUser.courseDuration || updatedStudent.courseDuration,
+      duration: currentUser.duration || updatedStudent.duration,
+      branch: currentUser.branch || updatedStudent.branch,
+      institution: currentUser.institution || updatedStudent.institution,
+      studyCenter: currentUser.studyCenter || updatedStudent.studyCenter,
+      date: currentUser.date || updatedStudent.date,
+      enrolmentDate: currentUser.enrolmentDate || updatedStudent.enrolmentDate,
+      selectedCourses: currentUser.selectedCourses || updatedStudent.selectedCourses,
+      name: currentUser.name || updatedStudent.name,
+      studentName: currentUser.studentName || updatedStudent.studentName,
+      parentName: currentUser.parentName || updatedStudent.parentName,
+      fatherName: currentUser.fatherName || updatedStudent.fatherName,
+      dob: currentUser.dob || updatedStudent.dob,
+      dateOfBirth: currentUser.dateOfBirth || updatedStudent.dateOfBirth,
+      gender: currentUser.gender || updatedStudent.gender,
+      aadhaarNumber: currentUser.aadhaarNumber || updatedStudent.aadhaarNumber,
+      aadharNumber: currentUser.aadhaarNumber || updatedStudent.aadhaarNumber,
+      feeAmount: currentUser.feeAmount || updatedStudent.feeAmount,
+      paymentMode: currentUser.paymentMode || updatedStudent.paymentMode,
+      receiptRefNo: currentUser.receiptRefNo || updatedStudent.receiptRefNo,
     };
 
     const storageKey = getStudentStorageKey(safeUpdatedStudent);
-
-    const editableProfile = {
-      ...safeUpdatedStudent,
-      name: safeUpdatedStudent.name,
-      studentName:
-        safeUpdatedStudent.studentName ||
-        safeUpdatedStudent.name,
-      parentName: safeUpdatedStudent.parentName || '',
-      phone: safeUpdatedStudent.phone || '',
-      email: safeUpdatedStudent.email || '',
-      grade: safeUpdatedStudent.grade || '',
-      institution: safeUpdatedStudent.institution || '',
-    };
 
     try {
       // 1. Save the editable profile locally for instant responsiveness
       localStorage.setItem(
         storageKey,
-        JSON.stringify(editableProfile)
+        JSON.stringify(safeUpdatedStudent)
       );
+
+      // Also sync into bsel_registered_users
+      try {
+        const rawUsers = localStorage.getItem('bsel_registered_users');
+        if (rawUsers) {
+          const userList = JSON.parse(rawUsers);
+          if (Array.isArray(userList)) {
+            const updatedList = userList.map((u) => {
+              if (
+                (u.userId && u.userId.toLowerCase() === studentId.toLowerCase()) ||
+                (u.phone && safeUpdatedStudent.phone && u.phone.replace(/\D/g, '') === safeUpdatedStudent.phone.replace(/\D/g, ''))
+              ) {
+                return { ...u, ...safeUpdatedStudent };
+              }
+              return u;
+            });
+            localStorage.setItem('bsel_registered_users', JSON.stringify(updatedList));
+          }
+        }
+      } catch (listErr) {
+        console.warn('Failed to sync student update into registered users list:', listErr);
+      }
 
       // Update the authenticated session.
       setActiveSession(safeUpdatedStudent);

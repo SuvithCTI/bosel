@@ -20,41 +20,62 @@ import {
   ImagePlus,
   Hash,
   CalendarClock,
+  Lock,
+  Receipt,
+  CreditCard,
+  Layers,
 } from 'lucide-react';
 
 // Get profile information from the student object.
-const getProfileValues = (student = {}) => ({
-  date: student.date || student.enrollmentDate || '',
-  branch: student.branch || '',
-  studyCenter: student.studyCenter || student.centerName || '',
-  courseName: student.courseName || student.program || student.course || '',
-  courseLevel: student.courseLevel || student.level || '',
-  courseDuration: student.courseDuration || student.duration || '',
+const getProfileValues = (student = {}) => {
+  const selectedList = Array.isArray(student.selectedCourses) && student.selectedCourses.length > 0
+    ? student.selectedCourses
+    : (Array.isArray(student.courses) ? student.courses : []);
 
-  name: student.name || student.studentName || '',
-  dateOfBirth: student.dateOfBirth || student.dob || '',
-  age: student.age ?? '',
-  gender: student.gender || '',
-  phone: student.phone || '',
-  alternatePhone: student.alternatePhone || student.alternativePhone || '',
+  return {
+    date: student.date || student.enrollmentDate || student.enrolmentDate || '',
+    registerNumber: student.registerNumber || student.registrationNo || '',
+    branch: student.branch || student.institution || student.studyCenter || 'Tenkasi',
+    institution: student.institution || student.branch || student.studyCenter || 'Tenkasi',
+    studyCenter: student.studyCenter || student.branch || student.institution || 'Tenkasi',
+    courseName: student.courseName || student.program || student.course || '',
+    courseLevel: student.courseLevel || student.level || student.grade || 'Level 1',
+    courseDuration: student.courseDuration || student.duration || '6 Months',
+    selectedCourses: selectedList,
 
-  address: student.address || '',
-  village: student.village || '',
-  city: student.city || '',
-  district: student.district || '',
-  pincode: student.pincode || student.pinCode || '',
+    name: student.name || student.studentName || '',
+    parentName: student.parentName || student.fatherName || '',
+    fatherName: student.parentName || student.fatherName || '',
+    dateOfBirth: student.dateOfBirth || student.dob || '',
+    age: student.age ?? '',
+    gender: student.gender || '',
+    studentClass: student.studentClass || '',
+    studentStage: student.studentStage || '',
+    phone: student.phone || '',
+    alternatePhone: student.alternatePhone || student.alternativePhone || '',
 
-  aadhaarNumber:
-    student.aadhaarNumber || student.aadharNumber || '',
+    address: student.address || '',
+    village: student.village || '',
+    city: student.city || '',
+    district: student.district || '',
+    pincode: student.pincode || student.pinCode || '',
 
-  studentPhoto:
-    student.studentPhoto ||
-    student.photoURL ||
-    student.photoUrl ||
-    student.profilePhoto ||
-    student.photo ||
-    '',
-});
+    aadhaarNumber: student.aadhaarNumber || student.aadharNumber || '',
+
+    feePaymentType: student.feePaymentType || 'Pay Now',
+    feeAmount: student.feeAmount || '',
+    paymentMode: student.paymentMode || '',
+    receiptRefNo: student.receiptRefNo || '',
+
+    studentPhoto:
+      student.studentPhoto ||
+      student.photoURL ||
+      student.photoUrl ||
+      student.profilePhoto ||
+      student.photo ||
+      '',
+  };
+};
 
 const displayValue = (value) => {
   if (value === null || value === undefined || value === '') {
@@ -109,34 +130,47 @@ function ProfileField({
   icon: Icon,
   type = 'text',
   readOnly = false,
+  isLocked = false,
   options,
   placeholder,
   maxLength,
   inputMode,
 }) {
-  const fieldClass = `w-full min-w-0 rounded-xl border bg-white py-3 text-sm outline-none transition ${
+  const isFieldDisabled = readOnly || isLocked;
+
+  const fieldClass = `w-full min-w-0 rounded-xl border py-3 text-sm outline-none transition ${
     Icon ? 'pl-10' : 'px-4'
-  } pr-4 ${
-    readOnly
-      ? 'cursor-default border-slate-200 bg-slate-50 text-slate-600'
-      : 'border-slate-200 text-slate-900 focus:border-blue-800 focus:ring-2 focus:ring-blue-100'
+  } ${
+    isLocked
+      ? 'pr-9 border-slate-200 bg-slate-100/80 text-slate-700 cursor-not-allowed font-medium'
+      : readOnly
+      ? 'pr-4 border-slate-200 bg-slate-50 text-slate-600 cursor-default'
+      : 'pr-4 border-slate-300 bg-white text-slate-900 focus:border-blue-800 focus:ring-2 focus:ring-blue-100'
   }`;
 
   return (
     <div className="min-w-0">
-      <label
-        htmlFor={name}
-        className="mb-2 block text-xs font-bold text-slate-700"
-      >
-        {label}
-      </label>
+      <div className="mb-1.5 flex items-center justify-between">
+        <label
+          htmlFor={name}
+          className="block text-xs font-bold text-slate-700"
+        >
+          {label}
+        </label>
+        {isLocked && (
+          <span className="inline-flex items-center gap-1 rounded bg-slate-200/90 px-1.5 py-0.5 text-[10px] font-bold text-slate-600">
+            <Lock className="h-2.5 w-2.5" />
+            Locked
+          </span>
+        )}
+      </div>
 
       <div className="relative">
         {Icon && (
           <Icon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
         )}
 
-        {options && !readOnly ? (
+        {options && !isFieldDisabled ? (
           <select
             id={name}
             name={name}
@@ -159,7 +193,7 @@ function ProfileField({
             type={type}
             value={value ?? ''}
             onChange={onChange}
-            readOnly={readOnly}
+            readOnly={isFieldDisabled}
             placeholder={
               placeholder || `Enter ${label.toLowerCase()}`
             }
@@ -168,26 +202,35 @@ function ProfileField({
             className={fieldClass}
           />
         )}
+
+        {isLocked && (
+          <Lock className="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+        )}
       </div>
     </div>
   );
 }
 
-function SectionHeading({ icon: Icon, title, description }) {
+function SectionHeading({ icon: Icon, title, description, badge }) {
   return (
-    <div className="mb-5 flex items-start gap-3">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-900">
-        <Icon className="h-5 w-5" />
-      </div>
+    <div className="mb-5 flex items-start justify-between gap-3">
+      <div className="flex items-start gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-900">
+          <Icon className="h-5 w-5" />
+        </div>
 
-      <div className="min-w-0">
-        <h3 className="text-base font-extrabold text-blue-950 sm:text-lg">
-          {title}
-        </h3>
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <h3 className="text-base font-extrabold text-blue-950 sm:text-lg">
+              {title}
+            </h3>
+            {badge}
+          </div>
 
-        <p className="mt-1 text-xs leading-5 text-slate-500 sm:text-sm">
-          {description}
-        </p>
+          <p className="mt-1 text-xs leading-5 text-slate-500 sm:text-sm">
+            {description}
+          </p>
+        </div>
       </div>
     </div>
   );
@@ -197,6 +240,7 @@ function ProfileSection({
   icon,
   title,
   description,
+  badge,
   children,
 }) {
   return (
@@ -205,30 +249,13 @@ function ProfileSection({
         icon={icon}
         title={title}
         description={description}
+        badge={badge}
       />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5">
         {children}
       </div>
     </section>
-  );
-}
-
-function DetailItem({ icon: Icon, label, value }) {
-  return (
-    <div className="flex min-w-0 items-start gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3 sm:p-4">
-      <Icon className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
-
-      <div className="min-w-0 flex-1">
-        <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
-          {label}
-        </p>
-
-        <p className="mt-1 break-words text-sm font-semibold text-slate-800">
-          {displayValue(value)}
-        </p>
-      </div>
-    </div>
   );
 }
 
@@ -250,9 +277,15 @@ export default function StudentProfile({
   }, [student]);
 
   const studentId =
-    student?.id ||
     student?.userId ||
+    student?.id ||
     student?.studentId ||
+    '';
+
+  const registerNumber =
+    form.registerNumber ||
+    student?.registerNumber ||
+    student?.registrationNo ||
     '';
 
   const handleChange = (event) => {
@@ -264,7 +297,7 @@ export default function StudentProfile({
         [name]: value,
       };
 
-      // Update age automatically when the date of birth changes.
+      // Update age automatically when dateOfBirth changes
       if (name === 'dateOfBirth') {
         updated.age = calculateAge(value);
       }
@@ -276,7 +309,7 @@ export default function StudentProfile({
     setError('');
   };
 
-  // Convert the selected photo into a previewable data URL.
+  // Convert selected photo into data URL
   const handlePhotoChange = (event) => {
     const file = event.target.files?.[0];
 
@@ -291,7 +324,6 @@ export default function StudentProfile({
       return;
     }
 
-    // Keep uploads reasonably small for a profile image.
     if (file.size > 2 * 1024 * 1024) {
       setError('Please select a photo smaller than 2 MB.');
       event.target.value = '';
@@ -320,30 +352,7 @@ export default function StudentProfile({
     setError('');
     setSaved(false);
 
-    if (!form.name.trim()) {
-      setError('Please enter the student name.');
-      return;
-    }
-
-    if (
-      form.dateOfBirth &&
-      !calculateAge(form.dateOfBirth)
-    ) {
-      setError('Please enter a valid date of birth.');
-      return;
-    }
-
-    if (form.age !== '' && Number(form.age) < 0) {
-      setError('Please enter a valid age.');
-      return;
-    }
-
     const phonePattern = /^[0-9+\-\s()]{7,20}$/;
-
-    if (form.phone && !phonePattern.test(form.phone)) {
-      setError('Please enter a valid phone number.');
-      return;
-    }
 
     if (
       form.alternatePhone &&
@@ -360,19 +369,6 @@ export default function StudentProfile({
       return;
     }
 
-    const aadhaarDigits = String(form.aadhaarNumber).replace(
-      /\D/g,
-      ''
-    );
-
-    if (
-      form.aadhaarNumber &&
-      !/^\d{12}$/.test(aadhaarDigits)
-    ) {
-      setError('Aadhaar number must contain exactly 12 digits.');
-      return;
-    }
-
     if (typeof onUpdateStudent !== 'function') {
       setError(
         'Profile updates are not connected. Please contact the administrator.'
@@ -380,45 +376,57 @@ export default function StudentProfile({
       return;
     }
 
+    // STRICT GUARANTEE: Keep all official admission and course fields locked
+    // Only update student-managed contact and address fields
     const updatedStudent = {
       ...student,
-      ...form,
+      // Retain official admission & academic values
+      date: student.date || form.date,
+      enrolmentDate: student.enrolmentDate || student.date || form.date,
+      enrollmentDate: student.enrollmentDate || student.date || form.date,
+      registerNumber: student.registerNumber || form.registerNumber,
+      registrationNo: student.registerNumber || student.registrationNo || form.registerNumber,
+      courseName: student.courseName || form.courseName,
+      program: student.program || student.courseName || form.courseName,
+      course: student.course || student.courseName || form.courseName,
+      courseLevel: student.courseLevel || form.courseLevel,
+      level: student.level || student.courseLevel || form.courseLevel,
+      courseDuration: student.courseDuration || form.courseDuration,
+      duration: student.duration || student.courseDuration || form.courseDuration,
+      branch: student.branch || form.branch,
+      institution: student.institution || form.institution,
+      studyCenter: student.studyCenter || form.studyCenter,
+      selectedCourses: (student.selectedCourses && student.selectedCourses.length > 0)
+        ? student.selectedCourses
+        : form.selectedCourses,
+      name: student.name || form.name,
+      studentName: student.studentName || student.name || form.name,
+      parentName: student.parentName || student.fatherName || form.parentName,
+      fatherName: student.fatherName || student.parentName || form.parentName,
+      dateOfBirth: student.dateOfBirth || student.dob || form.dateOfBirth,
+      dob: student.dob || student.dateOfBirth || form.dateOfBirth,
+      age: student.age || form.age,
+      gender: student.gender || form.gender,
+      studentClass: student.studentClass || form.studentClass,
+      studentStage: student.studentStage || form.studentStage,
+      phone: student.phone || form.phone,
+      aadhaarNumber: student.aadhaarNumber || student.aadharNumber || form.aadhaarNumber,
+      aadharNumber: student.aadharNumber || student.aadhaarNumber || form.aadhaarNumber,
+      feeAmount: student.feeAmount || form.feeAmount,
+      paymentMode: student.paymentMode || form.paymentMode,
+      receiptRefNo: student.receiptRefNo || form.receiptRefNo,
 
-      name: form.name.trim(),
-      studentName: form.name.trim(),
-
-      date: form.date,
-      enrollmentDate: form.date,
-
-      courseName: form.courseName.trim(),
-      program: form.courseName.trim(),
-      course: form.courseName.trim(),
-
-      courseLevel: form.courseLevel,
-      level: form.courseLevel,
-
-      courseDuration: form.courseDuration.trim(),
-      duration: form.courseDuration.trim(),
-
-      dateOfBirth: form.dateOfBirth,
-      dob: form.dateOfBirth,
-      age: form.age === '' ? '' : Number(form.age),
-
-      phone: form.phone.trim(),
+      // Apply permitted edits
       alternatePhone: form.alternatePhone.trim(),
       alternativePhone: form.alternatePhone.trim(),
-
       address: form.address.trim(),
       village: form.village.trim(),
       city: form.city.trim(),
       district: form.district.trim(),
       pincode: form.pincode.trim(),
       pinCode: form.pincode.trim(),
-
-      aadhaarNumber: aadhaarDigits,
-      aadharNumber: aadhaarDigits,
-
       studentPhoto: form.studentPhoto,
+      photoUrl: form.studentPhoto,
     };
 
     setSaving(true);
@@ -446,16 +454,6 @@ export default function StudentProfile({
     setError('');
   };
 
-  const readOnlyField = (label, name, value, icon) => (
-    <ProfileField
-      label={label}
-      name={name}
-      value={displayValue(value)}
-      icon={icon}
-      readOnly
-    />
-  );
-
   return (
     <div className="space-y-5 sm:space-y-7">
       {/* Page heading */}
@@ -470,8 +468,8 @@ export default function StudentProfile({
           </h2>
 
           <p className="mt-2 max-w-2xl text-xs leading-6 text-slate-500 sm:text-sm">
-            Manage your course, personal details, contact information,
-            address, and identity details in one place.
+            View your official admission records, registered course details,
+            and keep your contact information up to date.
           </p>
         </div>
 
@@ -527,26 +525,40 @@ export default function StudentProfile({
               </div>
 
               <div className="min-w-0">
-                <p className="text-xs font-bold uppercase tracking-wider text-blue-200">
-                  Student profile
-                </p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-xs font-bold uppercase tracking-wider text-blue-200">
+                    Student Profile
+                  </p>
+                  {registerNumber && (
+                    <span className="inline-flex items-center gap-1 rounded-md bg-amber-400/20 px-2 py-0.5 text-[11px] font-mono font-black text-amber-300 border border-amber-300/30">
+                      REG: {registerNumber}
+                    </span>
+                  )}
+                </div>
 
                 <h3 className="mt-1 break-words text-xl text-white font-black sm:text-2xl">
                   {form.name || 'Student Name'}
                 </h3>
 
                 <p className="mt-1 break-all text-xs text-blue-100 sm:text-sm">
-                  Student ID: {displayValue(studentId)}
+                  User ID: {displayValue(studentId)}
                 </p>
 
-                <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-[10px] font-bold text-amber-200">
-                  <ShieldCheck className="h-3.5 w-3.5" />
-                  Student Account
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <div className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-[10px] font-bold text-amber-200">
+                    <ShieldCheck className="h-3.5 w-3.5" />
+                    Verified Student Record
+                  </div>
+                  {form.date && (
+                    <span className="text-[11px] text-blue-200/90 font-medium">
+                      Admitted: {form.date}
+                    </span>
+                  )}
                 </div>
 
                 {editing && (
-                  <p className="mt-3 text-[11px] leading-5 text-blue-100">
-                    Select the camera icon to upload a photo (maximum 2 MB).
+                  <p className="mt-3 text-[11px] leading-5 text-amber-200 font-semibold">
+                    Note: Academic course details and core identity are locked. You can update your photo, alternative phone, and address below.
                   </p>
                 )}
               </div>
@@ -555,8 +567,8 @@ export default function StudentProfile({
             <div className="grid grid-cols-2 gap-3 sm:min-w-64">
               <div className="rounded-xl border border-white/10 bg-white/10 p-3">
                 <GraduationCap className="h-5 w-5 text-amber-300" />
-                <p className="mt-2 text-[10px] text-white text-blue-100">
-                  Course
+                <p className="mt-2 text-[10px] text-blue-100 font-medium">
+                  Enrolled Course
                 </p>
                 <p className="mt-1 break-words text-white text-sm font-bold">
                   {displayValue(form.courseName)}
@@ -565,8 +577,8 @@ export default function StudentProfile({
 
               <div className="rounded-xl border border-white/10 bg-white/10 p-3">
                 <School className="h-5 w-5 text-amber-300" />
-                <p className="mt-2 text-[10px] text-white text-blue-100">
-                  Course Level
+                <p className="mt-2 text-[10px] text-blue-100 font-medium">
+                  Level / Grade
                 </p>
                 <p className="mt-1 break-words text-white text-sm font-bold">
                   {displayValue(form.courseLevel)}
@@ -587,7 +599,22 @@ export default function StudentProfile({
         </div>
 
         {/* Quick details */}
-        <div className="grid grid-cols-1 divide-y divide-slate-100 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+        <div className="grid grid-cols-1 divide-y divide-slate-100 sm:grid-cols-4 sm:divide-x sm:divide-y-0">
+          <div className="flex min-w-0 items-center gap-3 p-4 sm:p-5">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-900">
+              <Hash className="h-4 w-4" />
+            </div>
+
+            <div className="min-w-0">
+              <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                Register No.
+              </p>
+              <p className="mt-1 break-words text-xs font-mono font-bold text-slate-800 sm:text-sm">
+                {displayValue(registerNumber)}
+              </p>
+            </div>
+          </div>
+
           <div className="flex min-w-0 items-center gap-3 p-4 sm:p-5">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-900">
               <Phone className="h-4 w-4" />
@@ -610,10 +637,10 @@ export default function StudentProfile({
 
             <div className="min-w-0">
               <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
-                District
+                Branch / District
               </p>
               <p className="mt-1 break-words text-xs font-semibold text-slate-800 sm:text-sm">
-                {displayValue(form.district)}
+                {displayValue(form.branch || form.district)}
               </p>
             </div>
           </div>
@@ -647,7 +674,7 @@ export default function StudentProfile({
               Profile updated successfully
             </p>
             <p className="mt-1 text-xs">
-              Your profile changes were submitted successfully.
+              Your contact details and profile photo were saved successfully.
             </p>
           </div>
         </div>
@@ -663,129 +690,246 @@ export default function StudentProfile({
       )}
 
       <form onSubmit={handleSave} className="space-y-5 sm:space-y-6">
-        {/* Course details */}
+        {/* Section 1: Course & Admission Details (LOCKED) */}
         <ProfileSection
           icon={BookOpen}
-          title="Course Details"
-          description="Your registered course, branch, study center, and course schedule."
+          title="Official Admission & Course Details"
+          description="Your registered course, branch, and academic record as enrolled during admission."
+          badge={
+            <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-[10.5px] font-extrabold text-amber-900 border border-amber-300">
+              <Lock className="h-3 w-3" />
+              Non-Editable
+            </span>
+          }
         >
+          {/* Lock notice alert */}
+          <div className="sm:col-span-2 flex items-start gap-2.5 rounded-xl border border-amber-200/90 bg-amber-50/80 p-3 text-xs text-amber-900">
+            <Lock className="h-4 w-4 shrink-0 text-amber-600 mt-0.5" />
+            <p className="leading-relaxed">
+              <strong>Official Academic Record:</strong> Enrolled courses, course levels, admission dates, and registration numbers are locked by B★SEL administration and cannot be changed from the student portal.
+            </p>
+          </div>
+
           <ProfileField
-            label="Date"
+            label="Admission Date"
             name="date"
             value={form.date}
-            onChange={handleChange}
             icon={CalendarDays}
-            type={editing ? 'date' : 'text'}
-            readOnly={!editing}
+            readOnly
+            isLocked
           />
 
           <ProfileField
-            label="Branch"
+            label="Official Register No."
+            name="registerNumber"
+            value={registerNumber}
+            icon={Hash}
+            readOnly
+            isLocked
+          />
+
+          <ProfileField
+            label="Branch / Centre"
             name="branch"
             value={form.branch}
-            onChange={handleChange}
             icon={Building2}
-            readOnly={!editing}
+            readOnly
+            isLocked
           />
 
           <ProfileField
-            label="Study Center"
+            label="Study Center / Institution"
             name="studyCenter"
-            value={form.studyCenter}
-            onChange={handleChange}
+            value={form.studyCenter || form.branch}
             icon={School}
-            readOnly={!editing}
+            readOnly
+            isLocked
           />
 
           <ProfileField
             label="Course Name"
             name="courseName"
             value={form.courseName}
-            onChange={handleChange}
             icon={BookOpen}
-            readOnly={!editing}
+            readOnly
+            isLocked
           />
 
           <ProfileField
             label="Course Level"
             name="courseLevel"
             value={form.courseLevel}
-            onChange={handleChange}
             icon={GraduationCap}
-            options={[
-              'Beginner',
-              'Level 1',
-              'Level 2',
-              'Level 3',
-              'Level 4',
-              'Level 5',
-              'Intermediate',
-              'Advanced',
-            ]}
-            readOnly={!editing}
+            readOnly
+            isLocked
           />
 
           <ProfileField
             label="Course Duration"
             name="courseDuration"
-            value={form.courseDuration}
-            onChange={handleChange}
+            value={form.courseDuration || '6 Months'}
             icon={CalendarClock}
-            readOnly={!editing}
-            placeholder="e.g. 3 months"
+            readOnly
+            isLocked
           />
+
+          {/* Enrolled Courses Breakdown if multiple */}
+          {Array.isArray(form.selectedCourses) && form.selectedCourses.length > 0 && (
+            <div className="sm:col-span-2 rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 space-y-2">
+              <p className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                <Layers className="h-4 w-4 text-blue-900" />
+                <span>Enrolled Programs & Fee Structure</span>
+              </p>
+              <div className="space-y-1.5">
+                {form.selectedCourses.map((c, idx) => (
+                  <div key={idx} className="flex items-center justify-between rounded-lg bg-white px-3 py-2 border border-slate-200 text-xs">
+                    <span className="font-bold text-slate-800">{c.courseName || c.name}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-0.5 rounded bg-blue-100 text-blue-900 font-bold text-[11px]">{c.level || form.courseLevel}</span>
+                      {c.fee && <span className="font-mono text-emerald-700 font-black">₹{String(c.fee).replace(/\D/g, '')}</span>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </ProfileSection>
 
-        {/* Personal details */}
+        {/* Section 2: Admission Fees & Payment Record (LOCKED) */}
+        {(form.feeAmount || form.paymentMode || form.receiptRefNo) && (
+          <ProfileSection
+            icon={Receipt}
+            title="Admission Fees & Payment Record"
+            description="Fee receipt and transaction verification recorded at the time of admission."
+            badge={
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10.5px] font-extrabold text-emerald-900 border border-emerald-300">
+                <CheckCircle2 className="h-3 w-3 text-emerald-600" />
+                Confirmed
+              </span>
+            }
+          >
+            <ProfileField
+              label="Admission Fee Paid"
+              name="feeAmount"
+              value={form.feeAmount || '₹450'}
+              icon={Receipt}
+              readOnly
+              isLocked
+            />
+
+            <ProfileField
+              label="Payment Mode"
+              name="paymentMode"
+              value={form.paymentMode || 'UPI / QR Code'}
+              icon={CreditCard}
+              readOnly
+              isLocked
+            />
+
+            <ProfileField
+              label="Receipt / Reference No."
+              name="receiptRefNo"
+              value={form.receiptRefNo || 'TXN-CONFIRMED'}
+              icon={Hash}
+              readOnly
+              isLocked
+            />
+
+            <ProfileField
+              label="Payment Status"
+              name="feePaymentType"
+              value="Fee Paid & Confirmed"
+              icon={CheckCircle2}
+              readOnly
+              isLocked
+            />
+          </ProfileSection>
+        )}
+
+        {/* Section 3: Personal Information (LOCKED OFFICIAL IDENTITY) */}
         <ProfileSection
           icon={UserRound}
           title="Personal Information"
-          description="Your name, date of birth, age, gender, and photo."
+          description="Candidate name, parent name, date of birth, age, gender, and student photograph."
+          badge={
+            <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-0.5 text-[10.5px] font-bold text-slate-700 border border-slate-300">
+              <Lock className="h-2.5 w-2.5" />
+              Identity Locked
+            </span>
+          }
         >
           <ProfileField
-            label="Student Name"
+            label="Student Full Name"
             name="name"
             value={form.name}
-            onChange={handleChange}
             icon={UserRound}
-            readOnly={!editing}
+            readOnly
+            isLocked
+          />
+
+          <ProfileField
+            label="Father / Mother Name"
+            name="parentName"
+            value={form.parentName}
+            icon={UserRound}
+            readOnly
+            isLocked
           />
 
           <ProfileField
             label="Date of Birth"
             name="dateOfBirth"
             value={form.dateOfBirth}
-            onChange={handleChange}
             icon={CalendarDays}
-            type={editing ? 'date' : 'text'}
-            readOnly={!editing}
+            readOnly
+            isLocked
           />
 
           <ProfileField
             label="Age"
             name="age"
             value={form.age}
-            onChange={handleChange}
             icon={Clock}
-            type="number"
-            readOnly={!editing || Boolean(form.dateOfBirth)}
-            placeholder="Age"
+            readOnly
+            isLocked
           />
 
           <ProfileField
             label="Gender"
             name="gender"
             value={form.gender}
-            onChange={handleChange}
             icon={UserRound}
-            options={['Male', 'Female', 'Other', 'Prefer not to say']}
-            readOnly={!editing}
+            readOnly
+            isLocked
           />
 
+          {form.studentClass && (
+            <ProfileField
+              label="School / Class"
+              name="studentClass"
+              value={form.studentClass}
+              icon={School}
+              readOnly
+              isLocked
+            />
+          )}
+
+          {form.studentStage && (
+            <ProfileField
+              label="Academic Stage"
+              name="studentStage"
+              value={form.studentStage}
+              icon={GraduationCap}
+              readOnly
+              isLocked
+            />
+          )}
+
+          {/* Student Photo upload section */}
           {editing ? (
             <div className="sm:col-span-2">
               <label className="mb-2 block text-xs font-bold text-slate-700">
-                Student Photo
+                Student Photo (Update Permitted)
               </label>
 
               <div className="flex flex-col gap-4 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 sm:flex-row sm:items-center">
@@ -803,10 +947,10 @@ export default function StudentProfile({
 
                 <div className="min-w-0">
                   <p className="text-sm font-bold text-slate-800">
-                    Upload student photo
+                    Upload new student photo
                   </p>
                   <p className="mt-1 text-xs leading-5 text-slate-500">
-                    JPG, PNG, or another supported image format. Maximum size: 2 MB.
+                    JPG, PNG, or supported image format. Maximum size: 2 MB.
                   </p>
 
                   <label
@@ -836,30 +980,33 @@ export default function StudentProfile({
               </div>
             </div>
           ) : (
-            <div className="sm:col-span-2">
-              <DetailItem
-                icon={Camera}
-                label="Student Photo"
-                value={form.studentPhoto ? 'Photo uploaded' : 'Not provided'}
-              />
+            <div className="sm:col-span-2 flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3 sm:p-4">
+              <Camera className="h-4 w-4 shrink-0 text-slate-400" />
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                  Student Photo
+                </p>
+                <p className="mt-0.5 text-xs font-semibold text-slate-800">
+                  {form.studentPhoto ? 'Photo Uploaded & Verified' : 'Not provided'}
+                </p>
+              </div>
             </div>
           )}
         </ProfileSection>
 
-        {/* Contact details */}
+        {/* Section 4: Contact details */}
         <ProfileSection
           icon={Phone}
           title="Contact Information"
-          description="Your primary and alternative contact numbers."
+          description="Primary login mobile number and alternative contact information."
         >
           <ProfileField
-            label="Phone Number"
+            label="Primary Phone Number (Login User ID)"
             name="phone"
             value={form.phone}
-            onChange={handleChange}
             icon={Phone}
-            type="tel"
-            readOnly={!editing}
+            readOnly
+            isLocked
           />
 
           <ProfileField
@@ -870,14 +1017,15 @@ export default function StudentProfile({
             icon={Phone}
             type="tel"
             readOnly={!editing}
+            placeholder="Enter alternative mobile number"
           />
         </ProfileSection>
 
-        {/* Address details */}
+        {/* Section 5: Address details */}
         <ProfileSection
           icon={MapPinned}
-          title="Address Information"
-          description="Your residential address and location details."
+          title="Residential Address Information"
+          description="Your residential address and postal details (editable when updating profile)."
         >
           <ProfileField
             label="Address"
@@ -890,12 +1038,13 @@ export default function StudentProfile({
           />
 
           <ProfileField
-            label="Village"
+            label="Village / Area"
             name="village"
             value={form.village}
             onChange={handleChange}
             icon={MapPinned}
             readOnly={!editing}
+            placeholder="Enter village or locality"
           />
 
           <ProfileField
@@ -905,6 +1054,7 @@ export default function StudentProfile({
             onChange={handleChange}
             icon={Building2}
             readOnly={!editing}
+            placeholder="Enter city or town"
           />
 
           <ProfileField
@@ -914,6 +1064,7 @@ export default function StudentProfile({
             onChange={handleChange}
             icon={MapPin}
             readOnly={!editing}
+            placeholder="Enter district"
           />
 
           <ProfileField
@@ -925,67 +1076,55 @@ export default function StudentProfile({
             readOnly={!editing}
             maxLength={6}
             inputMode="numeric"
+            placeholder="6-digit PIN code"
           />
         </ProfileSection>
 
-        {/* Identity details */}
+        {/* Section 6: Identity details (LOCKED) */}
         <ProfileSection
           icon={IdCard}
           title="Identity Information"
-          description="Your Aadhaar number. It is masked when you are not editing your profile."
+          description="Official Aadhaar record submitted during admission."
+          badge={
+            <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-0.5 text-[10.5px] font-bold text-slate-700 border border-slate-300">
+              <Lock className="h-2.5 w-2.5" />
+              Verified & Locked
+            </span>
+          }
         >
-          {editing ? (
-            <ProfileField
-              label="Aadhaar Number"
-              name="aadhaarNumber"
-              value={form.aadhaarNumber}
-              onChange={(event) => {
-                const value = event.target.value
-                  .replace(/\D/g, '')
-                  .slice(0, 12);
-
-                handleChange({
-                  target: {
-                    name: 'aadhaarNumber',
-                    value,
-                  },
-                });
-              }}
-              icon={IdCard}
-              type="text"
-              maxLength={12}
-              inputMode="numeric"
-              placeholder="Enter 12-digit Aadhaar number"
-            />
-          ) : (
-            <div className="min-w-0">
+          <div className="min-w-0">
+            <div className="mb-1.5 flex items-center justify-between">
               <label
                 htmlFor="maskedAadhaar"
-                className="mb-2 block text-xs font-bold text-slate-700"
+                className="block text-xs font-bold text-slate-700"
               >
                 Aadhaar Number
               </label>
-
-              <div className="relative">
-                <IdCard className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-
-                <input
-                  id="maskedAadhaar"
-                  value={maskAadhaar(form.aadhaarNumber)}
-                  readOnly
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-4 text-sm text-slate-600 outline-none"
-                />
-              </div>
+              <span className="inline-flex items-center gap-1 rounded bg-slate-200/90 px-1.5 py-0.5 text-[10px] font-bold text-slate-600">
+                <Lock className="h-2.5 w-2.5" />
+                Locked
+              </span>
             </div>
-          )}
+
+            <div className="relative">
+              <IdCard className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+
+              <input
+                id="maskedAadhaar"
+                value={maskAadhaar(form.aadhaarNumber)}
+                readOnly
+                className="w-full rounded-xl border border-slate-200 bg-slate-100/80 py-3 pl-10 pr-9 text-sm text-slate-700 font-mono outline-none cursor-not-allowed"
+              />
+
+              <Lock className="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+            </div>
+          </div>
 
           <div className="flex items-start gap-3 rounded-xl border border-blue-100 bg-blue-50 p-4">
             <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-blue-900" />
 
             <p className="text-xs leading-5 text-slate-600">
-              Keep your identity information secure. Only collect and store
-              Aadhaar details when necessary, with appropriate consent and
-              access controls.
+              Your official identity information was verified and recorded during your admission. For any legal changes, please submit an official request to your B★SEL branch coordinator.
             </p>
           </div>
         </ProfileSection>
@@ -997,7 +1136,7 @@ export default function StudentProfile({
               type="button"
               onClick={handleCancel}
               disabled={saving}
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
             >
               <X className="h-4 w-4" />
               Cancel
@@ -1006,7 +1145,7 @@ export default function StudentProfile({
             <button
               type="submit"
               disabled={saving}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-950 px-5 py-3 text-sm font-bold text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-950 px-5 py-3 text-sm font-bold text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
             >
               {saving ? (
                 <>
@@ -1023,26 +1162,6 @@ export default function StudentProfile({
           </div>
         )}
       </form>
-
-      {/* Security note */}
-      <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4 sm:p-5">
-        <div className="flex items-start gap-3">
-          <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-blue-900" />
-
-          <div>
-            <h4 className="text-sm font-extrabold text-blue-950">
-              Profile and information security
-            </h4>
-
-            <p className="mt-2 text-xs leading-6 text-slate-600 sm:text-sm">
-              Your profile changes are sent to the application's profile
-              update handler. Ensure that your backend or database saves
-              the updated fields and photo, and restrict access to sensitive
-              information such as Aadhaar numbers.
-            </p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

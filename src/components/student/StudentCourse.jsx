@@ -3,12 +3,8 @@ import {
   BookOpen,
   CalendarDays,
   MapPin,
-  Ticket,
-  Download,
   GraduationCap,
-  CheckCircle2,
   FileText,
-  Award,
 } from 'lucide-react';
 
 
@@ -36,8 +32,12 @@ export default function StudentCourse({
   onViewCertificate,
 }) {
   const courseName =
+    student?.courseName ||
     student?.program ||
     student?.course ||
+    (Array.isArray(student?.selectedCourses) && student.selectedCourses.length > 0
+      ? student.selectedCourses.map((c) => c.courseName || c.name).join(', ')
+      : '') ||
     'Abacus Speed Math (Level 4) & Fine Arts';
 
   const events = Array.isArray(student?.events)
@@ -48,10 +48,16 @@ export default function StudentCourse({
     : [];
 
   const institution =
-    student?.institution || 'Not specified';
+    student?.institution ||
+    student?.branch ||
+    student?.studyCenter ||
+    'Tenkasi';
 
   const level =
-    student?.level || 'As per registration';
+    student?.courseLevel ||
+    student?.level ||
+    student?.grade ||
+    'Level 1';
 
   const session =
     student?.academicSession || '2026–2027';
@@ -164,8 +170,8 @@ export default function StudentCourse({
 
             <InfoCard
               icon={FileText}
-              label="Student ID"
-              value={student?.id || student?.userId}
+              label="Official Register No."
+              value={student?.registerNumber || student?.registrationNo || student?.id || student?.userId}
             />
           </div>
         </div>

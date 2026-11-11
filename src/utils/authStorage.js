@@ -389,36 +389,49 @@ export const registerStudentAccount = (formData) => {
     registerNumber: officialRegNo,
     registrationNo: officialRegNo,
     studentName: studentFullName,
+    name: studentFullName,
     parentName: (formData.parentName || formData.fatherName || '').trim(),
     fatherName: (formData.parentName || formData.fatherName || '').trim(),
     email: (formData.email || '').trim(),
     phone: cleanMobile,
     alternatePhone: (formData.alternatePhone || '').trim(),
+    alternativePhone: (formData.alternatePhone || '').trim(),
     grade: selectedCourses.length === 1 ? selectedCourses[0].level : combinedLevels,
     selectedCourses: selectedCourses,
     courses: selectedCourses,
     program: combinedCourseNames,
     courseName: combinedCourseNames,
+    course: combinedCourseNames,
+    courseLevel: selectedCourses[0]?.level || 'Level 1',
+    level: selectedCourses[0]?.level || 'Level 1',
+    courseDuration: '6 Months',
+    duration: '6 Months',
     branch: studentBranch,
+    institution: studentBranch,
+    studyCenter: studentBranch,
     dob: formData.dob || '',
+    dateOfBirth: formData.dob || '',
     age: formData.age || '',
     studentClass: formData.studentClass || '',
     studentStage: formData.studentStage || '',
     gender: formData.gender || 'Male',
     studentPhoto: formData.studentPhoto || null,
+    photoUrl: formData.studentPhoto || null,
     address: (formData.address || '').trim(),
     village: (formData.village || '').trim(),
     city: (formData.city || '').trim(),
     district: formData.district || '',
     pincode: (formData.pincode || '').trim(),
+    pinCode: (formData.pincode || '').trim(),
     aadharNumber: (formData.aadharNumber || '').trim(),
+    aadhaarNumber: (formData.aadharNumber || '').trim(),
     feePaymentType: formData.feePaymentType || 'Pay Now',
     feeAmount: formData.feeAmount || '₹450',
     paymentMode: formData.paymentMode || 'UPI / QR Code',
     receiptRefNo: (formData.receiptRefNo || '').trim(),
     paymentScreenshot: formData.paymentScreenshot || null,
-    institution: studentBranch,
     role: 'Student',
+    date: formData.date || new Date().toISOString().split('T')[0],
     enrolmentDate: formData.date ? new Date(formData.date).toLocaleDateString('en-GB', {
       day: '2-digit',
       month: 'short',
@@ -444,6 +457,15 @@ export const registerStudentAccount = (formData) => {
         studentName: newUser.studentName
       })
     );
+    // Directly seed student profile so it is immediately populated upon login
+    localStorage.setItem(`bsel_student_profile_${newUserId.toLowerCase()}`, JSON.stringify(newUser));
+    if (cleanMobile) {
+      localStorage.setItem(`bsel_student_profile_${cleanMobile}`, JSON.stringify(newUser));
+    }
+    const currentActive = getActiveSession();
+    if (currentActive && (currentActive.userId === newUserId || (currentActive.phone && currentActive.phone.replace(/\D/g, '').endsWith(cleanMobile)))) {
+      setActiveSession(newUser);
+    }
 
     // Sync with certificate preview
     const certificateStudent = {

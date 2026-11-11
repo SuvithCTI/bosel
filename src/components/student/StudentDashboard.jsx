@@ -9,7 +9,6 @@ import {
   CheckCheck,
   BellRing,
   Clock,
-  Menu,
   X,
   Award,
   BookOpen,
@@ -20,7 +19,8 @@ import StudentProfile from './StudentProfile';
 import StudentNotifications from './StudentNotifications';
 
 const navigationItems = [
- 
+  { id: 'course', label: 'My Course', icon: BookOpen },
+  { id: 'profile', label: 'My Profile', icon: UserRound },
 ];
 
 const NOTIFICATION_STORAGE_KEY = 'bsel_notifications';
@@ -232,6 +232,7 @@ export default function StudentDashboard({
   };
 
   const openProfilePopup = () => {
+    setActiveSection('profile');
     setProfileMenuOpen(false);
     setNotificationMenuOpen(false);
     setMobileMenuOpen(false);
@@ -312,6 +313,13 @@ export default function StudentDashboard({
 
   const renderSection = () => {
     switch (activeSection) {
+      case 'profile':
+        return (
+          <StudentProfile
+            student={student}
+            onUpdateStudent={onUpdateStudent}
+          />
+        );
       case 'course':
       default:
         return (
