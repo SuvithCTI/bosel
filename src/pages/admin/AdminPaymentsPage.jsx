@@ -296,15 +296,7 @@ export default function AdminPaymentsPage({
             <td className="py-3 px-3 text-right">
               <div className="flex items-center justify-end gap-1.5">
 
-                {payment.status !== 'Verified' && (
-                  <button
-                    type="button"
-                    onClick={() => handleVerifyPayment(payment.id)}
-                    className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[10px] font-bold transition"
-                  >
-                    Verify
-                  </button>
-                )}
+                
 
                 <button
                   type="button"
