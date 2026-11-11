@@ -19,6 +19,7 @@ import {
   getActiveSession,
   setActiveSession,
   clearActiveSession,
+  isPhoneNumberRegistered,
 } from '../utils/authStorage';
 
 // -------------------------------------------------------
@@ -300,6 +301,11 @@ export default function LoginPage({
     }
 
     if (!authUser) {
+      const cleanDigits = userId.replace(/\D/g, '');
+      if (cleanDigits.length === 10 && !isPhoneNumberRegistered(cleanDigits) && !userId.toLowerCase().startsWith('admin') && !userId.toLowerCase().startsWith('branch')) {
+        setErrorMessage(`Mobile number "${cleanDigits}" is not registered yet. Please click 'Submit Admission Enquiry' below to register.`);
+        return;
+      }
       setErrorMessage(
         localResult.message || 'Invalid User ID or password.'
       );
@@ -581,19 +587,33 @@ export default function LoginPage({
               <form onSubmit={handleSubmit} className="space-y-2.5 sm:space-y-3">
                 {/* User ID */}
                 <div>
-                  <label
-                    htmlFor="student-user-id"
-                    className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-200"
-                  >
-                    User ID
-                  </label>
+                  <div className="mb-1 flex items-center justify-between">
+                    <label
+                      htmlFor="student-user-id"
+                      className="block text-xs font-semibold uppercase tracking-wider text-slate-200"
+                    >
+                      User ID / Mobile Number
+                    </label>
+                    {(() => {
+                      const clean = (userId || '').replace(/\D/g, '');
+                      if (clean.length === 10) {
+                        const exists = isPhoneNumberRegistered(clean);
+                        return (
+                          <span className={`text-[10.5px] font-bold ${exists ? 'text-emerald-300' : 'text-amber-300'}`}>
+                            {exists ? '✓ Number already exists' : 'Number not registered'}
+                          </span>
+                        );
+                      }
+                      return null;
+                    })()}
+                  </div>
                   <div className="relative">
                     <input
                       id="student-user-id"
                       type="text"
                       required
                       autoComplete="username"
-                      placeholder="Enter your User ID"
+                      placeholder="e.g. BSEL-9840123456 or 10-digit mobile"
                       value={userId}
                       onChange={(event) => {
                         setUserId(event.target.value);

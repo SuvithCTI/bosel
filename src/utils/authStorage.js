@@ -327,6 +327,53 @@ export const generateRegisterNumber = (courseName = '') => {
   return `${prefix}${year2Digit}-${paddedSerial}`;
 };
 
+export const isPhoneNumberRegistered = (phoneNumber) => {
+  if (!phoneNumber) return false;
+  const digits = String(phoneNumber).replace(/\D/g, '');
+  const cleanMobile = digits.length >= 10 ? digits.slice(-10) : digits;
+  if (!cleanMobile || cleanMobile.length < 10) return false;
+
+  const users = getRegisteredUsers();
+  return users.some((u) => {
+    // Only check against student accounts
+    const isStudent = u.role === 'Student' || (!u.role && u.userId !== 'admin' && !String(u.userId || '').startsWith('branch.'));
+    if (!isStudent) return false;
+
+    const uPhone = (u.phone || '').replace(/\D/g, '');
+    const uClean = uPhone.length >= 10 ? uPhone.slice(-10) : uPhone;
+    if (uClean && uClean === cleanMobile) return true;
+
+    const uId = (u.userId || '').replace(/\D/g, '');
+    const uIdClean = uId.length >= 10 ? uId.slice(-10) : uId;
+    if (uIdClean && uIdClean === cleanMobile) return true;
+
+    return false;
+  });
+};
+
+export const getStudentByPhone = (phoneNumber) => {
+  if (!phoneNumber) return null;
+  const digits = String(phoneNumber).replace(/\D/g, '');
+  const cleanMobile = digits.length >= 10 ? digits.slice(-10) : digits;
+  if (!cleanMobile || cleanMobile.length < 10) return null;
+
+  const users = getRegisteredUsers();
+  return users.find((u) => {
+    const isStudent = u.role === 'Student' || (!u.role && u.userId !== 'admin' && !String(u.userId || '').startsWith('branch.'));
+    if (!isStudent) return false;
+
+    const uPhone = (u.phone || '').replace(/\D/g, '');
+    const uClean = uPhone.length >= 10 ? uPhone.slice(-10) : uPhone;
+    if (uClean && uClean === cleanMobile) return true;
+
+    const uId = (u.userId || '').replace(/\D/g, '');
+    const uIdClean = uId.length >= 10 ? uId.slice(-10) : uId;
+    if (uIdClean && uIdClean === cleanMobile) return true;
+
+    return false;
+  }) || null;
+};
+
 export const registerStudentAccount = (formData) => {
   const users = getRegisteredUsers();
 
@@ -334,6 +381,10 @@ export const registerStudentAccount = (formData) => {
   const studentBranch = (formData.branch || formData.district || 'Tenkasi').trim();
   const rawDigits = (formData.phone || '').replace(/\D/g, '');
   const cleanMobile = rawDigits.length >= 10 ? rawDigits.slice(-10) : (rawDigits || '9840123456');
+
+  if (cleanMobile.length === 10 && isPhoneNumberRegistered(cleanMobile)) {
+    throw new Error(`Mobile number ${cleanMobile} already exists! An account has already been registered with this mobile number. Please log in using this mobile number.`);
+  }
 
   // Format: BSEL-MobileNumber (e.g., BSEL-9988776655)
   const newUserId = `BSEL-${cleanMobile}`;

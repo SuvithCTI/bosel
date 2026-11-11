@@ -27,9 +27,10 @@ import {
   Camera,
   RotateCcw,
   Crop,
-  Trash2
+  Trash2,
+  AlertCircle
 } from 'lucide-react';
-import { registerStudentAccount, generateRegisterNumber } from '../utils/authStorage';
+import { registerStudentAccount, generateRegisterNumber, isPhoneNumberRegistered } from '../utils/authStorage';
 import { getStoredCourses } from '../data/coursesData';
 import { replacePhotoBackground } from '../utils/photoSegmentation';
 import { ACADEMIC_STAGES, getAcademicStageFromAge } from '../utils/academicStages';
@@ -267,6 +268,7 @@ export default function AdmissionModal({
   const [isOtherBranch, setIsOtherBranch] = useState(false);
   const [customBranchName, setCustomBranchName] = useState('');
   const branchDropdownRef = useRef(null);
+  const [phoneError, setPhoneError] = useState('');
   const [photoError, setPhotoError] = useState(false);
   const [pincodeLoading, setPincodeLoading] = useState(false);
   const [pincodeMessage, setPincodeMessage] = useState('');
@@ -843,6 +845,11 @@ export default function AdmissionModal({
       alert('Please enter a valid 10-digit Mobile / WhatsApp number (Field 7).');
       return false;
     }
+    if (isPhoneNumberRegistered(cleanPhone)) {
+      setPhoneError('Mobile number already exists! An account has already been registered with this mobile number.');
+      alert(`Mobile number ${cleanPhone} already exists! An account is already registered with this mobile number. Please log in or use a different phone number.`);
+      return false;
+    }
     if (formData.alternatePhone && formData.alternatePhone.trim()) {
       const cleanAlt = formData.alternatePhone.replace(/\D/g, '');
       if (cleanAlt.length !== 10) {
@@ -910,29 +917,43 @@ export default function AdmissionModal({
       return;
     }
 
+    const cleanPhone = formData.phone.replace(/\D/g, '');
+    if (isPhoneNumberRegistered(cleanPhone)) {
+      setPhoneError('Mobile number already exists! An account is already registered with this mobile number.');
+      alert(`Mobile number ${cleanPhone} already exists! Please log in using this number or provide a different phone number.`);
+      setFormStep(1);
+      return;
+    }
+
     setPhotoError(false);
     setDistrictError(false);
     const activeReceiptRef = formData.receiptRefNo?.trim() || (formData.feePaymentType === 'Pay Now' 
       ? `TXN-${Math.floor(10000000 + Math.random() * 90000000)}` 
       : 'CASH-PAY-LATER-AT-BRANCH');
 
-    const account = registerStudentAccount({
-      ...formData,
-      receiptRefNo: activeReceiptRef,
-      name: formData.studentName,
-      program: formData.courseName
-    });
-    setCreatedAccount(account);
-    setShowPassword(true);
-    setSubmitted(true);
-    if (onSuccess) {
-      try {
-        onSuccess(account);
-      } catch (err) {
-        console.error('onSuccess error:', err);
+    try {
+      const account = registerStudentAccount({
+        ...formData,
+        receiptRefNo: activeReceiptRef,
+        name: formData.studentName,
+        program: formData.courseName
+      });
+      setCreatedAccount(account);
+      setShowPassword(true);
+      setSubmitted(true);
+      if (onSuccess) {
+        try {
+          onSuccess(account);
+        } catch (err) {
+          console.error('onSuccess error:', err);
+        }
       }
+      modalBodyRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (regErr) {
+      alert(regErr.message || 'Unable to register student account.');
+      setPhoneError(regErr.message);
+      setFormStep(1);
     }
-    modalBodyRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleReset = () => {
@@ -942,6 +963,7 @@ export default function AdmissionModal({
     setShowPassword(true);
     setDistrictError(false);
     setPhotoError(false);
+    setPhoneError('');
     setPaymentGatewayStatus('idle');
     setPaymentGatewayTxn('');
     setCardDetails({ number: '', expiry: '', cvv: '', name: '' });
@@ -1681,41 +1703,91 @@ export default function AdmissionModal({
                 </div>
 
                 {/* 7. Phone & 8. Alternate Phone (2-Col on Mobile - strictly 10 digits) */}
-                <div className="grid grid-cols-2 gap-2 sm:gap-4">
-                  <div>
-                    <label className="block text-[11px] sm:text-xs font-black text-slate-800 mb-0.5 sm:mb-1 truncate">
-                      7. Mobile / WhatsApp *
-                    </label>
-                    <input
-                      type="tel"
-                      required
-                      maxLength="10"
-                      placeholder="10-digit number"
-                      value={formData.phone}
-                      onChange={(e) => {
-                        const val = e.target.value.replace(/\D/g, '').slice(0, 10);
-                        setFormData({ ...formData, phone: val });
-                      }}
-                      className="w-full px-2.5 sm:px-3 py-2 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-sky-500 focus:outline-none text-base sm:text-sm shadow-2xs min-h-[42px]"
-                    />
+                <div className="space-y-1.5">
+                  <div className="grid grid-cols-2 gap-2 sm:gap-4">
+                    <div>
+                      <div className="flex items-center justify-between mb-0.5 sm:mb-1">
+                        <label className="block text-[11px] sm:text-xs font-black text-slate-800 truncate">
+                          7. Mobile / WhatsApp *
+                        </label>
+                      </div>
+                      <input
+                        type="tel"
+                        required
+                        maxLength="10"
+                        placeholder="10-digit number"
+                        value={formData.phone}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                          setFormData({ ...formData, phone: val });
+                          if (val.length === 10) {
+                            if (isPhoneNumberRegistered(val)) {
+                              setPhoneError('Mobile number already exists! An account is already registered with this number.');
+                            } else {
+                              setPhoneError('');
+                            }
+                          } else {
+                            setPhoneError('');
+                          }
+                        }}
+                        onBlur={() => {
+                          const clean = formData.phone.replace(/\D/g, '');
+                          if (clean.length === 10 && isPhoneNumberRegistered(clean)) {
+                            setPhoneError('Mobile number already exists! An account is already registered with this number.');
+                          }
+                        }}
+                        className={`w-full px-2.5 sm:px-3 py-2 bg-white border ${
+                          phoneError ? 'border-rose-400 focus:ring-rose-500' : 'border-slate-300 focus:ring-sky-500'
+                        } rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:outline-none text-base sm:text-sm shadow-2xs min-h-[42px]`}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] sm:text-xs font-black text-slate-800 mb-0.5 sm:mb-1 truncate">
+                        8. Alternate Phone
+                      </label>
+                      <input
+                        type="tel"
+                        maxLength="10"
+                        placeholder="10-digit number"
+                        value={formData.alternatePhone}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                          setFormData({ ...formData, alternatePhone: val });
+                        }}
+                        className="w-full px-2.5 sm:px-3 py-2 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-sky-500 focus:outline-none text-base sm:text-sm shadow-2xs min-h-[42px]"
+                      />
+                    </div>
                   </div>
 
-                  <div>
-                    <label className="block text-[11px] sm:text-xs font-black text-slate-800 mb-0.5 sm:mb-1 truncate">
-                      8. Alternate Phone
-                    </label>
-                    <input
-                      type="tel"
-                      maxLength="10"
-                      placeholder="10-digit number"
-                      value={formData.alternatePhone}
-                      onChange={(e) => {
-                        const val = e.target.value.replace(/\D/g, '').slice(0, 10);
-                        setFormData({ ...formData, alternatePhone: val });
-                      }}
-                      className="w-full px-2.5 sm:px-3 py-2 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-sky-500 focus:outline-none text-base sm:text-sm shadow-2xs min-h-[42px]"
-                    />
-                  </div>
+                  {phoneError && (
+                    <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-300 text-rose-800 text-xs font-semibold flex items-start gap-2 shadow-xs animate-in fade-in duration-200">
+                      <AlertCircle className="w-4 h-4 shrink-0 text-rose-600 mt-0.5" />
+                      <div className="min-w-0 flex-1">
+                        <p className="font-bold text-rose-900">{phoneError}</p>
+                        <p className="text-[11px] text-rose-700 mt-0.5">
+                          Please log in with this mobile number, or enter a different number for a new admission.
+                        </p>
+                        {setActivePage && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              onClose?.();
+                              setActivePage('login');
+                              if (typeof window !== 'undefined') {
+                                localStorage.setItem('bsel_remember_user', formData.phone);
+                              }
+                              window.scrollTo({ top: 0, behavior: 'smooth' });
+                            }}
+                            className="mt-1.5 inline-flex items-center gap-1 font-bold text-blue-900 bg-white border border-blue-200 px-2.5 py-1 rounded-lg hover:bg-blue-50 text-[11px] transition shadow-2xs cursor-pointer"
+                          >
+                            <span>Proceed to Student Login</span>
+                            <ArrowRight className="w-3 h-3" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* 9. Aadhar Number & 10. Student Photo Upload */}
