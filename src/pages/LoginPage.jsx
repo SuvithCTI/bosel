@@ -341,18 +341,6 @@ export default function LoginPage({
     onStudentDashboardChange?.(false);
   };
 
-  // -------------------------------------------------------
-  // Forgot password
-  // -------------------------------------------------------
-  const handleForgotPassword = () => {
-    window.alert(
-      'Your password is your registered 10-digit mobile number. ' +
-        'Your User ID follows the format BSEL-MobileNumber ' +
-        '(example: BSEL-9876543211). ' +
-        'For assistance, contact +91 98401 23456.'
-    );
-  };
-
   // =======================================================
   // LOGGED-IN STUDENT: DISPLAY DASHBOARD WITHOUT GLOBAL
   // NAVBAR, FOOTER, OR FLOATING ACTION BUTTONS.
@@ -501,20 +489,13 @@ export default function LoginPage({
 
                 {/* Password */}
                 <div>
-                  <div className="mb-1 flex items-center justify-between gap-2">
+                  <div className="mb-1">
                     <label
                       htmlFor="student-password"
                       className="text-xs font-semibold uppercase tracking-wider text-slate-200"
                     >
                       Password
                     </label>
-                    <button
-                      type="button"
-                      onClick={handleForgotPassword}
-                      className="text-xs font-medium text-sky-300 hover:text-white hover:underline transition cursor-pointer"
-                    >
-                      Forgot Password?
-                    </button>
                   </div>
 
                   <div className="relative">
