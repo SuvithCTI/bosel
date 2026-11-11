@@ -792,14 +792,14 @@ export default function StudentDashboard({
       {/* MY PROFILE POPUP */}
       {profilePopupOpen && (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/60 p-2 backdrop-blur-sm sm:p-6"
+          className="fixed inset-0 z-[100] flex items-start sm:items-center justify-center bg-slate-950/70 p-2 sm:p-6 overflow-y-auto overscroll-contain backdrop-blur-sm"
           onClick={closeProfilePopup}
         >
           <div
             role="dialog"
             aria-modal="true"
             aria-labelledby="student-profile-title"
-            className="relative flex h-full max-h-[94vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-slate-50 shadow-2xl sm:max-h-[85vh] sm:rounded-3xl"
+            className="relative flex h-full max-h-[94vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-slate-50 shadow-2xl sm:max-h-[85vh] sm:rounded-3xl my-auto"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-3.5 py-3 sm:px-6">
@@ -844,14 +844,14 @@ export default function StudentDashboard({
       {/* NOTIFICATIONS POPUP */}
       {notificationPopupOpen && (
         <div
-          className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/60 p-3 backdrop-blur-sm sm:p-6"
+          className="fixed inset-0 z-[120] flex items-start sm:items-center justify-center bg-slate-950/70 p-3 sm:p-6 overflow-y-auto overscroll-contain backdrop-blur-sm"
           onClick={closeNotificationsPopup}
         >
           <div
             role="dialog"
             aria-modal="true"
             aria-labelledby="student-notifications-title"
-            className="relative flex max-h-[85vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-slate-50 shadow-2xl sm:rounded-3xl"
+            className="relative flex max-h-[85vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-slate-50 shadow-2xl sm:rounded-3xl my-auto"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-3 sm:px-6">

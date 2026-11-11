@@ -1,4 +1,4 @@
-﻿import React, { useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   ArrowLeft,
   Download,
@@ -81,7 +81,7 @@ export default function StudentEventRegView({ student, onClose }) {
   return (
     <div
       className="
-        fixed inset-0 z-50
+        fixed inset-0 z-[200]
         flex flex-col items-center
         overflow-y-auto overflow-x-hidden
         bg-slate-900/85

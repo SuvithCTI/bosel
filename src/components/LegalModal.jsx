@@ -45,7 +45,7 @@ export default function LegalModal({ isOpen, onClose, initialTab = 'privacy' }) 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200 overscroll-contain">
+    <div className="fixed inset-0 z-[150] flex items-center justify-center p-3 sm:p-5 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200 overscroll-contain">
       
       {/* Backdrop Click Listener */}
       <div className="absolute inset-0" onClick={onClose} />

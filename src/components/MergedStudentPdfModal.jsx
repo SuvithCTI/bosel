@@ -231,7 +231,7 @@ export default function MergedStudentPdfModal({
   if (!students.length || !currentStudentPackage) return null;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/85 backdrop-blur-xs flex flex-col items-center justify-start py-4 px-2 sm:px-4">
+    <div className="fixed inset-0 z-[200] overflow-y-auto bg-slate-950/85 backdrop-blur-xs flex flex-col items-center justify-start py-4 px-2 sm:px-4">
       {/* Print Stylesheet */}
       <style>{`
         @media print {

@@ -276,7 +276,7 @@ export default function AdminModals({
           MODAL: CREATE / EDIT BRANCH BATCH & CLASS TIMING
           ========================================================================= */}
       {showAddBatchModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
+        <div className="fixed inset-0 z-[150] bg-black/75 backdrop-blur-xs flex items-start justify-center p-3 sm:p-6 overflow-y-auto overscroll-contain">
           <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-150 my-auto">
             <div className="bg-[#081d3d] text-white p-4 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
@@ -450,8 +450,8 @@ export default function AdminModals({
         </div>
       )}
       {editingCourse && (
-        <div className="fixed inset-0 z-50 bg-black/65 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
-          <div className="bg-white w-full max-w-2xl lg:max-w-3xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-150 my-auto flex flex-col max-h-[92vh]">
+        <div className="fixed inset-0 z-[150] bg-black/75 backdrop-blur-xs flex items-start justify-center p-3 sm:p-6 overflow-y-auto overscroll-contain">
+          <div className="bg-white w-full max-w-2xl lg:max-w-3xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-150 my-auto flex flex-col max-h-[90vh]">
             
             {/* Header */}
             <div className="bg-[#081d3d] text-white p-4.5 shrink-0 border-b border-white/10">
@@ -925,8 +925,8 @@ export default function AdminModals({
           MODAL 2: ADD NEW COURSE TO MASTER CURRICULUM
           ========================================================================= */}
       {showAddCourseModal && (
-        <div className="fixed inset-0 z-50 bg-black/65 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
-          <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-150 my-auto max-h-[92vh] flex flex-col">
+        <div className="fixed inset-0 z-[150] bg-black/75 backdrop-blur-xs flex items-start justify-center p-3 sm:p-6 overflow-y-auto overscroll-contain">
+          <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-150 my-auto max-h-[90vh] flex flex-col">
             <div className="bg-[#081d3d] text-white p-4.5 flex items-center justify-between shrink-0 border-b border-white/10">
               <div>
                 <h3 className="text-base font-black flex items-center gap-2">
@@ -1121,8 +1121,8 @@ export default function AdminModals({
           MODAL 3: ADD NEW EVENT (SUPER ADMIN)
           ========================================================================= */}
       {showAddEventModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
-          <div className="bg-white w-full max-w-xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-[150] bg-black/75 backdrop-blur-xs flex items-start justify-center p-3 sm:p-6 overflow-y-auto overscroll-contain">
+          <div className="bg-white w-full max-w-xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-150 my-auto">
             <div className="bg-[#081d3d] text-white p-4 flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-black">Publish New Event / Championship</h3>
@@ -1255,7 +1255,7 @@ export default function AdminModals({
           MODAL 3B: EDIT EXISTING EVENT / CHAMPIONSHIP (SUPER ADMIN)
           ========================================================================= */}
       {editingEvent && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
+        <div className="fixed inset-0 z-[150] bg-black/75 backdrop-blur-xs flex items-start justify-center p-3 sm:p-6 overflow-y-auto overscroll-contain">
           <div className="bg-white w-full max-w-xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-150 my-auto">
             
             {/* Header */}
@@ -1427,8 +1427,8 @@ export default function AdminModals({
           MODAL 4: RECORD PAYMENT / ISSUE RECEIPT (SUPER ADMIN & BRANCH HEAD)
           ========================================================================= */}
       {showAddPaymentModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
-          <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-[150] bg-black/75 backdrop-blur-xs flex items-start justify-center p-3 sm:p-6 overflow-y-auto overscroll-contain">
+          <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-150 my-auto">
             <div className="bg-[#081d3d] text-white p-4 flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-black">Record Payment & Generate Official Receipt</h3>
@@ -1552,8 +1552,8 @@ export default function AdminModals({
           MODAL 5: PRINTABLE OFFICIAL FEE RECEIPT
           ========================================================================= */}
       {selectedReceiptForPrint && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
-          <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-[150] bg-black/75 backdrop-blur-xs flex items-start justify-center p-3 sm:p-6 overflow-y-auto overscroll-contain">
+          <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-150 my-auto">
             {/* Header */}
             <div className="bg-[#081d3d] text-white p-4.5 flex items-center justify-between border-b-2 border-amber-400">
               <div className="flex items-center gap-2">
@@ -1636,8 +1636,8 @@ export default function AdminModals({
           MODAL 6: EDIT STUDENT
           ========================================================================= */}
       {editingStudent && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
-          <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-[150] bg-black/75 backdrop-blur-xs flex items-start justify-center p-3 sm:p-6 overflow-y-auto overscroll-contain">
+          <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-150 my-auto">
             <div className="bg-[#081d3d] text-white p-4 flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-black">Edit Student Profile: {editingStudent.studentName}</h3>
@@ -1824,8 +1824,8 @@ export default function AdminModals({
           MODAL 7: AFFILIATE NEW CENTRE / SCHOOL (SUPER ADMIN)
           ========================================================================= */}
       {showAddSchoolModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
-          <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-[150] bg-black/75 backdrop-blur-xs flex items-start justify-center p-3 sm:p-6 overflow-y-auto overscroll-contain">
+          <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-150 my-auto">
             <div className="bg-[#081d3d] text-white p-4 flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-black">Affiliate New Branch / Exam Centre</h3>

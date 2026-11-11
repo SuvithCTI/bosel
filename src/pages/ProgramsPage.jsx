@@ -497,7 +497,7 @@ export default function ProgramsPage() {
          ========================================================================= */}
       {selectedProgram && (
         <div 
-          className="fixed inset-0 z-50 overflow-y-auto overscroll-contain bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-2.5 sm:p-4"
+          className="fixed inset-0 z-[150] overflow-y-auto overscroll-contain bg-slate-950/80 backdrop-blur-sm flex items-start justify-center p-2.5 sm:p-4"
           onClick={() => setSelectedProgram(null)}
         >
           <div 
@@ -737,7 +737,7 @@ export default function ProgramsPage() {
           RIGHT-SIDE SLIDE-OVER DRAWER: REGISTRATION & PAYMENT GATEWAY + DETAILS
          ========================================================================= */}
       {registeringProgram && (
-        <div className="fixed inset-0 z-50 overflow-hidden">
+        <div className="fixed inset-0 z-[150] overflow-hidden">
           {/* Backdrop */}
           <div 
             className="fixed inset-0 bg-slate-950/75 backdrop-blur-xs transition-opacity animate-in fade-in duration-300"

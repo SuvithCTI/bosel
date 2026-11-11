@@ -1030,7 +1030,7 @@ export default function AdmissionModal({
 
   return (
     <div 
-      className="fixed inset-0 z-50 overflow-y-auto overscroll-contain bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 select-none"
+      className="fixed inset-0 z-[150] overflow-y-auto overscroll-contain bg-slate-950/80 backdrop-blur-xs flex items-start justify-center p-2 sm:p-4 select-none"
       onClick={onClose}
     >
       <div 
@@ -2547,7 +2547,7 @@ export default function AdmissionModal({
           ========================================================================= */}
       {isCameraOpen && (
         <div 
-          className="fixed inset-0 z-60 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 select-none animate-in fade-in duration-200"
+          className="fixed inset-0 z-[160] bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 select-none animate-in fade-in duration-200"
           onClick={handleCloseCamera}
         >
           <div 
@@ -2646,7 +2646,7 @@ export default function AdmissionModal({
           ========================================================================= */}
       {isPhotoEditorOpen && formData.photoPreview && (
         <div 
-          className="fixed inset-0 z-60 bg-black/85 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 select-none animate-in fade-in duration-200"
+          className="fixed inset-0 z-[160] bg-black/85 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 select-none animate-in fade-in duration-200"
           onClick={() => setIsPhotoEditorOpen(false)}
         >
           <div 

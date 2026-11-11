@@ -107,7 +107,7 @@ export default function FranchiseModal({ isOpen, onClose }) {
 
   return (
     <div 
-      className="fixed inset-0 z-50 overflow-y-auto overscroll-contain bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-2.5 sm:p-4 select-none"
+      className="fixed inset-0 z-[150] overflow-y-auto overscroll-contain bg-slate-950/80 backdrop-blur-xs flex items-start justify-center p-2.5 sm:p-4 select-none"
       onClick={onClose}
     >
       <div 

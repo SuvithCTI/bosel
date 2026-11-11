@@ -243,7 +243,7 @@ export default function AdminCoursesPage({
 
       {/* DETAIL / SYLLABUS PREVIEW MODAL */}
       {viewingCourse && (
-        <div className="fixed inset-0 z-50 bg-black/65 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
+        <div className="fixed inset-0 z-[150] bg-black/75 backdrop-blur-xs flex items-start justify-center p-3 sm:p-6 overflow-y-auto overscroll-contain">
           <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-150 my-auto flex flex-col max-h-[90vh]">
             {/* Modal Header with Course Cover */}
             <div className="relative h-44 w-full bg-slate-900 shrink-0">

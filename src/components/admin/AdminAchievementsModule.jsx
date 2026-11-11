@@ -1181,7 +1181,7 @@ export default function AdminAchievementsModule({ showToast = () => {} }) {
           MODAL: EDIT SCHOOL SECTION HEADER
           ========================================================================= */}
       {isHeaderModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+        <div className="fixed inset-0 z-[150] bg-black/75 backdrop-blur-xs flex items-start justify-center p-3 sm:p-6 overflow-y-auto overscroll-contain">
           <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-150 my-auto">
             <div className="bg-[#0c234b] text-white p-4.5 flex items-center justify-between border-b border-amber-400/40">
               <div className="flex items-center gap-2">
@@ -1271,7 +1271,7 @@ export default function AdminAchievementsModule({ showToast = () => {} }) {
           MODAL: ADD / EDIT PARTICIPATING SCHOOL
           ========================================================================= */}
       {isSchoolModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+        <div className="fixed inset-0 z-[150] bg-black/75 backdrop-blur-xs flex items-start justify-center p-3 sm:p-6 overflow-y-auto overscroll-contain">
           <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-150 my-auto">
             <div className="bg-[#0c234b] text-white p-4.5 flex items-center justify-between border-b border-amber-400/40">
               <div className="flex items-center gap-2">
@@ -1376,7 +1376,7 @@ export default function AdminAchievementsModule({ showToast = () => {} }) {
           MODAL: DELETE SCHOOL CONFIRMATION
           ========================================================================= */}
       {deleteConfirmSchool && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3">
+        <div className="fixed inset-0 z-[150] bg-black/75 backdrop-blur-xs flex items-center justify-center p-3">
           <div className="bg-white max-w-sm w-full rounded-2xl shadow-xl p-5 border border-slate-200 animate-in zoom-in-95 duration-150">
             <div className="flex items-center gap-2.5 text-rose-600 mb-2">
               <AlertCircle className="w-5 h-5 shrink-0" />
@@ -1409,7 +1409,7 @@ export default function AdminAchievementsModule({ showToast = () => {} }) {
           MODAL: ADD / EDIT STUDENT ACHIEVER
           ========================================================================= */}
       {isStudentModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+        <div className="fixed inset-0 z-[150] bg-black/75 backdrop-blur-xs flex items-start justify-center p-3 sm:p-6 overflow-y-auto overscroll-contain">
           <div className="bg-white w-full max-w-xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-150 my-auto">
             <div className="bg-[#0c234b] text-white p-4.5 flex items-center justify-between border-b border-amber-400/40">
               <div className="flex items-center gap-2">
@@ -1615,7 +1615,7 @@ export default function AdminAchievementsModule({ showToast = () => {} }) {
           MODAL: DELETE STUDENT ACHIEVER CONFIRMATION
           ========================================================================= */}
       {deleteConfirmStudent && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3">
+        <div className="fixed inset-0 z-[150] bg-black/75 backdrop-blur-xs flex items-center justify-center p-3">
           <div className="bg-white max-w-sm w-full rounded-2xl shadow-xl p-5 border border-slate-200 animate-in zoom-in-95 duration-150">
             <div className="flex items-center gap-2.5 text-rose-600 mb-2">
               <AlertCircle className="w-5 h-5 shrink-0" />
@@ -1648,7 +1648,7 @@ export default function AdminAchievementsModule({ showToast = () => {} }) {
           MODAL: ADD / EDIT COMPETITION ACHIEVEMENT
           ========================================================================= */}
       {isCompModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+        <div className="fixed inset-0 z-[150] bg-black/75 backdrop-blur-xs flex items-start justify-center p-3 sm:p-6 overflow-y-auto overscroll-contain">
           <div className="bg-white w-full max-w-xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-150 my-auto">
             <div className="bg-[#0c234b] text-white p-4.5 flex items-center justify-between border-b border-amber-400/40">
               <div className="flex items-center gap-2">
@@ -1816,7 +1816,7 @@ export default function AdminAchievementsModule({ showToast = () => {} }) {
           MODAL: DELETE COMPETITION CONFIRMATION
           ========================================================================= */}
       {deleteConfirmCompItem && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3">
+        <div className="fixed inset-0 z-[150] bg-black/75 backdrop-blur-xs flex items-center justify-center p-3">
           <div className="bg-white max-w-sm w-full rounded-2xl shadow-xl p-5 border border-slate-200 animate-in zoom-in-95 duration-150">
             <div className="flex items-center gap-2.5 text-rose-600 mb-2">
               <AlertCircle className="w-5 h-5 shrink-0" />
