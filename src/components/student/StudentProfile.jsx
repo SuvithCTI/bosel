@@ -594,31 +594,21 @@ export default function StudentProfile({
             </div>
 
             {Array.isArray(form.selectedCourses) && form.selectedCourses.length > 1 ? (
-              <div className="flex flex-col gap-2 sm:min-w-80">
+              <div className="rounded-xl border border-white/15 bg-white/10 p-3 sm:min-w-80 backdrop-blur-xs">
                 <span className="text-[10px] text-amber-300 font-extrabold uppercase tracking-wider flex items-center gap-1.5">
                   <GraduationCap className="h-3.5 w-3.5" />
-                  <span>Enrolled Courses & Register Nos. ({form.selectedCourses.length})</span>
+                  <span>Enrolled Courses ({form.selectedCourses.length})</span>
                 </span>
-                <div className="flex flex-col gap-2">
+                <div className="mt-2 space-y-1.5">
                   {form.selectedCourses.map((c, idx) => (
                     <div
                       key={idx}
-                      className="rounded-xl border border-white/15 bg-white/10 p-2.5 backdrop-blur-xs flex items-center justify-between gap-3 shadow-2xs"
+                      className="flex items-center justify-between gap-3 text-xs"
                     >
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-[9.5px] text-blue-200 font-bold uppercase tracking-wide">
-                            Course {idx + 1}
-                          </span>
-                          <span className="rounded bg-amber-400/25 px-1.5 py-0.2 text-[10px] font-mono font-black text-amber-300 border border-amber-300/40">
-                            REG: {c.registerNumber || allRegNumbers[idx] || registerNumber}
-                          </span>
-                        </div>
-                        <p className="text-xs sm:text-sm font-black text-white truncate mt-0.5">
-                          {c.courseName || c.name}
-                        </p>
-                      </div>
-                      <span className="shrink-0 px-2.5 py-1 rounded-lg bg-amber-400 text-blue-950 font-black text-[10.5px] shadow-2xs">
+                      <span className="font-bold text-white truncate max-w-48 sm:max-w-64">
+                        {c.courseName || c.name}
+                      </span>
+                      <span className="shrink-0 px-2 py-0.5 rounded bg-amber-400 text-blue-950 font-black text-[10px]">
                         {c.level || 'Level 1'}
                       </span>
                     </div>
@@ -670,24 +660,11 @@ export default function StudentProfile({
 
             <div className="min-w-0">
               <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
-                {allRegNumbers.length > 1 ? `${allRegNumbers.length} Register Nos.` : 'Register No.'}
+                {allRegNumbers.length > 1 ? 'Register Nos.' : 'Register No.'}
               </p>
-              {allRegNumbers.length > 1 ? (
-                <div className="mt-1 flex flex-wrap gap-1.5">
-                  {allRegNumbers.map((reg, idx) => (
-                    <span
-                      key={idx}
-                      className="inline-block rounded-md bg-blue-50 px-2 py-0.5 text-xs font-mono font-extrabold text-blue-950 border border-blue-200"
-                    >
-                      {reg}
-                    </span>
-                  ))}
-                </div>
-              ) : (
-                <p className="mt-1 break-words text-xs font-mono font-bold text-slate-800 sm:text-sm">
-                  {displayValue(registerNumber)}
-                </p>
-              )}
+              <p className="mt-1 truncate text-xs font-mono font-bold text-slate-800 sm:text-sm">
+                {allRegNumbers.length > 0 ? allRegNumbers.join(' • ') : displayValue(registerNumber)}
+              </p>
             </div>
           </div>
 
@@ -790,10 +767,10 @@ export default function StudentProfile({
           />
 
           <ProfileField
-            label={allRegNumbers.length > 1 ? "Official Register Nos." : "Official Register No."}
-            name="registerNumber"
-            value={registerNumber}
-            icon={Hash}
+            label="Course Duration"
+            name="courseDuration"
+            value={form.courseDuration || '6 Months'}
+            icon={CalendarClock}
             readOnly
             isLocked
           />
@@ -817,54 +794,63 @@ export default function StudentProfile({
           />
 
           {Array.isArray(form.selectedCourses) && form.selectedCourses.length > 1 ? (
-            <>
-              {form.selectedCourses.map((c, idx) => (
-                <div
-                  key={idx}
-                  className="sm:col-span-2 rounded-xl border border-slate-200 bg-slate-50/70 p-4 space-y-3.5"
-                >
-                  <div className="flex items-center justify-between border-b border-slate-200 pb-2.5">
-                    <span className="text-xs font-black uppercase tracking-wider text-blue-950 flex items-center gap-1.5">
-                      <GraduationCap className="h-4 w-4 text-blue-900" />
-                      Course {idx + 1}: {c.courseName || c.name}
-                    </span>
-                    <span className="inline-flex items-center gap-1 rounded-md bg-amber-100 text-amber-900 px-2.5 py-0.5 font-mono text-xs font-black border border-amber-300">
-                      <Hash className="h-3 w-3" />
-                      {c.registerNumber || allRegNumbers[idx] || registerNumber}
-                    </span>
-                  </div>
+            <div className="sm:col-span-2 rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-2xs space-y-3">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <span className="text-xs font-black uppercase tracking-wider text-blue-950 flex items-center gap-1.5">
+                  <GraduationCap className="h-4 w-4 text-blue-900" />
+                  <span>Enrolled Courses & Academic Registration ({form.selectedCourses.length})</span>
+                </span>
+                <span className="text-[11px] font-bold text-slate-500">
+                  {form.selectedCourses.length} Enrolled Courses
+                </span>
+              </div>
 
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                    <ProfileField
-                      label={`Course ${idx + 1} Official Register No.`}
-                      name={`courseReg_${idx}`}
-                      value={c.registerNumber || allRegNumbers[idx] || registerNumber}
-                      icon={Hash}
-                      readOnly
-                      isLocked
-                    />
-                    <ProfileField
-                      label={`Course ${idx + 1} Name`}
-                      name={`courseName_${idx}`}
-                      value={c.courseName || c.name}
-                      icon={BookOpen}
-                      readOnly
-                      isLocked
-                    />
-                    <ProfileField
-                      label={`Course ${idx + 1} Level`}
-                      name={`courseLevel_${idx}`}
-                      value={c.level || 'Level 1'}
-                      icon={GraduationCap}
-                      readOnly
-                      isLocked
-                    />
+              <div className="divide-y divide-slate-100">
+                {form.selectedCourses.map((c, idx) => (
+                  <div
+                    key={idx}
+                    className="flex flex-col gap-2.5 py-3 sm:flex-row sm:items-center sm:justify-between first:pt-1 last:pb-1"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs sm:text-sm font-black text-slate-900">
+                          {c.courseName || c.name}
+                        </span>
+                        <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-2 py-0.5 text-xs font-mono font-black text-amber-900 border border-amber-200">
+                          <Hash className="h-3 w-3" />
+                          {c.registerNumber || allRegNumbers[idx] || registerNumber}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-xs text-slate-500">
+                        {c.level || form.courseLevel || 'Level 1'}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2.5 self-start sm:self-center shrink-0">
+                      <span className="rounded-lg bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-900 border border-blue-200">
+                        {c.level || 'Level 1'}
+                      </span>
+                      {c.fee && (
+                        <span className="font-mono text-xs font-black text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
+                          ₹{String(c.fee).replace(/\D/g, '')}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </>
+                ))}
+              </div>
+            </div>
           ) : (
             <>
+              <ProfileField
+                label="Official Register No."
+                name="registerNumber"
+                value={registerNumber}
+                icon={Hash}
+                readOnly
+                isLocked
+              />
+
               <ProfileField
                 label="Course Name"
                 name="courseName"
@@ -883,41 +869,6 @@ export default function StudentProfile({
                 isLocked
               />
             </>
-          )}
-
-          <ProfileField
-            label="Course Duration"
-            name="courseDuration"
-            value={form.courseDuration || '6 Months'}
-            icon={CalendarClock}
-            readOnly
-            isLocked
-          />
-
-          {/* Enrolled Courses Breakdown if multiple */}
-          {Array.isArray(form.selectedCourses) && form.selectedCourses.length > 0 && (
-            <div className="sm:col-span-2 rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 space-y-2">
-              <p className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                <Layers className="h-4 w-4 text-blue-900" />
-                <span>Enrolled Programs & Fee Structure</span>
-              </p>
-              <div className="space-y-1.5">
-                {form.selectedCourses.map((c, idx) => (
-                  <div key={idx} className="flex items-center justify-between rounded-lg bg-white px-3 py-2 border border-slate-200 text-xs">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-bold text-slate-800">{c.courseName || c.name}</span>
-                      <span className="px-2 py-0.5 rounded bg-amber-50 text-amber-900 border border-amber-200 font-mono font-bold text-[11px]">
-                        REG: {c.registerNumber || allRegNumbers[idx] || registerNumber}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="px-2 py-0.5 rounded bg-blue-100 text-blue-900 font-bold text-[11px]">{c.level || form.courseLevel}</span>
-                      {c.fee && <span className="font-mono text-emerald-700 font-black">₹{String(c.fee).replace(/\D/g, '')}</span>}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
           )}
         </ProfileSection>
 
