@@ -55,8 +55,20 @@ export default function StudentReceiptView({ student, onClose }) {
   const admissionNo =
     regNo || student.userId || 'PH26-001';
 
-  const rawFee =
-    String(student.feeAmount || '450').replace(/\D/g, '') || '450';
+  const selectedList = Array.isArray(student.selectedCourses) && student.selectedCourses.length > 0
+    ? student.selectedCourses
+    : (Array.isArray(student.courses) ? student.courses : []);
+
+  const totalCoursesFee = selectedList.length > 1
+    ? selectedList.reduce((sum, c) => {
+        const val = parseInt(String(c.fee || c.feeAmount || '').replace(/\D/g, ''), 10);
+        return sum + (isNaN(val) || val <= 0 ? 450 : val);
+      }, 0)
+    : 0;
+
+  const rawFee = selectedList.length > 1 && totalCoursesFee > 0
+    ? String(totalCoursesFee)
+    : (String(student.feeAmount || '450').replace(/\D/g, '') || '450');
 
   const amountNumeric = `${rawFee} /-`;
   const amountWords = numberToWords(rawFee);

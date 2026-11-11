@@ -33,7 +33,7 @@ const getProfileValues = (student = {}) => {
     ? student.selectedCourses
     : (Array.isArray(student.courses) && student.courses.length > 0 ? student.courses : []);
 
-  // Ensure each course has its unique official register number
+  // Ensure each course has its unique official register number and fee
   const usedRegs = [];
   const selectedList = rawList.map((c, idx) => {
     let reg = c.registerNumber || c.registrationNo;
@@ -41,10 +41,12 @@ const getProfileValues = (student = {}) => {
       reg = generateRegisterNumber(c.courseName || c.name || 'Abacus', usedRegs);
     }
     usedRegs.push(reg);
+    const parsedFee = parseInt(String(c.fee || c.feeAmount || '').replace(/\D/g, ''), 10);
     return {
       ...c,
       registerNumber: reg,
       registrationNo: reg,
+      fee: !isNaN(parsedFee) && parsedFee > 0 ? parsedFee : (idx === 0 ? 450 : 400),
     };
   });
 
@@ -65,6 +67,15 @@ const getProfileValues = (student = {}) => {
   const derivedCourseLevel = selectedList.length > 1
     ? selectedList.map(c => `${c.courseName || c.name}: ${c.level || 'Level 1'}`).join(' | ')
     : (student.courseLevel || student.level || student.grade || selectedList[0]?.level || 'Level 1');
+
+  const totalCoursesFee = selectedList.length > 1
+    ? selectedList.reduce((sum, c) => sum + (c.fee || 450), 0)
+    : 0;
+
+  const rawStudentFee = parseInt(String(student.feeAmount || '').replace(/\D/g, ''), 10);
+  const derivedFeeAmount = selectedList.length > 1
+    ? `₹${Math.max(totalCoursesFee, isNaN(rawStudentFee) ? 0 : rawStudentFee)}`
+    : (student.feeAmount || (selectedList[0]?.fee ? `₹${selectedList[0].fee}` : '₹450'));
 
   return {
     date: student.date || student.enrollmentDate || student.enrolmentDate || '',
@@ -98,7 +109,7 @@ const getProfileValues = (student = {}) => {
     aadhaarNumber: student.aadhaarNumber || student.aadharNumber || '',
 
     feePaymentType: student.feePaymentType || 'Pay Now',
-    feeAmount: student.feeAmount || '',
+    feeAmount: derivedFeeAmount,
     paymentMode: student.paymentMode || '',
     receiptRefNo: student.receiptRefNo || '',
 
@@ -447,7 +458,7 @@ export default function StudentProfile({
       phone: student.phone || form.phone,
       aadhaarNumber: student.aadhaarNumber || student.aadharNumber || form.aadhaarNumber,
       aadharNumber: student.aadharNumber || student.aadhaarNumber || form.aadhaarNumber,
-      feeAmount: student.feeAmount || form.feeAmount,
+      feeAmount: form.feeAmount || student.feeAmount,
       paymentMode: student.paymentMode || form.paymentMode,
       receiptRefNo: student.receiptRefNo || form.receiptRefNo,
 
@@ -898,7 +909,11 @@ export default function StudentProfile({
             }
           >
             <ProfileField
-              label="Admission Fee Paid"
+              label={
+                Array.isArray(form.selectedCourses) && form.selectedCourses.length > 1
+                  ? "Total Admission Fees Paid"
+                  : "Admission Fee Paid"
+              }
               name="feeAmount"
               value={form.feeAmount || '₹450'}
               icon={Receipt}
@@ -927,11 +942,102 @@ export default function StudentProfile({
             <ProfileField
               label="Payment Status"
               name="feePaymentType"
-              value="Fee Paid & Confirmed"
+              value={
+                Array.isArray(form.selectedCourses) && form.selectedCourses.length > 1
+                  ? `Fee Paid & Confirmed (${form.selectedCourses.length} Courses)`
+                  : "Fee Paid & Confirmed"
+              }
               icon={CheckCircle2}
               readOnly
               isLocked
             />
+
+            {/* Individual Course Payment Records when 2 or more courses */}
+            {Array.isArray(form.selectedCourses) && form.selectedCourses.length > 1 && (
+              <div className="col-span-2 rounded-2xl border border-slate-200 bg-white p-3.5 sm:p-5 shadow-2xs space-y-3">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                  <span className="text-xs font-black uppercase tracking-wider text-blue-950 flex items-center gap-1.5">
+                    <Receipt className="h-4 w-4 text-emerald-600" />
+                    <span>Course-wise Payment Receipts ({form.selectedCourses.length})</span>
+                  </span>
+                  <span className="text-[11px] font-extrabold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                    All {form.selectedCourses.length} Paid & Confirmed
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                  {form.selectedCourses.map((c, idx) => {
+                    const parsedFee = parseInt(String(c.fee || c.feeAmount || '').replace(/\D/g, ''), 10);
+                    const courseFee = !isNaN(parsedFee) && parsedFee > 0 ? parsedFee : (idx === 0 ? 450 : 400);
+                    const courseReg = c.registerNumber || allRegNumbers[idx] || registerNumber;
+                    const courseTxn = form.receiptRefNo
+                      ? `${form.receiptRefNo}`
+                      : `TXN-${String(courseReg).replace(/\D/g, '') || (idx + 1)}`;
+
+                    return (
+                      <div
+                        key={idx}
+                        className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 sm:p-4 flex flex-col justify-between"
+                      >
+                        <div>
+                          <div className="flex items-center justify-between gap-2 border-b border-slate-200/60 pb-2 mb-2.5">
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <span className="rounded-md bg-amber-100 px-1.5 py-0.5 text-[10px] font-black uppercase text-amber-900 border border-amber-300">
+                                Course {idx + 1}
+                              </span>
+                              <span className="truncate text-xs font-black text-blue-950">
+                                {c.courseName || c.name}
+                              </span>
+                            </div>
+                            <span className="font-mono text-xs font-black text-emerald-700 bg-emerald-100/70 px-2 py-0.5 rounded-md border border-emerald-300 shrink-0">
+                              ₹{courseFee}
+                            </span>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2 text-[11px]">
+                            <div className="rounded-lg bg-white p-2 border border-slate-200/70">
+                              <span className="block text-[9px] sm:text-[9.5px] uppercase font-bold text-slate-400">Register No.</span>
+                              <span className="font-mono font-bold text-slate-800 text-[11px] sm:text-xs truncate block">{courseReg}</span>
+                            </div>
+                            <div className="rounded-lg bg-white p-2 border border-slate-200/70">
+                              <span className="block text-[9px] sm:text-[9.5px] uppercase font-bold text-slate-400">Course Level</span>
+                              <span className="font-semibold text-slate-800 text-[11px] sm:text-xs truncate block">{c.level || form.courseLevel || 'Level 1'}</span>
+                            </div>
+                            <div className="rounded-lg bg-white p-2 border border-slate-200/70">
+                              <span className="block text-[9px] sm:text-[9.5px] uppercase font-bold text-slate-400">Payment Mode</span>
+                              <span className="font-semibold text-slate-800 text-[11px] sm:text-xs truncate block">{form.paymentMode || 'UPI / QR Code'}</span>
+                            </div>
+                            <div className="rounded-lg bg-white p-2 border border-slate-200/70">
+                              <span className="block text-[9px] sm:text-[9.5px] uppercase font-bold text-slate-400">Ref / Txn No.</span>
+                              <span className="font-mono font-bold text-slate-800 text-[11px] sm:text-xs truncate block">{courseTxn}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="mt-3 pt-2.5 border-t border-slate-200/60 flex items-center justify-between text-xs">
+                          <span className="inline-flex items-center gap-1 font-bold text-emerald-700 text-[11px]">
+                            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                            Fee Paid & Confirmed
+                          </span>
+                          <span className="font-mono text-xs font-black text-slate-900">
+                            Paid: ₹{courseFee}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pt-2 border-t border-slate-100 text-xs">
+                  <span className="text-slate-500 font-medium">
+                    Total Combined Admission Fees for {form.selectedCourses.length} Enrolled Courses:
+                  </span>
+                  <span className="font-mono text-sm font-black text-emerald-700 bg-emerald-50 px-3 py-1 rounded-xl border border-emerald-200">
+                    Total: {form.feeAmount}
+                  </span>
+                </div>
+              </div>
+            )}
           </ProfileSection>
         )}
 

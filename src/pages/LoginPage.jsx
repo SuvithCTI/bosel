@@ -184,7 +184,12 @@ const normalizeStudent = (user) => {
     aadharNumber: user.aadhaarNumber || user.aadharNumber || '',
     studentPhoto: user.studentPhoto || user.photoUrl || user.photoURL || user.profilePhoto || null,
     photoUrl: user.studentPhoto || user.photoUrl || user.photoURL || user.profilePhoto || null,
-    feeAmount: user.feeAmount || '',
+    feeAmount: (Array.isArray(user.selectedCourses) && user.selectedCourses.length > 1)
+      ? `₹${Math.max(
+          user.selectedCourses.reduce((sum, c) => sum + (parseInt(String(c.fee || c.feeAmount || '').replace(/\D/g, ''), 10) || 450), 0),
+          parseInt(String(user.feeAmount || '').replace(/\D/g, ''), 10) || 0
+        )}`
+      : (user.feeAmount || ''),
     paymentMode: user.paymentMode || '',
     receiptRefNo: user.receiptRefNo || '',
     selectedCourses: Array.isArray(user.selectedCourses) ? user.selectedCourses : (Array.isArray(user.courses) ? user.courses : []),
@@ -427,7 +432,7 @@ export default function LoginPage({
       gender: currentUser.gender || updatedStudent.gender,
       aadhaarNumber: currentUser.aadhaarNumber || updatedStudent.aadhaarNumber,
       aadharNumber: currentUser.aadhaarNumber || updatedStudent.aadhaarNumber,
-      feeAmount: currentUser.feeAmount || updatedStudent.feeAmount,
+      feeAmount: updatedStudent.feeAmount || currentUser.feeAmount,
       paymentMode: currentUser.paymentMode || updatedStudent.paymentMode,
       receiptRefNo: currentUser.receiptRefNo || updatedStudent.receiptRefNo,
     };
