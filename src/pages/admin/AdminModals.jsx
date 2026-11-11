@@ -30,6 +30,8 @@ import Logo from '../../components/Logo';
 import { addStoredPayment } from '../../data/paymentsData';
 import { saveStoredSchools } from '../../data/schoolsData';
 
+import BselReceipt from "../../components/admin/BselReceipt";
+
 export default function AdminModals({
   currentAdminRole,
   activeBranch,
@@ -1553,85 +1555,14 @@ export default function AdminModals({
           ========================================================================= */}
       {selectedReceiptForPrint && (
         <div className="fixed inset-0 z-[150] bg-black/75 backdrop-blur-xs flex items-start justify-center p-3 sm:p-6 overflow-y-auto overscroll-contain">
-          <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-150 my-auto">
-            {/* Header */}
-            <div className="bg-[#081d3d] text-white p-4.5 flex items-center justify-between border-b-2 border-amber-400">
-              <div className="flex items-center gap-2">
-                <Logo lightText={true} />
-                <span className="text-xs font-black uppercase text-amber-300 tracking-wider">Official Fee Receipt</span>
-              </div>
-              <button onClick={() => setSelectedReceiptForPrint(null)} className="text-white/80 hover:text-white">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Receipt Content */}
-            <div className="p-6 space-y-4 text-xs font-sans">
-              <div className="flex justify-between border-b border-slate-200 pb-3">
-                <div>
-                  <span className="text-[10px] uppercase font-bold text-slate-400">Receipt Number</span>
-                  <div className="text-sm font-black font-mono text-slate-900">{selectedReceiptForPrint.receiptNo || selectedReceiptForPrint.id}</div>
-                </div>
-                <div className="text-right">
-                  <span className="text-[10px] uppercase font-bold text-slate-400">Date of Payment</span>
-                  <div className="font-bold text-slate-800">{selectedReceiptForPrint.date}</div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3 text-xs">
-                <div>
-                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Candidate / Payer</span>
-                  <strong className="text-slate-900 text-sm capitalize">{selectedReceiptForPrint.payerName}</strong>
-                </div>
-
-                <div>
-                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Issuing Branch</span>
-                  <strong className="text-slate-900">{selectedReceiptForPrint.branch}</strong>
-                </div>
-
-                <div>
-                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Payment Sector</span>
-                  <span className="text-slate-800 font-bold">{selectedReceiptForPrint.sector}</span>
-                </div>
-
-                <div>
-                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Course / Purpose</span>
-                  <span className="text-slate-800 font-bold">{selectedReceiptForPrint.program}</span>
-                </div>
-              </div>
-
-              {/* Amount Box */}
-              <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-200 flex items-center justify-between">
-                <div>
-                  <span className="text-[10px] font-black uppercase tracking-wider text-emerald-800">Total Fee Paid</span>
-                  <div className="text-2xl font-black text-emerald-900">{selectedReceiptForPrint.amount}</div>
-                </div>
-                <div className="text-right">
-                  <span className="text-[10px] uppercase font-bold text-emerald-700 block">Mode: {selectedReceiptForPrint.paymentMode}</span>
-                  <span className="font-mono text-[10px] text-emerald-800">Ref: {selectedReceiptForPrint.refNo}</span>
-                </div>
-              </div>
-
-              {/* Verification Stamp */}
-              <div className="pt-3 border-t border-slate-200 flex items-center justify-between text-[11px] text-slate-500">
-                <div className="flex items-center gap-1.5 text-emerald-700 font-bold">
-                  <ShieldCheck className="w-4 h-4" />
-                  <span>Authenticated by {selectedReceiptForPrint.verifiedBy || 'B★SEL Desk'}</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => window.print()}
-                  className="px-3 py-1.5 bg-[#081d3d] hover:bg-[#123068] text-white rounded-lg font-black text-xs transition flex items-center gap-1.5"
-                >
-                  <Printer className="w-3.5 h-3.5" />
-                  <span>Print Receipt</span>
-                </button>
-              </div>
-            </div>
+          <div className="bg-white w-full max-w-4xl rounded-2xl shadow-2xl p-4 sm:p-6 my-auto">
+            <BselReceipt
+              receipt={selectedReceiptForPrint}
+              onClose={() => setSelectedReceiptForPrint(null)}
+            />
           </div>
         </div>
       )}
-
       {/* =========================================================================
           MODAL 6: EDIT STUDENT
           ========================================================================= */}

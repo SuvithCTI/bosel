@@ -100,25 +100,6 @@ export default function AdminStudentsPage({
                   </p>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
-                  {/* Merge as PDF button placed near Register New Student */}
-                  <button
-                    type="button"
-                    onClick={handleToggleMergeMode}
-                    className={`px-3.5 py-2 rounded-xl text-xs font-black transition flex items-center gap-1.5 shadow-sm cursor-pointer border ${
-                      isMergeMode
-                        ? 'bg-[#081d3d] text-white border-amber-400 ring-2 ring-amber-400/30'
-                        : 'bg-white text-slate-800 hover:bg-slate-50 border-slate-300'
-                    }`}
-                    title="Select students to merge Certificate and Marksheet into PDF"
-                  >
-                    <FileDown className={`w-4 h-4 ${isMergeMode ? 'text-amber-300' : 'text-sky-600'}`} />
-                    <span>Merge as PDF</span>
-                    {selectedStudentIds.length > 0 && (
-                      <span className="ml-1 px-1.5 py-0.5 bg-amber-400 text-slate-950 rounded-full text-[10px] font-black">
-                        {selectedStudentIds.length}
-                      </span>
-                    )}
-                  </button>
                   <button
                     type="button"
                     onClick={() => setShowAddStudentModal(true)}

@@ -76,7 +76,7 @@ import {
 
 import AdminAchievementsModule from '../components/admin/AdminAchievementsModule';
 
-
+import BselReceipt from "../components/admin/BselReceipt";
 
 import AdminOverviewPage from './admin/AdminOverviewPage';
 
@@ -571,13 +571,16 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
           if (data && Array.isArray(data.students)) {
             const currentUsers = getRegisteredUsers();
             const remoteMapped = data.students.map(s => {
-              const existing = currentUsers.find(u => (u.userId || '').toLowerCase() === (s.user_id || '').toLowerCase());
+              const userId = s.user_id || '';
+              const existing = currentUsers.find(u => (u.userId || '').toLowerCase() === userId.toLowerCase());
               const regParent = s.parent_name || existing?.parentName || existing?.fatherName || '';
               const photo = s.photo_url || existing?.studentPhoto || existing?.photoUrl || null;
               const regNo = s.register_number || existing?.registerNumber || existing?.registrationNo || '';
               return {
                 ...(existing || {}),
-                userId: s.user_id,
+                userId,
+                accountUserId: userId.replace(/-COURSE-\d+$/i, ''),
+                admissionOnly: /-COURSE-\d+$/i.test(userId),
                 studentName: s.student_name || existing?.studentName || '',
                 name: s.student_name || existing?.name || '',
                 parentName: regParent,
@@ -3824,4 +3827,3 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
   );
 
 }
-
