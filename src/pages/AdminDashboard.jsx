@@ -76,7 +76,7 @@ import {
 
 import AdminAchievementsModule from '../components/admin/AdminAchievementsModule';
 
-
+import BselReceipt from "../components/admin/BselReceipt";
 
 import AdminOverviewPage from './admin/AdminOverviewPage';
 
@@ -570,6 +570,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
           const data = await res.json();
           if (data && Array.isArray(data.students)) {
             const currentUsers = getRegisteredUsers();
+<<<<<<< HEAD
             const remoteMapped = data.students.map(s => ({
               userId: s.user_id,
               accountUserId: s.user_id.replace(/-COURSE-\d+$/i, ''),
@@ -599,6 +600,56 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
               pincode: s.pincode || '',
               aadharNumber: s.aadhar_number || ''
             }));
+=======
+            const remoteMapped = data.students.map(s => {
+              const existing = currentUsers.find(u => (u.userId || '').toLowerCase() === (s.user_id || '').toLowerCase());
+              const regParent = s.parent_name || existing?.parentName || existing?.fatherName || '';
+              const photo = s.photo_url || existing?.studentPhoto || existing?.photoUrl || null;
+              const regNo = s.register_number || existing?.registerNumber || existing?.registrationNo || '';
+              return {
+                ...(existing || {}),
+                userId: s.user_id,
+                studentName: s.student_name || existing?.studentName || '',
+                name: s.student_name || existing?.name || '',
+                parentName: regParent,
+                fatherName: regParent,
+                email: s.email || existing?.email || '',
+                phone: s.phone || existing?.phone || '',
+                alternatePhone: s.alternate_phone || existing?.alternatePhone || '',
+                grade: s.grade || existing?.grade || '',
+                program: s.program || s.course_name || existing?.program || '',
+                courseName: s.course_name || existing?.courseName || '',
+                selectedCourses: (s.selected_courses && s.selected_courses.length > 0) ? s.selected_courses : (existing?.selectedCourses || []),
+                branch: s.branch || existing?.branch || '',
+                institution: s.institution || s.branch || existing?.institution || '',
+                address: s.address || existing?.address || '',
+                village: s.village || existing?.village || '',
+                city: s.city || existing?.city || '',
+                district: s.district || existing?.district || '',
+                pincode: s.pincode || existing?.pincode || '',
+                studentPhoto: photo,
+                photoUrl: photo,
+                registerNumber: regNo,
+                registrationNo: regNo,
+                role: 'Student',
+                enrolmentDate: s.enrolment_date || existing?.enrolmentDate || '',
+                dob: s.dob || existing?.dob || '',
+                age: s.age || existing?.age || '',
+                gender: s.gender || existing?.gender || 'Male',
+                studentClass: s.student_class || existing?.studentClass || '',
+                studentStage: s.student_stage || existing?.studentStage || '',
+                aadharNumber: s.aadhar_number || existing?.aadharNumber || existing?.aadhaar || '',
+                aadhaarNumber: s.aadhar_number || existing?.aadhaarNumber || existing?.aadharNumber || '',
+                aadhaar: s.aadhar_number || existing?.aadhaar || '',
+                feePaymentType: s.fee_payment_type || existing?.feePaymentType || 'Pay Now',
+                feeAmount: s.fee_amount || existing?.feeAmount || '₹450',
+                paymentMode: s.payment_mode || existing?.paymentMode || 'UPI / QR Code',
+                receiptRefNo: s.receipt_ref_no || existing?.receiptRefNo || '',
+                paymentScreenshot: s.payment_screenshot || existing?.paymentScreenshot || null,
+                status: s.status || existing?.status || 'Confirmed'
+              };
+            });
+>>>>>>> fb81711c3283a10820977b5a3de68bcf3f0e4d85
 
             const remoteMap = new Map(remoteMapped.map(s => [s.userId.toLowerCase(), s]));
             const merged = currentUsers.map(u => {
@@ -2110,7 +2161,9 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
 
         u.phone?.toLowerCase().includes(studentSearch.toLowerCase()) ||
 
-        u.parentName?.toLowerCase().includes(studentSearch.toLowerCase());
+        u.parentName?.toLowerCase().includes(studentSearch.toLowerCase()) ||
+        u.fatherName?.toLowerCase().includes(studentSearch.toLowerCase()) ||
+        u.studentClass?.toLowerCase().includes(studentSearch.toLowerCase());
 
       
 

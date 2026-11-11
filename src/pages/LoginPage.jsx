@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 
 import CertificateModal from '../components/CertificateModal';
+import AdmissionModal from '../components/AdmissionModal';
 import api from '../services/api';
 import StudentDashboard from '../components/student/StudentDashboard';
 
@@ -116,9 +117,18 @@ export default function LoginPage({
   const [selectedCertForModal, setSelectedCertForModal] =
     useState(null);
 
+  const [isAdmissionOpen, setIsAdmissionOpen] = useState(false);
+
   const [errorMessage, setErrorMessage] = useState('');
 
   const isLoggedIn = Boolean(currentUser);
+
+  // Listen for open_admission_modal event
+  useEffect(() => {
+    const handleOpenAdmission = () => setIsAdmissionOpen(true);
+    window.addEventListener('open_admission_modal', handleOpenAdmission);
+    return () => window.removeEventListener('open_admission_modal', handleOpenAdmission);
+  }, []);
 
   // -------------------------------------------------------
   // Notify App.jsx when the student dashboard is displayed.
@@ -341,18 +351,6 @@ export default function LoginPage({
     onStudentDashboardChange?.(false);
   };
 
-  // -------------------------------------------------------
-  // Forgot password
-  // -------------------------------------------------------
-  const handleForgotPassword = () => {
-    window.alert(
-      'Your password is your registered 10-digit mobile number. ' +
-        'Your User ID follows the format BSEL-MobileNumber ' +
-        '(example: BSEL-9876543211). ' +
-        'For assistance, contact +91 98401 23456.'
-    );
-  };
-
   // =======================================================
   // LOGGED-IN STUDENT: DISPLAY DASHBOARD WITHOUT GLOBAL
   // NAVBAR, FOOTER, OR FLOATING ACTION BUTTONS.
@@ -501,20 +499,13 @@ export default function LoginPage({
 
                 {/* Password */}
                 <div>
-                  <div className="mb-1 flex items-center justify-between gap-2">
+                  <div className="mb-1">
                     <label
                       htmlFor="student-password"
                       className="text-xs font-semibold uppercase tracking-wider text-slate-200"
                     >
                       Password
                     </label>
-                    <button
-                      type="button"
-                      onClick={handleForgotPassword}
-                      className="text-xs font-medium text-sky-300 hover:text-white hover:underline transition cursor-pointer"
-                    >
-                      Forgot Password?
-                    </button>
                   </div>
 
                   <div className="relative">
@@ -615,21 +606,15 @@ export default function LoginPage({
               </form>
 
               {/* Admission Enquiry Text Link */}
-              {setActivePage && (
-                <div className="pt-0.5 text-center">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      window.dispatchEvent(
-                        new CustomEvent('open_admission_modal')
-                      );
-                    }}
-                    className="text-xs font-medium text-blue-100 hover:text-white hover:underline transition cursor-pointer"
-                  >
-                    Don't have login credentials? Submit Admission Enquiry →
-                  </button>
-                </div>
-              )}
+              <div className="pt-0.5 text-center">
+                <button
+                  type="button"
+                  onClick={() => setIsAdmissionOpen(true)}
+                  className="text-xs font-medium text-blue-100 hover:text-white hover:underline transition cursor-pointer"
+                >
+                  Don&apos;t have login credentials? Submit Admission Enquiry →
+                </button>
+              </div>
 
               {/* Help / Helpline */}
               <div className="border-t border-white/15 pt-2 text-center text-xs text-blue-100/80">
@@ -645,6 +630,13 @@ export default function LoginPage({
           </div>
         </div>
       </div>
+
+      {/* Admission Enquiry / Application Modal */}
+      <AdmissionModal
+        isOpen={isAdmissionOpen}
+        onClose={() => setIsAdmissionOpen(false)}
+        setActivePage={setActivePage}
+      />
     </div>
   );
 }

@@ -2,7 +2,7 @@ import { getStoredSchools, getStoredSchoolsSectionHeader } from "../data/schools
 import { getStoredCompetitionAchievements } from "../data/competitionAchievementsData";
 import { useState, useEffect } from "react";
 import { Trophy, Sparkles, Award, ArrowRight } from "lucide-react";
-import { getStoredAchievements } from "../data/achievementsData";
+import { getStoredAchievements, resolveStudentPhoto } from "../data/achievementsData";
 
 import apj from "../assets/programs/apj.jpg";
 import district from "../assets/programs/districtlevel.jpg";
@@ -746,7 +746,7 @@ function StudentAchievers({ achievements }) {
 
         {/* Student Cards: 2 columns on mobile */}
         <div className="mt-6 grid grid-cols-2 gap-3 sm:mt-10 sm:gap-5 lg:grid-cols-3 lg:gap-8">
-          {(achievements || []).map((student) => (
+          {(achievements || []).map((student, idx) => (
             <article
               key={student.id}
               className="group relative min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-amber-300 hover:shadow-xl sm:rounded-2xl lg:rounded-3xl flex flex-col justify-between"
@@ -754,10 +754,14 @@ function StudentAchievers({ achievements }) {
               {/* Student Photo */}
               <div className="relative h-36 overflow-hidden min-[400px]:h-44 sm:h-60 lg:h-72 bg-slate-900">
                 <img
-                  src={student.photo}
-                  alt={`Photo of ${student.name}`}
+                  src={resolveStudentPhoto(student.photo, idx)}
+                  alt=""
                   className="h-full w-full object-cover object-top transition duration-500 group-hover:scale-105"
                   loading="lazy"
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = resolveStudentPhoto(null, idx);
+                  }}
                 />
 
                 {/* Image Overlay */}

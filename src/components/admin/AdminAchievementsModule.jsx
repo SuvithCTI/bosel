@@ -28,7 +28,8 @@ import {
   addStoredAchievement,
   updateStoredAchievement,
   deleteStoredAchievement,
-  PRESET_STUDENT_PHOTOS
+  PRESET_STUDENT_PHOTOS,
+  resolveStudentPhoto
 } from '../../data/achievementsData';
 import {
   getStoredSchools,
@@ -53,6 +54,49 @@ const STUDENT_LEVEL_OPTIONS = [
   'State',
   'District'
 ];
+
+function StudentPhotoCell({ photo, name, index = 0 }) {
+  const resolved = resolveStudentPhoto(photo, index);
+  const [imgSrc, setImgSrc] = useState(resolved);
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    setImgSrc(resolveStudentPhoto(photo, index));
+    setHasError(false);
+  }, [photo, index]);
+
+  const initials = (name || 'S')
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(p => p[0].toUpperCase())
+    .join('') || 'S';
+
+  return (
+    <div className="w-12 h-14 rounded-xl overflow-hidden border border-slate-300 bg-slate-100 shadow-xs relative flex items-center justify-center">
+      {!hasError && imgSrc ? (
+        <img
+          src={imgSrc}
+          alt=""
+          className="w-full h-full object-cover object-top"
+          onError={() => {
+            const fallback = resolveStudentPhoto(null, index);
+            if (imgSrc !== fallback) {
+              setImgSrc(fallback);
+            } else {
+              setHasError(true);
+            }
+          }}
+          loading="lazy"
+        />
+      ) : (
+        <div className="w-full h-full bg-gradient-to-br from-sky-600 to-indigo-800 flex items-center justify-center text-white font-black text-xs select-none">
+          {initials}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function AdminAchievementsModule({ showToast = () => {} }) {
   // Active Section Switcher: 'schools' | 'students' | 'competitions'
@@ -311,7 +355,7 @@ export default function AdminAchievementsModule({ showToast = () => {} }) {
       award: student.award || '',
       year: student.year || '2026',
       description: student.description || '',
-      photo: student.photo || ''
+      photo: resolveStudentPhoto(student.photo)
     });
     setIsStudentModalOpen(true);
   };
@@ -351,7 +395,7 @@ export default function AdminAchievementsModule({ showToast = () => {} }) {
         award: studentFormData.award.trim() || 'Achievement Award',
         year: studentFormData.year.trim() || '2026',
         description: studentFormData.description.trim() || 'Recognized for outstanding performance in competition.',
-        photo: studentFormData.photo
+        photo: resolveStudentPhoto(studentFormData.photo)
       });
       showToast?.(`Achievement for "${studentFormData.name.trim()}" updated live on website!`);
     } else {
@@ -363,7 +407,7 @@ export default function AdminAchievementsModule({ showToast = () => {} }) {
         award: studentFormData.award.trim() || 'Achievement Award',
         year: studentFormData.year.trim() || '2026',
         description: studentFormData.description.trim() || 'Recognized for outstanding performance in competition.',
-        photo: studentFormData.photo
+        photo: resolveStudentPhoto(studentFormData.photo)
       });
       showToast?.(`Achievement for "${studentFormData.name.trim()}" published live to website!`);
     }
@@ -911,16 +955,14 @@ export default function AdminAchievementsModule({ showToast = () => {} }) {
                       </td>
                     </tr>
                   ) : (
-                    displayedStudents.map((student) => (
+                    displayedStudents.map((student, idx) => (
                       <tr key={student.id} className="hover:bg-slate-50/70 transition">
                         <td className="py-3.5 px-4 whitespace-nowrap">
-                          <div className="w-12 h-14 rounded-xl overflow-hidden border border-slate-300 bg-slate-900 shadow-xs">
-                            <img
-                              src={student.photo}
-                              alt={student.name}
-                              className="w-full h-full object-cover object-top"
-                            />
-                          </div>
+                          <StudentPhotoCell
+                            photo={student.photo}
+                            name={student.name}
+                            index={idx}
+                          />
                         </td>
 
                         <td className="py-3.5 px-4">
@@ -1070,11 +1112,14 @@ export default function AdminAchievementsModule({ showToast = () => {} }) {
                         </td>
                         <td className="py-3.5 px-4 whitespace-nowrap">
                           {item.image ? (
-                            <div className="w-14 h-10 rounded-lg overflow-hidden border border-slate-200 bg-slate-100 shadow-xs">
+                            <div className="w-14 h-10 rounded-lg overflow-hidden border border-slate-200 bg-slate-100 shadow-xs flex items-center justify-center">
                               <img
                                 src={item.image}
-                                alt={item.title}
+                                alt=""
                                 className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none';
+                                }}
                               />
                             </div>
                           ) : (

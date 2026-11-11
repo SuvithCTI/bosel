@@ -18,6 +18,7 @@ import {
   Ticket,
   FileSpreadsheet
 } from 'lucide-react';
+import StudentAvatar from '../../components/StudentAvatar';
 import {
   getStudentPhotoUrl,
   getStudentRegisterNumber,
@@ -254,21 +255,13 @@ export default function AdminStudentsPage({
                           {/* Student Details */}
                           <td className="py-3 px-4">
                             <div className="flex items-center gap-3">
-                              <div 
+                              <StudentAvatar
+                                student={student}
+                                index={idx}
+                                className="w-9 h-9"
                                 onClick={() => setViewingAdmissionStudent(student)}
-                                className="relative w-9 h-9 rounded-lg overflow-hidden border border-slate-200 shadow-2xs shrink-0 bg-slate-100 cursor-pointer hover:border-sky-500 hover:scale-105 transition"
-                                title="View Admission Form"
-                              >
-                                <img
-                                  src={getStudentPhotoUrl(student, idx)}
-                                  alt={student.studentName}
-                                  className="w-full h-full object-cover object-top"
-                                  onError={(e) => {
-                                    e.currentTarget.onerror = null;
-                                    e.currentTarget.src = SAMPLE_STUDENT_PHOTOS[Math.abs(idx) % SAMPLE_STUDENT_PHOTOS.length];
-                                  }}
-                                />
-                              </div>
+                                title={`View Admission Form for ${student.studentName || 'Student'}`}
+                              />
                               <div>
                                 <div className="font-bold text-slate-900 capitalize text-xs">{student.studentName || 'Student Name'}</div>
                                 <div className="text-[11px] text-slate-500 flex items-center gap-1.5 mt-0.5">
@@ -280,7 +273,7 @@ export default function AdminStudentsPage({
 
                           {/* Parent & Contact */}
                           <td className="py-3 px-3 whitespace-nowrap">
-                            <div className="text-slate-800 font-semibold">{student.parentName || 'Guardian'}</div>
+                            <div className="text-slate-800 font-semibold">{student.parentName || student.fatherName || 'Guardian'}</div>
                             <div className="text-[11px] text-slate-500 mt-0.5 flex items-center gap-1">
                               <Phone className="w-3 h-3 text-emerald-600" />
                               <span>{student.phone || '98400 00000'}</span>
@@ -298,7 +291,7 @@ export default function AdminStudentsPage({
                           <td className="py-3 px-3 whitespace-nowrap">
                             <div className="font-bold text-slate-900">{student.program || student.courseName || 'Abacus'}</div>
                             <div className="text-[10px] font-black text-amber-700 mt-0.5 uppercase tracking-wide">
-                              {student.grade || 'Level 1'}
+                              {student.grade || student.studentClass || 'Level 1'}
                             </div>
                           </td>
 

@@ -227,6 +227,11 @@ export default function ProgramsPage() {
   // Step 1: Submit Registration Form -> Go to Payment Gateway
   const handleFormSubmit = (e) => {
     e.preventDefault();
+    const cleanPhone = (regForm.phone || '').replace(/\D/g, '');
+    if (cleanPhone.length !== 10) {
+      alert('Please enter a valid 10-digit mobile number.');
+      return;
+    }
     setRegStep('payment');
   };
 
@@ -888,8 +893,10 @@ export default function ProgramsPage() {
                           <input
                             type="tel"
                             required
+                            maxLength="10"
+                            placeholder="10-digit mobile"
                             value={regForm.phone}
-                            onChange={(e) => setRegForm({...regForm, phone: e.target.value})}
+                            onChange={(e) => setRegForm({...regForm, phone: e.target.value.replace(/\D/g, '').slice(0, 10)})}
                             className="w-full h-9 sm:h-10 px-2 sm:px-3 text-base sm:text-sm text-slate-950 font-semibold border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none"
                           />
                         </div>

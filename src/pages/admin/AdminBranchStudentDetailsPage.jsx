@@ -42,7 +42,7 @@ import { getStoredCourses } from '../../data/coursesData';
 
 import MergedStudentPdfModal from '../../components/MergedStudentPdfModal';
 
-import { getCoursePrefix } from '../../utils/authStorage';
+import { getCoursePrefix, getRegisteredUsers } from '../../utils/authStorage';
 
 import { getCourseSubjectModules } from '../../components/OfficialMarksheetView';
 
@@ -405,63 +405,74 @@ export const DEFAULT_STUDENT_ENQUIRIES = [
 ];
 
 export const getStoredStudentEnquiries = () => {
-
   if (typeof window === 'undefined') return DEFAULT_STUDENT_ENQUIRIES;
-
   try {
-
     const raw = localStorage.getItem('bsel_student_enquiries');
+    let parsed = raw ? JSON.parse(raw) : [];
+    if (!Array.isArray(parsed)) parsed = [];
 
-    if (!raw) {
+    // Also get all registered students from official student registration
+    const registeredUsers = getRegisteredUsers().filter(u => u.role !== 'Super Admin' && u.role !== 'Branch Head');
 
-      localStorage.setItem('bsel_student_enquiries', JSON.stringify(DEFAULT_STUDENT_ENQUIRIES));
-
-      return DEFAULT_STUDENT_ENQUIRIES;
-
-    }
-
-    const parsed = JSON.parse(raw);
-
-    if (!Array.isArray(parsed) || parsed.length === 0) {
-
-      localStorage.setItem('bsel_student_enquiries', JSON.stringify(DEFAULT_STUDENT_ENQUIRIES));
-
-      return DEFAULT_STUDENT_ENQUIRIES;
-
-    }
-
-    // Ensure all default seed records exist so the table is never empty
-
-    const existingIds = new Set(parsed.map((p) => p.id || p.admissionNo));
-
-    let hasAdditions = false;
-
-    DEFAULT_STUDENT_ENQUIRIES.forEach((item) => {
-
-      if (!existingIds.has(item.id) && !existingIds.has(item.admissionNo)) {
-
-        parsed.push(item);
-
-        hasAdditions = true;
-
-      }
-
+    // Map registered users to enquiry structure with 100% full detail fidelity
+    const registeredEnquiries = registeredUsers.map(u => {
+      const parent = u.parentName || u.fatherName || '';
+      const regNo = u.registerNumber || u.registrationNo || getStudentRegisterNumber(u);
+      return {
+        id: u.userId,
+        userId: u.userId,
+        admissionNo: regNo,
+        registerNumber: regNo,
+        branchName: u.branch || u.institution || 'Tenkasi Regional Branch',
+        branch: u.branch || u.institution || 'Tenkasi Regional Branch',
+        institution: u.institution || u.branch || 'Tenkasi Regional Branch',
+        studentName: u.studentName || u.name || 'Student',
+        name: u.studentName || u.name || 'Student',
+        parentName: parent,
+        fatherName: parent,
+        courseName: u.program || u.courseName || 'Abacus Speed Arithmetic',
+        program: u.program || u.courseName || 'Abacus Speed Arithmetic',
+        grade: u.grade || u.studentClass || 'Level 1',
+        level: u.grade || u.studentClass || 'Level 1',
+        mobile: u.phone || '',
+        phone: u.phone || '',
+        alternatePhone: u.alternatePhone || '',
+        email: u.email || '',
+        submitted: u.enrolmentDate || new Date().toISOString().split('T')[0],
+        status: u.status || 'Confirmed',
+        feeStatus: (u.feePaymentType === 'Paid' || u.feePaymentType === 'Pay Now') ? 'Paid' : 'Pending',
+        feePaymentType: u.feePaymentType || 'Pay Now',
+        feeAmount: u.feeAmount || '₹450',
+        paymentMode: u.paymentMode || 'UPI / QR Code',
+        receiptRefNo: u.receiptRefNo || '',
+        gender: u.gender || 'Male',
+        dob: u.dob || '',
+        age: u.age || '',
+        studentClass: u.studentClass || '',
+        studentStage: u.studentStage || '',
+        address: u.address || '',
+        village: u.village || '',
+        city: u.city || '',
+        district: u.district || '',
+        pincode: u.pincode || '',
+        aadharNumber: u.aadharNumber || u.aadhaarNumber || u.aadhaar || '',
+        aadhaar: u.aadharNumber || u.aadhaarNumber || u.aadhaar || '',
+        studentPhoto: u.studentPhoto || u.photoUrl || null,
+        photoUrl: u.photoUrl || u.studentPhoto || null,
+        results: u.results || [],
+        events: u.events || []
+      };
     });
 
-    if (hasAdditions) {
+    // Merge registered enquiries on top so registered users ALWAYS take precedence
+    const regIds = new Set(registeredEnquiries.map(r => (r.userId || r.id).toLowerCase()));
+    const nonDuplicatedParsed = parsed.filter(p => !regIds.has((p.userId || p.id || '').toLowerCase()));
+    const combined = [...registeredEnquiries, ...nonDuplicatedParsed];
 
-      localStorage.setItem('bsel_student_enquiries', JSON.stringify(parsed));
-
-    }
-
-    return parsed;
-
+    return combined.length > 0 ? combined : DEFAULT_STUDENT_ENQUIRIES;
   } catch {
-
     return DEFAULT_STUDENT_ENQUIRIES;
-
   }
-
 };
 
 export const saveStoredStudentEnquiries = (list) => {
@@ -553,13 +564,13 @@ export default function AdminBranchStudentDetailsPage({
     const handleUpdate = () => setEnquiries(getStoredStudentEnquiries());
 
     window.addEventListener('bsel_enquiries_updated', handleUpdate);
-
+    window.addEventListener('bsel_users_updated', handleUpdate);
     window.addEventListener('storage', handleUpdate);
 
     return () => {
 
       window.removeEventListener('bsel_enquiries_updated', handleUpdate);
-
+      window.removeEventListener('bsel_users_updated', handleUpdate);
       window.removeEventListener('storage', handleUpdate);
 
     };
