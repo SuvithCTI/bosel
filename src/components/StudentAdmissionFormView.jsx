@@ -525,73 +525,14 @@ export default function StudentAdmissionFormView({ student, onClose }) {
               flex items-center justify-center
             ">
 
-<<<<<<< HEAD
-            <div className="border-b border-slate-100 pb-1.5 flex flex-col justify-end">
-              <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider block">
-                DATE
-              </span>
-              <span className="font-bold text-slate-800">
-                {student.date || student.enrolmentDate || '2026-10-09'}
-              </span>
-            </div>
-
-            <div className="border-b border-slate-100 pb-1.5 flex flex-col justify-end">
-              <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider block">
-                COURSE NAME
-              </span>
-              <span className="font-bold text-slate-800">
-                {student.program || student.courseName || 'Handwriting'}
-              </span>
-            </div>
-
-            <div className="border-b border-slate-100 pb-1.5 flex flex-col justify-end">
-              <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider block">
-                STUDY CENTRE TYPE
-              </span>
-              <span className="font-bold text-slate-800">
-                {student.studyCentreType || (student.branch?.toLowerCase().includes('school') ? 'School' : 'Academy')}
-              </span>
-            </div>
-
-            <div className="border-b border-slate-100 pb-1.5 flex flex-col justify-end">
-              <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider block">
-                STUDENT AADHAAR NUMBER
-              </span>
-              <span className="font-bold text-slate-800 font-mono">
-                {student.aadharNumber || student.aadhaarNumber || student.aadhaar || student.aadhar_number || 'Not provided'}
-              </span>
-            </div>
-
-            <div className="col-span-2 pt-1 flex flex-col justify-end">
-              <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider block">
-                SCHOOL / BRANCH
-              </span>
-              <span className="font-extrabold text-[#0c234b]">
-                {student.branch || student.institution || 'Aim 4 Life'}
-              </span>
-            </div>
-          </div>
-
-          {/* Student Photo */}
-          <div className="col-span-3 flex justify-end items-start pt-1">
-            <div className="w-28 h-36 border-2 border-slate-300 p-0.5 bg-slate-50 rounded-xs shadow-xs overflow-hidden flex items-center justify-center">
-              <img
-                src={studentPhoto}
-                alt=""
-                className="w-full h-full object-cover object-top"
-                onError={(e) => {
-                  e.currentTarget.onerror = null;
-=======
               <img
                 src="/bsel_logo.jpg"
                 alt="BSEL Logo"
                 className="w-full h-full object-contain"
                 onError={(e) => {
->>>>>>> c9ab6ffed7d638917ec688718c787bf1d9321d6b
                   e.currentTarget.style.display = 'none';
                 }}
               />
-
             </div>
 
 
@@ -804,12 +745,6 @@ export default function StudentAdmissionFormView({ student, onClose }) {
               <span className="font-extrabold text-slate-900">
                 {student.studentName || student.name || 'Not provided'}
               </span>
-<<<<<<< HEAD
-              <span className="font-bold text-slate-800">
-                {student.studentClass || student.grade || student.classGrade || 'Not provided'}
-              </span>
-            </div>
-=======
             </Field>
 
             <Field label="DATE OF BIRTH / AGE">
@@ -829,9 +764,8 @@ export default function StudentAdmissionFormView({ student, onClose }) {
             </Field>
 
             <Field label="CLASS / GRADE" className="col-span-2">
-              {student.grade || student.classGrade || 'Not provided'}
+              {student.studentClass || student.grade || student.classGrade || 'Not provided'}
             </Field>
->>>>>>> c9ab6ffed7d638917ec688718c787bf1d9321d6b
 
             {student.studentStage && (
               <div className="
@@ -1076,216 +1010,6 @@ export default function StudentAdmissionFormView({ student, onClose }) {
 
         </div>
 
-<<<<<<< HEAD
-        {/* SECTION 2: CONTACT INFORMATION */}
-        <div className="mt-3">
-          <div className="bg-slate-100 px-3 py-1.5 text-[11px] font-black text-slate-800 border-l-4 border-red-600 uppercase tracking-wider">
-            2. CONTACT INFORMATION
-          </div>
-
-          <div className="grid grid-cols-2 gap-x-8 gap-y-3 p-3.5 text-[11px] border-b border-slate-100">
-            <div>
-              <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider block">
-                MOBILE NUMBER
-              </span>
-              <span className="font-bold text-slate-900 font-mono">
-                {student.phone || '9898989898'}
-              </span>
-            </div>
-
-            <div>
-              <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider block">
-                ALTERNATE NUMBER
-              </span>
-              <span className="font-bold text-slate-900 font-mono">
-                {student.alternatePhone || student.phone || 'Not provided'}
-              </span>
-            </div>
-
-            <div>
-              <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider block">
-                RELATIVE NUMBER
-              </span>
-              <span className="font-bold text-slate-800">
-                {student.relativeNumber || 'Not provided'}
-              </span>
-            </div>
-
-            <div>
-              <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider block">
-                EMAIL ADDRESS
-              </span>
-              <span className="font-bold text-slate-800">
-                {student.email || 'Not provided'}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* SECTION 3: PERMANENT ADDRESS */}
-        <div className="mt-3">
-          <div className="bg-slate-100 px-3 py-1.5 text-[11px] font-black text-slate-800 border-l-4 border-red-600 uppercase tracking-wider">
-            3. PERMANENT ADDRESS
-          </div>
-
-          <div className="grid grid-cols-2 gap-x-8 gap-y-3 p-3.5 text-[11px] border-b border-slate-100">
-            <div className="col-span-2">
-              <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider block">
-                ADDRESS
-              </span>
-              <span className="font-bold text-slate-800">
-                {student.address || 'address sample'}
-              </span>
-            </div>
-
-            <div>
-              <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider block">
-                VILLAGE / CITY
-              </span>
-              <span className="font-bold text-slate-800">
-                {student.village ? (student.city ? `${student.village}, ${student.city}` : student.village) : (student.city || 'Not provided')}
-              </span>
-            </div>
-
-            <div>
-              <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider block">
-                DISTRICT / PIN
-              </span>
-              <span className="font-bold text-slate-800">
-                {student.district || 'Not provided'} / {student.pincode || student.pin || 'Not provided'}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* SECTION 4: COURSE INFORMATION */}
-        <div className="mt-3">
-          <div className="bg-slate-100 px-3 py-1.5 text-[11px] font-black text-slate-800 border-l-4 border-red-600 uppercase tracking-wider">
-            4. COURSE INFORMATION
-          </div>
-
-          <div className="grid grid-cols-2 gap-x-8 gap-y-3 p-3.5 text-[11px] border-b border-slate-100">
-            <div>
-              <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider block">
-                COURSE DURATION
-              </span>
-              <span className="font-bold text-slate-800">
-                {student.duration || student.courseDuration || '6 Months'}
-              </span>
-            </div>
-
-            <div>
-              <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider block">
-                COURSE LEVEL
-              </span>
-              <span className="font-bold text-slate-800">
-                {student.grade || student.courseLevel || 'Level 1'}
-              </span>
-            </div>
-
-            <div>
-              <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider block">
-                ADMISSION FEE
-              </span>
-              <span className="font-bold text-slate-800">
-                {student.feeAmount || student.admissionFee || 'Not provided'}
-              </span>
-            </div>
-
-            <div>
-              <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider block">
-                PAYMENT TIMING
-              </span>
-              <span className="font-bold text-slate-800">
-                {student.paymentTiming || (student.feePaymentType === 'Pay Now' || student.feePaymentType === 'Paid' ? 'Immediate' : 'Later')}
-              </span>
-            </div>
-
-            <div>
-              <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider block">
-                PAYMENT MODE
-              </span>
-              <span className="font-bold text-slate-800">
-                {student.paymentMode || 'Not provided'}
-              </span>
-            </div>
-
-            <div>
-              <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider block">
-                RECEIPT / REFERENCE NO.
-              </span>
-              <span className="font-bold text-slate-800 font-mono">
-                {student.receiptRefNo || student.referenceNo || 'Not provided'}
-              </span>
-            </div>
-
-            <div>
-              <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider block">
-                PAYMENT SCREENSHOT
-              </span>
-              <span className="font-bold text-slate-800">
-                {student.paymentScreenshot ? 'Uploaded' : 'Not provided'}
-              </span>
-            </div>
-
-            <div>
-              <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider block">
-                ADDITIONAL PROGRAMS
-              </span>
-              <span className="font-bold text-slate-800">
-                {student.additionalPrograms || 'Other'}
-              </span>
-            </div>
-
-            <div className="col-span-2">
-              <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider block">
-                OTHER PROGRAM
-              </span>
-              <span className="font-bold text-slate-800">
-                {student.otherProgram || 'sample'}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* SECTION 5: DECLARATION */}
-        <div className="mt-3 border border-slate-300 rounded-xs p-3.5 bg-slate-50/50 text-[11px] space-y-1">
-          <div className="font-extrabold text-slate-900 mb-1">
-            5. Declaration
-          </div>
-          <p className="text-slate-700">
-            I hereby declare that all the information provided is true and correct.
-          </p>
-          <p className="text-slate-700">
-            I agree to abide by the institute's rules and regulations.
-          </p>
-          <div className="font-bold text-slate-900 pt-1.5">
-            Guardian declaration: <span className="text-emerald-700">Accepted</span>
-          </div>
-        </div>
-
-        {/* FOR OFFICE USE ONLY */}
-        <div className="mt-3">
-          <div className="bg-slate-100 px-3 py-1 text-[11px] font-black text-slate-800 border-l-4 border-red-600 uppercase tracking-wider">
-            FOR OFFICE USE ONLY
-          </div>
-
-          <div className="flex items-end justify-between pt-10 px-4 text-xs">
-            <div className="border-t border-slate-400 pt-1.5 w-44 text-center font-bold text-slate-700">
-              Parent / Guardian Signature
-            </div>
-
-            <div className="border-t border-slate-400 pt-1.5 w-44 text-center font-bold text-slate-700">
-              Approved By
-            </div>
-          </div>
-
-          <div className="text-[9px] text-slate-400 text-right mt-4 italic">
-            Generated from the B★SEL admission record • {student.enrolmentDate || new Date().toISOString().replace('T', ' ').slice(0, 19)}
-          </div>
-        </div>
-=======
->>>>>>> c9ab6ffed7d638917ec688718c787bf1d9321d6b
       </div>
 
     </div>
