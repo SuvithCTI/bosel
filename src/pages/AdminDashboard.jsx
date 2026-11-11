@@ -76,7 +76,7 @@ import {
 
 import AdminAchievementsModule from '../components/admin/AdminAchievementsModule';
 
-
+import BselReceipt from "../components/admin/BselReceipt";
 
 import AdminOverviewPage from './admin/AdminOverviewPage';
 

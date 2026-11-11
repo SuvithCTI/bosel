@@ -232,199 +232,117 @@ export default function AdminPaymentsPage({
 
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
 
-              <div className="w-full overflow-hidden">
-
-                <table className="w-full text-left text-xs">
-
-                  <thead className="bg-[#081d3d] text-white uppercase text-[10px] tracking-wider font-black">
-
-                    <tr>
-
-                      <th className="py-3 px-4">Txn / Receipt No</th>
-
-                      <th className="py-3 px-3">Payer Name</th>
-
-                      <th className="py-3 px-3">Branch</th>
-
-                      <th className="py-3 px-3">Payment Sector</th>
-
-                      <th className="py-3 px-3">Amount</th>
-
-                      <th className="py-3 px-3">Mode & UTR</th>
-
-                      <th className="py-3 px-3">Status</th>
-
-                      <th className="py-3 px-3 text-right">Actions</th>
-
-                    </tr>
-
-                  </thead>
-
-                  <tbody className="divide-y divide-slate-100 font-medium">
-
-                    {filteredPayments.map((payment) => (
-
-                      <tr key={payment.id} className="hover:bg-slate-50 transition">
-
-                        <td className="py-3 px-4 font-mono font-bold text-slate-800">
-
-                          <div>{payment.id}</div>
-
-                          <div className="text-[10px] text-slate-400">{payment.receiptNo}</div>
-
-                        </td>
-
-
-
-                        <td className="py-3 px-3">
-
-                          <div className="font-extrabold text-slate-900">{payment.payerName}</div>
-
-                          <div className="text-[10px] text-slate-500">{payment.date}</div>
-
-                        </td>
-
-
-
-                        <td className="py-3 px-3 text-slate-700">
-
-                          {payment.branch}
-
-                        </td>
-
-
-
-                        <td className="py-3 px-3">
-
-                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-800">
-
-                            {payment.sector}
-
-                          </span>
-
-                        </td>
-
-
-
-                        <td className="py-3 px-3 font-black text-emerald-800 text-sm">
-
-                          {payment.amount}
-
-                        </td>
-
-
-
-                        <td className="py-3 px-3">
-
-                          <div className="font-bold text-slate-800">{payment.paymentMode}</div>
-
-                          <div className="font-mono text-[10px] text-slate-500">{payment.refNo}</div>
-
-                        </td>
-
-
-
-                        <td className="py-3 px-3">
-
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${
-
-                            payment.status === 'Verified'
-
-                              ? 'bg-emerald-100 text-emerald-800'
-
-                              : 'bg-amber-100 text-amber-800'
-
-                          }`}>
-
-                            {payment.status}
-
-                          </span>
-
-                        </td>
-
-
-
-                        <td className="py-3 px-3 text-right">
-
-                          <div className="flex items-center justify-end gap-1.5">
-
-                            {payment.status !== 'Verified' && (
-
-                              <button
-
-                                type="button"
-
-                                onClick={() => handleVerifyPayment(payment.id)}
-
-                                className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[10px] font-bold transition"
-
-                              >
-
-                                Verify
-
-                              </button>
-
-                            )}
-
-
-
-                            <button
-
-                              type="button"
-
-                              onClick={() => setSelectedReceiptForPrint(payment)}
-
-                              className="p-1 text-slate-600 hover:text-sky-700 hover:bg-sky-50 rounded transition"
-
-                              title="Print Receipt"
-
-                            >
-
-                              <Printer className="w-4 h-4" />
-
-                            </button>
-
-
-
-                            <button
-
-                              type="button"
-
-                              onClick={() => {
-
-                                if (window.confirm(`Delete payment record ${payment.id}?`)) {
-
-                                  setPaymentsList(deletePayment(payment.id));
-
-                                  showToast('Payment record removed.');
-
-                                }
-
-                              }}
-
-                              className="p-1 text-slate-400 hover:text-rose-600 transition"
-
-                            >
-
-                              <Trash2 className="w-4 h-4" />
-
-                            </button>
-
-                          </div>
-
-                        </td>
-
-                      </tr>
-
-                    ))}
-
-                  </tbody>
-
-                </table>
+  <div className="w-full overflow-x-auto">
+
+    <table className="w-full min-w-[850px] text-left text-xs">
+
+      <thead className="bg-[#081d3d] text-white uppercase text-[10px] tracking-wider font-black">
+        <tr>
+          <th className="py-3 px-4">Txn / Receipt No</th>
+          <th className="py-3 px-3">Payer Name</th>
+          <th className="py-3 px-3">Branch</th>
+          <th className="py-3 px-3">Payment Sector</th>
+          <th className="py-3 px-3">Amount</th>
+          <th className="py-3 px-3">Mode & UTR</th>
+          <th className="py-3 px-3 text-right">Actions</th>
+        </tr>
+      </thead>
+
+      <tbody className="divide-y divide-slate-100 font-medium">
+
+        {filteredPayments.map((payment) => (
+
+          <tr key={payment.id} className="hover:bg-slate-50 transition">
+
+            <td className="py-3 px-4 font-mono font-bold text-slate-800">
+              <div>{payment.id}</div>
+              <div className="text-[10px] text-slate-400">
+                {payment.receiptNo}
+              </div>
+            </td>
+
+            <td className="py-3 px-3">
+              <div className="font-extrabold text-slate-900">
+                {payment.payerName}
+              </div>
+              <div className="text-[10px] text-slate-500">
+                {payment.date}
+              </div>
+            </td>
+
+            <td className="py-3 px-3 text-slate-700">
+              {payment.branch}
+            </td>
+
+            <td className="py-3 px-3">
+              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-800">
+                {payment.sector}
+              </span>
+            </td>
+
+            <td className="py-3 px-3 font-black text-emerald-800 text-sm">
+              {payment.amount}
+            </td>
+
+            <td className="py-3 px-3">
+              <div className="font-bold text-slate-800">
+                {payment.paymentMode}
+              </div>
+              <div className="font-mono text-[10px] text-slate-500">
+                {payment.refNo}
+              </div>
+            </td>
+
+            <td className="py-3 px-3 text-right">
+              <div className="flex items-center justify-end gap-1.5">
+
+                {payment.status !== 'Verified' && (
+                  <button
+                    type="button"
+                    onClick={() => handleVerifyPayment(payment.id)}
+                    className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[10px] font-bold transition"
+                  >
+                    Verify
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedReceiptForPrint(payment)}
+                  className="p-1 text-slate-600 hover:text-sky-700 hover:bg-sky-50 rounded transition"
+                  title="Print Receipt"
+                >
+                  <Printer className="w-4 h-4" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (window.confirm(`Delete payment record ${payment.id}?`)) {
+                      setPaymentsList(deletePayment(payment.id));
+                      showToast('Payment record removed.');
+                    }
+                  }}
+                  className="p-1 text-slate-400 hover:text-rose-600 transition"
+                  title="Delete Payment"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
 
               </div>
+            </td>
 
-            </div>
+          </tr>
+
+        ))}
+
+      </tbody>
+
+    </table>
+
+  </div>
+
+</div>
 
           </div>
 
