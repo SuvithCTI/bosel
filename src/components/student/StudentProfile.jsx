@@ -236,21 +236,21 @@ function ProfileField({
 
 function SectionHeading({ icon: Icon, title, description, badge }) {
   return (
-    <div className="mb-5 flex items-start justify-between gap-3">
-      <div className="flex items-start gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-900">
-          <Icon className="h-5 w-5" />
+    <div className="mb-4 flex items-start justify-between gap-3 sm:mb-5">
+      <div className="flex items-start gap-2.5 sm:gap-3">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-900 sm:h-10 sm:w-10">
+          <Icon className="h-4.5 w-4.5 sm:h-5 sm:w-5" />
         </div>
 
         <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <h3 className="text-base font-extrabold text-blue-950 sm:text-lg">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h3 className="text-sm font-extrabold text-blue-950 sm:text-lg">
               {title}
             </h3>
             {badge}
           </div>
 
-          <p className="mt-1 text-xs leading-5 text-slate-500 sm:text-sm">
+          <p className="mt-0.5 text-xs leading-5 text-slate-500 sm:mt-1 sm:text-sm">
             {description}
           </p>
         </div>
@@ -267,7 +267,7 @@ function ProfileSection({
   children,
 }) {
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+    <section className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm sm:p-6">
       <SectionHeading
         icon={icon}
         title={title}
@@ -275,7 +275,7 @@ function ProfileSection({
         badge={badge}
       />
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5">
+      <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 sm:gap-5">
         {children}
       </div>
     </section>
@@ -523,13 +523,13 @@ export default function StudentProfile({
 
       {/* Student identity banner */}
       <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm sm:rounded-3xl">
-        <div className="relative overflow-hidden bg-gradient-to-r from-[#0F2B5C] to-[#1E4D99] p-5 text-white sm:p-8">
+        <div className="relative overflow-hidden bg-gradient-to-r from-[#0F2B5C] to-[#1E4D99] p-4 text-white sm:p-8">
           <div className="pointer-events-none absolute -right-10 -top-16 h-48 w-48 rounded-full border-[24px] border-white/5" />
 
-          <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex min-w-0 items-center gap-4">
+          <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-5">
+            <div className="flex min-w-0 items-start sm:items-center gap-3.5 sm:gap-4">
               {/* Student photo */}
-              <div className="relative h-20 w-20 shrink-0 sm:h-24 sm:w-24">
+              <div className="relative h-16 w-16 shrink-0 sm:h-24 sm:w-24">
                 {form.studentPhoto ? (
                   <img
                     src={form.studentPhoto}
@@ -537,7 +537,7 @@ export default function StudentProfile({
                     className="h-full w-full rounded-2xl border-2 border-white/30 bg-white object-cover"
                   />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center rounded-2xl bg-amber-400 text-3xl font-black text-blue-950">
+                  <div className="flex h-full w-full items-center justify-center rounded-2xl bg-amber-400 text-2xl font-black text-blue-950 sm:text-3xl">
                     {(form.name || 'S')
                       .trim()
                       .charAt(0)
@@ -548,41 +548,41 @@ export default function StudentProfile({
                 {editing && (
                   <label
                     htmlFor="studentPhotoUpload"
-                    className="absolute -bottom-2 -right-2 flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl border-2 border-white bg-amber-400 text-blue-950 shadow-md transition hover:bg-amber-300"
+                    className="absolute -bottom-1.5 -right-1.5 flex h-7.5 w-7.5 cursor-pointer items-center justify-center rounded-xl border-2 border-white bg-amber-400 text-blue-950 shadow-md transition hover:bg-amber-300 sm:-bottom-2 sm:-right-2 sm:h-9 sm:w-9"
                     title="Upload student photo"
                   >
-                    <Camera className="h-4 w-4" />
+                    <Camera className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   </label>
                 )}
               </div>
 
-              <div className="min-w-0">
-                <p className="text-xs font-bold uppercase tracking-wider text-blue-200">
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-blue-200 sm:text-xs">
                   Student Profile
                 </p>
 
-                <h3 className="mt-1 break-words text-xl text-white font-black sm:text-2xl">
+                <h3 className="mt-0.5 break-words text-lg font-black text-white sm:mt-1 sm:text-2xl">
                   {form.name || 'Student Name'}
                 </h3>
 
-                <p className="mt-1 break-all text-xs text-blue-100 sm:text-sm">
+                <p className="mt-0.5 break-all text-xs text-blue-100 sm:mt-1 sm:text-sm">
                   User ID: {displayValue(studentId)}
                 </p>
 
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <div className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-[10px] font-bold text-amber-200">
-                    <ShieldCheck className="h-3.5 w-3.5" />
+                <div className="mt-2.5 flex flex-wrap items-center gap-1.5 sm:mt-3 sm:gap-2">
+                  <div className="inline-flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-[9.5px] font-bold text-amber-200 sm:px-3 sm:py-1.5 sm:text-[10px]">
+                    <ShieldCheck className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                     Verified Student Record
                   </div>
                   {form.date && (
-                    <span className="text-[11px] text-blue-200/90 font-medium">
+                    <span className="text-[10px] text-blue-200/90 font-medium sm:text-[11px]">
                       Admitted: {form.date}
                     </span>
                   )}
                 </div>
 
                 {editing && (
-                  <p className="mt-3 text-[11px] leading-5 text-amber-200 font-semibold">
+                  <p className="mt-2 text-[10px] leading-relaxed text-amber-200 font-semibold sm:mt-3 sm:text-[11px] sm:leading-5">
                     Note: Academic course details and core identity are locked. You can update your photo, alternative phone, and address below.
                   </p>
                 )}
@@ -590,7 +590,7 @@ export default function StudentProfile({
             </div>
 
             {Array.isArray(form.selectedCourses) && form.selectedCourses.length > 1 ? (
-              <div className="rounded-xl border border-white/15 bg-white/10 p-3 sm:min-w-80 backdrop-blur-xs">
+              <div className="w-full rounded-xl border border-white/15 bg-white/10 p-3 sm:w-auto sm:min-w-80 backdrop-blur-xs">
                 <span className="text-[10px] text-amber-300 font-extrabold uppercase tracking-wider flex items-center gap-1.5">
                   <GraduationCap className="h-3.5 w-3.5" />
                   <span>Enrolled Courses ({form.selectedCourses.length})</span>
@@ -599,9 +599,9 @@ export default function StudentProfile({
                   {form.selectedCourses.map((c, idx) => (
                     <div
                       key={idx}
-                      className="flex items-center justify-between gap-3 text-xs"
+                      className="flex items-center justify-between gap-2.5 text-xs"
                     >
-                      <span className="font-bold text-white truncate max-w-48 sm:max-w-64">
+                      <span className="font-bold text-white truncate max-w-44 sm:max-w-64">
                         {c.courseName || c.name}
                       </span>
                       <span className="shrink-0 px-2 py-0.5 rounded bg-amber-400 text-blue-950 font-black text-[10px]">
@@ -612,23 +612,23 @@ export default function StudentProfile({
                 </div>
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-3 sm:min-w-64">
-                <div className="rounded-xl border border-white/10 bg-white/10 p-3">
-                  <GraduationCap className="h-5 w-5 text-amber-300" />
-                  <p className="mt-2 text-[10px] text-blue-100 font-medium">
+              <div className="grid grid-cols-2 gap-2.5 w-full sm:w-auto sm:min-w-64 sm:gap-3">
+                <div className="rounded-xl border border-white/10 bg-white/10 p-2.5 sm:p-3">
+                  <GraduationCap className="h-4 w-4 text-amber-300 sm:h-5 sm:w-5" />
+                  <p className="mt-1.5 text-[9.5px] text-blue-100 font-medium sm:text-[10px]">
                     Enrolled Course
                   </p>
-                  <p className="mt-1 break-words text-white text-sm font-bold">
+                  <p className="mt-0.5 break-words text-white text-xs font-bold sm:text-sm">
                     {displayValue(form.courseName)}
                   </p>
                 </div>
 
-                <div className="rounded-xl border border-white/10 bg-white/10 p-3">
-                  <School className="h-5 w-5 text-amber-300" />
-                  <p className="mt-2 text-[10px] text-blue-100 font-medium">
+                <div className="rounded-xl border border-white/10 bg-white/10 p-2.5 sm:p-3">
+                  <School className="h-4 w-4 text-amber-300 sm:h-5 sm:w-5" />
+                  <p className="mt-1.5 text-[9.5px] text-blue-100 font-medium sm:text-[10px]">
                     Level / Grade
                   </p>
-                  <p className="mt-1 break-words text-white text-sm font-bold">
+                  <p className="mt-0.5 break-words text-white text-xs font-bold sm:text-sm">
                     {displayValue(form.courseLevel)}
                   </p>
                 </div>
@@ -648,62 +648,62 @@ export default function StudentProfile({
         </div>
 
         {/* Quick details */}
-        <div className="grid grid-cols-1 divide-y divide-slate-100 sm:grid-cols-4 sm:divide-x sm:divide-y-0">
-          <div className="flex min-w-0 items-center gap-3 p-4 sm:p-5">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-900">
+        <div className="grid grid-cols-2 divide-y-0 divide-slate-100 sm:grid-cols-4 sm:divide-x">
+          <div className="flex min-w-0 items-center gap-2.5 p-3 sm:gap-3 sm:p-5 border-b sm:border-b-0 border-r border-slate-100">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-900 sm:h-10 sm:w-10 sm:rounded-xl">
               <Hash className="h-4 w-4" />
             </div>
 
             <div className="min-w-0">
-              <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
+              <p className="text-[9.5px] font-bold uppercase tracking-wide text-slate-500 sm:text-[10px]">
                 {allRegNumbers.length > 1 ? 'Register Nos.' : 'Register No.'}
               </p>
-              <p className="mt-1 truncate text-xs font-mono font-bold text-slate-800 sm:text-sm">
+              <p className="mt-0.5 truncate text-xs font-mono font-bold text-slate-800 sm:text-sm">
                 {allRegNumbers.length > 0 ? allRegNumbers.join(' • ') : displayValue(registerNumber)}
               </p>
             </div>
           </div>
 
-          <div className="flex min-w-0 items-center gap-3 p-4 sm:p-5">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-900">
+          <div className="flex min-w-0 items-center gap-2.5 p-3 sm:gap-3 sm:p-5 border-b sm:border-b-0 border-slate-100">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-900 sm:h-10 sm:w-10 sm:rounded-xl">
               <Phone className="h-4 w-4" />
             </div>
 
             <div className="min-w-0">
-              <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
+              <p className="text-[9.5px] font-bold uppercase tracking-wide text-slate-500 sm:text-[10px]">
                 Phone Number
               </p>
-              <p className="mt-1 break-words text-xs font-semibold text-slate-800 sm:text-sm">
+              <p className="mt-0.5 truncate text-xs font-semibold text-slate-800 sm:text-sm">
                 {displayValue(form.phone)}
               </p>
             </div>
           </div>
 
-          <div className="flex min-w-0 items-center gap-3 p-4 sm:p-5">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-900">
+          <div className="flex min-w-0 items-center gap-2.5 p-3 sm:gap-3 sm:p-5 border-r border-slate-100">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-900 sm:h-10 sm:w-10 sm:rounded-xl">
               <MapPin className="h-4 w-4" />
             </div>
 
             <div className="min-w-0">
-              <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
+              <p className="text-[9.5px] font-bold uppercase tracking-wide text-slate-500 sm:text-[10px]">
                 Branch / District
               </p>
-              <p className="mt-1 break-words text-xs font-semibold text-slate-800 sm:text-sm">
+              <p className="mt-0.5 truncate text-xs font-semibold text-slate-800 sm:text-sm">
                 {displayValue(form.branch || form.district)}
               </p>
             </div>
           </div>
 
-          <div className="flex min-w-0 items-center gap-3 p-4 sm:p-5">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-900">
+          <div className="flex min-w-0 items-center gap-2.5 p-3 sm:gap-3 sm:p-5">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-900 sm:h-10 sm:w-10 sm:rounded-xl">
               <CalendarDays className="h-4 w-4" />
             </div>
 
             <div className="min-w-0">
-              <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
+              <p className="text-[9.5px] font-bold uppercase tracking-wide text-slate-500 sm:text-[10px]">
                 Date of Birth
               </p>
-              <p className="mt-1 break-words text-xs font-semibold text-slate-800 sm:text-sm">
+              <p className="mt-0.5 truncate text-xs font-semibold text-slate-800 sm:text-sm">
                 {displayValue(form.dateOfBirth)}
               </p>
             </div>

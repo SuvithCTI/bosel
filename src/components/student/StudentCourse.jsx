@@ -155,7 +155,7 @@ export default function StudentCourse({
             level-specific instructions.
           </p>
 
-          <div className="mt-4 grid grid-cols-1 gap-2.5 sm:mt-6 sm:grid-cols-2 sm:gap-3 xl:grid-cols-4">
+          <div className="mt-4 grid grid-cols-2 gap-2.5 sm:mt-6 sm:grid-cols-2 sm:gap-3 xl:grid-cols-4">
 
             <InfoCard
               icon={GraduationCap}
