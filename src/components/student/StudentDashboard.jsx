@@ -20,7 +20,6 @@ import StudentNotifications from './StudentNotifications';
 
 const navigationItems = [
   { id: 'course', label: 'My Course', icon: BookOpen },
-  { id: 'profile', label: 'My Profile', icon: UserRound },
 ];
 
 const NOTIFICATION_STORAGE_KEY = 'bsel_notifications';
