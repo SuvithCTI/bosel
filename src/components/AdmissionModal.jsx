@@ -265,6 +265,8 @@ export default function AdmissionModal({
   const [districtError, setDistrictError] = useState(false);
   const [branchDropdownOpen, setBranchDropdownOpen] = useState(false);
   const [branchSearch, setBranchSearch] = useState('');
+  const [isOtherBranch, setIsOtherBranch] = useState(false);
+  const [customBranchName, setCustomBranchName] = useState('');
   const branchDropdownRef = useRef(null);
   const [photoError, setPhotoError] = useState(false);
   const [pincodeLoading, setPincodeLoading] = useState(false);
@@ -377,9 +379,21 @@ export default function AdmissionModal({
     d.toLowerCase().includes(districtSearch.toLowerCase().trim())
   );
 
-  const filteredBranches = availableBranches.filter((b) =>
-    b.toLowerCase().includes(branchSearch.toLowerCase().trim())
-  );
+  const allBranchOptions = useMemo(() => {
+    const list = [...availableBranches];
+    if (!list.includes('Other')) {
+      list.push('Other');
+    }
+    return list;
+  }, [availableBranches]);
+
+  const filteredBranches = allBranchOptions.filter((b) => {
+    const term = branchSearch.toLowerCase().trim();
+    if (b === 'Other') {
+      return term === '' || 'other'.includes(term) || 'others'.includes(term) || 'school'.includes(term);
+    }
+    return b.toLowerCase().includes(term);
+  });
 
   // Auto calculate age from Date of Birth & determine Academic Stage (Field 5 -> 6 & Category)
   const handleDobChange = (e) => {
@@ -808,6 +822,10 @@ export default function AdmissionModal({
       alert('Please enter Student Full Name (Field 4).');
       return false;
     }
+    if (isOtherBranch && (!customBranchName.trim() || formData.branch === 'Other')) {
+      alert('Please enter your School or Academy Name for the branch (Field 2).');
+      return false;
+    }
     if (!formData.parentName.trim()) {
       alert('Please enter Father or Mother Name.');
       return false;
@@ -928,6 +946,8 @@ export default function AdmissionModal({
     setPaymentGatewayTxn('');
     setCardDetails({ number: '', expiry: '', cvv: '', name: '' });
     setCopiedUpi(false);
+    setIsOtherBranch(false);
+    setCustomBranchName('');
     const resetCourse = initialProgram || 'Abacus Speed Arithmetic';
     const resetLevels = getLevelsForCourse(resetCourse, coursesList);
     const resetFee = parseCourseFee(resetCourse, coursesList);
@@ -1294,7 +1314,11 @@ export default function AdmissionModal({
                           : 'bg-white border-slate-300 hover:border-slate-400 text-slate-950'
                       }`}
                     >
-                      <span className="truncate">{formData.branch || 'Select Branch'}</span>
+                      <span className="truncate">
+                        {isOtherBranch 
+                          ? (customBranchName.trim() ? `Other: ${customBranchName}` : 'Other (Enter School Name)')
+                          : (formData.branch || 'Select Branch')}
+                      </span>
                       {!lockBranch && (
                         branchDropdownOpen ? (
                           <ChevronUp className="w-3.5 h-3.5 text-slate-500 shrink-0 ml-1" />
@@ -1309,26 +1333,38 @@ export default function AdmissionModal({
                         <div className="p-1.5 border-b border-slate-200 bg-slate-50">
                           <input
                             type="text"
-                            placeholder="Search district..."
+                            placeholder="Search district or type 'other'..."
                             value={branchSearch}
                             onChange={(e) => setBranchSearch(e.target.value)}
                             className="w-full px-2 py-1 text-xs text-slate-950 font-semibold border border-slate-300 rounded-md focus:outline-none focus:border-sky-500 bg-white"
                             autoFocus
                           />
                         </div>
-                        <div className="max-h-44 overflow-y-auto p-1 divide-y divide-slate-100">
+                        <div className="max-h-48 overflow-y-auto p-1 divide-y divide-slate-100">
                           {filteredBranches.map((b) => {
-                            const isSelected = formData.branch === b;
+                            const isSelected = isOtherBranch ? b === 'Other' : formData.branch === b;
                             return (
                               <button
                                 key={b}
                                 type="button"
                                 onClick={() => {
-                                  setFormData(prev => ({ 
-                                    ...prev, 
-                                    branch: b,
-                                    district: (!prev.district || prev.district === prev.branch || prev.district === 'Tenkasi') ? b : prev.district
-                                  }));
+                                  if (b === 'Other') {
+                                    setIsOtherBranch(true);
+                                    setFormData(prev => ({
+                                      ...prev,
+                                      branch: customBranchName.trim() || 'Other',
+                                      institution: customBranchName.trim() || 'Other'
+                                    }));
+                                  } else {
+                                    setIsOtherBranch(false);
+                                    setCustomBranchName('');
+                                    setFormData(prev => ({ 
+                                      ...prev, 
+                                      branch: b,
+                                      institution: b,
+                                      district: (!prev.district || prev.district === prev.branch || prev.district === 'Tenkasi') ? b : prev.district
+                                    }));
+                                  }
                                   setBranchDropdownOpen(false);
                                   setBranchSearch('');
                                 }}
@@ -1336,17 +1372,61 @@ export default function AdmissionModal({
                                   isSelected ? 'bg-sky-50 text-sky-900 font-bold' : 'text-slate-700 hover:bg-slate-100'
                                 }`}
                               >
-                                <span className="truncate">{b}</span>
+                                <span className="truncate">
+                                  {b === 'Other' ? '★ Other (Enter School / Academy Name)' : b}
+                                </span>
                                 {isSelected && <Check className="w-3 h-3 text-sky-600 shrink-0" />}
                               </button>
                             );
                           })}
                           {filteredBranches.length === 0 && (
                             <div className="p-2.5 text-center text-xs text-slate-500">
-                              No matching district found
+                              No matching option found
                             </div>
                           )}
                         </div>
+                      </div>
+                    )}
+
+                    {/* School / Academy Name Input (Revealed when 'Other' is selected) */}
+                    {isOtherBranch && !lockBranch && (
+                      <div className="mt-2 p-2 sm:p-2.5 bg-sky-50/80 border border-sky-300 rounded-lg sm:rounded-xl text-left animate-in fade-in duration-150">
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="block text-[11px] sm:text-xs font-black text-sky-950">
+                            Enter School / Academy Name *
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsOtherBranch(false);
+                              setCustomBranchName('');
+                              setFormData(prev => ({ ...prev, branch: defaultBranch, institution: defaultBranch }));
+                            }}
+                            className="text-[10px] text-sky-700 hover:underline font-bold"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                        <input
+                          type="text"
+                          required
+                          placeholder="e.g. St. Joseph's Matric School, Tenkasi"
+                          value={customBranchName}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setCustomBranchName(val);
+                            setFormData(prev => ({
+                              ...prev,
+                              branch: val.trim() || 'Other',
+                              institution: val.trim() || 'Other'
+                            }));
+                          }}
+                          className="w-full px-2.5 sm:px-3 py-1.5 bg-white border border-sky-400 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-sky-500 focus:outline-none text-base sm:text-sm shadow-2xs"
+                          autoFocus
+                        />
+                        <p className="text-[10px] text-slate-500 mt-1">
+                          Enter the full school or learning centre name where the candidate studies.
+                        </p>
                       </div>
                     )}
                   </div>
