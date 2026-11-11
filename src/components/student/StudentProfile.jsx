@@ -32,14 +32,22 @@ const getProfileValues = (student = {}) => {
     ? student.selectedCourses
     : (Array.isArray(student.courses) ? student.courses : []);
 
+  const derivedCourseName = selectedList.length > 1
+    ? selectedList.map(c => c.courseName || c.name).filter(Boolean).join(' & ')
+    : (student.courseName || student.program || student.course || (selectedList[0]?.courseName || ''));
+
+  const derivedCourseLevel = selectedList.length > 1
+    ? selectedList.map(c => `${c.courseName || c.name}: ${c.level || 'Level 1'}`).join(' | ')
+    : (student.courseLevel || student.level || student.grade || selectedList[0]?.level || 'Level 1');
+
   return {
     date: student.date || student.enrollmentDate || student.enrolmentDate || '',
     registerNumber: student.registerNumber || student.registrationNo || '',
     branch: student.branch || student.institution || student.studyCenter || 'Tenkasi',
     institution: student.institution || student.branch || student.studyCenter || 'Tenkasi',
     studyCenter: student.studyCenter || student.branch || student.institution || 'Tenkasi',
-    courseName: student.courseName || student.program || student.course || '',
-    courseLevel: student.courseLevel || student.level || student.grade || 'Level 1',
+    courseName: derivedCourseName,
+    courseLevel: derivedCourseLevel,
     courseDuration: student.courseDuration || student.duration || '6 Months',
     selectedCourses: selectedList,
 
@@ -556,27 +564,56 @@ export default function StudentProfile({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 sm:min-w-64">
-              <div className="rounded-xl border border-white/10 bg-white/10 p-3">
-                <GraduationCap className="h-5 w-5 text-amber-300" />
-                <p className="mt-2 text-[10px] text-blue-100 font-medium">
-                  Enrolled Course
-                </p>
-                <p className="mt-1 break-words text-white text-sm font-bold">
-                  {displayValue(form.courseName)}
-                </p>
+            {Array.isArray(form.selectedCourses) && form.selectedCourses.length > 1 ? (
+              <div className="flex flex-col gap-2 sm:min-w-80">
+                <span className="text-[10px] text-amber-300 font-extrabold uppercase tracking-wider flex items-center gap-1.5">
+                  <GraduationCap className="h-3.5 w-3.5" />
+                  <span>Enrolled Courses ({form.selectedCourses.length})</span>
+                </span>
+                <div className="flex flex-col gap-2">
+                  {form.selectedCourses.map((c, idx) => (
+                    <div
+                      key={idx}
+                      className="rounded-xl border border-white/15 bg-white/10 p-2.5 backdrop-blur-xs flex items-center justify-between gap-3 shadow-2xs"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <span className="text-[9.5px] text-blue-200 font-bold block uppercase tracking-wide">
+                          Course {idx + 1}
+                        </span>
+                        <p className="text-xs sm:text-sm font-black text-white truncate">
+                          {c.courseName || c.name}
+                        </p>
+                      </div>
+                      <span className="shrink-0 px-2.5 py-1 rounded-lg bg-amber-400 text-blue-950 font-black text-[10.5px] shadow-2xs">
+                        {c.level || 'Level 1'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-3 sm:min-w-64">
+                <div className="rounded-xl border border-white/10 bg-white/10 p-3">
+                  <GraduationCap className="h-5 w-5 text-amber-300" />
+                  <p className="mt-2 text-[10px] text-blue-100 font-medium">
+                    Enrolled Course
+                  </p>
+                  <p className="mt-1 break-words text-white text-sm font-bold">
+                    {displayValue(form.courseName)}
+                  </p>
+                </div>
 
-              <div className="rounded-xl border border-white/10 bg-white/10 p-3">
-                <School className="h-5 w-5 text-amber-300" />
-                <p className="mt-2 text-[10px] text-blue-100 font-medium">
-                  Level / Grade
-                </p>
-                <p className="mt-1 break-words text-white text-sm font-bold">
-                  {displayValue(form.courseLevel)}
-                </p>
+                <div className="rounded-xl border border-white/10 bg-white/10 p-3">
+                  <School className="h-5 w-5 text-amber-300" />
+                  <p className="mt-2 text-[10px] text-blue-100 font-medium">
+                    Level / Grade
+                  </p>
+                  <p className="mt-1 break-words text-white text-sm font-bold">
+                    {displayValue(form.courseLevel)}
+                  </p>
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {editing && (
@@ -732,23 +769,51 @@ export default function StudentProfile({
             isLocked
           />
 
-          <ProfileField
-            label="Course Name"
-            name="courseName"
-            value={form.courseName}
-            icon={BookOpen}
-            readOnly
-            isLocked
-          />
+          {Array.isArray(form.selectedCourses) && form.selectedCourses.length > 1 ? (
+            <>
+              {form.selectedCourses.map((c, idx) => (
+                <React.Fragment key={idx}>
+                  <ProfileField
+                    label={`Course ${idx + 1} Name`}
+                    name={`courseName_${idx}`}
+                    value={c.courseName || c.name}
+                    icon={BookOpen}
+                    readOnly
+                    isLocked
+                  />
 
-          <ProfileField
-            label="Course Level"
-            name="courseLevel"
-            value={form.courseLevel}
-            icon={GraduationCap}
-            readOnly
-            isLocked
-          />
+                  <ProfileField
+                    label={`Course ${idx + 1} Level`}
+                    name={`courseLevel_${idx}`}
+                    value={c.level || 'Level 1'}
+                    icon={GraduationCap}
+                    readOnly
+                    isLocked
+                  />
+                </React.Fragment>
+              ))}
+            </>
+          ) : (
+            <>
+              <ProfileField
+                label="Course Name"
+                name="courseName"
+                value={form.courseName}
+                icon={BookOpen}
+                readOnly
+                isLocked
+              />
+
+              <ProfileField
+                label="Course Level"
+                name="courseLevel"
+                value={form.courseLevel}
+                icon={GraduationCap}
+                readOnly
+                isLocked
+              />
+            </>
+          )}
 
           <ProfileField
             label="Course Duration"

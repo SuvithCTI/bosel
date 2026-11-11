@@ -31,14 +31,18 @@ export default function StudentCourse({
   student,
   onViewCertificate,
 }) {
-  const courseName =
-    student?.courseName ||
-    student?.program ||
-    student?.course ||
-    (Array.isArray(student?.selectedCourses) && student.selectedCourses.length > 0
-      ? student.selectedCourses.map((c) => c.courseName || c.name).join(', ')
-      : '') ||
-    'Abacus Speed Math (Level 4) & Fine Arts';
+  const selectedCourses = Array.isArray(student?.selectedCourses) && student.selectedCourses.length > 0
+    ? student.selectedCourses
+    : (Array.isArray(student?.courses) ? student.courses : []);
+
+  const courseName = selectedCourses.length > 1
+    ? selectedCourses.map(c => c.courseName || c.name).filter(Boolean).join(' & ')
+    : (
+        student?.courseName ||
+        student?.program ||
+        student?.course ||
+        'Abacus Speed Math (Level 4) & Fine Arts'
+      );
 
   const events = Array.isArray(student?.events)
     ? student.events
@@ -53,11 +57,14 @@ export default function StudentCourse({
     student?.studyCenter ||
     'Tenkasi';
 
-  const level =
-    student?.courseLevel ||
-    student?.level ||
-    student?.grade ||
-    'Level 1';
+  const level = selectedCourses.length > 1
+    ? selectedCourses.map(c => `${c.courseName || c.name}: ${c.level || 'Level 1'}`).join(' | ')
+    : (
+        student?.courseLevel ||
+        student?.level ||
+        student?.grade ||
+        'Level 1'
+      );
 
   const session =
     student?.academicSession || '2026–2027';
@@ -174,6 +181,32 @@ export default function StudentCourse({
               value={student?.registerNumber || student?.registrationNo || student?.id || student?.userId}
             />
           </div>
+
+          {selectedCourses.length > 1 && (
+            <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50/70 p-4 sm:p-5">
+              <h5 className="text-xs font-black uppercase tracking-wider text-slate-700 mb-3 flex items-center gap-2">
+                <BookOpen className="h-4 w-4 text-blue-900" />
+                <span>All Enrolled Courses ({selectedCourses.length})</span>
+              </h5>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {selectedCourses.map((c, idx) => (
+                  <div key={idx} className="rounded-xl border border-slate-200 bg-white p-3.5 shadow-2xs">
+                    <div className="flex items-center justify-between gap-2 mb-1.5">
+                      <span className="text-[10px] font-black uppercase text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">
+                        Course {idx + 1}
+                      </span>
+                      <span className="text-[11px] font-black text-blue-950 bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-200">
+                        {c.level || 'Level 1'}
+                      </span>
+                    </div>
+                    <p className="font-extrabold text-slate-900 text-sm">
+                      {c.courseName || c.name}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </section>
     </div>

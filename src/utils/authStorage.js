@@ -403,8 +403,8 @@ export const registerStudentAccount = (formData) => {
       ];
 
   const primaryCourse = selectedCourses[0]?.courseName || formData.courseName || formData.program || 'Abacus Speed Arithmetic';
-  const combinedCourseNames = selectedCourses.map(c => c.courseName).join(', ');
-  const combinedLevels = selectedCourses.map(c => `${c.courseName}: ${c.level}`).join(' | ');
+  const combinedCourseNames = selectedCourses.map(c => c.courseName || c.name).filter(Boolean).join(' & ');
+  const combinedLevels = selectedCourses.map(c => `${c.courseName || c.name}: ${c.level || 'Level 1'}`).join(' | ');
 
   const certSuffix = cleanMobile.slice(-4);
   const officialRegNo = formData.registerNumber || generateRegisterNumber(primaryCourse);
@@ -453,8 +453,8 @@ export const registerStudentAccount = (formData) => {
     program: combinedCourseNames,
     courseName: combinedCourseNames,
     course: combinedCourseNames,
-    courseLevel: selectedCourses[0]?.level || 'Level 1',
-    level: selectedCourses[0]?.level || 'Level 1',
+    courseLevel: selectedCourses.length === 1 ? (selectedCourses[0]?.level || 'Level 1') : combinedLevels,
+    level: selectedCourses.length === 1 ? (selectedCourses[0]?.level || 'Level 1') : combinedLevels,
     courseDuration: '6 Months',
     duration: '6 Months',
     branch: studentBranch,

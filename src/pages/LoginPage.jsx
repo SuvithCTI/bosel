@@ -61,11 +61,31 @@ const loadSavedProfile = (student) => {
         studyCenter: student.studyCenter || parsed.studyCenter || student.branch,
 
         // Course details
-        courseName: student.courseName || parsed.courseName || student.course || parsed.course,
-        course: student.course || parsed.course || student.courseName || parsed.courseName,
-        program: student.program || parsed.program || student.courseName || parsed.courseName,
-        courseLevel: student.courseLevel || parsed.courseLevel || student.level || parsed.level,
-        level: student.level || parsed.level || student.courseLevel || parsed.courseLevel,
+        courseName: (student.selectedCourses && student.selectedCourses.length > 1)
+          ? student.selectedCourses.map((c) => c.courseName || c.name).filter(Boolean).join(' & ')
+          : (parsed.selectedCourses && parsed.selectedCourses.length > 1)
+          ? parsed.selectedCourses.map((c) => c.courseName || c.name).filter(Boolean).join(' & ')
+          : (student.courseName || parsed.courseName || student.course || parsed.course),
+        course: (student.selectedCourses && student.selectedCourses.length > 1)
+          ? student.selectedCourses.map((c) => c.courseName || c.name).filter(Boolean).join(' & ')
+          : (parsed.selectedCourses && parsed.selectedCourses.length > 1)
+          ? parsed.selectedCourses.map((c) => c.courseName || c.name).filter(Boolean).join(' & ')
+          : (student.course || parsed.course || student.courseName || parsed.courseName),
+        program: (student.selectedCourses && student.selectedCourses.length > 1)
+          ? student.selectedCourses.map((c) => c.courseName || c.name).filter(Boolean).join(' & ')
+          : (parsed.selectedCourses && parsed.selectedCourses.length > 1)
+          ? parsed.selectedCourses.map((c) => c.courseName || c.name).filter(Boolean).join(' & ')
+          : (student.program || parsed.program || student.courseName || parsed.courseName),
+        courseLevel: (student.selectedCourses && student.selectedCourses.length > 1)
+          ? student.selectedCourses.map((c) => `${c.courseName || c.name}: ${c.level || 'Level 1'}`).join(' | ')
+          : (parsed.selectedCourses && parsed.selectedCourses.length > 1)
+          ? parsed.selectedCourses.map((c) => `${c.courseName || c.name}: ${c.level || 'Level 1'}`).join(' | ')
+          : (student.courseLevel || parsed.courseLevel || student.level || parsed.level),
+        level: (student.selectedCourses && student.selectedCourses.length > 1)
+          ? student.selectedCourses.map((c) => `${c.courseName || c.name}: ${c.level || 'Level 1'}`).join(' | ')
+          : (parsed.selectedCourses && parsed.selectedCourses.length > 1)
+          ? parsed.selectedCourses.map((c) => `${c.courseName || c.name}: ${c.level || 'Level 1'}`).join(' | ')
+          : (student.level || parsed.level || student.courseLevel || parsed.courseLevel),
         courseDuration: student.courseDuration || parsed.courseDuration || student.duration || parsed.duration || '6 Months',
         duration: student.duration || parsed.duration || student.courseDuration || '6 Months',
         selectedCourses: (student.selectedCourses && student.selectedCourses.length > 0) ? student.selectedCourses : (parsed.selectedCourses || []),
@@ -101,14 +121,31 @@ const loadSavedProfile = (student) => {
 // Normalize student information
 // -------------------------------------------------------
 const normalizeStudent = (user) => {
+  const selectedList = Array.isArray(user.selectedCourses) && user.selectedCourses.length > 0
+    ? user.selectedCourses
+    : (Array.isArray(user.courses) ? user.courses : []);
+
   const studentCourse =
-    user.courseName ||
-    user.program ||
-    user.course ||
-    (Array.isArray(user.selectedCourses) && user.selectedCourses.length > 0
-      ? user.selectedCourses.map((c) => c.courseName || c.name).join(', ')
-      : '') ||
-    'Abacus Speed Math (Level 4) & Fine Arts';
+    selectedList.length > 1
+      ? selectedList.map((c) => c.courseName || c.name).filter(Boolean).join(' & ')
+      : (
+          user.courseName ||
+          user.program ||
+          user.course ||
+          (selectedList[0]?.courseName || '') ||
+          'Abacus Speed Math (Level 4) & Fine Arts'
+        );
+
+  const studentLevel =
+    selectedList.length > 1
+      ? selectedList.map((c) => `${c.courseName || c.name}: ${c.level || 'Level 1'}`).join(' | ')
+      : (
+          user.courseLevel ||
+          user.level ||
+          user.grade ||
+          selectedList[0]?.level ||
+          'Level 1'
+        );
 
   const student = {
     ...user,
@@ -120,8 +157,8 @@ const normalizeStudent = (user) => {
     course: studentCourse,
     courseName: studentCourse,
     program: studentCourse,
-    courseLevel: user.courseLevel || user.level || user.grade || 'Level 1',
-    level: user.level || user.courseLevel || user.grade || 'Level 1',
+    courseLevel: studentLevel,
+    level: studentLevel,
     courseDuration: user.courseDuration || user.duration || '6 Months',
     duration: user.duration || user.courseDuration || '6 Months',
 
