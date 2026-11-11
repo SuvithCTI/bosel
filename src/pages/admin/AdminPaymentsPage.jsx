@@ -7,7 +7,7 @@ import {
   Plus,
   Printer,
   Trash2,
-  X
+  CheckSquare
 } from 'lucide-react';
 
 const RECEIPTS_PER_SHEET = 3;
@@ -26,7 +26,8 @@ export default function AdminPaymentsPage({
 }) {
   const allBranches = useMemo(() => getAllDistrictBranches(), []);
 
-  // ---- bulk selection ----
+  // ---- selection mode (checkboxes hidden until "Select Records" is clicked) ----
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState([]);
   const selectAllRef = useRef(null);
 
@@ -54,6 +55,11 @@ export default function AdminPaymentsPage({
   const toggleAll = () =>
     setSelectedIds(allSelected ? [] : filteredPayments.map((p) => p.id));
 
+  const exitSelection = () => {
+    setIsSelectionMode(false);
+    setSelectedIds([]);
+  };
+
   const sheetCount = Math.ceil(selectedPayments.length / RECEIPTS_PER_SHEET);
 
   const handlePrintSelected = () => {
@@ -80,6 +86,17 @@ export default function AdminPaymentsPage({
         </div>
 
         <div className="flex items-center gap-2">
+          {!isSelectionMode && (
+            <button
+              type="button"
+              onClick={() => setIsSelectionMode(true)}
+              className="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer"
+            >
+              <CheckSquare className="w-4 h-4 text-sky-600" />
+              <span>Select Records</span>
+            </button>
+          )}
+
           <button
             type="button"
             onClick={() => setShowAddPaymentModal(true)}
@@ -157,35 +174,46 @@ export default function AdminPaymentsPage({
             Filtered Total: ₹{filteredPayments.reduce((acc, p) => acc + (p.amountNum || 0), 0).toLocaleString('en-IN')}
           </div>
 
-          {/* Bulk print controls */}
-          <div className="flex items-center gap-2">
-            {selectedPayments.length > 0 && (
-              <>
-                <span className="text-[11px] font-bold text-slate-600">
-                  {selectedPayments.length} selected &middot; {sheetCount} A4 sheet{sheetCount > 1 ? 's' : ''}
-                </span>
+          {/* Bulk print controls: only in selection mode */}
+          {isSelectionMode && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[11px] font-bold text-slate-600">
+                {selectedPayments.length} selected
+                {selectedPayments.length > 0 && (
+                  <> &middot; {sheetCount} A4 sheet{sheetCount > 1 ? 's' : ''}</>
+                )}
+              </span>
+
+              {selectedPayments.length > 0 && (
                 <button
                   type="button"
                   onClick={() => setSelectedIds([])}
-                  className="p-1 text-slate-400 hover:text-rose-600 transition cursor-pointer"
-                  title="Clear selection"
+                  className="px-2 py-1 text-xs font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition cursor-pointer"
                 >
-                  <X className="w-4 h-4" />
+                  Clear
                 </button>
-              </>
-            )}
+              )}
 
-            <button
-              type="button"
-              onClick={handlePrintSelected}
-              disabled={selectedPayments.length === 0}
-              className="px-3.5 py-1.5 bg-[#081d3d] hover:bg-[#172b4d] disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-lg text-xs font-black transition flex items-center gap-1.5 cursor-pointer"
-              title="Prints 3 receipts per A4 sheet"
-            >
-              <Printer className="w-4 h-4" />
-              <span>Print Selected (3 per A4)</span>
-            </button>
-          </div>
+              <button
+                type="button"
+                onClick={handlePrintSelected}
+                disabled={selectedPayments.length === 0}
+                className="px-3.5 py-1.5 bg-[#081d3d] hover:bg-[#172b4d] disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-lg text-xs font-black transition flex items-center gap-1.5 cursor-pointer"
+                title="Prints 3 receipts per A4 sheet"
+              >
+                <Printer className="w-4 h-4" />
+                <span>Print Selected (3 per A4)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={exitSelection}
+                className="px-3 py-1.5 text-xs font-bold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-lg transition cursor-pointer"
+              >
+                Exit Selection
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -195,18 +223,20 @@ export default function AdminPaymentsPage({
           <table className="w-full min-w-[850px] text-left text-xs">
             <thead className="bg-[#081d3d] text-white uppercase text-[10px] tracking-wider font-black">
               <tr>
-                <th className="py-3 pl-4 pr-1 w-8">
-                  <input
-                    ref={selectAllRef}
-                    type="checkbox"
-                    checked={allSelected}
-                    onChange={toggleAll}
-                    disabled={filteredPayments.length === 0}
-                    className="w-4 h-4 accent-emerald-500 cursor-pointer"
-                    title="Select all"
-                    aria-label="Select all payments"
-                  />
-                </th>
+                {isSelectionMode && (
+                  <th className="py-3 pl-4 pr-1 w-8">
+                    <input
+                      ref={selectAllRef}
+                      type="checkbox"
+                      checked={allSelected}
+                      onChange={toggleAll}
+                      disabled={filteredPayments.length === 0}
+                      className="w-4 h-4 accent-emerald-500 cursor-pointer"
+                      title="Select all"
+                      aria-label="Select all payments"
+                    />
+                  </th>
+                )}
                 <th className="py-3 px-3">Txn / Receipt No</th>
                 <th className="py-3 px-3">Payer Name</th>
                 <th className="py-3 px-3">Branch</th>
@@ -226,15 +256,17 @@ export default function AdminPaymentsPage({
                     key={payment.id}
                     className={`transition ${isSelected ? 'bg-emerald-50/60' : 'hover:bg-slate-50'}`}
                   >
-                    <td className="py-3 pl-4 pr-1">
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={() => toggleOne(payment.id)}
-                        className="w-4 h-4 accent-emerald-600 cursor-pointer"
-                        aria-label={`Select ${payment.payerName}`}
-                      />
-                    </td>
+                    {isSelectionMode && (
+                      <td className="py-3 pl-4 pr-1">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleOne(payment.id)}
+                          className="w-4 h-4 accent-emerald-600 cursor-pointer"
+                          aria-label={`Select ${payment.payerName}`}
+                        />
+                      </td>
+                    )}
 
                     <td className="py-3 px-3 font-mono font-bold text-slate-800">
                       <div>{payment.id}</div>
@@ -308,7 +340,7 @@ export default function AdminPaymentsPage({
 
               {filteredPayments.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="py-8 text-center text-slate-400 font-bold">
+                  <td colSpan={isSelectionMode ? 8 : 7} className="py-8 text-center text-slate-400 font-bold">
                     No payments match the selected filters.
                   </td>
                 </tr>
