@@ -170,6 +170,7 @@ function ProfileField({
   placeholder,
   maxLength,
   inputMode,
+  className = '',
 }) {
   const isFieldDisabled = readOnly || isLocked;
 
@@ -184,7 +185,7 @@ function ProfileField({
   }`;
 
   return (
-    <div className="min-w-0">
+    <div className={`min-w-0 ${className}`}>
       <label
         htmlFor={name}
         className="mb-1 sm:mb-1.5 block text-[11px] sm:text-xs font-bold text-slate-700 truncate"
@@ -939,6 +940,7 @@ export default function StudentProfile({
           icon={UserRound}
           title="Personal Information"
           description="Candidate name, parent name, date of birth, age, gender, and student photograph."
+          gridCols="grid-cols-2"
           badge={
             <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-0.5 text-[10.5px] font-bold text-slate-700 border border-slate-300">
               <Lock className="h-2.5 w-2.5" />
@@ -1013,9 +1015,9 @@ export default function StudentProfile({
             />
           )}
 
-          {/* Student Photo upload section */}
+          {/* Student Photo upload / status section */}
           {editing ? (
-            <div className="sm:col-span-2">
+            <div className="col-span-2">
               <label className="mb-2 block text-xs font-bold text-slate-700">
                 Student Photo (Update Permitted)
               </label>
@@ -1068,17 +1070,19 @@ export default function StudentProfile({
               </div>
             </div>
           ) : (
-            <div className="sm:col-span-2 flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3 sm:p-4">
-              <Camera className="h-4 w-4 shrink-0 text-slate-400" />
-              <div className="min-w-0 flex-1">
-                <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
-                  Student Photo
-                </p>
-                <p className="mt-0.5 text-xs font-semibold text-slate-800">
-                  {form.studentPhoto ? 'Photo Uploaded & Verified' : 'Not provided'}
-                </p>
-              </div>
-            </div>
+            <ProfileField
+              label="Student Photo"
+              name="studentPhotoStatus"
+              value={form.studentPhoto ? 'Photo Uploaded & Verified' : 'Not provided'}
+              icon={Camera}
+              readOnly
+              isLocked
+              className={
+                (Boolean(form.studentClass) ? 1 : 0) + (Boolean(form.studentStage) ? 1 : 0) === 1
+                  ? 'col-span-2'
+                  : 'col-span-1'
+              }
+            />
           )}
         </ProfileSection>
 
