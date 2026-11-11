@@ -331,6 +331,12 @@ export default function AdmissionModal({
         feeAmount: initialFee
       }));
     }
+    if (isOpen) {
+      setFormData(prev => ({
+        ...prev,
+        date: new Date().toISOString().split('T')[0]
+      }));
+    }
   }, [initialProgram, initialFee, initialBranch, isOpen, coursesList]);
 
   // Click outside listener for district and branch dropdowns
@@ -1271,15 +1277,20 @@ export default function AdmissionModal({
                 {/* 1. Date & 2. Branch (2-Col on Mobile) */}
                 <div className="grid grid-cols-2 gap-2 sm:gap-4">
                   <div>
-                    <label className="block text-[11px] sm:text-xs font-black text-slate-800 mb-0.5 sm:mb-1 truncate">
-                      1. Date *
-                    </label>
+                    <div className="flex items-center justify-between mb-0.5 sm:mb-1">
+                      <label className="block text-[11px] sm:text-xs font-black text-slate-800 truncate">
+                        1. Date *
+                      </label>
+                      <span className="text-[9.5px] font-bold text-slate-500 bg-slate-200/80 px-1.5 py-0.5 rounded">
+                        Auto
+                      </span>
+                    </div>
                     <input
                       type="date"
-                      required
-                      value={formData.date}
-                      onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                      className="w-full px-2.5 sm:px-3 py-2 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-sky-500 focus:outline-none text-base sm:text-sm shadow-2xs"
+                      readOnly
+                      tabIndex={-1}
+                      value={formData.date || ''}
+                      className="w-full px-2.5 sm:px-3 py-2 bg-slate-100 border border-slate-300 rounded-lg sm:rounded-xl text-slate-700 font-bold focus:outline-none text-base sm:text-sm shadow-2xs cursor-not-allowed select-none pointer-events-none"
                     />
                   </div>
 
