@@ -757,9 +757,10 @@ export default function StudentProfile({
           icon={BookOpen}
           title="Official Admission & Course Details"
           description="Your registered course, branch, and academic record as enrolled during admission."
+          gridCols="grid-cols-2"
         >
           {/* Lock notice alert */}
-          <div className="sm:col-span-2 flex items-start gap-2.5 rounded-xl border border-amber-200/90 bg-amber-50/80 p-3 text-xs text-amber-900">
+          <div className="col-span-2 flex items-start gap-2.5 rounded-xl border border-amber-200/90 bg-amber-50/80 p-3 text-xs text-amber-900">
             <Lock className="h-4 w-4 shrink-0 text-amber-600 mt-0.5" />
             <p className="leading-relaxed">
               <strong>Official Academic Record:</strong> Enrolled courses, course levels, admission dates, and registration numbers are locked by B★SEL administration and cannot be changed from the student portal.
@@ -803,7 +804,7 @@ export default function StudentProfile({
           />
 
           {Array.isArray(form.selectedCourses) && form.selectedCourses.length > 1 ? (
-            <div className="sm:col-span-2 rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-2xs space-y-3">
+            <div className="col-span-2 rounded-2xl border border-slate-200 bg-white p-3.5 sm:p-5 shadow-2xs space-y-3">
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                 <span className="text-xs font-black uppercase tracking-wider text-blue-950 flex items-center gap-1.5">
                   <GraduationCap className="h-4 w-4 text-blue-900" />
