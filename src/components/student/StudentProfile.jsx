@@ -1047,12 +1047,6 @@ export default function StudentProfile({
           title="Personal Information"
           description="Candidate name, parent name, date of birth, age, gender, and student photograph."
           gridCols="grid-cols-2"
-          badge={
-            <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-0.5 text-[10.5px] font-bold text-slate-700 border border-slate-300">
-              <Lock className="h-2.5 w-2.5" />
-              Identity Locked
-            </span>
-          }
         >
           <ProfileField
             label="Student Full Name"
@@ -1283,12 +1277,6 @@ export default function StudentProfile({
           icon={IdCard}
           title="Identity Information"
           description="Official Aadhaar record submitted during admission."
-          badge={
-            <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-0.5 text-[10.5px] font-bold text-slate-700 border border-slate-300">
-              <Lock className="h-2.5 w-2.5" />
-              Verified & Locked
-            </span>
-          }
         >
           <div className="min-w-0">
             <label
