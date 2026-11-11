@@ -241,8 +241,10 @@ export default function FranchiseModal({ isOpen, onClose }) {
                     <input
                       type="tel"
                       required
+                      maxLength={10}
+                      placeholder="10-digit mobile"
                       value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
                       className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-none transition shadow-2xs text-base sm:text-sm"
                     />
                   </div>

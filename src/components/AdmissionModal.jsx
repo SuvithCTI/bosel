@@ -820,9 +820,17 @@ export default function AdmissionModal({
       alert('Please enter Candidate Age (Field 6).');
       return false;
     }
-    if (!formData.phone.trim()) {
-      alert('Please enter Mobile / WhatsApp number (Field 7).');
+    const cleanPhone = formData.phone.replace(/\D/g, '');
+    if (!cleanPhone || cleanPhone.length !== 10) {
+      alert('Please enter a valid 10-digit Mobile / WhatsApp number (Field 7).');
       return false;
+    }
+    if (formData.alternatePhone && formData.alternatePhone.trim()) {
+      const cleanAlt = formData.alternatePhone.replace(/\D/g, '');
+      if (cleanAlt.length !== 10) {
+        alert('Please enter a valid 10-digit Alternate Phone number (Field 8).');
+        return false;
+      }
     }
     if (!formData.aadharNumber.trim() || formData.aadharNumber.length < 12) {
       alert('Please enter a valid 12-digit Aadhar Number (Field 9).');
@@ -880,7 +888,7 @@ export default function AdmissionModal({
     }
 
     if (!formData.declaration) {
-      alert('Please check the Official Declaration box (Field 21) to confirm your admission.');
+      alert('Please check the Official Declaration box to confirm your admission.');
       return;
     }
 
@@ -1156,10 +1164,8 @@ export default function AdmissionModal({
 
                   <div className="bg-slate-50/70 p-2 rounded-lg border border-slate-100 col-span-2 sm:col-span-1">
                     <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider block">Payment Status</span>
-                    <span className={`inline-flex items-center gap-1 font-black text-[11px] mt-0.5 ${
-                      formData.feePaymentType === 'Pay Now' ? 'text-emerald-700' : 'text-amber-800'
-                    }`}>
-                      {formData.feePaymentType === 'Pay Now' ? '✓ Paid Online' : 'Pay Later at Branch'}
+                    <span className="inline-flex items-center gap-1 font-black text-[11px] mt-0.5 text-emerald-700">
+                      ✓ Paid Online
                     </span>
                   </div>
 
@@ -1594,7 +1600,7 @@ export default function AdmissionModal({
                   </div>
                 </div>
 
-                {/* 7. Phone & 8. Alternate Phone (2-Col on Mobile) */}
+                {/* 7. Phone & 8. Alternate Phone (2-Col on Mobile - strictly 10 digits) */}
                 <div className="grid grid-cols-2 gap-2 sm:gap-4">
                   <div>
                     <label className="block text-[11px] sm:text-xs font-black text-slate-800 mb-0.5 sm:mb-1 truncate">
@@ -1603,8 +1609,13 @@ export default function AdmissionModal({
                     <input
                       type="tel"
                       required
+                      maxLength="10"
+                      placeholder="10-digit number"
                       value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                        setFormData({ ...formData, phone: val });
+                      }}
                       className="w-full px-2.5 sm:px-3 py-2 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-sky-500 focus:outline-none text-base sm:text-sm shadow-2xs min-h-[42px]"
                     />
                   </div>
@@ -1615,8 +1626,13 @@ export default function AdmissionModal({
                     </label>
                     <input
                       type="tel"
+                      maxLength="10"
+                      placeholder="10-digit number"
                       value={formData.alternatePhone}
-                      onChange={(e) => setFormData({ ...formData, alternatePhone: e.target.value })}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                        setFormData({ ...formData, alternatePhone: val });
+                      }}
                       className="w-full px-2.5 sm:px-3 py-2 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-sky-500 focus:outline-none text-base sm:text-sm shadow-2xs min-h-[42px]"
                     />
                   </div>
@@ -1980,16 +1996,12 @@ export default function AdmissionModal({
                   </span>
 
                   {/* Real-time Status Badge */}
-                  {formData.feePaymentType === 'Pay Later' ? (
-                    <span className="text-[10px] font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full border border-amber-300">
-                      Pay at Branch
-                    </span>
-                  ) : paymentGatewayStatus === 'success' ? (
+                  {paymentGatewayStatus === 'success' && (
                     <span className="text-[10px] font-black text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-300 flex items-center gap-1">
                       <CheckCircle2 className="w-3 h-3 text-emerald-600" />
                       <span>Verified in Real-Time ✓</span>
                     </span>
-                  ) : null}
+                  )}
                 </div>
 
                 {/* 16. Fee Payment Option & 17. Fee Amount */}
@@ -1998,41 +2010,9 @@ export default function AdmissionModal({
                     <label className="block text-[11px] sm:text-xs font-black text-slate-800 mb-1">
                       16. Fee Payment Option *
                     </label>
-                    <div className="grid grid-cols-2 gap-1.5 bg-slate-200/80 p-1 rounded-lg">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setFormData({ ...formData, feePaymentType: 'Pay Now' });
-                          if (formData.paymentMode === 'Cash at Branch') {
-                            setFormData(prev => ({ ...prev, paymentMode: 'UPI / QR Code' }));
-                          }
-                        }}
-                        className={`py-2 px-2.5 rounded-md text-xs font-black transition cursor-pointer text-center min-h-[38px] ${
-                          formData.feePaymentType === 'Pay Now'
-                            ? 'bg-emerald-600 text-white shadow-xs'
-                            : 'text-slate-700 hover:text-slate-950'
-                        }`}
-                      >
-                        Pay Now
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setFormData({ 
-                            ...formData, 
-                            feePaymentType: 'Pay Later',
-                            receiptRefNo: 'CASH-PAY-LATER-AT-BRANCH'
-                          });
-                          setPaymentGatewayStatus('idle');
-                        }}
-                        className={`py-2 px-2.5 rounded-md text-xs font-black transition cursor-pointer text-center min-h-[38px] ${
-                          formData.feePaymentType === 'Pay Later'
-                            ? 'bg-[#0F2B5C] text-white shadow-xs'
-                            : 'text-slate-700 hover:text-slate-950'
-                        }`}
-                      >
-                        Pay Later
-                      </button>
+                    <div className="flex items-center gap-2 px-3 py-2 bg-emerald-50 border border-emerald-300 rounded-lg text-emerald-900 font-black text-xs min-h-[38px]">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span>Pay Now (Online UPI / QR Code / Net Banking)</span>
                     </div>
                   </div>
 
@@ -2040,16 +2020,15 @@ export default function AdmissionModal({
                     <label className="block text-[11px] sm:text-xs font-black text-slate-800 mb-1">
                       17. Total Amount Payable
                     </label>
-                    <div className="px-3.5 py-2 bg-emerald-50 border border-emerald-300 rounded-lg text-emerald-800 font-black text-sm sm:text-base flex items-center justify-between shadow-2xs min-h-[40px]">
+                    <div className="px-3.5 py-2 bg-emerald-50 border border-emerald-300 rounded-lg text-emerald-800 font-black text-sm sm:text-base flex items-center justify-between shadow-2xs min-h-[38px]">
                       <span className="text-xs text-emerald-700 font-semibold">Payable:</span>
                       <span className="text-sm sm:text-base font-black">{formData.feeAmount}</span>
                     </div>
                   </div>
                 </div>
 
-                {/* When 'Pay Now' is selected: Interactive Real-Time Payment Methods */}
-                {formData.feePaymentType === 'Pay Now' ? (
-                  <div className="space-y-3 pt-1 border-t border-slate-200 animate-in fade-in duration-200">
+                {/* Interactive Real-Time Payment Methods */}
+                <div className="space-y-3 pt-1 border-t border-slate-200 animate-in fade-in duration-200">
                     {/* 18. Payment Mode Selector Tabs */}
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
@@ -2343,14 +2322,6 @@ export default function AdmissionModal({
                       </div>
                     )}
                   </div>
-                ) : (
-                  <div className="p-3 bg-amber-50/80 border border-amber-200 rounded-xl text-amber-900 text-xs font-semibold flex items-center gap-2 text-left">
-                    <FileCheck2 className="w-5 h-5 text-amber-700 shrink-0" />
-                    <span>
-                      You have selected <strong>Pay Later</strong>. You can pay the admission fee of <strong>{formData.feeAmount}</strong> in cash directly at your assigned branch during batch orientation and document verification.
-                    </span>
-                  </div>
-                )}
               </div>
 
               {/* 21. DECLARATION CHECKBOX */}
@@ -2364,7 +2335,7 @@ export default function AdmissionModal({
                     className="mt-0.5 w-4 h-4 rounded text-[#0F2B5C] border-slate-300 focus:ring-sky-500 cursor-pointer shrink-0"
                   />
                   <span className="text-[11px] sm:text-xs text-slate-800 font-semibold leading-relaxed">
-                    <strong>21. Declaration:</strong> I hereby declare that all the information furnished above is true and complete to the best of my knowledge. I agree to abide by the academic regulations and code of conduct of the Board of Skills and Educational Learning (B★SEL).
+                    I hereby declare that all the information furnished above is true and complete to the best of my knowledge. I agree to abide by the academic regulations and code of conduct of the Board of Skills and Educational Learning (B★SEL).
                   </span>
                 </label>
               </div>

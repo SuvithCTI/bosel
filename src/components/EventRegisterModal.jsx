@@ -501,10 +501,12 @@ export default function EventRegisterModal({ event: initialEvent, onClose, stude
                       <input
                         type="tel"
                         required
+                        maxLength={10}
+                        placeholder="10-digit mobile"
                         readOnly={isStudentPreset}
                         value={formData.phone}
                         onChange={(e) =>
-                          !isStudentPreset && updateForm('phone', e.target.value)
+                          !isStudentPreset && updateForm('phone', e.target.value.replace(/\D/g, '').slice(0, 10))
                         }
                         className={inputClass}
                       />
