@@ -1277,14 +1277,9 @@ export default function AdmissionModal({
                 {/* 1. Date & 2. Branch (2-Col on Mobile) */}
                 <div className="grid grid-cols-2 gap-2 sm:gap-4">
                   <div>
-                    <div className="flex items-center justify-between mb-0.5 sm:mb-1">
-                      <label className="block text-[11px] sm:text-xs font-black text-slate-800 truncate">
-                        1. Date *
-                      </label>
-                      <span className="text-[9.5px] font-bold text-slate-500 bg-slate-200/80 px-1.5 py-0.5 rounded">
-                        Auto
-                      </span>
-                    </div>
+                    <label className="block text-[11px] sm:text-xs font-black text-slate-800 mb-0.5 sm:mb-1 truncate">
+                      1. Date *
+                    </label>
                     <input
                       type="date"
                       readOnly
