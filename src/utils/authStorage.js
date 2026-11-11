@@ -352,15 +352,15 @@ export const registerStudentAccount = (formData) => {
       ];
 
   const primaryCourse = selectedCourses[0]?.courseName || formData.courseName || formData.program || 'Abacus Speed Arithmetic';
-  const combinedCourseNames = selectedCourses.map(c => c.courseName).join(', ');
-  const combinedLevels = selectedCourses.map(c => `${c.courseName}: ${c.level}`).join(' | ');
+  const combinedCourseNames = selectedCourses.map(course => course.courseName).join(', ');
+  const combinedLevels = selectedCourses.map(course => `${course.courseName}: ${course.level}`).join(' | ');
 
   const certSuffix = cleanMobile.slice(-4);
   const officialRegNo = formData.registerNumber || generateRegisterNumber(primaryCourse);
 
   const studentFullName = (formData.studentName || formData.name || '').trim();
+  const usedRegisterNumbers = new Set();
 
-  // Build events & results for each enrolled course
   const generatedEvents = selectedCourses.map((c, idx) => ({
     name: `Annual State ${c.courseName} Assessment 2026`,
     date: '28 Nov 2026',
@@ -383,22 +383,13 @@ export const registerStudentAccount = (formData) => {
     };
   });
 
-  const newUser = {
-    userId: newUserId,
-    password: newPassword,
-    registerNumber: officialRegNo,
-    registrationNo: officialRegNo,
+  const commonStudentData = {
     studentName: studentFullName,
     parentName: (formData.parentName || formData.fatherName || '').trim(),
     fatherName: (formData.parentName || formData.fatherName || '').trim(),
     email: (formData.email || '').trim(),
     phone: cleanMobile,
     alternatePhone: (formData.alternatePhone || '').trim(),
-    grade: selectedCourses.length === 1 ? selectedCourses[0].level : combinedLevels,
-    selectedCourses: selectedCourses,
-    courses: selectedCourses,
-    program: combinedCourseNames,
-    courseName: combinedCourseNames,
     branch: studentBranch,
     dob: formData.dob || '',
     age: formData.age || '',
@@ -413,7 +404,6 @@ export const registerStudentAccount = (formData) => {
     pincode: (formData.pincode || '').trim(),
     aadharNumber: (formData.aadharNumber || '').trim(),
     feePaymentType: formData.feePaymentType || 'Pay Now',
-    feeAmount: formData.feeAmount || '₹450',
     paymentMode: formData.paymentMode || 'UPI / QR Code',
     receiptRefNo: (formData.receiptRefNo || '').trim(),
     paymentScreenshot: formData.paymentScreenshot || null,
@@ -427,15 +417,47 @@ export const registerStudentAccount = (formData) => {
       day: '2-digit',
       month: 'short',
       year: 'numeric'
-    }),
-    events: generatedEvents,
-    results: generatedResults
+    })
   };
 
-  const otherUsers = users.filter((u) => u.userId.toUpperCase() !== newUserId.toUpperCase());
-  const updatedUsers = [newUser, ...otherUsers];
+  const admissionEntries = selectedCourses.map((course, idx) => {
+    let registerNumber = idx === 0 ? officialRegNo : generateRegisterNumber(course.courseName);
+    if (usedRegisterNumbers.has(registerNumber.toLowerCase())) {
+      registerNumber = `${registerNumber}-${idx + 1}`;
+    }
+    usedRegisterNumbers.add(registerNumber.toLowerCase());
+
+    return {
+      ...commonStudentData,
+      userId: idx === 0 ? newUserId : `${newUserId}-COURSE-${idx + 1}`,
+      accountUserId: newUserId,
+      admissionOnly: idx > 0,
+      password: newPassword,
+      registerNumber,
+      registrationNo: registerNumber,
+      grade: course.level || 'Level 1',
+      selectedCourses: idx === 0 ? selectedCourses : [course],
+      courses: [course],
+      program: course.courseName,
+      courseName: course.courseName,
+      feeAmount: course.fee || formData.feeAmount || '₹450',
+      events: idx === 0 ? generatedEvents : [generatedEvents[idx]],
+      results: idx === 0 ? generatedResults : [generatedResults[idx]]
+    };
+  });
+  const newUser = admissionEntries[0];
+
+  const admissionIds = new Set(admissionEntries.map(entry => entry.userId.toUpperCase()));
+  const otherUsers = users.filter((user) =>
+    !admissionIds.has((user.userId || '').toUpperCase()) &&
+    (user.accountUserId || '').toUpperCase() !== newUserId.toUpperCase()
+  );
+  const updatedUsers = [...admissionEntries, ...otherUsers];
   try {
     localStorage.setItem('bsel_registered_users', JSON.stringify(updatedUsers));
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('bsel_users_updated'));
+    }
     localStorage.setItem(
       'bsel_last_registered_creds',
       JSON.stringify({
@@ -448,8 +470,8 @@ export const registerStudentAccount = (formData) => {
     // Sync with certificate preview
     const certificateStudent = {
       studentName: newUser.studentName,
-      courseName: newUser.program,
-      level: formattedLevel,
+      courseName: primaryCourse,
+      level: selectedCourses[0]?.level || 'Level 1',
       grade: 'A+',
       duration: '6 Months',
       registrationNo: officialRegNo,
@@ -491,23 +513,35 @@ export const registerStudentAccount = (formData) => {
           }
         }
 
-        // Send student record to Neon PostgreSQL
-        await fetch('/api/students', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            ...newUser,
-            photoUrl: s3PhotoUrl,
-            studentPhoto: s3PhotoUrl
-          })
-        });
+        for (const [index, admission] of admissionEntries.entries()) {
+          const response = await fetch('/api/students', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              ...admission,
+              syncUserAccount: index === 0,
+              photoUrl: s3PhotoUrl,
+              studentPhoto: s3PhotoUrl
+            })
+          });
+          if (!response.ok) {
+            throw new Error(`Could not save admission for ${admission.courseName}: ${response.status}`);
+          }
+        }
       } catch (syncErr) {
-        console.debug('[Neon Sync offline/fallback]:', syncErr.message);
+        console.error('[Neon student admission sync error]:', syncErr);
       }
     })();
   }
 
-  return newUser;
+  return {
+    ...newUser,
+    program: combinedCourseNames,
+    courseName: combinedCourseNames,
+    grade: selectedCourses.length === 1 ? selectedCourses[0].level : combinedLevels,
+    feeAmount: formData.feeAmount || newUser.feeAmount,
+    selectedCourses
+  };
 };
 
 export const validateLogin = (enteredUserId, enteredPassword) => {
@@ -615,6 +649,8 @@ export const validateLogin = (enteredUserId, enteredPassword) => {
   const cleanMobile = digitsOnly.length >= 10 ? digitsOnly.slice(-10) : '';
 
   const userFound = users.find((u) => {
+    if (u.admissionOnly) return false;
+
     const uId = (u.userId || '').toLowerCase();
     const uEmail = (u.email || '').toLowerCase();
     const uPhone = (u.phone || '').replace(/\D/g, '');

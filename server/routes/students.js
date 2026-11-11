@@ -145,44 +145,46 @@ router.post('/', async (req, res) => {
         data.enrolmentDate || new Date().toISOString().split('T')[0]
       ]);
 
-      // 2. Also upsert into users table for login authentication
-      await db.query(`
-        INSERT INTO users (
-          user_id, password, student_name, name, parent_name, email, phone,
-          grade, program, course_name, institution, branch, address, role,
-          photo_url, student_photo, register_number, registration_no, enrolment_date
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
-        ON CONFLICT (user_id) DO UPDATE SET
-          student_name = EXCLUDED.student_name,
-          name = EXCLUDED.name,
-          parent_name = EXCLUDED.parent_name,
-          email = EXCLUDED.email,
-          phone = EXCLUDED.phone,
-          address = EXCLUDED.address,
-          photo_url = COALESCE(EXCLUDED.photo_url, users.photo_url),
-          student_photo = COALESCE(EXCLUDED.student_photo, users.student_photo),
-          updated_at = CURRENT_TIMESTAMP
-      `, [
-        userId,
-        cleanMobile,
-        data.studentName || data.name || 'Student',
-        data.studentName || data.name || 'Student',
-        data.parentName || '',
-        data.email || '',
-        data.phone || cleanMobile,
-        data.grade || data.level || 'Level 1',
-        data.courseName || data.program || 'Abacus Speed Arithmetic',
-        data.courseName || data.program || 'Abacus Speed Arithmetic',
-        data.institution || data.branch || 'Tenkasi Regional Branch',
-        data.branch || 'Tenkasi Regional Branch',
-        data.address || '',
-        'Student',
-        photoUrl,
-        photoUrl,
-        regNo,
-        regNo,
-        data.enrolmentDate || new Date().toISOString().split('T')[0]
-      ]);
+      // Only the primary admission entry needs a login account.
+      if (data.syncUserAccount !== false) {
+        await db.query(`
+          INSERT INTO users (
+            user_id, password, student_name, name, parent_name, email, phone,
+            grade, program, course_name, institution, branch, address, role,
+            photo_url, student_photo, register_number, registration_no, enrolment_date
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+          ON CONFLICT (user_id) DO UPDATE SET
+            student_name = EXCLUDED.student_name,
+            name = EXCLUDED.name,
+            parent_name = EXCLUDED.parent_name,
+            email = EXCLUDED.email,
+            phone = EXCLUDED.phone,
+            address = EXCLUDED.address,
+            photo_url = COALESCE(EXCLUDED.photo_url, users.photo_url),
+            student_photo = COALESCE(EXCLUDED.student_photo, users.student_photo),
+            updated_at = CURRENT_TIMESTAMP
+        `, [
+          userId,
+          cleanMobile,
+          data.studentName || data.name || 'Student',
+          data.studentName || data.name || 'Student',
+          data.parentName || '',
+          data.email || '',
+          data.phone || cleanMobile,
+          data.grade || data.level || 'Level 1',
+          data.courseName || data.program || 'Abacus Speed Arithmetic',
+          data.courseName || data.program || 'Abacus Speed Arithmetic',
+          data.institution || data.branch || 'Tenkasi Regional Branch',
+          data.branch || 'Tenkasi Regional Branch',
+          data.address || '',
+          'Student',
+          photoUrl,
+          photoUrl,
+          regNo,
+          regNo,
+          data.enrolmentDate || new Date().toISOString().split('T')[0]
+        ]);
+      }
 
       return res.status(201).json({ success: true, student: result.rows[0] });
     }
@@ -297,45 +299,47 @@ const updateStudentHandler = async (req, res) => {
         savedStudent = insertRes.rows[0];
       }
 
-      // Also sync to users table in Neon so login credentials & profile remain updated
-      const targetUserId = (savedStudent.user_id || id).toLowerCase();
-      const existingUser = await db.query('SELECT * FROM users WHERE LOWER(user_id) = $1 OR phone = $2', [targetUserId, savedStudent.phone]);
-      if (existingUser.rows.length > 0) {
-        await db.query(`
-          UPDATE users SET
-            student_name = COALESCE(NULLIF($1, ''), student_name),
-            name = COALESCE(NULLIF($1, ''), name),
-            parent_name = COALESCE(NULLIF($2, ''), parent_name),
-            phone = COALESCE(NULLIF($3, ''), phone),
-            email = COALESCE(NULLIF($4, ''), email),
-            address = COALESCE(NULLIF($5, ''), address),
-            program = COALESCE(NULLIF($6, ''), program),
-            course_name = COALESCE(NULLIF($6, ''), course_name),
-            grade = COALESCE(NULLIF($7, ''), grade),
-            branch = COALESCE(NULLIF($8, ''), branch),
-            institution = COALESCE(NULLIF($8, ''), institution),
-            photo_url = COALESCE(NULLIF($9, ''), photo_url),
-            student_photo = COALESCE(NULLIF($9, ''), student_photo),
-            updated_at = CURRENT_TIMESTAMP
-          WHERE LOWER(user_id) = $10 OR phone = $3
-        `, [
-          studentName, parentName, phone, email, address,
-          courseName, grade, branch, photoUrl || '', targetUserId
-        ]);
-      } else {
-        await db.query(`
-          INSERT INTO users (
-            user_id, password, student_name, name, parent_name, email, phone,
-            grade, program, course_name, institution, branch, address, role,
-            photo_url, student_photo, register_number, registration_no, enrolment_date
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
-        `, [
-          savedStudent.user_id, savedStudent.phone ? savedStudent.phone.replace(/\D/g, '').slice(-10) : '123456',
-          studentName, studentName, parentName, email, phone,
-          grade, courseName, courseName, branch, branch, address, 'Student',
-          photoUrl || null, photoUrl || null, savedStudent.register_number, savedStudent.register_number,
-          savedStudent.enrolment_date || new Date().toISOString().split('T')[0]
-        ]);
+      // Course-only admission rows do not own login accounts.
+      if (!/-COURSE-\d+$/i.test(savedStudent.user_id || '')) {
+        const targetUserId = (savedStudent.user_id || id).toLowerCase();
+        const existingUser = await db.query('SELECT * FROM users WHERE LOWER(user_id) = $1 OR phone = $2', [targetUserId, savedStudent.phone]);
+        if (existingUser.rows.length > 0) {
+          await db.query(`
+            UPDATE users SET
+              student_name = COALESCE(NULLIF($1, ''), student_name),
+              name = COALESCE(NULLIF($1, ''), name),
+              parent_name = COALESCE(NULLIF($2, ''), parent_name),
+              phone = COALESCE(NULLIF($3, ''), phone),
+              email = COALESCE(NULLIF($4, ''), email),
+              address = COALESCE(NULLIF($5, ''), address),
+              program = COALESCE(NULLIF($6, ''), program),
+              course_name = COALESCE(NULLIF($6, ''), course_name),
+              grade = COALESCE(NULLIF($7, ''), grade),
+              branch = COALESCE(NULLIF($8, ''), branch),
+              institution = COALESCE(NULLIF($8, ''), institution),
+              photo_url = COALESCE(NULLIF($9, ''), photo_url),
+              student_photo = COALESCE(NULLIF($9, ''), student_photo),
+              updated_at = CURRENT_TIMESTAMP
+            WHERE LOWER(user_id) = $10 OR phone = $3
+          `, [
+            studentName, parentName, phone, email, address,
+            courseName, grade, branch, photoUrl || '', targetUserId
+          ]);
+        } else {
+          await db.query(`
+            INSERT INTO users (
+              user_id, password, student_name, name, parent_name, email, phone,
+              grade, program, course_name, institution, branch, address, role,
+              photo_url, student_photo, register_number, registration_no, enrolment_date
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+          `, [
+            savedStudent.user_id, savedStudent.phone ? savedStudent.phone.replace(/\D/g, '').slice(-10) : '123456',
+            studentName, studentName, parentName, email, phone,
+            grade, courseName, courseName, branch, branch, address, 'Student',
+            photoUrl || null, photoUrl || null, savedStudent.register_number, savedStudent.register_number,
+            savedStudent.enrolment_date || new Date().toISOString().split('T')[0]
+          ]);
+        }
       }
 
       return res.json({ success: true, student: savedStudent, message: 'Profile successfully updated in Neon PostgreSQL.' });

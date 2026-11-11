@@ -321,24 +321,6 @@ export default function StudentAdmissionFormView({ student, onClose }) {
                 {student.alternatePhone || student.phone || '9898989898'}
               </span>
             </div>
-
-            <div>
-              <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider block">
-                RELATIVE NUMBER
-              </span>
-              <span className="font-bold text-slate-800">
-                {student.relativeNumber || 'Not provided'}
-              </span>
-            </div>
-
-            <div>
-              <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider block">
-                EMAIL ADDRESS
-              </span>
-              <span className="font-bold text-slate-800">
-                {student.email || 'Not provided'}
-              </span>
-            </div>
           </div>
         </div>
 

@@ -572,6 +572,8 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
             const currentUsers = getRegisteredUsers();
             const remoteMapped = data.students.map(s => ({
               userId: s.user_id,
+              accountUserId: s.user_id.replace(/-COURSE-\d+$/i, ''),
+              admissionOnly: /-COURSE-\d+$/i.test(s.user_id),
               studentName: s.student_name,
               name: s.student_name,
               parentName: s.parent_name || '',
@@ -3775,4 +3777,3 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
   );
 
 }
-
