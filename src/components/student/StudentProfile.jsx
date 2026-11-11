@@ -591,22 +591,33 @@ export default function StudentProfile({
 
             {Array.isArray(form.selectedCourses) && form.selectedCourses.length > 1 ? (
               <div className="w-full rounded-xl border border-white/15 bg-white/10 p-3 sm:w-auto sm:min-w-80 backdrop-blur-xs">
-                <span className="text-[10px] text-amber-300 font-extrabold uppercase tracking-wider flex items-center gap-1.5">
-                  <GraduationCap className="h-3.5 w-3.5" />
-                  <span>Enrolled Courses ({form.selectedCourses.length})</span>
-                </span>
-                <div className="mt-2 space-y-1.5">
+                <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                  <span className="text-[10px] text-amber-300 font-extrabold uppercase tracking-wider flex items-center gap-1.5">
+                    <GraduationCap className="h-3.5 w-3.5" />
+                    <span>Enrolled Courses ({form.selectedCourses.length})</span>
+                  </span>
+                </div>
+
+                <div className="mt-2.5 divide-y divide-white/10 space-y-2 sm:space-y-1.5">
                   {form.selectedCourses.map((c, idx) => (
                     <div
                       key={idx}
-                      className="flex items-center justify-between gap-2.5 text-xs"
+                      className="pt-2 first:pt-0 flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3"
                     >
-                      <span className="font-bold text-white truncate max-w-44 sm:max-w-64">
-                        {c.courseName || c.name}
-                      </span>
-                      <span className="shrink-0 px-2 py-0.5 rounded bg-amber-400 text-blue-950 font-black text-[10px]">
-                        {c.level || 'Level 1'}
-                      </span>
+                      <div className="min-w-0">
+                        <span className="text-[9px] font-black uppercase text-blue-200 tracking-wider block sm:hidden">
+                          Course {idx + 1}
+                        </span>
+                        <p className="font-extrabold text-white text-xs leading-snug break-words sm:truncate sm:max-w-56">
+                          {c.courseName || c.name}
+                        </p>
+                      </div>
+
+                      <div className="self-start sm:self-center shrink-0">
+                        <span className="inline-block px-2 py-0.5 rounded-md bg-amber-400 text-blue-950 font-black text-[10px] shadow-2xs">
+                          {c.level || 'Level 1'}
+                        </span>
+                      </div>
                     </div>
                   ))}
                 </div>
