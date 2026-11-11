@@ -288,7 +288,6 @@ export default function AdmissionModal({
   const [isProcessingBg, setIsProcessingBg] = useState(false);
   const editorImageRef = useRef(null);
   const [paymentGatewayStatus, setPaymentGatewayStatus] = useState('idle'); // 'idle' | 'processing' | 'success'
-  const [paymentGatewayTxn, setPaymentGatewayTxn] = useState('');
   const [copiedUpi, setCopiedUpi] = useState(false);
   const [selectedBank, setSelectedBank] = useState('HDFC Bank');
   const [cardDetails, setCardDetails] = useState({
@@ -1382,50 +1381,50 @@ export default function AdmissionModal({
                         </div>
                       </div>
                     )}
-
-                    {/* School / Academy Name Input (Revealed when 'Other' is selected) */}
-                    {isOtherBranch && !lockBranch && (
-                      <div className="mt-2 p-2 sm:p-2.5 bg-sky-50/80 border border-sky-300 rounded-lg sm:rounded-xl text-left animate-in fade-in duration-150">
-                        <div className="flex items-center justify-between mb-1">
-                          <label className="block text-[11px] sm:text-xs font-black text-sky-950">
-                            Enter School / Academy Name *
-                          </label>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setIsOtherBranch(false);
-                              setCustomBranchName('');
-                              setFormData(prev => ({ ...prev, branch: defaultBranch, institution: defaultBranch }));
-                            }}
-                            className="text-[10px] text-sky-700 hover:underline font-bold"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                        <input
-                          type="text"
-                          required
-                          placeholder="e.g. St. Joseph's Matric School, Tenkasi"
-                          value={customBranchName}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            setCustomBranchName(val);
-                            setFormData(prev => ({
-                              ...prev,
-                              branch: val.trim() || 'Other',
-                              institution: val.trim() || 'Other'
-                            }));
-                          }}
-                          className="w-full px-2.5 sm:px-3 py-1.5 bg-white border border-sky-400 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-sky-500 focus:outline-none text-base sm:text-sm shadow-2xs"
-                          autoFocus
-                        />
-                        <p className="text-[10px] text-slate-500 mt-1">
-                          Enter the full school or learning centre name where the candidate studies.
-                        </p>
-                      </div>
-                    )}
                   </div>
                 </div>
+
+                {/* School / Academy Name Input (Revealed across full width when 'Other' is selected) */}
+                {isOtherBranch && !lockBranch && (
+                  <div className="p-3 bg-sky-50/90 border border-sky-300 rounded-xl text-left animate-in fade-in duration-150">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-xs font-black text-sky-950">
+                        Enter School / Academy Name *
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsOtherBranch(false);
+                          setCustomBranchName('');
+                          setFormData(prev => ({ ...prev, branch: defaultBranch, institution: defaultBranch }));
+                        }}
+                        className="text-[11px] text-sky-700 hover:underline font-bold"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. St. Joseph's Matric School, Tenkasi"
+                      value={customBranchName}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setCustomBranchName(val);
+                        setFormData(prev => ({
+                          ...prev,
+                          branch: val.trim() || 'Other',
+                          institution: val.trim() || 'Other'
+                        }));
+                      }}
+                      className="w-full px-3 py-2 bg-white border border-sky-400 rounded-lg text-slate-950 font-semibold focus:ring-2 focus:ring-sky-500 focus:outline-none text-sm shadow-2xs"
+                      autoFocus
+                    />
+                    <p className="text-[10px] text-slate-500 mt-1">
+                      Enter the full school or learning centre name where the candidate studies.
+                    </p>
+                  </div>
+                )}
 
                 {/* 3. Multi-Course & Level Selection Desk */}
                 <div className="space-y-2 pt-1 border-t border-slate-200">

@@ -68,6 +68,29 @@ export const INITIAL_STUDENT_ACHIEVEMENTS = [
 
 const ACHIEVEMENTS_STORAGE_KEY = 'bsel_achievements_data';
 
+const DEFAULT_PRESET_IMAGES = [student1, student2, student3, student4, student5, student6];
+
+export const resolveStudentPhoto = (photo, index = 0) => {
+  const fallback = DEFAULT_PRESET_IMAGES[Math.abs(index) % DEFAULT_PRESET_IMAGES.length];
+  if (!photo || photo === 'undefined' || photo === 'null' || (typeof photo === 'string' && !photo.trim())) {
+    return fallback;
+  }
+  if (typeof photo === 'string') {
+    // If it's a data URL (uploaded file) or absolute http URL, use it
+    if (photo.startsWith('data:image/') || photo.startsWith('http://') || photo.startsWith('https://')) {
+      return photo;
+    }
+    // If it's an old relative Vite path or preset identifier from another machine/build
+    if (photo.includes('student1')) return student1;
+    if (photo.includes('student2')) return student2;
+    if (photo.includes('student3')) return student3;
+    if (photo.includes('student4')) return student4;
+    if (photo.includes('student5')) return student5;
+    if (photo.includes('student6')) return student6;
+  }
+  return photo || fallback;
+};
+
 export const getStoredAchievements = () => {
   if (typeof window === 'undefined') return INITIAL_STUDENT_ACHIEVEMENTS;
   try {
@@ -77,7 +100,11 @@ export const getStoredAchievements = () => {
       return INITIAL_STUDENT_ACHIEVEMENTS;
     }
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) && parsed.length > 0 ? parsed : INITIAL_STUDENT_ACHIEVEMENTS;
+    if (!Array.isArray(parsed) || parsed.length === 0) return INITIAL_STUDENT_ACHIEVEMENTS;
+    return parsed.map((item, idx) => ({
+      ...item,
+      photo: resolveStudentPhoto(item.photo, idx)
+    }));
   } catch (err) {
     console.error('Error reading stored achievements:', err);
     return INITIAL_STUDENT_ACHIEVEMENTS;
