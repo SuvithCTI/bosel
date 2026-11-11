@@ -816,50 +816,54 @@ export default function StudentProfile({
           />
 
           {Array.isArray(form.selectedCourses) && form.selectedCourses.length > 1 ? (
-            <div className="col-span-2 rounded-2xl border border-slate-200 bg-white p-3.5 sm:p-5 shadow-2xs space-y-3">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <span className="text-xs font-black uppercase tracking-wider text-blue-950 flex items-center gap-1.5">
-                  <GraduationCap className="h-4 w-4 text-blue-900" />
-                  <span>Enrolled Courses & Academic Registration ({form.selectedCourses.length})</span>
+            <div className="col-span-2 rounded-2xl border border-slate-200 bg-white p-3 sm:p-5 shadow-2xs space-y-3">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                <span className="text-xs font-black uppercase tracking-wider text-blue-950 flex items-center gap-1.5 min-w-0">
+                  <GraduationCap className="h-4 w-4 shrink-0 text-blue-900" />
+                  <span className="truncate">Enrolled Courses ({form.selectedCourses.length})</span>
                 </span>
-                <span className="text-[11px] font-bold text-slate-500">
-                  {form.selectedCourses.length} Enrolled Courses
+                <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] sm:text-[11px] font-bold text-blue-900 border border-blue-200 shrink-0">
+                  {form.selectedCourses.length} Enrolled
                 </span>
               </div>
 
-              <div className="divide-y divide-slate-100">
-                {form.selectedCourses.map((c, idx) => (
-                  <div
-                    key={idx}
-                    className="flex flex-col gap-2.5 py-3 sm:flex-row sm:items-center sm:justify-between first:pt-1 last:pb-1"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-xs sm:text-sm font-black text-slate-900">
-                          {c.courseName || c.name}
-                        </span>
-                        <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-2 py-0.5 text-xs font-mono font-black text-amber-900 border border-amber-200">
+              <div className="flex flex-col gap-2.5 sm:gap-0 sm:divide-y sm:divide-slate-100">
+                {form.selectedCourses.map((c, idx) => {
+                  const courseReg = c.registerNumber || allRegNumbers[idx] || registerNumber;
+                  const courseFee = c.fee ? String(c.fee).replace(/\D/g, '') : (idx === 0 ? '450' : '400');
+                  const courseLevel = c.level || form.courseLevel || 'Level 1';
+
+                  return (
+                    <div
+                      key={idx}
+                      className="rounded-xl border border-slate-100 bg-slate-50/70 p-2.5 sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0 sm:py-3 sm:first:pt-1 sm:last:pb-1 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                      <div className="flex items-start justify-between gap-2 min-w-0 flex-1">
+                        <div className="min-w-0 flex-1">
+                          <span className="text-xs sm:text-sm font-black text-slate-900 leading-snug block">
+                            {c.courseName || c.name}
+                          </span>
+                        </div>
+
+                        <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-2 py-0.5 text-[11px] sm:text-xs font-mono font-black text-amber-900 border border-amber-200 shrink-0">
                           <Hash className="h-3 w-3" />
-                          {c.registerNumber || allRegNumbers[idx] || registerNumber}
+                          {courseReg}
                         </span>
                       </div>
-                      <p className="mt-1 text-xs text-slate-500">
-                        {c.level || form.courseLevel || 'Level 1'}
-                      </p>
-                    </div>
 
-                    <div className="flex items-center gap-2.5 self-start sm:self-center shrink-0">
-                      <span className="rounded-lg bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-900 border border-blue-200">
-                        {c.level || 'Level 1'}
-                      </span>
-                      {c.fee && (
-                        <span className="font-mono text-xs font-black text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
-                          ₹{String(c.fee).replace(/\D/g, '')}
+                      <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0">
+                        <span className="inline-flex items-center gap-1 rounded-lg bg-blue-50 px-2.5 py-1 text-[11px] sm:text-xs font-bold text-blue-900 border border-blue-200 min-w-0 truncate max-w-[200px] sm:max-w-none">
+                          <GraduationCap className="h-3 w-3 shrink-0 text-blue-800" />
+                          <span className="truncate">{courseLevel}</span>
                         </span>
-                      )}
+
+                        <span className="inline-flex items-center rounded-lg bg-emerald-50 px-2.5 py-1 text-[11px] sm:text-xs font-mono font-black text-emerald-700 border border-emerald-200 shrink-0">
+                          ₹{courseFee}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           ) : (
