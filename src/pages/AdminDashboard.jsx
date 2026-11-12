@@ -1445,7 +1445,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                 {currentAdminRole === 'Super Admin' ? 'Executive Desks' : 'Branch Management'}
               </span>
               <span className="text-[10px] font-bold text-slate-400">
-                {currentAdminRole === 'Super Admin' ? '7 Modules' : '6 Modules'}
+                {currentAdminRole === 'Super Admin' ? '7 Modules' : '5 Modules'}
               </span>
             </div>
 
@@ -1612,19 +1612,6 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                       }`}
                     />
                     <span className="truncate">Student Marksheet</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleTabSelect('branch_fees')}
-                    className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-black transition cursor-pointer text-left ${
-                      activeTab === 'branch_fees'
-                        ? 'bg-[#0c234b] text-white shadow-sm ring-1 ring-amber-400/40'
-                        : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950'
-                    }`}
-                  >
-                    <CreditCard className={`w-4 h-4 shrink-0 ${activeTab === 'branch_fees' ? 'text-amber-400' : 'text-slate-500'}`} />
-                    <span className="truncate">Branch Fee Collections</span>
                   </button>
 
                   <button
