@@ -782,20 +782,22 @@ export default function Certificate({
 
           {/* =========================================================================
               5. DETAILS GRID / TABLE (LEFT & RIGHT COLUMNS)
-              Rendered in classic 'Times New Roman' with perfect column-by-column alignment
-              Labels & colons (:) are aligned in the official template background.
-              Dynamic values align vertically next to each colon.
+              Rendered in classic 'Times New Roman' with perfect row-by-row baseline alignment
+              Colons: Left x=214px (20.9%), Right x=765px (74.7%)
+              Start x: Left 22.6%, Right 76.5%
+              Row Y Centers:
+              Row 1: 64.3%, Row 2: 67.3%, Row 3: 70.2%, Row 4: 73.2%, Row 5: 76.2%
               ========================================================================= */}
           
-          {/* --- LEFT COLUMN VALUES (Colons at x=18.0%, Values start at x=18.8%) --- */}
+          {/* --- LEFT COLUMN VALUES --- */}
           {/* Row 1: Registration No */}
           <div 
             className="absolute font-bold text-[#13427a] select-none truncate flex items-center"
             style={{
-              top: '63.35%',
-              left: '18.8%',
-              width: '29.5%',
-              maxWidth: '29.5%',
+              top: '64.3%',
+              left: '22.6%',
+              width: '26.5%',
+              maxWidth: '26.5%',
               transform: 'translateY(-50%)',
               fontFamily: "'Times New Roman', Times, serif",
               fontSize: 'clamp(9px, 1.25vw, 13px)',
@@ -803,17 +805,17 @@ export default function Certificate({
               lineHeight: 1
             }}
           >
-            {registrationNo || 'REG-001'}
+            {registrationNo || 'DR26-001'}
           </div>
 
           {/* Row 2: Certificate No */}
           <div 
             className="absolute font-bold text-[#13427a] select-none truncate flex items-center"
             style={{
-              top: '66.74%',
-              left: '18.8%',
-              width: '29.5%',
-              maxWidth: '29.5%',
+              top: '67.3%',
+              left: '22.6%',
+              width: '26.5%',
+              maxWidth: '26.5%',
               transform: 'translateY(-50%)',
               fontFamily: "'Times New Roman', Times, serif",
               fontSize: 'clamp(9px, 1.25vw, 13px)',
@@ -821,35 +823,35 @@ export default function Certificate({
               lineHeight: 1
             }}
           >
-            {displayCertNo || 'BSEL/CERT/001'}
+            {displayCertNo}
           </div>
 
           {/* Row 3: Course */}
           <div 
             className="absolute font-bold text-[#13427a] select-none uppercase flex items-center"
             style={{
-              top: '70.12%',
-              left: '18.8%',
-              width: '30.0%',
-              maxWidth: '30.0%',
+              top: '70.2%',
+              left: '22.6%',
+              width: '27.2%',
+              maxWidth: '27.2%',
               transform: 'translateY(-50%)',
               fontFamily: "'Times New Roman', Times, serif",
-              fontSize: (displayCourseUpper || '').length > 25 ? 'clamp(7.5px, 1.0vw, 10.5px)' : 'clamp(9px, 1.25vw, 13px)',
-              letterSpacing: (displayCourseUpper || '').length > 25 ? '0.005em' : '0.02em',
+              fontSize: displayCourseUpper.length > 25 ? 'clamp(7.5px, 1.0vw, 10.5px)' : 'clamp(9px, 1.25vw, 13px)',
+              letterSpacing: displayCourseUpper.length > 25 ? '0.005em' : '0.02em',
               lineHeight: 1
             }}
           >
-            <span className="truncate">{displayCourseUpper || 'COURSE NAME'}</span>
+            <span className="truncate">{displayCourseUpper}</span>
           </div>
 
           {/* Row 4: Level */}
           <div 
             className="absolute font-bold text-[#13427a] select-none truncate capitalize flex items-center"
             style={{
-              top: '73.44%',
-              left: '18.8%',
-              width: '29.5%',
-              maxWidth: '29.5%',
+              top: '73.2%',
+              left: '22.6%',
+              width: '26.5%',
+              maxWidth: '26.5%',
               transform: 'translateY(-50%)',
               fontFamily: "'Times New Roman', Times, serif",
               fontSize: 'clamp(9px, 1.25vw, 13px)',
@@ -864,10 +866,10 @@ export default function Certificate({
           <div 
             className="absolute font-bold text-[#13427a] select-none truncate capitalize flex items-center"
             style={{
-              top: '76.83%',
-              left: '18.8%',
-              width: '29.5%',
-              maxWidth: '29.5%',
+              top: '76.2%',
+              left: '22.6%',
+              width: '26.5%',
+              maxWidth: '26.5%',
               transform: 'translateY(-50%)',
               fontFamily: "'Times New Roman', Times, serif",
               fontSize: 'clamp(9px, 1.25vw, 13px)',
@@ -878,33 +880,15 @@ export default function Certificate({
             {duration || '6 Months'}
           </div>
 
-          {/* --- RIGHT COLUMN VALUES (Colons at x=76.8%, Values start at x=77.8%) --- */}
+          {/* --- RIGHT COLUMN VALUES --- */}
           {/* Row 1: School / Examination Centre */}
           <div 
             className="absolute font-bold text-[#13427a] select-none truncate capitalize flex items-center"
             style={{
-              top: '63.35%',
-              left: '77.8%',
-              width: '20.8%',
-              maxWidth: '20.8%',
-              transform: 'translateY(-50%)',
-              fontFamily: "'Times New Roman', Times, serif",
-              fontSize: 'clamp(8.5px, 1.2vw, 12.5px)',
-              letterSpacing: '0.02em',
-              lineHeight: 1
-            }}
-          >
-            {centreName || 'Tenkasi Regional Branch'}
-          </div>
-
-          {/* Row 2: Code */}
-          <div 
-            className="absolute font-bold text-[#13427a] select-none truncate flex items-center"
-            style={{
-              top: '66.74%',
-              left: '77.8%',
-              width: '20.8%',
-              maxWidth: '20.8%',
+              top: '64.3%',
+              left: '76.5%',
+              width: '16.5%',
+              maxWidth: '16.5%',
               transform: 'translateY(-50%)',
               fontFamily: "'Times New Roman', Times, serif",
               fontSize: 'clamp(9px, 1.25vw, 13px)',
@@ -912,17 +896,35 @@ export default function Certificate({
               lineHeight: 1
             }}
           >
-            {centreCode || '101'}
+            {centreName || 'Tenkasi'}
+          </div>
+
+          {/* Row 2: Code */}
+          <div 
+            className="absolute font-bold text-[#13427a] select-none truncate flex items-center"
+            style={{
+              top: '67.3%',
+              left: '76.5%',
+              width: '16.5%',
+              maxWidth: '16.5%',
+              transform: 'translateY(-50%)',
+              fontFamily: "'Times New Roman', Times, serif",
+              fontSize: 'clamp(9px, 1.25vw, 13px)',
+              letterSpacing: '0.02em',
+              lineHeight: 1
+            }}
+          >
+            {centreCode || '545454'}
           </div>
 
           {/* Row 3: Address Line 1 */}
           <div 
             className="absolute font-bold text-[#13427a] select-none truncate capitalize flex items-center"
             style={{
-              top: '70.12%',
-              left: '77.8%',
-              width: '20.8%',
-              maxWidth: '20.8%',
+              top: '70.2%',
+              left: '76.5%',
+              width: '16.5%',
+              maxWidth: '16.5%',
               transform: 'translateY(-50%)',
               fontFamily: "'Times New Roman', Times, serif",
               fontSize: 'clamp(8.5px, 1.2vw, 12.5px)',
@@ -930,7 +932,7 @@ export default function Certificate({
               lineHeight: 1
             }}
           >
-            {addressLine1 || 'Branch Address'}
+            {addressLine1}
           </div>
 
           {/* Row 4: Address Line 2 (graceful wrapping into blank Row 4 area on the right) */}
@@ -938,10 +940,10 @@ export default function Certificate({
             <div 
               className="absolute font-bold text-[#13427a] select-none truncate capitalize flex items-center"
               style={{
-                top: '73.44%',
-                left: '77.8%',
-                width: '20.8%',
-                maxWidth: '20.8%',
+                top: '73.2%',
+                left: '76.5%',
+                width: '16.5%',
+                maxWidth: '16.5%',
                 transform: 'translateY(-50%)',
                 fontFamily: "'Times New Roman', Times, serif",
                 fontSize: 'clamp(8.5px, 1.2vw, 12.5px)',
@@ -957,10 +959,10 @@ export default function Certificate({
           <div 
             className="absolute font-bold text-[#13427a] select-none truncate flex items-center"
             style={{
-              top: '76.83%',
-              left: '77.8%',
-              width: '20.8%',
-              maxWidth: '20.8%',
+              top: '76.2%',
+              left: '76.5%',
+              width: '16.5%',
+              maxWidth: '16.5%',
               transform: 'translateY(-50%)',
               fontFamily: "'Times New Roman', Times, serif",
               fontSize: 'clamp(9px, 1.25vw, 13px)',
@@ -968,7 +970,7 @@ export default function Certificate({
               lineHeight: 1
             }}
           >
-            {issueDate || '12/11/2026'}
+            {issueDate || '05-10-2026'}
           </div>
 
           {/* 6. CENTER DIRECTOR / PRINCIPAL SIGNATURE (Centered directly above "Center Director / Principal") */}
