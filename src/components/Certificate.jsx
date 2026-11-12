@@ -783,103 +783,192 @@ export default function Certificate({
           {/* =========================================================================
               5. DETAILS GRID / TABLE (LEFT & RIGHT COLUMNS)
               Rendered in classic 'Times New Roman' with perfect column-by-column alignment
-              - Labels, colons (:), and dynamic values are all aligned in vertical columns
-              - Fits inside the official template's double-border box
+              Labels & colons (:) are aligned in the official template background.
+              Dynamic values align vertically next to each colon.
               ========================================================================= */}
-          <div
-            className="absolute flex items-center justify-between select-none pointer-events-none"
+          
+          {/* --- LEFT COLUMN VALUES (Colons at x=18.0%, Values start at x=18.8%) --- */}
+          {/* Row 1: Registration No */}
+          <div 
+            className="absolute font-bold text-[#13427a] select-none truncate flex items-center"
             style={{
-              top: '60.6%',
-              left: '1.2%',
-              width: '97.6%',
-              height: '17.7%',
+              top: '63.35%',
+              left: '18.8%',
+              width: '29.5%',
+              maxWidth: '29.5%',
+              transform: 'translateY(-50%)',
               fontFamily: "'Times New Roman', Times, serif",
-              color: '#13427a',
-              fontSize: 'clamp(8.5px, 1.2vw, 12.5px)',
-              lineHeight: 1.2
+              fontSize: 'clamp(9px, 1.25vw, 13px)',
+              letterSpacing: '0.02em',
+              lineHeight: 1
             }}
           >
-            {/* --- LEFT COLUMN (5 Rows) --- */}
-            <div className="w-[48.5%] h-full flex flex-col justify-between py-2.5 pl-4 pr-2">
-              {/* Row 1: Registration No */}
-              <div className="grid grid-cols-[34%_4%_62%] items-center">
-                <span className="font-bold whitespace-nowrap">Registration No</span>
-                <span className="font-bold text-center">:</span>
-                <span className="font-bold truncate pl-1">{registrationNo || 'REG-001'}</span>
-              </div>
+            {registrationNo || 'REG-001'}
+          </div>
 
-              {/* Row 2: Certificate No */}
-              <div className="grid grid-cols-[34%_4%_62%] items-center">
-                <span className="font-bold whitespace-nowrap">Certificate No</span>
-                <span className="font-bold text-center">:</span>
-                <span className="font-bold truncate pl-1">{displayCertNo}</span>
-              </div>
+          {/* Row 2: Certificate No */}
+          <div 
+            className="absolute font-bold text-[#13427a] select-none truncate flex items-center"
+            style={{
+              top: '66.74%',
+              left: '18.8%',
+              width: '29.5%',
+              maxWidth: '29.5%',
+              transform: 'translateY(-50%)',
+              fontFamily: "'Times New Roman', Times, serif",
+              fontSize: 'clamp(9px, 1.25vw, 13px)',
+              letterSpacing: '0.02em',
+              lineHeight: 1
+            }}
+          >
+            {displayCertNo || 'BSEL/CERT/001'}
+          </div>
 
-              {/* Row 3: Course */}
-              <div className="grid grid-cols-[34%_4%_62%] items-center">
-                <span className="font-bold whitespace-nowrap">Course</span>
-                <span className="font-bold text-center">:</span>
-                <span className="font-bold truncate pl-1 uppercase">{displayCourseUpper}</span>
-              </div>
+          {/* Row 3: Course */}
+          <div 
+            className="absolute font-bold text-[#13427a] select-none uppercase flex items-center"
+            style={{
+              top: '70.12%',
+              left: '18.8%',
+              width: '30.0%',
+              maxWidth: '30.0%',
+              transform: 'translateY(-50%)',
+              fontFamily: "'Times New Roman', Times, serif",
+              fontSize: (displayCourseUpper || '').length > 25 ? 'clamp(7.5px, 1.0vw, 10.5px)' : 'clamp(9px, 1.25vw, 13px)',
+              letterSpacing: (displayCourseUpper || '').length > 25 ? '0.005em' : '0.02em',
+              lineHeight: 1
+            }}
+          >
+            <span className="truncate">{displayCourseUpper || 'COURSE NAME'}</span>
+          </div>
 
-              {/* Row 4: Level */}
-              <div className="grid grid-cols-[34%_4%_62%] items-center">
-                <span className="font-bold whitespace-nowrap">Level</span>
-                <span className="font-bold text-center">:</span>
-                <span className="font-bold truncate pl-1 capitalize">{level || 'Level 1'}</span>
-              </div>
+          {/* Row 4: Level */}
+          <div 
+            className="absolute font-bold text-[#13427a] select-none truncate capitalize flex items-center"
+            style={{
+              top: '73.44%',
+              left: '18.8%',
+              width: '29.5%',
+              maxWidth: '29.5%',
+              transform: 'translateY(-50%)',
+              fontFamily: "'Times New Roman', Times, serif",
+              fontSize: 'clamp(9px, 1.25vw, 13px)',
+              letterSpacing: '0.02em',
+              lineHeight: 1
+            }}
+          >
+            {level || 'Level 1'}
+          </div>
 
-              {/* Row 5: Duration */}
-              <div className="grid grid-cols-[34%_4%_62%] items-center">
-                <span className="font-bold whitespace-nowrap">Duration</span>
-                <span className="font-bold text-center">:</span>
-                <span className="font-bold truncate pl-1 capitalize">{duration || '6 Months'}</span>
-              </div>
+          {/* Row 5: Duration */}
+          <div 
+            className="absolute font-bold text-[#13427a] select-none truncate capitalize flex items-center"
+            style={{
+              top: '76.83%',
+              left: '18.8%',
+              width: '29.5%',
+              maxWidth: '29.5%',
+              transform: 'translateY(-50%)',
+              fontFamily: "'Times New Roman', Times, serif",
+              fontSize: 'clamp(9px, 1.25vw, 13px)',
+              letterSpacing: '0.02em',
+              lineHeight: 1
+            }}
+          >
+            {duration || '6 Months'}
+          </div>
+
+          {/* --- RIGHT COLUMN VALUES (Colons at x=76.8%, Values start at x=77.8%) --- */}
+          {/* Row 1: School / Examination Centre */}
+          <div 
+            className="absolute font-bold text-[#13427a] select-none truncate capitalize flex items-center"
+            style={{
+              top: '63.35%',
+              left: '77.8%',
+              width: '20.8%',
+              maxWidth: '20.8%',
+              transform: 'translateY(-50%)',
+              fontFamily: "'Times New Roman', Times, serif",
+              fontSize: 'clamp(8.5px, 1.2vw, 12.5px)',
+              letterSpacing: '0.02em',
+              lineHeight: 1
+            }}
+          >
+            {centreName || 'Tenkasi Regional Branch'}
+          </div>
+
+          {/* Row 2: Code */}
+          <div 
+            className="absolute font-bold text-[#13427a] select-none truncate flex items-center"
+            style={{
+              top: '66.74%',
+              left: '77.8%',
+              width: '20.8%',
+              maxWidth: '20.8%',
+              transform: 'translateY(-50%)',
+              fontFamily: "'Times New Roman', Times, serif",
+              fontSize: 'clamp(9px, 1.25vw, 13px)',
+              letterSpacing: '0.02em',
+              lineHeight: 1
+            }}
+          >
+            {centreCode || '101'}
+          </div>
+
+          {/* Row 3: Address Line 1 */}
+          <div 
+            className="absolute font-bold text-[#13427a] select-none truncate capitalize flex items-center"
+            style={{
+              top: '70.12%',
+              left: '77.8%',
+              width: '20.8%',
+              maxWidth: '20.8%',
+              transform: 'translateY(-50%)',
+              fontFamily: "'Times New Roman', Times, serif",
+              fontSize: 'clamp(8.5px, 1.2vw, 12.5px)',
+              letterSpacing: '0.02em',
+              lineHeight: 1
+            }}
+          >
+            {addressLine1 || 'Branch Address'}
+          </div>
+
+          {/* Row 4: Address Line 2 (graceful wrapping into blank Row 4 area on the right) */}
+          {addressLine2 && (
+            <div 
+              className="absolute font-bold text-[#13427a] select-none truncate capitalize flex items-center"
+              style={{
+                top: '73.44%',
+                left: '77.8%',
+                width: '20.8%',
+                maxWidth: '20.8%',
+                transform: 'translateY(-50%)',
+                fontFamily: "'Times New Roman', Times, serif",
+                fontSize: 'clamp(8.5px, 1.2vw, 12.5px)',
+                letterSpacing: '0.02em',
+                lineHeight: 1
+              }}
+            >
+              {addressLine2}
             </div>
+          )}
 
-            {/* --- RIGHT COLUMN (5 Rows) --- */}
-            <div className="w-[48.5%] h-full flex flex-col justify-between py-2.5 pl-3 pr-4">
-              {/* Row 1: School / Examination Centre */}
-              <div className="grid grid-cols-[48%_4%_48%] items-center">
-                <span className="font-bold whitespace-nowrap">School / Examination Centre</span>
-                <span className="font-bold text-center">:</span>
-                <span className="font-bold truncate pl-1 capitalize">{centreName || 'Tenkasi Regional Branch'}</span>
-              </div>
-
-              {/* Row 2: Code */}
-              <div className="grid grid-cols-[48%_4%_48%] items-center">
-                <span className="font-bold whitespace-nowrap">Code</span>
-                <span className="font-bold text-center">:</span>
-                <span className="font-bold truncate pl-1">{centreCode || '101'}</span>
-              </div>
-
-              {/* Row 3: Address */}
-              <div className="grid grid-cols-[48%_4%_48%] items-center">
-                <span className="font-bold whitespace-nowrap">Address</span>
-                <span className="font-bold text-center">:</span>
-                <span className="font-bold truncate pl-1 capitalize">{addressLine1 || 'Branch Address'}</span>
-              </div>
-
-              {/* Row 4: Address Line 2 (or blank) */}
-              <div className="grid grid-cols-[48%_4%_48%] items-center min-h-[1em]">
-                {addressLine2 ? (
-                  <>
-                    <span></span>
-                    <span></span>
-                    <span className="font-bold truncate pl-1 capitalize">{addressLine2}</span>
-                  </>
-                ) : (
-                  <span></span>
-                )}
-              </div>
-
-              {/* Row 5: Date of Issue */}
-              <div className="grid grid-cols-[48%_4%_48%] items-center">
-                <span className="font-bold whitespace-nowrap">Date of Issue</span>
-                <span className="font-bold text-center">:</span>
-                <span className="font-bold truncate pl-1">{issueDate || '12/11/2026'}</span>
-              </div>
-            </div>
+          {/* Row 5: Date of Issue */}
+          <div 
+            className="absolute font-bold text-[#13427a] select-none truncate flex items-center"
+            style={{
+              top: '76.83%',
+              left: '77.8%',
+              width: '20.8%',
+              maxWidth: '20.8%',
+              transform: 'translateY(-50%)',
+              fontFamily: "'Times New Roman', Times, serif",
+              fontSize: 'clamp(9px, 1.25vw, 13px)',
+              letterSpacing: '0.02em',
+              lineHeight: 1
+            }}
+          >
+            {issueDate || '12/11/2026'}
           </div>
 
           {/* 6. CENTER DIRECTOR / PRINCIPAL SIGNATURE (Centered directly above "Center Director / Principal") */}
