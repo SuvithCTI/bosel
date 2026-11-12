@@ -1651,51 +1651,6 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
             ========================================================================= */}
         <main className="flex-1 min-w-0 w-full lg:ml-72 xl:ml-80 p-4 sm:p-6 lg:p-8 space-y-5 bg-slate-100">
 
-          {/* BRANCH HEAD CONTEXT BANNER (Rendered when viewing as Branch Head; styled in Super Admin blue theme) */}
-          {currentAdminRole === 'Branch Head' && (
-            <div className="bg-gradient-to-r from-[#081d3d] via-[#0c234b] to-[#123068] text-white p-4 sm:p-5 rounded-2xl shadow-md border-2 border-amber-400/40 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 animate-in fade-in duration-200">
-              <div className="flex items-center gap-3.5">
-                <div className="w-12 h-12 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-amber-400 shrink-0 shadow-sm">
-                  <Building className="w-6 h-6" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h1 className="text-base sm:text-lg font-black text-white">{activeBranch}</h1>
-                  </div>
-                  <p className="text-xs text-sky-200 mt-0.5">
-                    Centre Director: <strong className="text-amber-300">Mrs. Thangam Sivaji</strong> &nbsp;|&nbsp; 
-                    Branch Code: <strong className="text-white">TSI-01</strong>
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 flex-wrap self-end md:self-auto">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setNewStudent(prev => ({ ...prev, branch: activeBranch, institution: activeBranch }));
-                    setShowAddStudentModal(true);
-                  }}
-                  className="px-3.5 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded-xl text-xs font-black transition flex items-center gap-1.5 shadow-sm cursor-pointer"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Enroll Student to This Branch</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setNewPayment(prev => ({ ...prev, branch: activeBranch }));
-                    setShowAddPaymentModal(true);
-                  }}
-                  className="px-3.5 py-2 bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-xl text-xs font-black transition flex items-center gap-1.5 shadow-sm cursor-pointer"
-                >
-                  <CreditCard className="w-3.5 h-3.5" />
-                  <span>Record Branch Fee</span>
-                </button>
-              </div>
-            </div>
-          )}
 
           {/* SUPER ADMIN: TAB 1 - EXECUTIVE OVERVIEW */}
           {currentAdminRole === 'Super Admin' && activeTab === 'overview' && (
