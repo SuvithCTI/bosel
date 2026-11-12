@@ -43,9 +43,8 @@ router.post('/login', async (req, res) => {
         const isValidPassword = 
           user.password === cleanPassword ||
           (userMobilePass && cleanPassword === userMobilePass) ||
-          cleanPassword === 'admin123' ||
-          cleanPassword === 'branch123' ||
-          cleanPassword === 'besel2026';
+          (user.role === 'Super Admin' && cleanPassword === 'admin123') ||
+          ((user.role === 'Branch Head' || user.role === 'Branch Admin') && cleanPassword === 'branch123');
 
         if (!isValidPassword) {
           return res.status(401).json({
@@ -99,24 +98,9 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    // Default student fallback
-    const digits = cleanId.replace(/\D/g, '');
-    if (digits.length >= 10 && (cleanPassword === digits.slice(-10) || cleanPassword === 'besel2026')) {
-      return res.json({
-        success: true,
-        user: {
-          userId: `BSEL-${digits.slice(-10)}`,
-          studentName: 'BSEL Enrolled Student',
-          phone: digits.slice(-10),
-          role: 'Student',
-          branch: 'Tenkasi'
-        }
-      });
-    }
-
     return res.status(401).json({
       success: false,
-      message: `Invalid credentials for User ID "${userId}".`
+      message: `Candidate account not found for "${userId}". Only candidates who have filled and submitted the admission form can log in.`
     });
   } catch (error) {
     console.error('[Auth Route Error]:', error);
