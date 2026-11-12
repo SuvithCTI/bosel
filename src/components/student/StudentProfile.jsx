@@ -21,8 +21,6 @@ import {
   Hash,
   CalendarClock,
   Lock,
-  Receipt,
-  CreditCard,
   Layers,
 } from 'lucide-react';
 import { generateRegisterNumber } from '../../utils/authStorage';
@@ -898,67 +896,7 @@ export default function StudentProfile({
           )}
         </ProfileSection>
 
-        {/* Section 2: Admission Fees & Payment Record (LOCKED) */}
-        {(form.feeAmount || form.paymentMode || form.receiptRefNo) && (
-          <ProfileSection
-            icon={Receipt}
-            title="Admission Fees & Payment Record"
-            description="Fee receipt and transaction verification recorded at the time of admission."
-            gridCols="grid-cols-2"
-            badge={
-              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10.5px] font-extrabold text-emerald-900 border border-emerald-300">
-                <CheckCircle2 className="h-3 w-3 text-emerald-600" />
-                Confirmed
-              </span>
-            }
-          >
-            <ProfileField
-              label={
-                Array.isArray(form.selectedCourses) && form.selectedCourses.length > 1
-                  ? "Total Admission Fees Paid"
-                  : "Admission Fee Paid"
-              }
-              name="feeAmount"
-              value={form.feeAmount || '₹450'}
-              icon={Receipt}
-              readOnly
-              isLocked
-            />
-
-            <ProfileField
-              label="Payment Mode"
-              name="paymentMode"
-              value={form.paymentMode || 'UPI / QR Code'}
-              icon={CreditCard}
-              readOnly
-              isLocked
-            />
-
-            <ProfileField
-              label="Receipt / Reference No."
-              name="receiptRefNo"
-              value={form.receiptRefNo || 'TXN-CONFIRMED'}
-              icon={Hash}
-              readOnly
-              isLocked
-            />
-
-            <ProfileField
-              label="Payment Status"
-              name="feePaymentType"
-              value={
-                Array.isArray(form.selectedCourses) && form.selectedCourses.length > 1
-                  ? `Fee Paid & Confirmed (${form.selectedCourses.length} Courses)`
-                  : "Fee Paid & Confirmed"
-              }
-              icon={CheckCircle2}
-              readOnly
-              isLocked
-            />
-          </ProfileSection>
-        )}
-
-        {/* Section 3: Personal Information (LOCKED OFFICIAL IDENTITY) */}
+        {/* Section 2: Personal Information (LOCKED OFFICIAL IDENTITY) */}
         <ProfileSection
           icon={UserRound}
           title="Personal Information"
