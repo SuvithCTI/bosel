@@ -56,17 +56,26 @@ Clone the repository and install dependencies for both the frontend and backend:
 git clone https://github.com/your-username/besel.git
 cd besel
 
+# Install frontend and backend dependencies
+npm run install:all
+```
+
+Or install each separately:
+
+```bash
 # Install frontend dependencies
+cd frontend
 npm install
+cd ..
 
 # Install backend dependencies
-cd server
+cd backend
 npm install
 cd ..
 ```
 
 ### 3. Environment Configuration
-Create a `.env` file in the root directory or inside `server/` based on `.env.example`:
+Create a `.env` file in the root directory or inside `backend/` based on `.env.example`:
 
 ```bash
 cp .env.example .env
@@ -92,7 +101,7 @@ AWS_BUCKET_NAME=your_s3_bucket_name
 
 ### 4. Running the Application
 
-In development mode:
+In development mode (from the root directory):
 
 ```bash
 # Terminal 1: Run the backend API server (runs on http://localhost:5000)
@@ -100,6 +109,9 @@ npm run server:dev
 
 # Terminal 2: Run the Vite frontend (runs on http://localhost:5173)
 npm run dev
+
+# Or run both together:
+npm run dev:all
 ```
 
 ### 5. Production Build
@@ -116,25 +128,31 @@ npm run preview
 
 ```
 ├── all-images/              # Consolidated project images and templates
-├── public/                  # Public static assets
-├── server/
+├── backend/
 │   ├── config/              # Neon DB and AWS S3 client configurations
 │   ├── db/
 │   │   ├── init.js          # Database schema migration & initialization
 │   │   └── schema.sql       # PostgreSQL database table schemas
 │   ├── routes/              # Express API endpoints (auth, students, courses, upload, etc.)
+│   ├── uploads/             # Local upload fallback directory
 │   ├── index.js             # Express server entry point
-│   └── .env.example         # Backend environment template
-├── src/
-│   ├── components/          # Reusable UI components & modals (student, admin, certificates)
-│   ├── pages/               # Main page views (Home, Login, AdminDashboard, Registration)
-│   ├── services/            # Frontend API client and HTTP services
-│   ├── utils/               # Auth storage, session management, and helper functions
-│   ├── App.jsx              # Application router
-│   └── main.jsx             # React DOM entry point
-├── .env.example             # Root environment template
+│   ├── package.json         # Backend dependencies & npm scripts
+│   └── .env                 # Backend environment configuration
+├── frontend/
+│   ├── public/              # Public static assets
+│   ├── src/
+│   │   ├── components/      # Reusable UI components & modals (student, admin, certificates)
+│   │   ├── pages/           # Main page views (Home, Login, AdminDashboard, Registration)
+│   │   ├── services/        # Frontend API client and HTTP services
+│   │   ├── utils/           # Auth storage, session management, and helper functions
+│   │   ├── App.jsx          # Application router
+│   │   └── main.jsx         # React DOM entry point
+│   ├── index.html           # Vite HTML entry point
+│   ├── vite.config.js       # Vite configuration & API proxy
+│   └── package.json         # Frontend dependencies & npm scripts
+├── .env                     # Root environment configuration
 ├── .gitignore               # Strict gitignore protecting secrets and artifacts
-├── package.json             # Frontend dependencies & npm scripts
+├── package.json             # Root helper scripts (dev, build, server, dev:all)
 └── README.md                # Project documentation
 ```
 
