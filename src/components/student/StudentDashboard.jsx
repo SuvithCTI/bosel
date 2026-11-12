@@ -413,20 +413,8 @@ export default function StudentDashboard({
           )}
 
           {/* HEADER ACTIONS */}
-          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2.5">
-            {/* VISIT WEBSITE / LOGOUT BUTTON */}
-            <button
-              type="button"
-              onClick={handleVisitWebsite}
-              title="Logout & Visit Public Website"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-blue-900/20 bg-gradient-to-r from-[#0c234b] to-[#123068] px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs font-black text-white shadow-xs transition hover:from-[#123068] hover:to-[#1a448c] hover:shadow-md active:scale-95 cursor-pointer"
-            >
-              <Globe className="h-3.5 w-3.5 text-amber-400 shrink-0" />
-              <span className="whitespace-nowrap font-bold">Visit Website</span>
-              <LogOut className="hidden h-3 w-3 text-blue-200 sm:inline shrink-0" />
-            </button>
-
-            <div className="hidden border-r border-slate-200 pr-2.5 text-right lg:block">
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
+            <div className="hidden border-r border-slate-200 pr-3 text-right lg:block">
               <p className="max-w-36 truncate text-sm font-bold text-slate-900">
                 {displayName}
               </p>
