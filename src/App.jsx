@@ -28,9 +28,17 @@ import {
 export default function App() {
   // -------------------------------------------------------
   // Active page
+  // If a student is logged in, they are always restored to the student dashboard ('login')
   // -------------------------------------------------------
   const [activePage, setActivePage] = useState(() => {
     if (typeof window !== 'undefined') {
+      const session = getActiveSession();
+
+      // If a student account is currently active, ensure they load into student dashboard
+      if (session && session.role !== 'Super Admin' && session.role !== 'Branch Head') {
+        return 'login';
+      }
+
       const params = new URLSearchParams(window.location.search);
 
       if (params.get('page')) {
@@ -67,7 +75,6 @@ export default function App() {
       const session = getActiveSession();
 
       return (
-        activePage === 'login' &&
         Boolean(session) &&
         session.role !== 'Super Admin' &&
         session.role !== 'Branch Head'
@@ -75,10 +82,17 @@ export default function App() {
     });
 
   // Hide the global website layout on the admin dashboard
-  // or on the login page (including student dashboard).
+  // or on the login page (including student dashboard), or whenever a student is logged in.
+  const isStudentActive =
+    Boolean(sessionUser) &&
+    sessionUser.role !== 'Super Admin' &&
+    sessionUser.role !== 'Branch Head';
+
   const hideGlobalLayout =
     activePage === 'admin' ||
-    activePage === 'login';
+    activePage === 'login' ||
+    isStudentDashboardOpen ||
+    isStudentActive;
 
   // -------------------------------------------------------
   // Modal states
@@ -132,6 +146,10 @@ export default function App() {
       // If the student session is cleared, restore the public layout.
       if (!session || session.role === 'Super Admin' || session.role === 'Branch Head') {
         setIsStudentDashboardOpen(false);
+      } else {
+        // If a student session is activated, ensure dashboard opens immediately
+        setIsStudentDashboardOpen(true);
+        setActivePage('login');
       }
     };
 
@@ -147,6 +165,19 @@ export default function App() {
       );
     };
   }, []);
+
+  // -------------------------------------------------------
+  // Enforce student navigation: while logged in, students
+  // remain exclusively on their student dashboard
+  // -------------------------------------------------------
+  useEffect(() => {
+    const session = getActiveSession();
+    if (session && session.role !== 'Super Admin' && session.role !== 'Branch Head') {
+      if (activePage !== 'login') {
+        setActivePage('login');
+      }
+    }
+  }, [activePage]);
 
   // -------------------------------------------------------
   // Program selection
