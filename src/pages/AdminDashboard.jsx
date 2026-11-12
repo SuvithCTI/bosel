@@ -1570,19 +1570,6 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
 
                   <button
                     type="button"
-                    onClick={() => handleTabSelect('branch_student_details')}
-                    className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-black transition cursor-pointer text-left ${
-                      activeTab === 'branch_student_details'
-                        ? 'bg-[#0c234b] text-white shadow-sm ring-1 ring-amber-400/40'
-                        : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950'
-                    }`}
-                  >
-                    <FileText className={`w-4 h-4 shrink-0 ${activeTab === 'branch_student_details' ? 'text-amber-400' : 'text-slate-500'}`} />
-                    <span className="truncate">Student Details</span>
-                  </button>
-
-                  <button
-                    type="button"
                     onClick={() => handleTabSelect('branch_students')}
                     className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-black transition cursor-pointer text-left ${
                       activeTab === 'branch_students'
@@ -1592,6 +1579,19 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                   >
                     <Users className={`w-4 h-4 shrink-0 ${activeTab === 'branch_students' ? 'text-sky-400' : 'text-slate-500'}`} />
                     <span className="truncate">Concern Branch Students</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleTabSelect('branch_student_details')}
+                    className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-black transition cursor-pointer text-left ${
+                      activeTab === 'branch_student_details'
+                        ? 'bg-[#0c234b] text-white shadow-sm ring-1 ring-amber-400/40'
+                        : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950'
+                    }`}
+                  >
+                    <FileText className={`w-4 h-4 shrink-0 ${activeTab === 'branch_student_details' ? 'text-amber-400' : 'text-slate-500'}`} />
+                    <span className="truncate">Student Details</span>
                   </button>
 
                   {/* Student Marksheet */}
