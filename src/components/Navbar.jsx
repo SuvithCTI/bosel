@@ -72,22 +72,17 @@ export default function Navbar({ activePage, setActivePage, sessionUser }) {
               {/* Login Profile / Portal Icon */}
               {sessionUser ? (
                 <button
+                  type="button"
                   onClick={() => handleNavClick((sessionUser.role === 'Super Admin' || sessionUser.role === 'Branch Head') ? 'admin' : 'login')}
-                  title={`Logged in as ${sessionUser.name || sessionUser.studentName}`}
-                  aria-label={`Profile: ${sessionUser.name || sessionUser.studentName}`}
-                  className={`ml-2 w-10 h-10 rounded-full transition-all duration-200 flex items-center justify-center shadow-sm relative group cursor-pointer font-black text-sm select-none ${
-                    activePage === 'login' || activePage === 'admin'
-                      ? 'bg-amber-400 text-slate-950 ring-2 ring-amber-300 shadow-md scale-105'
-                      : 'bg-amber-400 text-slate-950 hover:bg-amber-300 hover:scale-105 ring-2 ring-amber-400/60 shadow'
-                  }`}
+                  title={`Return to ${sessionUser.role === 'Super Admin' || sessionUser.role === 'Branch Head' ? 'Admin' : 'Student'} Dashboard`}
+                  aria-label="Dashboard"
+                  className="ml-2 inline-flex items-center gap-2 rounded-full bg-amber-400 hover:bg-amber-300 text-slate-950 px-3 py-1.5 font-black text-xs shadow-md transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer select-none"
                 >
-                  <span>
+                  <span className="w-6 h-6 rounded-full bg-slate-950 text-amber-400 flex items-center justify-center font-black text-xs shrink-0">
                     {(sessionUser.name || sessionUser.studentName || 'U').trim().charAt(0).toUpperCase()}
                   </span>
-                  <span className="sr-only">{sessionUser.name || sessionUser.studentName}</span>
-                  {/* Tooltip on hover */}
-                  <span className="absolute -bottom-9 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-[11px] font-semibold py-1 px-2.5 rounded-md shadow-lg pointer-events-none whitespace-nowrap z-50">
-                    {sessionUser.name || sessionUser.studentName}
+                  <span className="hidden lg:inline whitespace-nowrap">
+                    {sessionUser.role === 'Super Admin' || sessionUser.role === 'Branch Head' ? 'Admin Desk' : 'Student Dashboard'}
                   </span>
                 </button>
               ) : (
@@ -202,15 +197,19 @@ export default function Navbar({ activePage, setActivePage, sessionUser }) {
             <div className="pt-2 space-y-2.5 border-t border-white/15">
               <button
                 type="button"
-                onClick={() => handleNavClick('login')}
+                onClick={() => handleNavClick((sessionUser?.role === 'Super Admin' || sessionUser?.role === 'Branch Head') ? 'admin' : 'login')}
                 className={`w-full py-3 px-4 rounded-xl text-sm font-black flex items-center justify-center gap-2 transition cursor-pointer shadow-md active:scale-[0.99] ${
-                  activePage === 'login'
-                    ? 'bg-amber-400 text-slate-950'
+                  activePage === 'login' || activePage === 'admin'
+                    ? 'bg-amber-400 text-slate-950 font-black'
                     : 'bg-sky-600 hover:bg-sky-500 text-white'
                 }`}
               >
                 <User className="w-4 h-4" />
-                <span>Student & Coordinator Login</span>
+                <span>
+                  {sessionUser
+                    ? (sessionUser.role === 'Super Admin' || sessionUser.role === 'Branch Head' ? 'Return to Admin Desk' : 'Return to Student Dashboard')
+                    : 'Student & Coordinator Login'}
+                </span>
               </button>
             </div>
 

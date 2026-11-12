@@ -494,10 +494,29 @@ export default function LoginPage({
   };
 
   // -------------------------------------------------------
+  // Visit Website (Navigate to site without logging out)
+  // -------------------------------------------------------
+  const handleVisitWebsite = () => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('bsel_current_page', 'home');
+      window.location.hash = '';
+      const url = new URL(window.location.href);
+      url.searchParams.delete('page');
+      window.history.replaceState({}, '', url.pathname);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    setActivePage?.('home');
+  };
+
+  // -------------------------------------------------------
   // Logout
   // -------------------------------------------------------
   const handleLogout = () => {
     clearActiveSession();
+
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('bsel_current_page');
+    }
 
     setCurrentUser(null);
     setPassword('');
@@ -523,6 +542,7 @@ export default function LoginPage({
         <StudentDashboard
           student={currentUser}
           onLogout={handleLogout}
+          onVisitWebsite={handleVisitWebsite}
           onUpdateStudent={handleUpdateStudent}
           onViewCertificate={setSelectedCertForModal}
         />

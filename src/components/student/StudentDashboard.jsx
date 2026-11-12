@@ -12,6 +12,7 @@ import {
   X,
   Award,
   BookOpen,
+  Globe,
 } from 'lucide-react';
 
 import StudentCourse from './StudentCourse';
@@ -50,6 +51,7 @@ function StudentAvatar({ src, initials, className = '' }) {
 export default function StudentDashboard({
   student,
   onLogout,
+  onVisitWebsite,
   onUpdateStudent,
   onViewCertificate,
 }) {
@@ -640,7 +642,17 @@ export default function StudentDashboard({
                       <span>My Profile</span>
                     </button>
 
-                    
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setProfileMenuOpen(false);
+                        onVisitWebsite?.();
+                      }}
+                      className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-bold text-slate-700 transition hover:bg-blue-50 hover:text-blue-950 cursor-pointer"
+                    >
+                      <Globe className="h-5 w-5 text-amber-500" />
+                      <span>Visit Website</span>
+                    </button>
 
                     <div className="my-1 border-t border-slate-100" />
 

@@ -42,8 +42,14 @@ export default function App() {
   const [activePage, setActivePage] = useState(() => {
     if (typeof window !== 'undefined') {
       const session = getActiveSession();
+      const savedPage = sessionStorage.getItem('bsel_current_page');
 
-      // If a student account is currently active, ensure they load into student dashboard
+      // If a page was specifically selected in this session (e.g. 'home' via Visit Website), honor it
+      if (savedPage) {
+        return savedPage;
+      }
+
+      // If a student account is currently active and no saved page, default to student dashboard
       if (isStudentUser(session)) {
         return 'login';
       }
@@ -68,6 +74,13 @@ export default function App() {
     return 'home';
   });
 
+  // Track activePage in sessionStorage so refresh maintains the current view
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('bsel_current_page', activePage);
+    }
+  }, [activePage]);
+
   // -------------------------------------------------------
   // Authentication session
   // -------------------------------------------------------
@@ -86,14 +99,10 @@ export default function App() {
     });
 
   // Hide the global website layout on the admin dashboard
-  // or on the login page (including student dashboard), or whenever a student is logged in.
-  const isStudentActive = isStudentUser(sessionUser);
-
+  // or on the login page (including student dashboard).
   const hideGlobalLayout =
     activePage === 'admin' ||
-    activePage === 'login' ||
-    isStudentDashboardOpen ||
-    isStudentActive;
+    activePage === 'login';
 
   // -------------------------------------------------------
   // Modal states
@@ -166,19 +175,6 @@ export default function App() {
       );
     };
   }, []);
-
-  // -------------------------------------------------------
-  // Enforce student navigation: while logged in, students
-  // remain exclusively on their student dashboard
-  // -------------------------------------------------------
-  useEffect(() => {
-    const session = getActiveSession();
-    if (isStudentUser(session)) {
-      if (activePage !== 'login') {
-        setActivePage('login');
-      }
-    }
-  }, [activePage, sessionUser]);
 
   // -------------------------------------------------------
   // Program selection
@@ -260,77 +256,68 @@ export default function App() {
 
       {/* Main Content */}
       <main className="flex-1">
-        {isStudentActive ? (
+        {activePage === 'home' && (
+          <HomePage
+            setActivePage={setActivePage}
+            onSelectProgram={handleSelectProgram}
+            onRegisterEvent={handleRegisterEvent}
+          />
+        )}
+
+        {activePage === 'about' && (
+          <AboutPage setActivePage={setActivePage} />
+        )}
+
+        {activePage === 'programs' && (
+          <ProgramsPage setActivePage={setActivePage} />
+        )}
+
+        {activePage === 'events' && (
+          <EventsPage onRegisterEvent={handleRegisterEvent} />
+        )}
+
+        {activePage === 'achievements' && (
+          <AchievementsPage setActivePage={setActivePage} />
+        )}
+
+        {activePage === 'franchise' && (
+          <FranchisePage setActivePage={setActivePage} />
+        )}
+
+        {activePage === 'certificate' && (
+          <CertificatePage />
+        )}
+
+        {activePage === 'contact' && (
+          <ContactPage setActivePage={setActivePage} />
+        )}
+
+        {/* Login Page / Student Dashboard */}
+        {activePage === 'login' && (
           <LoginPage
             setActivePage={setActivePage}
             onStudentDashboardChange={handleStudentDashboardChange}
           />
-        ) : (
-          <>
-            {activePage === 'home' && (
-              <HomePage
-                setActivePage={setActivePage}
-                onSelectProgram={handleSelectProgram}
-                onRegisterEvent={handleRegisterEvent}
-              />
-            )}
+        )}
 
-            {activePage === 'about' && (
-              <AboutPage setActivePage={setActivePage} />
-            )}
+        {/* Admin Dashboard */}
+        {activePage === 'admin' && (
+          <AdminDashboard
+            setActivePage={setActivePage}
+            onLogout={() => {
+              clearActiveSession();
 
-            {activePage === 'programs' && (
-              <ProgramsPage setActivePage={setActivePage} />
-            )}
+              setSessionUser(null);
+              setIsStudentDashboardOpen(false);
+              setActivePage('login');
 
-            {activePage === 'events' && (
-              <EventsPage onRegisterEvent={handleRegisterEvent} />
-            )}
-
-            {activePage === 'achievements' && (
-              <AchievementsPage setActivePage={setActivePage} />
-            )}
-
-            {activePage === 'franchise' && (
-              <FranchisePage setActivePage={setActivePage} />
-            )}
-
-            {activePage === 'certificate' && (
-              <CertificatePage />
-            )}
-
-            {activePage === 'contact' && (
-              <ContactPage setActivePage={setActivePage} />
-            )}
-
-            {/* Login Page / Student Dashboard */}
-            {activePage === 'login' && (
-              <LoginPage
-                setActivePage={setActivePage}
-                onStudentDashboardChange={handleStudentDashboardChange}
-              />
-            )}
-
-            {/* Admin Dashboard */}
-            {activePage === 'admin' && (
-              <AdminDashboard
-                setActivePage={setActivePage}
-                onLogout={() => {
-                  clearActiveSession();
-
-                  setSessionUser(null);
-                  setIsStudentDashboardOpen(false);
-                  setActivePage('login');
-
-                  window.scrollTo({
-                    top: 0,
-                    behavior: 'smooth',
-                  });
-                }}
-                onOpenCertificate={handleOpenCertificate}
-              />
-            )}
-          </>
+              window.scrollTo({
+                top: 0,
+                behavior: 'smooth',
+              });
+            }}
+            onOpenCertificate={handleOpenCertificate}
+          />
         )}
       </main>
 
