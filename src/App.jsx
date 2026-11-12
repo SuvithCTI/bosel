@@ -74,7 +74,6 @@ export default function App() {
     return 'home';
   });
 
-<<<<<<< HEAD
   const setActivePage = useCallback((page) => {
     setActivePageState(page);
     window.scrollTo(0, 0);
@@ -84,13 +83,13 @@ export default function App() {
     window.scrollTo(0, 0);
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
-=======
+  }, [activePage]);
+
   // Track activePage in sessionStorage so refresh maintains the current view
   useEffect(() => {
     if (typeof window !== 'undefined') {
       sessionStorage.setItem('bsel_current_page', activePage);
     }
->>>>>>> d3fdb17e418437b1440c580f11ae5876f750b1f2
   }, [activePage]);
 
   // -------------------------------------------------------
