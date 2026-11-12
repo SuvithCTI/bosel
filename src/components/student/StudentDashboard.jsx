@@ -12,7 +12,6 @@ import {
   X,
   Award,
   BookOpen,
-  Globe,
 } from 'lucide-react';
 
 import StudentCourse from './StudentCourse';
@@ -51,18 +50,9 @@ function StudentAvatar({ src, initials, className = '' }) {
 export default function StudentDashboard({
   student,
   onLogout,
-  onVisitWebsite,
   onUpdateStudent,
   onViewCertificate,
 }) {
-  const handleVisitWebsite = () => {
-    if (onVisitWebsite) {
-      onVisitWebsite();
-    } else if (onLogout) {
-      onLogout();
-    }
-  };
-
   const [activeSection, setActiveSection] = useState('course');
 
   const [notificationMenuOpen, setNotificationMenuOpen] =
@@ -658,24 +648,12 @@ export default function StudentDashboard({
                       type="button"
                       onClick={() => {
                         setProfileMenuOpen(false);
-                        handleVisitWebsite();
-                      }}
-                      className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-xs font-bold text-blue-950 transition hover:bg-blue-50 cursor-pointer"
-                    >
-                      <Globe className="h-4 w-4 text-amber-500" />
-                      <span>Visit Website</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setProfileMenuOpen(false);
-                        handleVisitWebsite();
+                        onLogout?.();
                       }}
                       className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-xs font-bold text-rose-600 transition hover:bg-rose-50 cursor-pointer"
                     >
                       <LogOut className="h-4 w-4" />
-                      <span>Logout & Visit Website</span>
+                      <span>Logout</span>
                     </button>
                   </div>
                 </>

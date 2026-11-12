@@ -25,6 +25,15 @@ import {
   clearActiveSession,
 } from './utils/authStorage';
 
+// Helper to determine if an active session belongs to a student
+const isStudentUser = (user) => {
+  if (!user) return false;
+  if (user.role === 'Super Admin' || user.role === 'Branch Head') return false;
+  const uid = String(user.userId || user.id || '').toLowerCase();
+  if (uid === 'admin' || uid.startsWith('branch.') || uid.startsWith('sch-')) return false;
+  return true;
+};
+
 export default function App() {
   // -------------------------------------------------------
   // Active page
@@ -35,7 +44,7 @@ export default function App() {
       const session = getActiveSession();
 
       // If a student account is currently active, ensure they load into student dashboard
-      if (session && session.role !== 'Super Admin' && session.role !== 'Branch Head') {
+      if (isStudentUser(session)) {
         return 'login';
       }
 
@@ -73,20 +82,12 @@ export default function App() {
   const [isStudentDashboardOpen, setIsStudentDashboardOpen] =
     useState(() => {
       const session = getActiveSession();
-
-      return (
-        Boolean(session) &&
-        session.role !== 'Super Admin' &&
-        session.role !== 'Branch Head'
-      );
+      return isStudentUser(session);
     });
 
   // Hide the global website layout on the admin dashboard
   // or on the login page (including student dashboard), or whenever a student is logged in.
-  const isStudentActive =
-    Boolean(sessionUser) &&
-    sessionUser.role !== 'Super Admin' &&
-    sessionUser.role !== 'Branch Head';
+  const isStudentActive = isStudentUser(sessionUser);
 
   const hideGlobalLayout =
     activePage === 'admin' ||
@@ -144,7 +145,7 @@ export default function App() {
       setSessionUser(session);
 
       // If the student session is cleared, restore the public layout.
-      if (!session || session.role === 'Super Admin' || session.role === 'Branch Head') {
+      if (!isStudentUser(session)) {
         setIsStudentDashboardOpen(false);
       } else {
         // If a student session is activated, ensure dashboard opens immediately
@@ -172,12 +173,12 @@ export default function App() {
   // -------------------------------------------------------
   useEffect(() => {
     const session = getActiveSession();
-    if (session && session.role !== 'Super Admin' && session.role !== 'Branch Head') {
+    if (isStudentUser(session)) {
       if (activePage !== 'login') {
         setActivePage('login');
       }
     }
-  }, [activePage]);
+  }, [activePage, sessionUser]);
 
   // -------------------------------------------------------
   // Program selection
@@ -259,68 +260,77 @@ export default function App() {
 
       {/* Main Content */}
       <main className="flex-1">
-        {activePage === 'home' && (
-          <HomePage
-            setActivePage={setActivePage}
-            onSelectProgram={handleSelectProgram}
-            onRegisterEvent={handleRegisterEvent}
-          />
-        )}
-
-        {activePage === 'about' && (
-          <AboutPage setActivePage={setActivePage} />
-        )}
-
-        {activePage === 'programs' && (
-          <ProgramsPage setActivePage={setActivePage} />
-        )}
-
-        {activePage === 'events' && (
-          <EventsPage onRegisterEvent={handleRegisterEvent} />
-        )}
-
-        {activePage === 'achievements' && (
-          <AchievementsPage setActivePage={setActivePage} />
-        )}
-
-        {activePage === 'franchise' && (
-          <FranchisePage setActivePage={setActivePage} />
-        )}
-
-        {activePage === 'certificate' && (
-          <CertificatePage />
-        )}
-
-        {activePage === 'contact' && (
-          <ContactPage setActivePage={setActivePage} />
-        )}
-
-        {/* Login Page / Student Dashboard */}
-        {activePage === 'login' && (
+        {isStudentActive ? (
           <LoginPage
             setActivePage={setActivePage}
             onStudentDashboardChange={handleStudentDashboardChange}
           />
-        )}
+        ) : (
+          <>
+            {activePage === 'home' && (
+              <HomePage
+                setActivePage={setActivePage}
+                onSelectProgram={handleSelectProgram}
+                onRegisterEvent={handleRegisterEvent}
+              />
+            )}
 
-        {/* Admin Dashboard */}
-        {activePage === 'admin' && (
-          <AdminDashboard
-            setActivePage={setActivePage}
-            onLogout={() => {
-              clearActiveSession();
+            {activePage === 'about' && (
+              <AboutPage setActivePage={setActivePage} />
+            )}
 
-              setSessionUser(null);
-              setIsStudentDashboardOpen(false);
-              setActivePage('login');
+            {activePage === 'programs' && (
+              <ProgramsPage setActivePage={setActivePage} />
+            )}
 
-              window.scrollTo({
-                top: 0,
-                behavior: 'smooth',
-              });
-            }}
-            onOpenCertificate={handleOpenCertificate}
-          />
+            {activePage === 'events' && (
+              <EventsPage onRegisterEvent={handleRegisterEvent} />
+            )}
+
+            {activePage === 'achievements' && (
+              <AchievementsPage setActivePage={setActivePage} />
+            )}
+
+            {activePage === 'franchise' && (
+              <FranchisePage setActivePage={setActivePage} />
+            )}
+
+            {activePage === 'certificate' && (
+              <CertificatePage />
+            )}
+
+            {activePage === 'contact' && (
+              <ContactPage setActivePage={setActivePage} />
+            )}
+
+            {/* Login Page / Student Dashboard */}
+            {activePage === 'login' && (
+              <LoginPage
+                setActivePage={setActivePage}
+                onStudentDashboardChange={handleStudentDashboardChange}
+              />
+            )}
+
+            {/* Admin Dashboard */}
+            {activePage === 'admin' && (
+              <AdminDashboard
+                setActivePage={setActivePage}
+                onLogout={() => {
+                  clearActiveSession();
+
+                  setSessionUser(null);
+                  setIsStudentDashboardOpen(false);
+                  setActivePage('login');
+
+                  window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth',
+                  });
+                }}
+                onOpenCertificate={handleOpenCertificate}
+              />
+            )}
+          </>
         )}
       </main>
 

@@ -494,35 +494,6 @@ export default function LoginPage({
   };
 
   // -------------------------------------------------------
-  // Logout & Return to Public Website
-  // -------------------------------------------------------
-  const handleVisitWebsite = () => {
-    clearActiveSession();
-
-    setCurrentUser(null);
-    setPassword('');
-    setErrorMessage('');
-    setSelectedCertForModal(null);
-
-    // Preserve remembered User ID when enabled.
-    if (!localStorage.getItem('bsel_remember_user')) {
-      setUserId('');
-    }
-
-    // Notify App.jsx immediately and switch to home page
-    onStudentDashboardChange?.(false);
-    setActivePage?.('home');
-
-    if (typeof window !== 'undefined') {
-      window.location.hash = '';
-      const url = new URL(window.location.href);
-      url.searchParams.delete('page');
-      window.history.replaceState({}, '', url.pathname);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  };
-
-  // -------------------------------------------------------
   // Logout
   // -------------------------------------------------------
   const handleLogout = () => {
@@ -552,7 +523,6 @@ export default function LoginPage({
         <StudentDashboard
           student={currentUser}
           onLogout={handleLogout}
-          onVisitWebsite={handleVisitWebsite}
           onUpdateStudent={handleUpdateStudent}
           onViewCertificate={setSelectedCertForModal}
         />
