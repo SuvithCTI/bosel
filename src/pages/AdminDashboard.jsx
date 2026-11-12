@@ -35,7 +35,8 @@ import {
   Menu,
   GraduationCap,
   Trophy,
-  FileDown
+  FileDown,
+  ClipboardList
 } from 'lucide-react';
 
 import AdminAchievementsModule from '../components/admin/AdminAchievementsModule';
@@ -1312,39 +1313,58 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
   const branchRevenueFormatted = `₹${branchRevenueNumber.toLocaleString('en-IN')}`;
 
   return (
-    <div className="admin-mobile min-h-screen bg-slate-100 font-sans text-slate-900 pb-12">
+    <div className="admin-mobile min-h-screen bg-slate-100 font-sans text-slate-900 pb-20 lg:pb-12">
       
       <style>{`
-        @media (max-width: 640px) {
-          .admin-mobile { font-size: 11px; }
-          .admin-mobile main { padding: 10px !important; gap: 12px !important; }
-          .admin-mobile h1 { font-size: 16px !important; line-height: 1.3 !important; }
-          .admin-mobile h2 { font-size: 14px !important; line-height: 1.35 !important; }
-          .admin-mobile h3 { font-size: 12px !important; line-height: 1.4 !important; }
-          .admin-mobile p, .admin-mobile label { font-size: 10px; line-height: 1.4; }
-          .admin-mobile button { font-size: 10px; }
-          .admin-mobile main button { padding: 7px 9px; border-radius: 8px; }
-          .admin-mobile input, .admin-mobile select, .admin-mobile textarea {
-            min-height: 34px; padding: 7px 9px !important; font-size: 11px !important;
-          }
-          .admin-mobile aside button { padding: 9px 10px !important; font-size: 11px !important; }
-          .admin-mobile .rounded-2xl { border-radius: 12px; }
-          .admin-mobile .rounded-xl { border-radius: 9px; }
-          .admin-mobile th { padding: 9px 8px !important; font-size: 9px !important; white-space: nowrap; }
-          .admin-mobile td { padding: 9px 8px !important; font-size: 10px !important; }
-          .admin-mobile :has(> table) { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-          .admin-mobile table { min-width: 720px; }
-          .admin-mobile header { min-height: 48px; }
-          .admin-mobile header > div { padding: 7px 10px !important; gap: 7px !important; }
-          .admin-mobile header button { font-size: 10px !important; padding: 6px 8px !important; }
-          .admin-mobile header svg { width: 14px; height: 14px; }
-          .admin-mobile .space-y-5 > :not([hidden]) ~ :not([hidden]) { margin-top: 12px; }
+        /* Smooth touch scrolling for wide data tables */
+        .admin-table-container {
+          -webkit-overflow-scrolling: touch;
         }
-        @media (max-width: 380px) {
-          .admin-mobile main { padding: 7px !important; }
-          .admin-mobile h1 { font-size: 14px !important; }
-          .admin-mobile h2 { font-size: 12px !important; }
-          .admin-mobile main button { font-size: 9px; padding: 6px 7px; }
+
+        @media (max-width: 640px) {
+          .admin-mobile main {
+            padding: 10px 10px 88px 10px !important;
+          }
+          .admin-mobile h1 {
+            font-size: 18px !important;
+            line-height: 1.3 !important;
+          }
+          .admin-mobile h2 {
+            font-size: 15px !important;
+            line-height: 1.35 !important;
+          }
+          .admin-mobile h3 {
+            font-size: 13px !important;
+            line-height: 1.4 !important;
+          }
+          .admin-mobile input,
+          .admin-mobile select,
+          .admin-mobile textarea {
+            min-height: 38px;
+            font-size: 12px !important;
+          }
+          .admin-mobile aside button {
+            padding: 10px 12px !important;
+            font-size: 12px !important;
+          }
+          .admin-mobile .rounded-2xl {
+            border-radius: 14px;
+          }
+          .admin-mobile .rounded-xl {
+            border-radius: 10px;
+          }
+          .admin-mobile th {
+            padding: 10px 10px !important;
+            font-size: 10px !important;
+            white-space: nowrap;
+          }
+          .admin-mobile td {
+            padding: 10px 10px !important;
+            font-size: 11px !important;
+          }
+          .admin-mobile header {
+            min-height: 52px;
+          }
         }
       `}</style>
 
@@ -1363,42 +1383,50 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
         ref={headerRef}
         className="fixed top-0 left-0 right-0 z-[60] w-full bg-gradient-to-r from-[#081d3d] via-[#0c234b] to-[#123068] text-white border-b-4 border-amber-400 shadow-lg"
       >
-        <div className="w-full px-2.5 sm:px-5 lg:px-6 py-2 sm:py-3 flex flex-wrap md:flex-nowrap items-center justify-between gap-2 sm:gap-3">
+        <div className="w-full px-3 sm:px-5 lg:px-6 py-2.5 sm:py-3 flex items-center justify-between gap-2">
           
           {/* Brand & Portal Type with Mobile Toggle */}
-          <div className="flex items-center gap-2.5 sm:gap-3.5">
+          <div className="flex items-center gap-2 sm:gap-3.5 min-w-0">
             {/* Mobile Drawer Toggle Button */}
             <button
               type="button"
               onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
-              className="lg:hidden p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center gap-1.5 text-xs font-bold transition cursor-pointer"
+              className="lg:hidden p-2 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 text-white flex items-center gap-1.5 text-xs font-bold transition cursor-pointer shrink-0"
               title="Toggle Navigation Menu"
               aria-label="Toggle Navigation Menu"
             >
-              {mobileSidebarOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+              {mobileSidebarOpen ? <X className="w-4 h-4 text-amber-400" /> : <Menu className="w-4 h-4" />}
               <span className="hidden sm:inline">Desks</span>
             </button>
 
-            <Logo lightText={true} />
+            {/* Desktop Brand Logo */}
+            <div className="hidden sm:block">
+              <Logo lightText={true} />
+            </div>
+
+            {/* Mobile Compact Brand Logo (prevents header wrapping on small mobile screens) */}
+            <div className="sm:hidden">
+              <Logo lightText={true} showTagline={false} size="small" />
+            </div>
           </div>
 
           {/* Controls */}
-          <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-end">
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
             {/* View Live Website Button */}
             <button
               onClick={() => setActivePage('home')}
-              className="text-xs font-black bg-white hover:bg-slate-100 text-[#0c234b] px-3 py-1.5 rounded-xl transition shadow-sm cursor-pointer flex items-center gap-1.5"
+              className="text-xs font-black bg-white hover:bg-slate-100 text-[#0c234b] px-2.5 sm:px-3 py-1.5 rounded-xl transition shadow-sm cursor-pointer flex items-center gap-1 sm:gap-1.5 active:scale-95 whitespace-nowrap"
             >
-              <span>Live Website</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <span className="hidden xs:inline">Live </span><span>Website</span>
+              <ArrowRight className="w-3.5 h-3.5 shrink-0" />
             </button>
 
             {/* Sign Out */}
             <button
               onClick={onLogout ? onLogout : () => setActivePage('login')}
-              className="text-xs font-black bg-rose-600/90 hover:bg-rose-700 text-white px-3 py-1.5 rounded-xl transition shadow-sm cursor-pointer flex items-center gap-1.5"
+              className="text-xs font-black bg-rose-600/90 hover:bg-rose-700 text-white px-2.5 sm:px-3 py-1.5 rounded-xl transition shadow-sm cursor-pointer flex items-center gap-1 sm:gap-1.5 active:scale-95 whitespace-nowrap"
             >
-              <LogOut className="w-3.5 h-3.5" />
+              <LogOut className="w-3.5 h-3.5 shrink-0" />
               <span className="hidden sm:inline">Sign Out</span>
             </button>
           </div>
@@ -1416,7 +1444,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
         {mobileSidebarOpen && (
           <div 
             onClick={() => setMobileSidebarOpen(false)}
-            className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-40 lg:hidden transition-opacity"
+            className="fixed inset-0 bg-slate-950/65 backdrop-blur-xs z-50 lg:hidden transition-opacity"
           />
         )}
 
@@ -1429,15 +1457,33 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
             height: `calc(100vh - ${headerHeight}px)`
           }}
           className={`
-            fixed left-0 z-40
-            w-72 xl:w-80 shrink-0 
-            bg-white border-r border-slate-200 shadow-xl lg:shadow-none
+            fixed left-0 z-50
+            w-72 sm:w-80 shrink-0 
+            bg-white border-r border-slate-200 shadow-2xl lg:shadow-none
             flex flex-col justify-between 
             overflow-y-auto transition-transform duration-200 ease-in-out
             ${mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
           `}
         >
-          <div className="p-3.5 sm:p-4 space-y-3.5">
+          <div className="p-3 sm:p-4 space-y-3">
+
+            {/* Mobile Header Inside Drawer */}
+            <div className="lg:hidden p-2.5 bg-gradient-to-r from-[#081d3d] to-[#0c234b] text-white rounded-xl flex items-center justify-between shadow-sm">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-amber-400" />
+                <span className="text-xs font-black">
+                  {currentAdminRole === 'Super Admin' ? 'Super Admin Desks' : `${activeBranch || 'Branch'} Desks`}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setMobileSidebarOpen(false)}
+                className="p-1 rounded-lg bg-white/10 hover:bg-white/20 text-white cursor-pointer"
+                aria-label="Close navigation"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
 
             {/* Navigation Heading */}
             <div className="px-1 pt-1 flex items-center justify-between">
@@ -1839,6 +1885,140 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
 
         </main>
       </div>
+
+      {/* =========================================================================
+          MOBILE BOTTOM QUICK ACCESS NAVIGATION BAR (Visible on mobile screens < lg)
+          ========================================================================= */}
+      <nav 
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#081d3d] border-t-2 border-amber-400 text-white shadow-2xl"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+      >
+        <div className="grid grid-cols-5 h-14 items-stretch select-none">
+          {currentAdminRole === 'Branch Head' ? (
+            <>
+              {/* Branch Tab 1: Overview */}
+              <button
+                type="button"
+                onClick={() => handleTabSelect('branch_overview')}
+                className={`flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold transition cursor-pointer ${
+                  activeTab === 'branch_overview' ? 'text-amber-400 bg-white/10' : 'text-slate-300 hover:text-white'
+                }`}
+              >
+                <Building className="w-4 h-4" />
+                <span>Overview</span>
+              </button>
+
+              {/* Branch Tab 2: Students */}
+              <button
+                type="button"
+                onClick={() => handleTabSelect('branch_students')}
+                className={`flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold transition cursor-pointer ${
+                  activeTab === 'branch_students' ? 'text-amber-400 bg-white/10' : 'text-slate-300 hover:text-white'
+                }`}
+              >
+                <Users className="w-4 h-4" />
+                <span>Students</span>
+              </button>
+
+              {/* Branch Tab 3: Enquiries / Student Details */}
+              <button
+                type="button"
+                onClick={() => handleTabSelect('branch_student_details')}
+                className={`flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold transition cursor-pointer ${
+                  activeTab === 'branch_student_details' ? 'text-amber-400 bg-white/10' : 'text-slate-300 hover:text-white'
+                }`}
+              >
+                <FileText className="w-4 h-4" />
+                <span>Details</span>
+              </button>
+
+              {/* Branch Tab 4: Marksheet */}
+              <button
+                type="button"
+                onClick={() => handleTabSelect('branch_marksheet')}
+                className={`flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold transition cursor-pointer ${
+                  activeTab === 'branch_marksheet' ? 'text-amber-400 bg-white/10' : 'text-slate-300 hover:text-white'
+                }`}
+              >
+                <ClipboardList className="w-4 h-4" />
+                <span>Marksheet</span>
+              </button>
+
+              {/* Branch Tab 5: Certificates */}
+              <button
+                type="button"
+                onClick={() => handleTabSelect('branch_certificates')}
+                className={`flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold transition cursor-pointer ${
+                  activeTab === 'branch_certificates' ? 'text-amber-400 bg-white/10' : 'text-slate-300 hover:text-white'
+                }`}
+              >
+                <Award className="w-4 h-4" />
+                <span>Certs</span>
+              </button>
+            </>
+          ) : (
+            <>
+              {/* Super Admin Tab 1: Overview */}
+              <button
+                type="button"
+                onClick={() => handleTabSelect('overview')}
+                className={`flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold transition cursor-pointer ${
+                  activeTab === 'overview' ? 'text-amber-400 bg-white/10' : 'text-slate-300 hover:text-white'
+                }`}
+              >
+                <TrendingUp className="w-4 h-4" />
+                <span>Overview</span>
+              </button>
+
+              {/* Super Admin Tab 2: Students */}
+              <button
+                type="button"
+                onClick={() => handleTabSelect('students')}
+                className={`flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold transition cursor-pointer ${
+                  activeTab === 'students' ? 'text-amber-400 bg-white/10' : 'text-slate-300 hover:text-white'
+                }`}
+              >
+                <Users className="w-4 h-4" />
+                <span>Students</span>
+              </button>
+
+              {/* Super Admin Tab 3: Courses */}
+              <button
+                type="button"
+                onClick={() => handleTabSelect('courses')}
+                className={`flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold transition cursor-pointer ${
+                  activeTab === 'courses' ? 'text-amber-400 bg-white/10' : 'text-slate-300 hover:text-white'
+                }`}
+              >
+                <BookOpen className="w-4 h-4" />
+                <span>Courses</span>
+              </button>
+
+              {/* Super Admin Tab 4: Events */}
+              <button
+                type="button"
+                onClick={() => handleTabSelect('events')}
+                className={`flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold transition cursor-pointer ${
+                  activeTab === 'events' ? 'text-amber-400 bg-white/10' : 'text-slate-300 hover:text-white'
+                }`}
+              >
+                <Calendar className="w-4 h-4" />
+                <span>Events</span>
+              </button>
+
+              {/* Super Admin Tab 5: More Desks Drawer */}
+              <button
+                type="button"
+                onClick={() => setMobileSidebarOpen(true)}
+                className="flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold text-amber-300 hover:text-white transition cursor-pointer active:scale-95"
+              >
+                <Menu className="w-4 h-4" />
+                <span>More</span>
+              </button>
+            </>
+          )}
+        </div>
+      </nav>
 
       {/* ALL OFFICIAL MODALS */}
       <AdminModals

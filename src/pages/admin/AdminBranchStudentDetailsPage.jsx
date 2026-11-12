@@ -1294,32 +1294,32 @@ export default function AdminBranchStudentDetailsPage({
             </p>
           </div>
           {/* Action Toolbar */}
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
             {!isSelectionMode ? (
               <>
                 <button
                   type="button"
                   onClick={() => setIsSelectionMode(true)}
-                  className="px-3.5 py-2 text-xs font-bold rounded-xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                  className="flex-1 sm:flex-initial px-3.5 py-2 text-xs font-bold rounded-xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 transition flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs active:scale-95"
                   title="Enable selection checkboxes to pick specific candidates"
                 >
-                  <CheckSquare className="w-3.5 h-3.5 text-sky-600" />
+                  <CheckSquare className="w-3.5 h-3.5 text-sky-600 shrink-0" />
                   <span>Select Records</span>
                 </button>
                 <button
                   type="button"
                   onClick={handleMergePrintCertificates}
-                  className="px-3.5 py-2 text-xs font-black rounded-xl bg-[#081d3d] hover:bg-[#0c2b5b] active:scale-95 text-white transition flex items-center gap-2 cursor-pointer shadow-xs"
+                  className="flex-1 sm:flex-initial px-3.5 py-2 text-xs font-black rounded-xl bg-[#081d3d] hover:bg-[#0c2b5b] active:scale-95 text-white transition flex items-center justify-center gap-2 cursor-pointer shadow-xs"
                 >
-                  <Printer className="w-3.5 h-3.5 text-amber-300" />
+                  <Printer className="w-3.5 h-3.5 text-amber-300 shrink-0" />
                   <span>Merge & Print All</span>
                 </button>
                 <button
                   type="button"
                   onClick={handleDownloadMergedPdf}
-                  className="px-3.5 py-2 text-xs font-black rounded-xl bg-sky-600 hover:bg-sky-700 active:scale-95 text-white transition flex items-center gap-2 cursor-pointer shadow-xs"
+                  className="w-full sm:w-auto px-3.5 py-2 text-xs font-black rounded-xl bg-sky-600 hover:bg-sky-700 active:scale-95 text-white transition flex items-center justify-center gap-2 cursor-pointer shadow-xs"
                 >
-                  <Download className="w-3.5 h-3.5 text-white" />
+                  <Download className="w-3.5 h-3.5 text-white shrink-0" />
                   <span>Download Merged PDF</span>
                 </button>
               </>
@@ -1478,9 +1478,19 @@ export default function AdminBranchStudentDetailsPage({
 
         <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-2xs">
 
-          <div className="w-full overflow-hidden">
+          {/* Mobile Horizontal Scroll Cue */}
+          <div className="lg:hidden flex items-center justify-between px-3.5 py-2 bg-gradient-to-r from-sky-50 to-indigo-50/50 border-b border-sky-100 text-[11px] text-sky-900 font-medium">
+            <span className="flex items-center gap-1.5">
+              <span className="text-sky-600 font-bold">⇄</span> Swipe to view Course, Mobile & Level Documents
+            </span>
+            <span className="text-[10px] font-bold bg-white text-sky-700 px-2 py-0.5 rounded-full border border-sky-200 shrink-0">
+              {filteredRecords.length} Records
+            </span>
+          </div>
 
-            <table className="w-full text-left border-collapse text-xs">
+          <div className="w-full overflow-x-auto admin-table-container">
+
+            <table className="w-full text-left border-collapse text-xs min-w-[820px]">
 
               {/* Header */}
 

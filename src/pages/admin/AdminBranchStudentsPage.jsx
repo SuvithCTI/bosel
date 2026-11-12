@@ -75,22 +75,22 @@ export default function AdminBranchStudentsPage({
   return (
     <div className="space-y-4 animate-in fade-in duration-200">
       {/* Header & Filter Controls */}
-      <div className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-sm space-y-3.5">
+      <div className="bg-white p-3.5 sm:p-4.5 rounded-2xl border border-slate-200 shadow-sm space-y-3.5">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div>
-            <h2 className="text-base font-black text-slate-950 flex items-center gap-2">
-              <Users className="w-5 h-5 text-sky-600" />
+            <h2 className="text-base sm:text-lg font-black text-slate-950 flex items-center gap-2">
+              <Users className="w-5 h-5 text-sky-600 shrink-0" />
               <span>Central Student Registration Monitor</span>
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
               Monitoring all student enrollments under <span className="font-bold text-sky-700">{activeBranch}</span>, fee status, and official B★SEL register numbers.
             </p>
           </div>
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="w-full sm:w-auto">
             <button
               type="button"
               onClick={() => setShowAddStudentModal(true)}
-              className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black transition flex items-center gap-1.5 shadow-sm cursor-pointer"
+              className="w-full sm:w-auto px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer active:scale-95"
             >
               <Plus className="w-4 h-4" />
               <span>Register New Student</span>
@@ -108,7 +108,7 @@ export default function AdminBranchStudentsPage({
               value={branchStudentSearch}
               onChange={(e) => setBranchStudentSearch(e.target.value)}
               placeholder="Search candidate, ID, phone..."
-              className="w-full pl-8 pr-2.5 py-1.5 text-xs border border-slate-200 rounded-lg focus:border-sky-500 focus:ring-1 focus:ring-sky-100 outline-none bg-slate-50/50 hover:bg-white focus:bg-white transition"
+              className="w-full pl-8 pr-2.5 py-2 text-xs border border-slate-200 rounded-lg focus:border-sky-500 focus:ring-1 focus:ring-sky-100 outline-none bg-slate-50/50 hover:bg-white focus:bg-white transition"
             />
           </div>
 
@@ -134,11 +134,21 @@ export default function AdminBranchStudentsPage({
 
       {/* Students Roster Table */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="w-full overflow-x-auto">
+        {/* Mobile Horizontal Scroll Cue */}
+        <div className="lg:hidden flex items-center justify-between px-3.5 py-2 bg-gradient-to-r from-sky-50 to-indigo-50/50 border-b border-sky-100 text-[11px] text-sky-900 font-medium">
+          <span className="flex items-center gap-1.5">
+            <span className="text-sky-600 font-bold">⇄</span> Swipe table to view Parent, Course, Fee & Documents
+          </span>
+          <span className="text-[10px] font-bold bg-white text-sky-700 px-2 py-0.5 rounded-full border border-sky-200 shrink-0">
+            {filteredStudents.length} Students
+          </span>
+        </div>
+
+        <div className="w-full overflow-x-auto admin-table-container">
           <table className="w-full text-left text-xs min-w-[760px]">
             <thead className="bg-[#081d3d] text-white uppercase text-[10px] tracking-wider font-black">
               <tr>
-                <th className="py-3 px-4">Student Details</th>
+                <th className="py-3 px-4 sticky left-0 bg-[#081d3d] z-20 shadow-[2px_0_5px_rgba(0,0,0,0.15)]">Student Details</th>
                 <th className="py-3 px-3">Parent & Contact</th>
                 <th className="py-3 px-3">Branch</th>
                 <th className="py-3 px-3">Course & Level</th>
@@ -157,9 +167,9 @@ export default function AdminBranchStudentsPage({
                 filteredStudents.map((student, idx) => {
                   const isPaid = student.feePaymentType === 'Paid' || student.feePaymentType === 'Pay Now';
                   return (
-                    <tr key={student.userId || idx} className="hover:bg-slate-50/80 transition">
-                      {/* Student Details */}
-                      <td className="py-3 px-4">
+                    <tr key={student.userId || idx} className="hover:bg-slate-50/80 transition group">
+                      {/* Student Details (Sticky column for optimal mobile orientation) */}
+                      <td className="py-3 px-4 sticky left-0 bg-white z-10 shadow-[2px_0_6px_-2px_rgba(0,0,0,0.06)] group-hover:bg-slate-50 transition">
                         <div className="flex items-center gap-3">
                           <StudentAvatar
                             student={student}

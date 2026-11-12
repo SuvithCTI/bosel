@@ -29,10 +29,10 @@ export default function AdminBranchCertificatesPage({
 
   return (
     <div className="space-y-4 animate-in fade-in duration-200">
-      <div className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+      <div className="bg-white p-3.5 sm:p-4.5 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-base font-black text-slate-950 flex items-center gap-2">
-            <Award className="w-5 h-5 text-amber-500" />
+          <h2 className="text-base sm:text-lg font-black text-slate-950 flex items-center gap-2">
+            <Award className="w-5 h-5 text-amber-500 shrink-0" />
             <span>{activeBranch} — Official Certificate Desk</span>
           </h2>
           <p className="text-xs text-slate-500 mt-0.5">
@@ -41,14 +41,14 @@ export default function AdminBranchCertificatesPage({
         </div>
 
         {/* Quick Select from Branch Students */}
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-bold text-slate-600">Select Branch Student:</span>
+        <div className="w-full sm:w-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          <span className="text-xs font-bold text-slate-600 whitespace-nowrap">Select Branch Student:</span>
           <select
             onChange={(e) => {
               const st = (branchStudents || []).find(s => s.userId === e.target.value);
               if (st && handleOpenCertForStudent) handleOpenCertForStudent(st);
             }}
-            className="px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-xl font-bold outline-none cursor-pointer"
+            className="w-full sm:w-auto px-3 py-2 text-xs bg-white border border-slate-300 rounded-xl font-bold outline-none cursor-pointer hover:border-sky-400 focus:border-sky-500 transition"
           >
             <option value="">-- Choose Branch Candidate --</option>
             {(branchStudents || []).map(s => (
@@ -59,7 +59,7 @@ export default function AdminBranchCertificatesPage({
       </div>
 
       {/* Certificate Canvas */}
-      <div className="flex justify-center overflow-x-auto py-2">
+      <div className="flex justify-center overflow-x-auto py-2 w-full">
         <Certificate
           studentName={safeCert.studentName}
           courseName={safeCert.courseName}

@@ -88,22 +88,22 @@ export default function AdminStudentsPage({
   return (
           <div className="space-y-4 animate-in fade-in duration-200">
             {/* Header & Filter Controls */}
-            <div className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-sm space-y-3.5">
+            <div className="bg-white p-3.5 sm:p-4.5 rounded-2xl border border-slate-200 shadow-sm space-y-3.5">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div>
-                  <h2 className="text-base font-black text-slate-950 flex items-center gap-2">
-                    <Users className="w-5 h-5 text-sky-600" />
+                  <h2 className="text-base sm:text-lg font-black text-slate-950 flex items-center gap-2">
+                    <Users className="w-5 h-5 text-sky-600 shrink-0" />
                     <span>Central Student Registration Monitor</span>
                   </h2>
                   <p className="text-xs text-slate-500 mt-0.5">
                     Monitoring all student enrollments across regional branches, fee status, and official B★SEL register numbers.
                   </p>
                 </div>
-                <div className="flex items-center gap-2 flex-wrap">
+                <div className="w-full sm:w-auto">
                   <button
                     type="button"
                     onClick={() => setShowAddStudentModal(true)}
-                    className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black transition flex items-center gap-1.5 shadow-sm cursor-pointer"
+                    className="w-full sm:w-auto px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer active:scale-95"
                   >
                     <Plus className="w-4 h-4" />
                     <span>Register New Student</span>
@@ -191,10 +191,20 @@ export default function AdminStudentsPage({
                 </div>
               </div>
             )}
-                                    {/* Students Roster Table */}
+            {/* Students Roster Table */}
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-              <div className="w-full overflow-hidden">
-                <table className="w-full text-left text-xs">
+              {/* Mobile Horizontal Scroll Cue */}
+              <div className="lg:hidden flex items-center justify-between px-3.5 py-2 bg-gradient-to-r from-sky-50 to-indigo-50/50 border-b border-sky-100 text-[11px] text-sky-900 font-medium">
+                <span className="flex items-center gap-1.5">
+                  <span className="text-sky-600 font-bold">⇄</span> Swipe to view Parent, Course, Fee & Documents
+                </span>
+                <span className="text-[10px] font-bold bg-white text-sky-700 px-2 py-0.5 rounded-full border border-sky-200 shrink-0">
+                  {filteredStudentsSuperAdmin.length} Students
+                </span>
+              </div>
+
+              <div className="w-full overflow-x-auto admin-table-container">
+                <table className="w-full text-left text-xs min-w-[760px]">
                   <thead className="bg-[#081d3d] text-white uppercase text-[10px] tracking-wider font-black">
                     <tr>
                       {isMergeMode && (
@@ -210,7 +220,7 @@ export default function AdminStudentsPage({
                           </div>
                         </th>
                       )}
-                      <th className="py-3 px-4">Student Details</th>
+                      <th className="py-3 px-4 sticky left-0 bg-[#081d3d] z-20 shadow-[2px_0_5px_rgba(0,0,0,0.15)]">Student Details</th>
                       <th className="py-3 px-3">Parent & Contact</th>
                       <th className="py-3 px-3">Branch</th>
                       <th className="py-3 px-3">Course & Level</th>
@@ -236,7 +246,7 @@ export default function AdminStudentsPage({
                               handleToggleSelectStudent(student.userId);
                             }
                           }}
-                          className={`transition ${isMergeMode ? 'cursor-pointer' : ''} ${
+                          className={`transition group ${isMergeMode ? 'cursor-pointer' : ''} ${
                             isSelected ? 'bg-amber-50/90 border-l-4 border-l-amber-500' : 'hover:bg-slate-50/80'
                           }`}
                         >
@@ -252,8 +262,8 @@ export default function AdminStudentsPage({
                             </td>
                           )}
 
-                          {/* Student Details */}
-                          <td className="py-3 px-4">
+                          {/* Student Details (Sticky on Mobile) */}
+                          <td className="py-3 px-4 sticky left-0 bg-white z-10 shadow-[2px_0_6px_-2px_rgba(0,0,0,0.06)] group-hover:bg-slate-50 transition">
                             <div className="flex items-center gap-3">
                               <StudentAvatar
                                 student={student}
