@@ -28,6 +28,7 @@ import {
   ArrowUpRight
 } from 'lucide-react';
 import franchiseHeroBg from '../assets/franchise-hero-bg.jpg';
+import { createFranchiseRefId } from '../data/franchiseData';
 
 /* =========================================================================
    REAL-TIME BRAND LOGOS FOR PARTNER CATEGORIES
@@ -484,7 +485,7 @@ export default function FranchisePage({ setActivePage }) {
       return;
     }
 
-    const newRefId = `BSEL-FRN-${Math.floor(100000 + Math.random() * 900000)}`;
+    const newRefId = createFranchiseRefId(formData.phone);
     setRefId(newRefId);
 
     try {

@@ -14,8 +14,7 @@ import {
   Sparkles,
   Image as ImageIcon,
   School,
-  MapPin,
-  Edit3
+  MapPin
 } from 'lucide-react';
 import {
   getStoredCompetitionAchievements,
@@ -35,9 +34,7 @@ import {
   getStoredSchools,
   addStoredSchool,
   updateStoredSchool,
-  deleteStoredSchool,
-  getStoredSchoolsSectionHeader,
-  saveStoredSchoolsSectionHeader
+  deleteStoredSchool
 } from '../../data/schoolsData';
 
 const LEVEL_OPTIONS = [
@@ -153,7 +150,6 @@ export default function AdminAchievementsModule({ showToast = () => {} }) {
   // SCHOOL COMMUNITY ("GROWING TOGETHER") STATE
   // ---------------------------------------------------------------------------
   const [schools, setSchools] = useState(() => getStoredSchools());
-  const [schoolsHeader, setSchoolsHeader] = useState(() => getStoredSchoolsSectionHeader());
   const [schoolSearchTerm, setSchoolSearchTerm] = useState('');
   const [schoolRowsPerPage, setSchoolRowsPerPage] = useState('10');
 
@@ -161,14 +157,6 @@ export default function AdminAchievementsModule({ showToast = () => {} }) {
   const [isSchoolModalOpen, setIsSchoolModalOpen] = useState(false);
   const [editingSchool, setEditingSchool] = useState(null);
   const [deleteConfirmSchool, setDeleteConfirmSchool] = useState(null);
-
-  // School Section Header Modal
-  const [isHeaderModalOpen, setIsHeaderModalOpen] = useState(false);
-  const [headerFormData, setHeaderFormData] = useState({
-    label: '',
-    heading: '',
-    description: ''
-  });
 
   // School Form State
   const [schoolFormData, setSchoolFormData] = useState({
@@ -192,7 +180,6 @@ export default function AdminAchievementsModule({ showToast = () => {} }) {
     };
     const handleSchoolsUpdate = () => {
       setSchools(getStoredSchools());
-      setSchoolsHeader(getStoredSchoolsSectionHeader());
     };
 
     window.addEventListener('bsel_competition_achievements_updated', handleCompUpdate);
@@ -524,22 +511,6 @@ export default function AdminAchievementsModule({ showToast = () => {} }) {
     }
   };
 
-  const handleOpenEditHeaderModal = () => {
-    setHeaderFormData({
-      label: schoolsHeader.label || 'Our School Community',
-      heading: schoolsHeader.heading || 'Growing Together',
-      description: schoolsHeader.description || 'Celebrating the schools and educational communities involved in our learning activities and student recognition programs.'
-    });
-    setIsHeaderModalOpen(true);
-  };
-
-  const handleSaveHeader = (e) => {
-    e.preventDefault();
-    saveStoredSchoolsSectionHeader(headerFormData);
-    showToast?.('Section heading updated live on website!');
-    setIsHeaderModalOpen(false);
-  };
-
   // Render Level Badges
   const renderCompLevelBadge = (level = '') => {
     const l = level.toLowerCase();
@@ -721,33 +692,6 @@ export default function AdminAchievementsModule({ showToast = () => {} }) {
         <div className="space-y-4">
           {/* Section Info & Filter Card */}
           <div className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-sm space-y-3.5">
-            {/* Header text preview & edit */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3.5 border-b border-slate-100">
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
-                    {schoolsHeader.label || 'Our School Community'}
-                  </span>
-                  <span className="text-xs text-slate-400">• Public Website Section</span>
-                </div>
-                <h3 className="text-base font-black text-slate-900 mt-1">
-                  {schoolsHeader.heading || 'Growing Together'}
-                </h3>
-                <p className="text-xs text-slate-500 mt-0.5 max-w-2xl leading-relaxed">
-                  {schoolsHeader.description || 'Celebrating the schools and educational communities involved in our learning activities and student recognition programs.'}
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={handleOpenEditHeaderModal}
-                className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shrink-0"
-              >
-                <Edit3 className="w-3.5 h-3.5 text-slate-600" />
-                <span>Edit Section Title & Subtitle</span>
-              </button>
-            </div>
-
             {/* Search & Filter row */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-0.5">
               <div className="relative flex-1 max-w-md">
@@ -1173,96 +1117,6 @@ export default function AdminAchievementsModule({ showToast = () => {} }) {
                 Public website updates automatically in real-time
               </span>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* =========================================================================
-          MODAL: EDIT SCHOOL SECTION HEADER
-          ========================================================================= */}
-      {isHeaderModalOpen && (
-        <div className="fixed inset-0 z-[150] bg-black/75 backdrop-blur-xs flex items-start justify-center p-3 sm:p-6 overflow-y-auto overscroll-contain">
-          <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-150 my-auto">
-            <div className="bg-[#0c234b] text-white p-4.5 flex items-center justify-between border-b border-amber-400/40">
-              <div className="flex items-center gap-2">
-                <Edit3 className="w-5 h-5 text-amber-400" />
-                <div>
-                  <h3 className="font-bold text-sm sm:text-base text-white">
-                    Edit School Community Header
-                  </h3>
-                  <p className="text-[11px] text-amber-300 font-medium">
-                    Updates the title and intro displayed on the public website
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsHeaderModalOpen(false)}
-                className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveHeader} className="p-5 space-y-4 text-xs">
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">
-                  Section Category / Label
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={headerFormData.label}
-                  onChange={(e) => setHeaderFormData(prev => ({ ...prev, label: e.target.value }))}
-                  placeholder="e.g. Our School Community"
-                  className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl outline-none font-bold text-slate-800 focus:border-[#0c234b]"
-                />
-              </div>
-
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">
-                  Main Heading
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={headerFormData.heading}
-                  onChange={(e) => setHeaderFormData(prev => ({ ...prev, heading: e.target.value }))}
-                  placeholder="e.g. Growing Together"
-                  className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl outline-none font-black text-slate-900 focus:border-[#0c234b]"
-                />
-              </div>
-
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">
-                  Description / Paragraph
-                </label>
-                <textarea
-                  rows={3}
-                  required
-                  value={headerFormData.description}
-                  onChange={(e) => setHeaderFormData(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder="e.g. Celebrating the schools and educational communities involved in our learning activities..."
-                  className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl outline-none text-slate-800 leading-relaxed resize-none font-medium focus:border-[#0c234b]"
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => setIsHeaderModalOpen(false)}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold transition cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 bg-[#0c234b] hover:bg-[#163e7c] text-white rounded-xl font-bold transition cursor-pointer shadow-sm"
-                >
-                  Save & Update Website
-                </button>
-              </div>
-            </form>
           </div>
         </div>
       )}

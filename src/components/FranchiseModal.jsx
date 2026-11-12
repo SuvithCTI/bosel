@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createFranchiseRefId } from '../data/franchiseData';
 import { 
   X, 
   Store, 
@@ -62,7 +63,7 @@ export default function FranchiseModal({ isOpen, onClose }) {
       return;
     }
 
-    const newRefId = `BSEL-FRN-${Math.floor(100000 + Math.random() * 900000)}`;
+    const newRefId = createFranchiseRefId(formData.phone);
     setRefId(newRefId);
 
     // Save lead to local storage so admin can view

@@ -94,8 +94,6 @@ import AdminSchoolsPage from './admin/AdminSchoolsPage';
 
 import AdminAchievementsPage from './admin/AdminAchievementsPage';
 
-import AdminCertificatesPage from './admin/AdminCertificatesPage';
-
 import AdminBranchOverviewPage from './admin/AdminBranchOverviewPage';
 
 import AdminBranchStudentsPage from './admin/AdminBranchStudentsPage';
@@ -183,11 +181,9 @@ import {
   getStoredFranchiseLeads,
 
   updateFranchiseLeadStatus,
-
   deleteFranchiseLead,
-
-  addFranchiseLead
-
+  addFranchiseLead,
+  getFranchiseDisplayId
 } from '../data/franchiseData';
 
 import {
@@ -524,6 +520,8 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
 
     setMobileSidebarOpen(false);
 
+    window.scrollTo(0, 0);
+
   };
 
 
@@ -676,11 +674,15 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
 
       setActiveTab('branch_overview');
 
+      window.scrollTo(0, 0);
+
       showToast(`Switched to Branch Head Portal (${activeBranch})`);
 
     } else {
 
       setActiveTab('overview');
+
+      window.scrollTo(0, 0);
 
       showToast('Switched to Super Administrator Portal');
 
@@ -1434,7 +1436,8 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
 
     setFranchiseList(updated);
 
-    showToast(`Franchise lead ${refId} status updated to: ${newStatus}`);
+    const updatedLead = franchiseList.find(lead => lead.refId === refId);
+    showToast(`Franchise lead ${updatedLead ? getFranchiseDisplayId(updatedLead) : refId} status updated to: ${newStatus}`);
 
   };
 
@@ -1442,7 +1445,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
 
   const handleApproveFranchiseToBranch = (lead) => {
 
-    if (window.confirm(`Approve franchise enquiry ${lead.refId} (${lead.name}) as an official Authorized Branch?`)) {
+    if (window.confirm(`Approve franchise enquiry ${getFranchiseDisplayId(lead)} (${lead.name}) as an official Authorized Branch?`)) {
 
       updateFranchiseLeadStatus(lead.refId, 'Approved Franchise Branch', `Official Branch Approved on ${new Date().toLocaleDateString('en-GB')}`);
 
@@ -1519,6 +1522,23 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
 
 
       showToast(`🎉 Congratulations! ${branchName} successfully affiliated with Code ${nextCode}!`);
+
+      const phoneDigits = String(lead.phone || '').replace(/\D/g, '');
+      const whatsappPhone = phoneDigits.length === 10
+        ? `91${phoneDigits}`
+        : phoneDigits.length === 11 && phoneDigits.startsWith('0')
+          ? `91${phoneDigits.slice(1)}`
+          : phoneDigits.length >= 11 && phoneDigits.length <= 15
+            ? phoneDigits
+            : '';
+
+      if (whatsappPhone) {
+        const message = `Dear ${lead.name}, congratulations! Your B★SEL franchise enquiry ${getFranchiseDisplayId(lead)} has been approved. Your franchise branch is now officially authorized. We will contact you soon with onboarding details.`;
+        const whatsappUrl = `https://wa.me/${whatsappPhone}?text=${encodeURIComponent(message)}`;
+        window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+      } else {
+        showToast(`Branch approved, but no valid WhatsApp number is available for ${lead.name}.`);
+      }
 
     }
 
@@ -2614,7 +2634,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
 
               <span className="text-[10px] font-bold text-slate-400">
 
-                {currentAdminRole === 'Super Admin' ? '9 Modules' : '6 Modules'}
+                {currentAdminRole === 'Super Admin' ? '7 Modules' : '6 Modules'}
 
               </span>
 
@@ -2677,32 +2697,6 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                     <Users className={`w-4 h-4 shrink-0 ${activeTab === 'students' ? 'text-sky-400' : 'text-slate-500'}`} />
 
                     <span className="truncate">Student Registrations</span>
-
-                  </button>
-
-
-
-                  <button
-
-                    type="button"
-
-                    onClick={() => handleTabSelect('student_details')}
-
-                    className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-black transition cursor-pointer text-left ${
-
-                      activeTab === 'student_details'
-
-                        ? 'bg-[#0c234b] text-white shadow-sm ring-1 ring-amber-400/40'
-
-                        : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950'
-
-                    }`}
-
-                  >
-
-                    <FileText className={`w-4 h-4 shrink-0 ${activeTab === 'student_details' ? 'text-amber-400' : 'text-slate-500'}`} />
-
-                    <span className="truncate">Student Details</span>
 
                   </button>
 
@@ -2855,30 +2849,6 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                   </button>
 
 
-
-                  <button
-
-                    type="button"
-
-                    onClick={() => handleTabSelect('certificates')}
-
-                    className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-black transition cursor-pointer text-left ${
-
-                      activeTab === 'certificates'
-
-                        ? 'bg-[#0c234b] text-white shadow-sm ring-1 ring-amber-400/40'
-
-                        : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950'
-
-                    }`}
-
-                  >
-
-                    <Award className={`w-4 h-4 shrink-0 ${activeTab === 'certificates' ? 'text-amber-400' : 'text-slate-500'}`} />
-
-                    <span className="truncate">Certificate Desk</span>
-
-                  </button>
 
                 </>
 
@@ -3300,30 +3270,6 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
 
 
 
-        {/* SUPER ADMIN: TAB - STUDENT DETAILS (WEBSITE SUBMISSIONS) */}
-
-        {currentAdminRole === 'Super Admin' && activeTab === 'student_details' && (
-
-          <AdminBranchStudentDetailsPage
-
-            activeBranch="All branches"
-
-            setViewingAdmissionStudent={setViewingAdmissionStudent}
-
-            handleOpenMarksheet={handleOpenMarksheet}
-
-            handleOpenCertForStudent={handleOpenCertForStudent}
-
-            setViewingMergedPdfStudent={setViewingMergedPdfStudent}
-
-            showToast={showToast}
-
-            schoolsList={schoolsList}
-
-          />
-
-        )}
-
 
 
         {/* SUPER ADMIN: TAB 3 - COURSE MANAGEMENT */}
@@ -3477,32 +3423,6 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
         )}
 
 
-
-        {/* SUPER ADMIN: TAB 9 - CERTIFICATE GENERATOR & DESK */}
-
-        {currentAdminRole === 'Super Admin' && activeTab === 'certificates' && (
-
-          <AdminCertificatesPage
-
-            certData={certData}
-
-            setCertData={setCertData}
-
-            handleGenerateCertificate={handleGenerateCertificate}
-
-            verifyCertInput={verifyCertInput}
-
-            setVerifyCertInput={setVerifyCertInput}
-
-            verifyResult={verifyResult}
-
-            setVerifyResult={setVerifyResult}
-
-            handleVerifyCertificate={handleVerifyCertificate}
-
-          />
-
-        )}
 
 
 

@@ -19,7 +19,9 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const data = req.body;
-    const refId = data.refId || `BSEL-FRN-${Math.floor(100000 + Math.random() * 900000)}`;
+    const phoneNumber = String(data.phone || '').replace(/\D/g, '');
+    const identifier = phoneNumber || Math.floor(100000 + Math.random() * 900000);
+    const refId = data.refId || `BSEL-FRN-${identifier}`;
 
     if (db.isDbConnected()) {
       const result = await db.query(`

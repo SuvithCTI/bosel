@@ -1,4 +1,4 @@
-import { deleteFranchiseLead } from '../../data/franchiseData';
+import { deleteFranchiseLead, getFranchiseDisplayId } from '../../data/franchiseData';
 import React from 'react';
 import {
   Building,
@@ -47,7 +47,7 @@ export default function AdminFranchisePage({
             </div>
 
             {/* Franchise Leads Cards / Table */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredFranchiseLeads.map((lead) => (
                 <div key={lead.refId} className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4.5 flex flex-col justify-between hover:shadow-md transition">
                   <div className="space-y-2.5">
@@ -55,7 +55,7 @@ export default function AdminFranchisePage({
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="font-mono text-[10px] font-black text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">
-                            {lead.refId}
+                            {getFranchiseDisplayId(lead)}
                           </span>
                           <span className="text-[10px] text-slate-400">{lead.date}</span>
                         </div>
@@ -133,9 +133,9 @@ export default function AdminFranchisePage({
                       <button
                         type="button"
                         onClick={() => {
-                          if (window.confirm(`Delete enquiry ${lead.refId}?`)) {
+                          if (window.confirm(`Delete enquiry ${getFranchiseDisplayId(lead)}?`)) {
                             setFranchiseList(deleteFranchiseLead(lead.refId));
-                            showToast(`Enquiry ${lead.refId} removed.`);
+                            showToast(`Enquiry ${getFranchiseDisplayId(lead)} removed.`);
                           }
                         }}
                         className="p-1 text-slate-400 hover:text-rose-600 transition"

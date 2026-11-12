@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useCallback } from 'react';
 
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -29,7 +29,7 @@ export default function App() {
   // -------------------------------------------------------
   // Active page
   // -------------------------------------------------------
-  const [activePage, setActivePage] = useState(() => {
+  const [activePage, setActivePageState] = useState(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
 
@@ -50,6 +50,17 @@ export default function App() {
 
     return 'home';
   });
+
+  const setActivePage = useCallback((page) => {
+    setActivePageState(page);
+    window.scrollTo(0, 0);
+  }, []);
+
+  useLayoutEffect(() => {
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, [activePage]);
 
   // -------------------------------------------------------
   // Authentication session

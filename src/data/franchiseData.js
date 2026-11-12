@@ -1,4 +1,15 @@
 // Central Franchise Leads & Enquiries Repository for B★SEL
+export const createFranchiseRefId = (phone) => {
+  const phoneNumber = String(phone || '').replace(/\D/g, '');
+  const identifier = phoneNumber || Math.floor(100000 + Math.random() * 900000);
+  return `BSEL-FRN-${identifier}`;
+};
+
+export const getFranchiseDisplayId = (lead) => {
+  const phoneNumber = String(lead.phone || '').replace(/\D/g, '');
+  return phoneNumber ? `BSEL-FRN-${phoneNumber}` : lead.refId;
+};
+
 export const DEFAULT_FRANCHISE_LEADS = [
   {
     refId: 'BSEL-FRN-849201',
@@ -143,7 +154,7 @@ export const deleteFranchiseLead = (refId) => {
 
 export const addFranchiseLead = (lead) => {
   const leads = getStoredFranchiseLeads();
-  const refId = lead.refId || `BSEL-FRN-${Math.floor(100000 + Math.random() * 900000)}`;
+  const refId = lead.refId || createFranchiseRefId(lead.phone);
   const newLead = {
     ...lead,
     refId,
