@@ -102,7 +102,7 @@ export default function AdminFranchisePage({
                       </div>
                       <div>
                         <strong className="text-slate-700">Space:</strong> {lead.spaceAvailable || '1,200 sq ft'} &nbsp;|&nbsp; 
-                        <strong className="text-slate-700">Budget:</strong> {lead.investmentBudget || '₹3 - ₹5 Lakhs'}
+                        
                       </div>
                       {lead.notes && (
                         <div className="text-indigo-900 bg-indigo-50/70 p-1.5 rounded text-[10px] italic border border-indigo-100">

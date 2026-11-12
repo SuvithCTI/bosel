@@ -1,9 +1,29 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { Menu, X, User, Phone, ArrowRight } from 'lucide-react';
 import Logo from './Logo';
 
 export default function Navbar({ activePage, setActivePage, sessionUser }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const headerRef = useRef(null);
+  const [headerHeight, setHeaderHeight] = useState(72);
+
+  // Measure the fixed header so page content can start right below it
+  useLayoutEffect(() => {
+    const el = headerRef.current;
+    if (!el) return undefined;
+
+    const update = () => setHeaderHeight(el.getBoundingClientRect().height);
+    update();
+
+    if (typeof ResizeObserver !== 'undefined') {
+      const observer = new ResizeObserver(update);
+      observer.observe(el);
+      return () => observer.disconnect();
+    }
+
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
 
   // Prevent background scroll when mobile menu is open
   useEffect(() => {
@@ -35,15 +55,18 @@ export default function Navbar({ activePage, setActivePage, sessionUser }) {
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-40 shadow-md">
+      <header
+        ref={headerRef}
+        className="fixed top-0 left-0 right-0 z-40 shadow-md"
+      >
         {/* Main Navigation Bar */}
         <nav className="bg-[#0F2B5C] text-white px-3 sm:px-6 lg:px-10 py-2.5 sm:py-3 transition-colors">
           <div className="w-full max-w-[1700px] mx-auto flex items-center justify-between gap-2">
             {/* Logo */}
             <div className="shrink-0 max-w-[65%] sm:max-w-none">
-              <Logo 
-                lightText={true} 
-                onClick={() => handleNavClick('home')} 
+              <Logo
+                lightText={true}
+                onClick={() => handleNavClick('home')}
               />
             </div>
 
@@ -147,11 +170,14 @@ export default function Navbar({ activePage, setActivePage, sessionUser }) {
         </nav>
       </header>
 
+      {/* Spacer: reserves the fixed header's height so page content starts below it */}
+      <div aria-hidden="true" style={{ height: headerHeight }} />
+
       {/* Mobile Drawer Backdrop & Menu */}
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-50 md:hidden flex flex-col justify-start">
           {/* Dark Backdrop */}
-          <div 
+          <div
             className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm transition-opacity animate-in fade-in"
             onClick={() => setMobileMenuOpen(false)}
           />
