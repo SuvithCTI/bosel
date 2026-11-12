@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { deletePayment } from '../../data/paymentsData';
 import { getAllDistrictBranches } from '../../data/districtsData';
-import { printReceiptSheets } from '../../components/BselReceipt'; // adjust path if BselReceipt.jsx lives elsewhere
+import { printReceiptSheets } from '../../components/admin/BselReceipt'; // adjust path if BselReceipt.jsx lives elsewhere
 import {
   CreditCard,
   Plus,
