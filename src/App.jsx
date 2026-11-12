@@ -25,12 +25,35 @@ import {
   clearActiveSession,
 } from './utils/authStorage';
 
+// Helper to determine if an active session belongs to a student
+const isStudentUser = (user) => {
+  if (!user) return false;
+  if (user.role === 'Super Admin' || user.role === 'Branch Head') return false;
+  const uid = String(user.userId || user.id || '').toLowerCase();
+  if (uid === 'admin' || uid.startsWith('branch.') || uid.startsWith('sch-')) return false;
+  return true;
+};
+
 export default function App() {
   // -------------------------------------------------------
   // Active page
+  // If a student is logged in, they are always restored to the student dashboard ('login')
   // -------------------------------------------------------
   const [activePage, setActivePageState] = useState(() => {
     if (typeof window !== 'undefined') {
+      const session = getActiveSession();
+      const savedPage = sessionStorage.getItem('bsel_current_page');
+
+      // If a page was specifically selected in this session (e.g. 'home' via Visit Website), honor it
+      if (savedPage) {
+        return savedPage;
+      }
+
+      // If a student account is currently active and no saved page, default to student dashboard
+      if (isStudentUser(session)) {
+        return 'login';
+      }
+
       const params = new URLSearchParams(window.location.search);
 
       if (params.get('page')) {
@@ -51,6 +74,7 @@ export default function App() {
     return 'home';
   });
 
+<<<<<<< HEAD
   const setActivePage = useCallback((page) => {
     setActivePageState(page);
     window.scrollTo(0, 0);
@@ -60,6 +84,13 @@ export default function App() {
     window.scrollTo(0, 0);
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
+=======
+  // Track activePage in sessionStorage so refresh maintains the current view
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('bsel_current_page', activePage);
+    }
+>>>>>>> d3fdb17e418437b1440c580f11ae5876f750b1f2
   }, [activePage]);
 
   // -------------------------------------------------------
@@ -76,13 +107,7 @@ export default function App() {
   const [isStudentDashboardOpen, setIsStudentDashboardOpen] =
     useState(() => {
       const session = getActiveSession();
-
-      return (
-        activePage === 'login' &&
-        Boolean(session) &&
-        session.role !== 'Super Admin' &&
-        session.role !== 'Branch Head'
-      );
+      return isStudentUser(session);
     });
 
   // Hide the global website layout on the admin dashboard
@@ -141,8 +166,12 @@ export default function App() {
       setSessionUser(session);
 
       // If the student session is cleared, restore the public layout.
-      if (!session || session.role === 'Super Admin' || session.role === 'Branch Head') {
+      if (!isStudentUser(session)) {
         setIsStudentDashboardOpen(false);
+      } else {
+        // If a student session is activated, ensure dashboard opens immediately
+        setIsStudentDashboardOpen(true);
+        setActivePage('login');
       }
     };
 

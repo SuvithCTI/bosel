@@ -799,7 +799,7 @@ export const validateLogin = (enteredUserId, enteredPassword) => {
   if (!userFound) {
     return {
       success: false,
-      message: `Invalid User ID "${enteredUserId}". Please enter your registered User ID (format: BSEL-MobileNumber) or mobile number.`
+      message: `Account not found for "${enteredUserId}". Only students who have submitted the admission form and received credentials can log in. Please click "Submit Admission Enquiry" below to register.`
     };
   }
 
@@ -807,15 +807,12 @@ export const validateLogin = (enteredUserId, enteredPassword) => {
   const userMobilePass = userPhone.length >= 10 ? userPhone.slice(-10) : '';
   const isCorrectPassword = 
     userFound.password === cleanPassword ||
-    (userMobilePass && cleanPassword === userMobilePass) ||
-    cleanPassword === 'besel2026' ||
-    cleanPassword === 'admin123' ||
-    cleanPassword === 'branch123';
+    (userMobilePass && cleanPassword === userMobilePass);
 
   if (!isCorrectPassword) {
     return {
       success: false,
-      message: 'Incorrect Password. Please enter the 10-digit mobile number registered with your account.'
+      message: 'Incorrect Password. Please enter the password provided upon admission (your 10-digit registered mobile number).'
     };
   }
 

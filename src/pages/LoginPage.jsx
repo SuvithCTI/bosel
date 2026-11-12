@@ -20,6 +20,7 @@ import {
   setActiveSession,
   clearActiveSession,
   isPhoneNumberRegistered,
+  getLastRegisteredCreds,
 } from '../utils/authStorage';
 
 // -------------------------------------------------------
@@ -237,10 +238,31 @@ export default function LoginPage({
     useState(null);
 
   const [isAdmissionOpen, setIsAdmissionOpen] = useState(false);
+  const [lastCreds, setLastCreds] = useState(() => getLastRegisteredCreds());
 
   const [errorMessage, setErrorMessage] = useState('');
 
   const isLoggedIn = Boolean(currentUser);
+
+  // Sync last registered credentials when admissions happen
+  useEffect(() => {
+    const handleUpdate = () => {
+      setLastCreds(getLastRegisteredCreds());
+    };
+    window.addEventListener('bsel_users_updated', handleUpdate);
+    return () => window.removeEventListener('bsel_users_updated', handleUpdate);
+  }, []);
+
+  // When admission modal closes or credentials are created, prefill form if empty
+  useEffect(() => {
+    if (!isAdmissionOpen) {
+      const creds = getLastRegisteredCreds();
+      if (creds?.userId && !userId && !currentUser) {
+        setUserId(creds.userId);
+        setPassword(creds.password);
+      }
+    }
+  }, [isAdmissionOpen, currentUser, userId]);
 
   // Listen for open_admission_modal event
   useEffect(() => {
@@ -349,11 +371,11 @@ export default function LoginPage({
     if (!authUser) {
       const cleanDigits = userId.replace(/\D/g, '');
       if (cleanDigits.length === 10 && !isPhoneNumberRegistered(cleanDigits) && !userId.toLowerCase().startsWith('admin') && !userId.toLowerCase().startsWith('branch')) {
-        setErrorMessage(`Mobile number "${cleanDigits}" is not registered yet. Please click 'Submit Admission Enquiry' below to register.`);
+        setErrorMessage(`Mobile number "${cleanDigits}" is not registered. Only candidates who have filled the admission form and received credentials can log in. Please click 'Fill Admission Form to Enroll' below.`);
         return;
       }
       setErrorMessage(
-        localResult.message || 'Invalid User ID or password.'
+        localResult.message || `Account not found for "${userId.trim()}". Only candidates who have completed admission registration and received official credentials can log in.`
       );
       return;
     }
@@ -494,10 +516,29 @@ export default function LoginPage({
   };
 
   // -------------------------------------------------------
+  // Visit Website (Navigate to site without logging out)
+  // -------------------------------------------------------
+  const handleVisitWebsite = () => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('bsel_current_page', 'home');
+      window.location.hash = '';
+      const url = new URL(window.location.href);
+      url.searchParams.delete('page');
+      window.history.replaceState({}, '', url.pathname);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    setActivePage?.('home');
+  };
+
+  // -------------------------------------------------------
   // Logout
   // -------------------------------------------------------
   const handleLogout = () => {
     clearActiveSession();
+
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('bsel_current_page');
+    }
 
     setCurrentUser(null);
     setPassword('');
@@ -523,6 +564,7 @@ export default function LoginPage({
         <StudentDashboard
           student={currentUser}
           onLogout={handleLogout}
+          onVisitWebsite={handleVisitWebsite}
           onUpdateStudent={handleUpdateStudent}
           onViewCertificate={setSelectedCertForModal}
         />
@@ -646,7 +688,7 @@ export default function LoginPage({
                         const exists = isPhoneNumberRegistered(clean);
                         return (
                           <span className={`text-[10.5px] font-bold ${exists ? 'text-emerald-300' : 'text-amber-300'}`}>
-                            {exists ? '✓ Number already exists' : 'Number not registered'}
+                            {exists ? '✓ Registered Candidate' : '⚠️ Not Registered (Apply Below)'}
                           </span>
                         );
                       }
@@ -659,7 +701,7 @@ export default function LoginPage({
                       type="text"
                       required
                       autoComplete="username"
-                      placeholder="e.g. BSEL-9840123456 or 10-digit mobile"
+                      placeholder="e.g. BSEL-98XXXXXXXX or 10-digit mobile"
                       value={userId}
                       onChange={(event) => {
                         setUserId(event.target.value);
@@ -690,7 +732,7 @@ export default function LoginPage({
                       type={showPassword ? 'text' : 'password'}
                       required
                       autoComplete="current-password"
-                      placeholder="Enter your password"
+                      placeholder="Enter registered mobile / password"
                       value={password}
                       onChange={(event) => {
                         setPassword(event.target.value);
@@ -724,14 +766,14 @@ export default function LoginPage({
                   Remember User ID
                 </label>
 
-                {/* Quick Demo Credentials Box - Aligned grid & harmonized theme colors */}
+                {/* Portal Access Buttons */}
                 <div className="rounded-xl bg-white/[0.06] p-2.5 sm:p-3 border border-white/15 backdrop-blur-sm">
                   <div className="flex items-center justify-between mb-2">
                     <span className="font-bold text-white block uppercase text-[11px] tracking-wider">
-                      Quick Demo Portals:
+                      Portal Access:
                     </span>
                     <span className="text-[10px] text-blue-200/70 font-medium">
-                      Click to fill
+                      Select Role
                     </span>
                   </div>
                   <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
@@ -757,17 +799,34 @@ export default function LoginPage({
                     >
                       Branch Admin
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setUserId('BSEL-9840123456');
-                        setPassword('9840123456');
-                        setErrorMessage('');
-                      }}
-                      className="w-full py-1.5 px-1 sm:px-2 bg-sky-500/20 hover:bg-sky-500/30 border border-sky-400/50 text-sky-200 font-semibold rounded-lg text-[11px] sm:text-xs transition active:scale-95 cursor-pointer text-center flex flex-col items-center justify-center min-h-[36px]"
-                    >
-                      Student
-                    </button>
+                    {lastCreds?.userId ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setUserId(lastCreds.userId);
+                          setPassword(lastCreds.password);
+                          setErrorMessage('');
+                        }}
+                        className="w-full py-1.5 px-1 sm:px-2 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/50 text-emerald-200 font-semibold rounded-lg text-[11px] sm:text-xs transition active:scale-95 cursor-pointer text-center flex flex-col items-center justify-center min-h-[36px]"
+                        title={`Enrolled: ${lastCreds.studentName || 'Student'}`}
+                      >
+                        <span className="truncate max-w-[85px] sm:max-w-none">{lastCreds.studentName ? lastCreds.studentName.split(' ')[0] : 'Enrolled'}</span>
+                        <span className="text-[9px] text-emerald-300/80 font-mono">My Account</span>
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsAdmissionOpen(true);
+                          setErrorMessage('');
+                        }}
+                        className="w-full py-1.5 px-1 sm:px-2 bg-sky-500/20 hover:bg-sky-500/30 border border-sky-400/50 text-sky-200 font-semibold rounded-lg text-[11px] sm:text-xs transition active:scale-95 cursor-pointer text-center flex flex-col items-center justify-center min-h-[36px]"
+                        title="New student? Apply for admission to receive credentials."
+                      >
+                        <span>New Student</span>
+                        <span className="text-[9px] text-sky-300/80 font-medium">Apply First</span>
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -786,9 +845,9 @@ export default function LoginPage({
                 <button
                   type="button"
                   onClick={() => setIsAdmissionOpen(true)}
-                  className="text-xs font-medium text-blue-100 hover:text-white hover:underline transition cursor-pointer"
+                  className="text-xs font-semibold text-amber-300 hover:text-amber-200 hover:underline transition cursor-pointer"
                 >
-                  Don&apos;t have login credentials? Submit Admission Enquiry →
+                  Don&apos;t have credentials? Fill Admission Form to Enroll →
                 </button>
               </div>
 
