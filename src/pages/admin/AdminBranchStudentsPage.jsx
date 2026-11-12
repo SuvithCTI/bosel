@@ -33,8 +33,6 @@ export default function AdminBranchStudentsPage({
 }) {
   // Course filter state
   const [branchCourseFilter, setBranchCourseFilter] = useState('All');
-  // Fee status filter state
-  const [branchPaymentFilter, setBranchPaymentFilter] = useState('All');
 
   // List of courses for filtering
   const allCourses = useMemo(() => [
@@ -62,14 +60,7 @@ export default function AdminBranchStudentsPage({
     { value: activeBranch || 'Branch', label: activeBranch || 'Branch' }
   ], [activeBranch]);
 
-  // Fee status options
-  const feeStatusOptions = useMemo(() => [
-    { value: 'All', label: 'All Fee Statuses' },
-    { value: 'Paid', label: 'Fee Paid / Verified' },
-    { value: 'Pending', label: 'Fee Pending' }
-  ], []);
-
-  // Filter students based on course and fee status (search is handled upstream or fallback here)
+  // Filter students based on course (search is handled upstream or fallback here)
   const filteredStudents = useMemo(() => {
     return (branchStudents || []).filter(student => {
       // Course filter
@@ -77,15 +68,9 @@ export default function AdminBranchStudentsPage({
         const prog = (student.program || student.courseName || '').toLowerCase();
         if (!prog.includes(branchCourseFilter.toLowerCase())) return false;
       }
-      // Fee status filter
-      if (branchPaymentFilter && branchPaymentFilter !== 'All') {
-        const isPaid = student.feePaymentType === 'Paid' || student.feePaymentType === 'Pay Now';
-        if (branchPaymentFilter === 'Paid' && !isPaid) return false;
-        if (branchPaymentFilter === 'Pending' && isPaid) return false;
-      }
       return true;
     });
-  }, [branchStudents, branchCourseFilter, branchPaymentFilter]);
+  }, [branchStudents, branchCourseFilter]);
 
   return (
     <div className="space-y-4 animate-in fade-in duration-200">
@@ -114,7 +99,7 @@ export default function AdminBranchStudentsPage({
         </div>
 
         {/* Filters Row */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 pt-1 items-center">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 pt-1 items-center">
           {/* Search */}
           <div className="relative">
             <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -142,15 +127,6 @@ export default function AdminBranchStudentsPage({
             onChange={setBranchCourseFilter}
             options={allCourses}
             placeholder="All Courses"
-            maxHeight="max-h-48"
-          />
-
-          {/* Fee Status Filter */}
-          <CompactSelect
-            value={branchPaymentFilter}
-            onChange={setBranchPaymentFilter}
-            options={feeStatusOptions}
-            placeholder="All Fee Statuses"
             maxHeight="max-h-48"
           />
         </div>
