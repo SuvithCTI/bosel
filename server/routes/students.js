@@ -94,55 +94,76 @@ router.post('/', async (req, res) => {
         INSERT INTO students (
           user_id, register_number, student_name, parent_name, dob, age, gender,
           student_class, student_stage, phone, alternate_phone, email, photo_url,
-          course_name, program, branch, institution, address, village, city, district,
+          course_name, program, grade, selected_courses, branch, institution, address, village, city, district,
           pincode, aadhar_number, fee_payment_type, fee_amount, payment_mode,
           receipt_ref_no, payment_screenshot, status, enrolment_date
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32)
         ON CONFLICT (user_id) DO UPDATE SET
+          register_number = EXCLUDED.register_number,
           student_name = EXCLUDED.student_name,
           parent_name = EXCLUDED.parent_name,
+          dob = EXCLUDED.dob,
+          age = EXCLUDED.age,
+          gender = EXCLUDED.gender,
+          student_class = EXCLUDED.student_class,
+          student_stage = EXCLUDED.student_stage,
           phone = EXCLUDED.phone,
+          alternate_phone = EXCLUDED.alternate_phone,
           email = EXCLUDED.email,
           photo_url = COALESCE(EXCLUDED.photo_url, students.photo_url),
           course_name = EXCLUDED.course_name,
           program = EXCLUDED.program,
+          grade = EXCLUDED.grade,
+          selected_courses = EXCLUDED.selected_courses,
           branch = EXCLUDED.branch,
+          institution = EXCLUDED.institution,
           address = EXCLUDED.address,
+          village = EXCLUDED.village,
           city = EXCLUDED.city,
           district = EXCLUDED.district,
-          pincode = EXCLUDED.pincode
+          pincode = EXCLUDED.pincode,
+          aadhar_number = EXCLUDED.aadhar_number,
+          fee_payment_type = EXCLUDED.fee_payment_type,
+          fee_amount = EXCLUDED.fee_amount,
+          payment_mode = EXCLUDED.payment_mode,
+          receipt_ref_no = EXCLUDED.receipt_ref_no,
+          payment_screenshot = COALESCE(EXCLUDED.payment_screenshot, students.payment_screenshot),
+          status = EXCLUDED.status,
+          enrolment_date = EXCLUDED.enrolment_date
         RETURNING *
       `, [
         userId,
         regNo,
         data.studentName || data.name || 'Student',
-        data.parentName || '',
+        data.parentName || data.fatherName || '',
         data.dob || data.dateOfBirth || '',
-        data.age ? String(data.age) : '',
+        data.age !== undefined && data.age !== null ? String(data.age) : '',
         data.gender || 'Male',
         data.studentClass || '',
         data.studentStage || '',
         data.phone || cleanMobile,
-        data.alternatePhone || '',
+        data.alternatePhone || data.alternativePhone || '',
         data.email || '',
         photoUrl,
         data.courseName || data.program || 'Abacus Speed Arithmetic',
-        data.courseName || data.program || 'Abacus Speed Arithmetic',
+        data.program || data.courseName || 'Abacus Speed Arithmetic',
+        data.grade || data.level || data.courseLevel || 'Level 1',
+        JSON.stringify(Array.isArray(data.selectedCourses) ? data.selectedCourses : (Array.isArray(data.courses) ? data.courses : [])),
         data.branch || 'Tenkasi Regional Branch',
         data.institution || data.branch || 'Tenkasi Regional Branch',
         data.address || '',
         data.village || '',
         data.city || '',
         data.district || '',
-        data.pincode || '',
-        data.aadharNumber || data.aadhaarNumber || '',
-        data.feePaymentType || 'Paid',
+        data.pincode || data.pinCode || '',
+        data.aadharNumber || data.aadhaarNumber || data.aadhaar || '',
+        data.feePaymentType || 'Pay Now',
         data.feeAmount || '₹450',
         data.paymentMode || 'UPI / QR Code',
-        data.receiptRefNo || `REC-${Date.now().toString().slice(-4)}`,
+        data.receiptRefNo || `TXN-${Date.now().toString().slice(-6)}`,
         screenshotUrl,
-        'Confirmed',
-        data.enrolmentDate || new Date().toISOString().split('T')[0]
+        data.status || 'Confirmed',
+        data.date || data.enrolmentDate || new Date().toISOString().split('T')[0]
       ]);
 
       // Only the primary admission entry needs a login account.
@@ -152,37 +173,44 @@ router.post('/', async (req, res) => {
             user_id, password, student_name, name, parent_name, email, phone,
             grade, program, course_name, institution, branch, address, role,
             photo_url, student_photo, register_number, registration_no, enrolment_date
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, 'Student', $14, $15, $16, $17, $18)
           ON CONFLICT (user_id) DO UPDATE SET
             student_name = EXCLUDED.student_name,
             name = EXCLUDED.name,
             parent_name = EXCLUDED.parent_name,
             email = EXCLUDED.email,
             phone = EXCLUDED.phone,
+            grade = EXCLUDED.grade,
+            program = EXCLUDED.program,
+            course_name = EXCLUDED.course_name,
+            institution = EXCLUDED.institution,
+            branch = EXCLUDED.branch,
             address = EXCLUDED.address,
             photo_url = COALESCE(EXCLUDED.photo_url, users.photo_url),
             student_photo = COALESCE(EXCLUDED.student_photo, users.student_photo),
+            register_number = EXCLUDED.register_number,
+            registration_no = EXCLUDED.registration_no,
+            enrolment_date = EXCLUDED.enrolment_date,
             updated_at = CURRENT_TIMESTAMP
         `, [
           userId,
           cleanMobile,
           data.studentName || data.name || 'Student',
           data.studentName || data.name || 'Student',
-          data.parentName || '',
+          data.parentName || data.fatherName || '',
           data.email || '',
           data.phone || cleanMobile,
-          data.grade || data.level || 'Level 1',
+          data.grade || data.level || data.courseLevel || 'Level 1',
           data.courseName || data.program || 'Abacus Speed Arithmetic',
           data.courseName || data.program || 'Abacus Speed Arithmetic',
           data.institution || data.branch || 'Tenkasi Regional Branch',
           data.branch || 'Tenkasi Regional Branch',
           data.address || '',
-          'Student',
           photoUrl,
           photoUrl,
           regNo,
           regNo,
-          data.enrolmentDate || new Date().toISOString().split('T')[0]
+          data.date || data.enrolmentDate || new Date().toISOString().split('T')[0]
         ]);
       }
 
@@ -252,24 +280,27 @@ const updateStudentHandler = async (req, res) => {
             age = COALESCE(NULLIF($7, ''), age),
             gender = COALESCE(NULLIF($8, ''), gender),
             student_class = COALESCE(NULLIF($9, ''), student_class),
-            address = COALESCE(NULLIF($10, ''), address),
-            village = COALESCE(NULLIF($11, ''), village),
-            city = COALESCE(NULLIF($12, ''), city),
-            district = COALESCE(NULLIF($13, ''), district),
-            pincode = COALESCE(NULLIF($14, ''), pincode),
-            aadhar_number = COALESCE(NULLIF($15, ''), aadhar_number),
-            course_name = COALESCE(NULLIF($16, ''), course_name),
-            program = COALESCE(NULLIF($16, ''), program),
-            grade = COALESCE(NULLIF($17, ''), grade),
-            branch = COALESCE(NULLIF($18, ''), branch),
-            institution = COALESCE(NULLIF($18, ''), institution),
-            photo_url = COALESCE(NULLIF($19, ''), photo_url)
-          WHERE id::text = $20 OR LOWER(user_id) = LOWER($20) OR LOWER(register_number) = LOWER($20)
+            student_stage = COALESCE(NULLIF($10, ''), student_stage),
+            address = COALESCE(NULLIF($11, ''), address),
+            village = COALESCE(NULLIF($12, ''), village),
+            city = COALESCE(NULLIF($13, ''), city),
+            district = COALESCE(NULLIF($14, ''), district),
+            pincode = COALESCE(NULLIF($15, ''), pincode),
+            aadhar_number = COALESCE(NULLIF($16, ''), aadhar_number),
+            course_name = COALESCE(NULLIF($17, ''), course_name),
+            program = COALESCE(NULLIF($17, ''), program),
+            grade = COALESCE(NULLIF($18, ''), grade),
+            branch = COALESCE(NULLIF($19, ''), branch),
+            institution = COALESCE(NULLIF($19, ''), institution),
+            photo_url = COALESCE(NULLIF($20, ''), photo_url),
+            selected_courses = COALESCE($21::jsonb, selected_courses)
+          WHERE id::text = $22 OR LOWER(user_id) = LOWER($22) OR LOWER(register_number) = LOWER($22)
           RETURNING *
         `, [
           studentName, parentName, phone, data.alternatePhone || '', email,
-          dob, age, gender, studentClass, address, village, city, district,
+          dob, age, gender, studentClass, data.studentStage || '', address, village, city, district,
           pincode, aadharNumber, courseName, grade, branch, photoUrl || '',
+          data.selectedCourses ? JSON.stringify(data.selectedCourses) : null,
           id
         ]);
         savedStudent = updateRes.rows[0];

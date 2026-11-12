@@ -53,13 +53,13 @@ const loadSavedProfile = (student) => {
         role: student.role || 'Student',
 
         // Registration & Admission official data
-        registerNumber: student.registerNumber || parsed.registerNumber,
-        registrationNo: student.registerNumber || parsed.registerNumber || parsed.registrationNo,
+        registerNumber: student.registerNumber || parsed.registerNumber || student.registrationNo,
+        registrationNo: student.registrationNo || student.registerNumber || parsed.registrationNo,
         registerNumbers: (Array.isArray(student.registerNumbers) && student.registerNumbers.length > 0)
           ? student.registerNumbers
           : (Array.isArray(parsed.registerNumbers) ? parsed.registerNumbers : []),
-        date: student.date || parsed.date || parsed.enrolmentDate,
-        enrolmentDate: student.enrolmentDate || parsed.enrolmentDate || student.date,
+        date: student.date || parsed.date || student.enrolmentDate || parsed.enrolmentDate,
+        enrolmentDate: student.enrolmentDate || student.date || parsed.enrolmentDate,
         branch: student.branch || parsed.branch,
         institution: student.institution || parsed.institution,
         studyCenter: student.studyCenter || parsed.studyCenter || student.branch,
@@ -90,6 +90,11 @@ const loadSavedProfile = (student) => {
           : (parsed.selectedCourses && parsed.selectedCourses.length > 1)
           ? parsed.selectedCourses.map((c) => `${c.courseName || c.name}: ${c.level || 'Level 1'}`).join(' | ')
           : (student.level || parsed.level || student.courseLevel || parsed.courseLevel),
+        grade: (student.selectedCourses && student.selectedCourses.length > 1)
+          ? student.selectedCourses.map((c) => `${c.courseName || c.name}: ${c.level || 'Level 1'}`).join(' | ')
+          : (parsed.selectedCourses && parsed.selectedCourses.length > 1)
+          ? parsed.selectedCourses.map((c) => `${c.courseName || c.name}: ${c.level || 'Level 1'}`).join(' | ')
+          : (student.grade || parsed.grade || student.courseLevel || parsed.courseLevel),
         courseDuration: student.courseDuration || parsed.courseDuration || student.duration || parsed.duration || '6 Months',
         duration: student.duration || parsed.duration || student.courseDuration || '6 Months',
         selectedCourses: (student.selectedCourses && student.selectedCourses.length > 0) ? student.selectedCourses : (parsed.selectedCourses || []),
@@ -101,14 +106,37 @@ const loadSavedProfile = (student) => {
         fatherName: student.fatherName || parsed.fatherName || student.parentName || parsed.parentName,
         dateOfBirth: student.dateOfBirth || parsed.dateOfBirth || student.dob || parsed.dob,
         dob: student.dob || parsed.dob || student.dateOfBirth || parsed.dateOfBirth,
-        gender: student.gender || parsed.gender,
-        aadhaarNumber: student.aadhaarNumber || parsed.aadhaarNumber || student.aadharNumber || parsed.aadharNumber,
-        aadharNumber: student.aadharNumber || parsed.aadharNumber || student.aadhaarNumber || parsed.aadhaarNumber,
-        studentClass: student.studentClass || parsed.studentClass,
-        studentStage: student.studentStage || parsed.studentStage,
-        feeAmount: student.feeAmount || parsed.feeAmount,
-        paymentMode: student.paymentMode || parsed.paymentMode,
-        receiptRefNo: student.receiptRefNo || parsed.receiptRefNo,
+        age: (student.age !== undefined && student.age !== null && String(student.age) !== '') ? String(student.age) : (parsed.age !== undefined && parsed.age !== null ? String(parsed.age) : ''),
+        gender: student.gender || parsed.gender || 'Male',
+        studentClass: student.studentClass || parsed.studentClass || '',
+        studentStage: student.studentStage || parsed.studentStage || '',
+        phone: student.phone || parsed.phone || '',
+        alternatePhone: student.alternatePhone || parsed.alternatePhone || student.alternativePhone || parsed.alternativePhone || '',
+        alternativePhone: student.alternatePhone || parsed.alternatePhone || student.alternativePhone || parsed.alternativePhone || '',
+        email: student.email || parsed.email || '',
+
+        // Permanent Address details
+        address: student.address || parsed.address || '',
+        village: student.village || parsed.village || '',
+        city: student.city || parsed.city || '',
+        district: student.district || parsed.district || '',
+        pincode: student.pincode || parsed.pincode || student.pinCode || parsed.pinCode || '',
+        pinCode: student.pincode || parsed.pincode || student.pinCode || parsed.pinCode || '',
+
+        // Identity
+        aadhaarNumber: student.aadhaarNumber || parsed.aadhaarNumber || student.aadharNumber || parsed.aadharNumber || student.aadhaar || parsed.aadhaar || '',
+        aadharNumber: student.aadharNumber || parsed.aadharNumber || student.aadhaarNumber || parsed.aadhaarNumber || student.aadhaar || parsed.aadhaar || '',
+        aadhaar: student.aadhaar || parsed.aadhaar || student.aadhaarNumber || parsed.aadhaarNumber || '',
+
+        // Photo
+        studentPhoto: student.studentPhoto || parsed.studentPhoto || student.photoUrl || parsed.photoUrl || null,
+        photoUrl: student.studentPhoto || parsed.studentPhoto || student.photoUrl || parsed.photoUrl || null,
+
+        // Payment & fee details
+        feePaymentType: student.feePaymentType || parsed.feePaymentType || 'Pay Now',
+        feeAmount: student.feeAmount || parsed.feeAmount || '',
+        paymentMode: student.paymentMode || parsed.paymentMode || '',
+        receiptRefNo: student.receiptRefNo || parsed.receiptRefNo || '',
       };
     }
   } catch (error) {
@@ -137,7 +165,7 @@ const normalizeStudent = (user) => {
           user.program ||
           user.course ||
           (selectedList[0]?.courseName || '') ||
-          'Abacus Speed Math (Level 4) & Fine Arts'
+          'Course Enrolled'
         );
 
   const studentLevel =
@@ -151,6 +179,8 @@ const normalizeStudent = (user) => {
           'Level 1'
         );
 
+  const regNo = user.registerNumber || user.registrationNo || (selectedList.length > 0 ? selectedList.map(c => c.registerNumber).filter(Boolean).join(', ') : '');
+
   const student = {
     ...user,
     name: user.studentName || user.name || 'Student',
@@ -163,6 +193,7 @@ const normalizeStudent = (user) => {
     program: studentCourse,
     courseLevel: studentLevel,
     level: studentLevel,
+    grade: studentLevel,
     courseDuration: user.courseDuration || user.duration || '6 Months',
     duration: user.duration || user.courseDuration || '6 Months',
 
@@ -172,19 +203,35 @@ const normalizeStudent = (user) => {
 
     parentName: user.parentName || user.fatherName || '',
     fatherName: user.parentName || user.fatherName || '',
-    registerNumber: user.registerNumber || user.registrationNo || '',
-    registrationNo: user.registerNumber || user.registrationNo || '',
-    registerNumbers: Array.isArray(user.registerNumbers) ? user.registerNumbers : [],
+    registerNumber: regNo,
+    registrationNo: regNo,
+    registerNumbers: (Array.isArray(user.registerNumbers) && user.registerNumbers.length > 0)
+      ? user.registerNumbers
+      : (selectedList.length > 0 ? selectedList.map(c => c.registerNumber).filter(Boolean) : (regNo ? regNo.split(',').map(s => s.trim()) : [])),
     dob: user.dob || user.dateOfBirth || '',
-    dateOfBirth: user.dob || user.dateOfBirth || '',
-    date: user.date || user.enrolmentDate || '',
+    dateOfBirth: user.dateOfBirth || user.dob || '',
+    age: user.age !== undefined && user.age !== null && String(user.age).trim() !== '' ? String(user.age) : '',
+    date: user.date || user.enrolmentDate || user.enrollmentDate || '',
+    enrolmentDate: user.enrolmentDate || user.date || '',
     studentClass: user.studentClass || '',
     studentStage: user.studentStage || '',
     gender: user.gender || 'Male',
-    aadhaarNumber: user.aadhaarNumber || user.aadharNumber || '',
-    aadharNumber: user.aadhaarNumber || user.aadharNumber || '',
+    phone: user.phone || '',
+    alternatePhone: user.alternatePhone || user.alternativePhone || '',
+    alternativePhone: user.alternatePhone || user.alternativePhone || '',
+    email: user.email || '',
+    address: user.address || '',
+    village: user.village || '',
+    city: user.city || '',
+    district: user.district || '',
+    pincode: user.pincode || user.pinCode || '',
+    pinCode: user.pincode || user.pinCode || '',
+    aadhaarNumber: user.aadhaarNumber || user.aadharNumber || user.aadhaar || '',
+    aadharNumber: user.aadhaarNumber || user.aadharNumber || user.aadhaar || '',
+    aadhaar: user.aadhaarNumber || user.aadharNumber || user.aadhaar || '',
     studentPhoto: user.studentPhoto || user.photoUrl || user.photoURL || user.profilePhoto || null,
     photoUrl: user.studentPhoto || user.photoUrl || user.photoURL || user.profilePhoto || null,
+    feePaymentType: user.feePaymentType || 'Pay Now',
     feeAmount: (Array.isArray(user.selectedCourses) && user.selectedCourses.length > 1)
       ? `₹${Math.max(
           user.selectedCourses.reduce((sum, c) => sum + (parseInt(String(c.fee || c.feeAmount || '').replace(/\D/g, ''), 10) || 450), 0),
@@ -193,7 +240,8 @@ const normalizeStudent = (user) => {
       : (user.feeAmount || ''),
     paymentMode: user.paymentMode || '',
     receiptRefNo: user.receiptRefNo || '',
-    selectedCourses: Array.isArray(user.selectedCourses) ? user.selectedCourses : (Array.isArray(user.courses) ? user.courses : []),
+    selectedCourses: selectedList,
+    courses: selectedList,
 
     events: Array.isArray(user.events) ? user.events : [],
     results: Array.isArray(user.results) ? user.results : [],

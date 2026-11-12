@@ -547,22 +547,29 @@ export const registerStudentAccount = (formData) => {
     }
     usedRegisterNumbers.add(registerNumber.toLowerCase());
 
+    const isPrimaryAccount = idx === 0;
+
     return {
       ...commonStudentData,
-      userId: idx === 0 ? newUserId : `${newUserId}-COURSE-${idx + 1}`,
+      userId: isPrimaryAccount ? newUserId : `${newUserId}-COURSE-${idx + 1}`,
       accountUserId: newUserId,
-      admissionOnly: idx > 0,
+      admissionOnly: !isPrimaryAccount,
       password: newPassword,
-      registerNumber,
-      registrationNo: registerNumber,
-      grade: course.level || 'Level 1',
-      selectedCourses: idx === 0 ? enrichedSelectedCourses : [course],
-      courses: idx === 0 ? enrichedSelectedCourses : [course],
-      program: course.courseName || course.name,
-      courseName: course.courseName || course.name,
-      feeAmount: course.fee || formData.feeAmount || '₹450',
-      events: idx === 0 ? generatedEvents : [generatedEvents[idx]],
-      results: idx === 0 ? generatedResults : [generatedResults[idx]]
+      registerNumber: isPrimaryAccount ? officialRegNo : registerNumber,
+      registrationNo: isPrimaryAccount ? officialRegNo : registerNumber,
+      primaryRegisterNumber: primaryRegNo,
+      registerNumbers: allRegNumbers,
+      grade: isPrimaryAccount ? (enrichedSelectedCourses.length === 1 ? (enrichedSelectedCourses[0].level || 'Level 1') : combinedLevels) : (course.level || 'Level 1'),
+      level: isPrimaryAccount ? (enrichedSelectedCourses.length === 1 ? (enrichedSelectedCourses[0].level || 'Level 1') : combinedLevels) : (course.level || 'Level 1'),
+      courseLevel: isPrimaryAccount ? (enrichedSelectedCourses.length === 1 ? (enrichedSelectedCourses[0].level || 'Level 1') : combinedLevels) : (course.level || 'Level 1'),
+      selectedCourses: isPrimaryAccount ? enrichedSelectedCourses : [course],
+      courses: isPrimaryAccount ? enrichedSelectedCourses : [course],
+      program: isPrimaryAccount ? combinedCourseNames : (course.courseName || course.name),
+      courseName: isPrimaryAccount ? combinedCourseNames : (course.courseName || course.name),
+      course: isPrimaryAccount ? combinedCourseNames : (course.courseName || course.name),
+      feeAmount: isPrimaryAccount ? (formData.feeAmount || `₹${enrichedSelectedCourses.reduce((sum, c) => sum + (c.fee || 450), 0)}`) : (course.fee ? `₹${course.fee}` : '₹450'),
+      events: isPrimaryAccount ? generatedEvents : [generatedEvents[idx]],
+      results: isPrimaryAccount ? generatedResults : [generatedResults[idx]]
     };
   });
   const newUser = admissionEntries[0];
@@ -903,8 +910,18 @@ export const updateUserProfile = (userId, updatedFields) => {
   users[index] = { ...users[index], ...updatedFields };
   try {
     localStorage.setItem('bsel_registered_users', JSON.stringify(users));
+    localStorage.setItem(`bsel_student_profile_${cleanId.toLowerCase()}`, JSON.stringify(users[index]));
+    const phoneDigits = (users[index].phone || '').replace(/\D/g, '');
+    if (phoneDigits) {
+      localStorage.setItem(`bsel_student_profile_${phoneDigits.slice(-10)}`, JSON.stringify(users[index]));
+    }
+    const currentActive = getActiveSession();
+    if (currentActive && (currentActive.userId?.toUpperCase() === cleanId || (currentActive.phone && currentActive.phone.replace(/\D/g, '').endsWith(phoneDigits.slice(-10))))) {
+      setActiveSession({ ...currentActive, ...users[index] });
+    }
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new Event('bsel_users_updated'));
+      window.dispatchEvent(new Event('bsel_session_changed'));
     }
   } catch (err) {
     console.error('Error updating user profile:', err);

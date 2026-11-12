@@ -31,20 +31,15 @@ const getProfileValues = (student = {}) => {
     ? student.selectedCourses
     : (Array.isArray(student.courses) && student.courses.length > 0 ? student.courses : []);
 
-  // Ensure each course has its unique official register number and fee
-  const usedRegs = [];
+  // Faithfully use exact official register numbers & fees as recorded during admission
   const selectedList = rawList.map((c, idx) => {
-    let reg = c.registerNumber || c.registrationNo;
-    if (!reg || reg === 'Not provided' || usedRegs.includes(reg) || (idx > 0 && reg === rawList[0]?.registerNumber)) {
-      reg = generateRegisterNumber(c.courseName || c.name || 'Abacus', usedRegs);
-    }
-    usedRegs.push(reg);
+    const existingReg = c.registerNumber || c.registrationNo || (Array.isArray(student.registerNumbers) ? student.registerNumbers[idx] : '') || '';
     const parsedFee = parseInt(String(c.fee || c.feeAmount || '').replace(/\D/g, ''), 10);
     return {
       ...c,
-      registerNumber: reg,
-      registrationNo: reg,
-      fee: !isNaN(parsedFee) && parsedFee > 0 ? parsedFee : (idx === 0 ? 450 : 400),
+      registerNumber: existingReg,
+      registrationNo: existingReg,
+      fee: !isNaN(parsedFee) && parsedFee > 0 ? parsedFee : (c.fee || 450),
     };
   });
 
@@ -52,7 +47,7 @@ const getProfileValues = (student = {}) => {
     ? selectedList.map(c => c.registerNumber).filter(Boolean)
     : (Array.isArray(student.registerNumbers) && student.registerNumbers.length > 0
         ? student.registerNumbers
-        : (student.registerNumber || student.registrationNo ? [student.registerNumber || student.registrationNo] : []));
+        : (student.registerNumber || student.registrationNo ? String(student.registerNumber || student.registrationNo).split(',').map(s => s.trim()).filter(Boolean) : []));
 
   const derivedRegisterNumber = allRegNumbers.length > 0
     ? allRegNumbers.join(', ')
@@ -75,8 +70,11 @@ const getProfileValues = (student = {}) => {
     ? `₹${Math.max(totalCoursesFee, isNaN(rawStudentFee) ? 0 : rawStudentFee)}`
     : (student.feeAmount || (selectedList[0]?.fee ? `₹${selectedList[0].fee}` : '₹450'));
 
+  const birthDate = student.dateOfBirth || student.dob || '';
+  const calculatedAge = birthDate ? calculateAge(birthDate) : '';
+
   return {
-    date: student.date || student.enrollmentDate || student.enrolmentDate || '',
+    date: student.date || student.enrolmentDate || student.enrollmentDate || '',
     registerNumber: derivedRegisterNumber,
     registerNumbers: allRegNumbers,
     branch: student.branch || student.institution || student.studyCenter || 'Tenkasi',
@@ -90,9 +88,9 @@ const getProfileValues = (student = {}) => {
     name: student.name || student.studentName || '',
     parentName: student.parentName || student.fatherName || '',
     fatherName: student.parentName || student.fatherName || '',
-    dateOfBirth: student.dateOfBirth || student.dob || '',
-    age: student.age ?? '',
-    gender: student.gender || '',
+    dateOfBirth: birthDate,
+    age: (student.age !== undefined && student.age !== null && String(student.age).trim() !== '') ? String(student.age) : calculatedAge,
+    gender: student.gender || 'Male',
     studentClass: student.studentClass || '',
     studentStage: student.studentStage || '',
     phone: student.phone || '',
@@ -104,7 +102,7 @@ const getProfileValues = (student = {}) => {
     district: student.district || '',
     pincode: student.pincode || student.pinCode || '',
 
-    aadhaarNumber: student.aadhaarNumber || student.aadharNumber || '',
+    aadhaarNumber: student.aadhaarNumber || student.aadharNumber || student.aadhaar || '',
 
     feePaymentType: student.feePaymentType || 'Pay Now',
     feeAmount: derivedFeeAmount,
