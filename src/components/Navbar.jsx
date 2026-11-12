@@ -35,7 +35,7 @@ export default function Navbar({ activePage, setActivePage, sessionUser }) {
 
   return (
     <>
-      <header className="sticky top-0 z-40 shadow-md">
+      <header className="fixed top-0 left-0 right-0 z-40 shadow-md">
         {/* Main Navigation Bar */}
         <nav className="bg-[#0F2B5C] text-white px-3 sm:px-6 lg:px-10 py-2.5 sm:py-3 transition-colors">
           <div className="w-full max-w-[1700px] mx-auto flex items-center justify-between gap-2">
