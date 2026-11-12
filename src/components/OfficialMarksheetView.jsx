@@ -4,7 +4,7 @@ import {
   Download,
   Printer,
   Loader2,
-  Upload,
+  Upload, Building2, Image as ImageIcon, X, PenTool,
 } from 'lucide-react';
 
 import { exportPdfFromElement } from '../utils/pdfExport';
@@ -13,188 +13,148 @@ import {
   getStudentRegisterNumber,
 } from '../utils/studentDataHelpers';
 import { getCoursePrefix } from '../utils/authStorage';
+import { getSavedMarksheet, getGrade } from '../utils/marksheetStorage';
 import marksheetOfficialTemplate from '../assets/marksheet_official_template.jpg';
 
 // ============================================================
 // COURSE SUBJECT MODULES
 // ============================================================
 
+const DEMO_MARKS = [96, 98, 94, 97, 95];
+
+// [keywords matched in the course name, 5 subject names]
+// Order matters: the first match wins.
+const COURSE_RULES = [
+  [['html'], [
+    'HTML5 Semantic Structure & Tags',
+    'Forms, Input Validation & Tables',
+    'Hyperlinks, Layouts & Media Tags',
+    'Responsive Architecture & Web DOM',
+    'Live Web Project & Viva Voce',
+  ]],
+  [['css'], [
+    'CSS Syntax, Selectors & Cascade',
+    'Box Model, Margins & Padding',
+    'Flexbox & CSS Grid Page Layouts',
+    'Media Queries & Responsive UI',
+    'Web Styling Portfolio & Viva',
+  ]],
+  [['python'], [
+    'Python Syntax & Data Types',
+    'Control Flow & Conditional Logic',
+    'Functions, Loops & String Handling',
+    'Data Structures & Problem Solving',
+    'Python Code Project & Viva Voce',
+  ]],
+  [['comput'], [
+    'Computer Architecture & Hardware',
+    'Operating Systems & File Handling',
+    'Internet Security & Cyber Safety',
+    'Keyboarding & Speed Typing Drills',
+    'IT Application Lab & Viva Voce',
+  ]],
+  [['office', 'ms'], [
+    'MS Word Document Formatting',
+    'MS Excel Formulas & Data Charts',
+    'MS PowerPoint Slide Design',
+    'Office Automation & Productivity',
+    'Applied Office Project & Viva',
+  ]],
+  [['photo'], [
+    'Interface, Layers & Selection Tools',
+    'Photo Retouching & Color Grading',
+    'Masking & Creative Composition',
+    'Banner, Poster & Graphic Design',
+    'Design Portfolio Review & Viva',
+  ]],
+  [['canva'], [
+    'Visual Design Hierarchy & Layouts',
+    'Typography & Color Harmony',
+    'Brand Kits & Social Media Assets',
+    'Poster, Flyer & Presentation Deck',
+    'Design Portfolio Assessment',
+  ]],
+  [['ai', 'artificial'], [
+    'Fundamentals of Artificial Intelligence',
+    'Prompt Engineering & Generative AI',
+    'AI Multimedia & Visual Synthesis',
+    'Digital Ethics & Fact Verification',
+    'Applied AI Capstone Project & Viva',
+  ]],
+  [['handwrit', 'calligraph'], [
+    'Basic Letter Formation & Slant',
+    'Cursive Flow & Ligature Joins',
+    'Word Spacing & Line Proportions',
+    'Speed Transcription Under Clock',
+    'Spotless Notebook Presentation',
+  ]],
+  [['art', 'draw'], [
+    'Freehand Sketching & Line Contour',
+    'Colour Theory & Shading Gradients',
+    'Thematic Creative Composition',
+    'Object, Perspective & Still Life',
+    'Art Portfolio & Viva Voce',
+  ]],
+  [['phonic', 'read'], [
+    '42 Core Phonemes & Letter Sounds',
+    'CVC Word Blending & Segmenting',
+    'Digraphs, Diphthongs & Sight Words',
+    'Oral Reading Fluency & Expression',
+    'Reading Comprehension & Viva',
+  ]],
+  [['memory', 'mnemon'], [
+    'Cognitive Concentration & Focus',
+    'Number Pegs & Mnemonic Systems',
+    'Memory Palace (Method of Loci)',
+    'Speed Face & Name Retention Drills',
+    'Memory Olympiad Practical Exam',
+  ]],
+  [['dance', 'bharatanatyam'], [
+    'Adavus & Basic Footwork Drills',
+    'Asamyutta & Samyutta Hastas (Mudras)',
+    'Rhythm, Tala & Laya Precision',
+    'Abhinaya, Facial Expression & Posture',
+    'Recital Performance & Guru Viva',
+  ]],
+  [['language', 'speak'], [
+    'Phonetics, Accent & Enunciation',
+    'Grammar Foundations & Sentences',
+    'Vocabulary & Contextual Phrases',
+    'Public Speaking & Extempore Drills',
+    'Conversational Fluency & Viva',
+  ]],
+  [['athletic', 'sport'], [
+    'Physical Conditioning & Warm-up',
+    'Sprint Technique & Cadence Drills',
+    'Agility, Balance & Coordination',
+    'Cardio Stamina & Field Endurance',
+    'Athletic Track Benchmark Exam',
+  ]],
+];
+
+// Default: Abacus Speed Arithmetic
+const ABACUS_SUBJECTS = [
+  'Abacus Operations & Bead Technique',
+  'Small Friend & Big Friend Formulas',
+  'Mental Arithmetic & Visual Anzan',
+  'Rapid Multi-Row Calculation Drills',
+  'Speed Arithmetic Accuracy & Viva',
+];
+
 export const getCourseSubjectModules = (courseName = '') => {
-  const c = courseName.toLowerCase();
+  const c = String(courseName).toLowerCase();
+  const rule = COURSE_RULES.find(([keys]) => keys.some((k) => c.includes(k)));
+  const names = rule ? rule[1] : ABACUS_SUBJECTS;
 
-  // 1. HTML5 & Web Development
-  if (c.includes('html')) {
-    return [
-      { id: 1, name: 'HTML5 Semantic Structure & Tags', max: 100, assessment: 100, practical: 100, marks: 96, pct: '96%' },
-      { id: 2, name: 'Forms, Input Validation & Tables', max: 100, assessment: 100, practical: 100, marks: 98, pct: '98%' },
-      { id: 3, name: 'Hyperlinks, Layouts & Media Tags', max: 100, assessment: 100, practical: 100, marks: 94, pct: '94%' },
-      { id: 4, name: 'Responsive Architecture & Web DOM', max: 100, assessment: 100, practical: 100, marks: 97, pct: '97%' },
-      { id: 5, name: 'Live Web Project & Viva Voce', max: 100, assessment: 100, practical: 100, marks: 95, pct: '95%' },
-    ];
-  }
-
-  // 2. CSS3 & Styling
-  if (c.includes('css')) {
-    return [
-      { id: 1, name: 'CSS Syntax, Selectors & Cascade', max: 100, assessment: 100, practical: 100, marks: 96, pct: '96%' },
-      { id: 2, name: 'Box Model, Margins & Padding', max: 100, assessment: 100, practical: 100, marks: 98, pct: '98%' },
-      { id: 3, name: 'Flexbox & CSS Grid Page Layouts', max: 100, assessment: 100, practical: 100, marks: 94, pct: '94%' },
-      { id: 4, name: 'Media Queries & Responsive UI', max: 100, assessment: 100, practical: 100, marks: 97, pct: '97%' },
-      { id: 5, name: 'Web Styling Portfolio & Viva', max: 100, assessment: 100, practical: 100, marks: 95, pct: '95%' },
-    ];
-  }
-
-  // 3. Python Programming
-  if (c.includes('python')) {
-    return [
-      { id: 1, name: 'Python Syntax & Data Types', max: 100, assessment: 100, practical: 100, marks: 96, pct: '96%' },
-      { id: 2, name: 'Control Flow & Conditional Logic', max: 100, assessment: 100, practical: 100, marks: 98, pct: '98%' },
-      { id: 3, name: 'Functions, Loops & String Handling', max: 100, assessment: 100, practical: 100, marks: 94, pct: '94%' },
-      { id: 4, name: 'Data Structures & Problem Solving', max: 100, assessment: 100, practical: 100, marks: 97, pct: '97%' },
-      { id: 5, name: 'Python Code Project & Viva Voce', max: 100, assessment: 100, practical: 100, marks: 95, pct: '95%' },
-    ];
-  }
-
-  // 4. Computer Fundamentals
-  if (c.includes('comput')) {
-    return [
-      { id: 1, name: 'Computer Architecture & Hardware', max: 100, assessment: 100, practical: 100, marks: 96, pct: '96%' },
-      { id: 2, name: 'Operating Systems & File Handling', max: 100, assessment: 100, practical: 100, marks: 98, pct: '98%' },
-      { id: 3, name: 'Internet Security & Cyber Safety', max: 100, assessment: 100, practical: 100, marks: 94, pct: '94%' },
-      { id: 4, name: 'Keyboarding & Speed Typing Drills', max: 100, assessment: 100, practical: 100, marks: 97, pct: '97%' },
-      { id: 5, name: 'IT Application Lab & Viva Voce', max: 100, assessment: 100, practical: 100, marks: 95, pct: '95%' },
-    ];
-  }
-
-  // 5. MS Office
-  if (c.includes('office') || c.includes('ms')) {
-    return [
-      { id: 1, name: 'MS Word Document Formatting', max: 100, assessment: 100, practical: 100, marks: 96, pct: '96%' },
-      { id: 2, name: 'MS Excel Formulas & Data Charts', max: 100, assessment: 100, practical: 100, marks: 98, pct: '98%' },
-      { id: 3, name: 'MS PowerPoint Slide Design', max: 100, assessment: 100, practical: 100, marks: 94, pct: '94%' },
-      { id: 4, name: 'Office Automation & Productivity', max: 100, assessment: 100, practical: 100, marks: 97, pct: '97%' },
-      { id: 5, name: 'Applied Office Project & Viva', max: 100, assessment: 100, practical: 100, marks: 95, pct: '95%' },
-    ];
-  }
-
-  // 6. Photoshop
-  if (c.includes('photo')) {
-    return [
-      { id: 1, name: 'Interface, Layers & Selection Tools', max: 100, assessment: 100, practical: 100, marks: 96, pct: '96%' },
-      { id: 2, name: 'Photo Retouching & Color Grading', max: 100, assessment: 100, practical: 100, marks: 98, pct: '98%' },
-      { id: 3, name: 'Masking & Creative Composition', max: 100, assessment: 100, practical: 100, marks: 94, pct: '94%' },
-      { id: 4, name: 'Banner, Poster & Graphic Design', max: 100, assessment: 100, practical: 100, marks: 97, pct: '97%' },
-      { id: 5, name: 'Design Portfolio Review & Viva', max: 100, assessment: 100, practical: 100, marks: 95, pct: '95%' },
-    ];
-  }
-
-  // 7. Canva Graphic Design
-  if (c.includes('canva')) {
-    return [
-      { id: 1, name: 'Visual Design Hierarchy & Layouts', max: 100, assessment: 100, practical: 100, marks: 96, pct: '96%' },
-      { id: 2, name: 'Typography & Color Harmony', max: 100, assessment: 100, practical: 100, marks: 98, pct: '98%' },
-      { id: 3, name: 'Brand Kits & Social Media Assets', max: 100, assessment: 100, practical: 100, marks: 94, pct: '94%' },
-      { id: 4, name: 'Poster, Flyer & Presentation Deck', max: 100, assessment: 100, practical: 100, marks: 97, pct: '97%' },
-      { id: 5, name: 'Design Portfolio Assessment', max: 100, assessment: 100, practical: 100, marks: 95, pct: '95%' },
-    ];
-  }
-
-  // 8. AI & Digital Skills
-  if (c.includes('ai') || c.includes('artificial')) {
-    return [
-      { id: 1, name: 'Fundamentals of Artificial Intelligence', max: 100, assessment: 100, practical: 100, marks: 96, pct: '96%' },
-      { id: 2, name: 'Prompt Engineering & Generative AI', max: 100, assessment: 100, practical: 100, marks: 98, pct: '98%' },
-      { id: 3, name: 'AI Multimedia & Visual Synthesis', max: 100, assessment: 100, practical: 100, marks: 94, pct: '94%' },
-      { id: 4, name: 'Digital Ethics & Fact Verification', max: 100, assessment: 100, practical: 100, marks: 97, pct: '97%' },
-      { id: 5, name: 'Applied AI Capstone Project & Viva', max: 100, assessment: 100, practical: 100, marks: 95, pct: '95%' },
-    ];
-  }
-
-  // 9. Handwriting & Calligraphy
-  if (c.includes('handwrit') || c.includes('calligraph')) {
-    return [
-      { id: 1, name: 'Basic Letter Formation & Slant', max: 100, assessment: 100, practical: 100, marks: 96, pct: '96%' },
-      { id: 2, name: 'Cursive Flow & Ligature Joins', max: 100, assessment: 100, practical: 100, marks: 98, pct: '98%' },
-      { id: 3, name: 'Word Spacing & Line Proportions', max: 100, assessment: 100, practical: 100, marks: 94, pct: '94%' },
-      { id: 4, name: 'Speed Transcription Under Clock', max: 100, assessment: 100, practical: 100, marks: 97, pct: '97%' },
-      { id: 5, name: 'Spotless Notebook Presentation', max: 100, assessment: 100, practical: 100, marks: 95, pct: '95%' },
-    ];
-  }
-
-  // 10. Drawing & Visual Arts
-  if (c.includes('art') || c.includes('draw')) {
-    return [
-      { id: 1, name: 'Freehand Sketching & Line Contour', max: 100, assessment: 100, practical: 100, marks: 96, pct: '96%' },
-      { id: 2, name: 'Colour Theory & Shading Gradients', max: 100, assessment: 100, practical: 100, marks: 98, pct: '98%' },
-      { id: 3, name: 'Thematic Creative Composition', max: 100, assessment: 100, practical: 100, marks: 94, pct: '94%' },
-      { id: 4, name: 'Object, Perspective & Still Life', max: 100, assessment: 100, practical: 100, marks: 97, pct: '97%' },
-      { id: 5, name: 'Art Portfolio & Viva Voce', max: 100, assessment: 100, practical: 100, marks: 95, pct: '95%' },
-    ];
-  }
-
-  // 11. Phonics & Reading
-  if (c.includes('phonic') || c.includes('read')) {
-    return [
-      { id: 1, name: '42 Core Phonemes & Letter Sounds', max: 100, assessment: 100, practical: 100, marks: 96, pct: '96%' },
-      { id: 2, name: 'CVC Word Blending & Segmenting', max: 100, assessment: 100, practical: 100, marks: 98, pct: '98%' },
-      { id: 3, name: 'Digraphs, Diphthongs & Sight Words', max: 100, assessment: 100, practical: 100, marks: 94, pct: '94%' },
-      { id: 4, name: 'Oral Reading Fluency & Expression', max: 100, assessment: 100, practical: 100, marks: 97, pct: '97%' },
-      { id: 5, name: 'Reading Comprehension & Viva', max: 100, assessment: 100, practical: 100, marks: 95, pct: '95%' },
-    ];
-  }
-
-  // 12. Memory Challenge
-  if (c.includes('memory') || c.includes('mnemon')) {
-    return [
-      { id: 1, name: 'Cognitive Concentration & Focus', max: 100, assessment: 100, practical: 100, marks: 96, pct: '96%' },
-      { id: 2, name: 'Number Pegs & Mnemonic Systems', max: 100, assessment: 100, practical: 100, marks: 98, pct: '98%' },
-      { id: 3, name: 'Memory Palace (Method of Loci)', max: 100, assessment: 100, practical: 100, marks: 94, pct: '94%' },
-      { id: 4, name: 'Speed Face & Name Retention Drills', max: 100, assessment: 100, practical: 100, marks: 97, pct: '97%' },
-      { id: 5, name: 'Memory Olympiad Practical Exam', max: 100, assessment: 100, practical: 100, marks: 95, pct: '95%' },
-    ];
-  }
-
-  // 13. Classical Dance / Bharatanatyam
-  if (c.includes('dance') || c.includes('bharatanatyam')) {
-    return [
-      { id: 1, name: 'Adavus & Basic Footwork Drills', max: 100, assessment: 100, practical: 100, marks: 96, pct: '96%' },
-      { id: 2, name: 'Asamyutta & Samyutta Hastas (Mudras)', max: 100, assessment: 100, practical: 100, marks: 98, pct: '98%' },
-      { id: 3, name: 'Rhythm, Tala & Laya Precision', max: 100, assessment: 100, practical: 100, marks: 94, pct: '94%' },
-      { id: 4, name: 'Abhinaya, Facial Expression & Posture', max: 100, assessment: 100, practical: 100, marks: 97, pct: '97%' },
-      { id: 5, name: 'Recital Performance & Guru Viva', max: 100, assessment: 100, practical: 100, marks: 95, pct: '95%' },
-    ];
-  }
-
-  // 14. Language & Speaking
-  if (c.includes('language') || c.includes('speak')) {
-    return [
-      { id: 1, name: 'Phonetics, Accent & Enunciation', max: 100, assessment: 100, practical: 100, marks: 96, pct: '96%' },
-      { id: 2, name: 'Grammar Foundations & Sentences', max: 100, assessment: 100, practical: 100, marks: 98, pct: '98%' },
-      { id: 3, name: 'Vocabulary & Contextual Phrases', max: 100, assessment: 100, practical: 100, marks: 94, pct: '94%' },
-      { id: 4, name: 'Public Speaking & Extempore Drills', max: 100, assessment: 100, practical: 100, marks: 97, pct: '97%' },
-      { id: 5, name: 'Conversational Fluency & Viva', max: 100, assessment: 100, practical: 100, marks: 95, pct: '95%' },
-    ];
-  }
-
-  // 15. Athletics & Sports
-  if (c.includes('athletic') || c.includes('sport')) {
-    return [
-      { id: 1, name: 'Physical Conditioning & Warm-up', max: 100, assessment: 100, practical: 100, marks: 96, pct: '96%' },
-      { id: 2, name: 'Sprint Technique & Cadence Drills', max: 100, assessment: 100, practical: 100, marks: 98, pct: '98%' },
-      { id: 3, name: 'Agility, Balance & Coordination', max: 100, assessment: 100, practical: 100, marks: 94, pct: '94%' },
-      { id: 4, name: 'Cardio Stamina & Field Endurance', max: 100, assessment: 100, practical: 100, marks: 97, pct: '97%' },
-      { id: 5, name: 'Athletic Track Benchmark Exam', max: 100, assessment: 100, practical: 100, marks: 95, pct: '95%' },
-    ];
-  }
-
-  // 16. Default: Abacus Speed Arithmetic
-  return [
-    { id: 1, name: 'Abacus Operations & Bead Technique', max: 100, assessment: 100, practical: 100, marks: 96, pct: '96%' },
-    { id: 2, name: 'Small Friend & Big Friend Formulas', max: 100, assessment: 100, practical: 100, marks: 98, pct: '98%' },
-    { id: 3, name: 'Mental Arithmetic & Visual Anzan', max: 100, assessment: 100, practical: 100, marks: 94, pct: '94%' },
-    { id: 4, name: 'Rapid Multi-Row Calculation Drills', max: 100, assessment: 100, practical: 100, marks: 97, pct: '97%' },
-    { id: 5, name: 'Speed Arithmetic Accuracy & Viva', max: 100, assessment: 100, practical: 100, marks: 95, pct: '95%' },
-  ];
+  return names.map((name, i) => ({
+    id: i + 1,
+    name,
+    max: 100,
+    assessment: 100,
+    practical: 100,
+    marks: DEMO_MARKS[i],
+    pct: `${DEMO_MARKS[i]}%`,
+  }));
 };
 
 // ============================================================
@@ -205,14 +165,138 @@ export default function OfficialMarksheetView({
   student,
   onClose,
   standalone = false,
-  defaultShowMarks = true,
+  defaultShowMarks = false,
 }) {
   const sheetRef = useRef(null);
   const fileInputRef = useRef(null);
 
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
-  const [showMarks, setShowMarks] = useState(defaultShowMarks);
+  const [showMarksFlag] = useState(defaultShowMarks);
   const [uploadedPhoto, setUploadedPhoto] = useState(null);
+
+  const schoolLogoInputRef = useRef(null);
+  const directorSignInputRef = useRef(null);
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+
+  const [customDirectorSign, setCustomDirectorSign] = useState(() => {
+    try {
+      const saved = localStorage.getItem('bsel_certificate_director_signature');
+      if (saved) return saved;
+    } catch (_) {}
+    return null;
+  });
+
+  const [customSchoolName, setCustomSchoolName] = useState(() => {
+    try {
+      const saved = localStorage.getItem('bsel_certificate_school_header');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.name) return parsed.name;
+      }
+    } catch (_) {}
+    return 'RISING STARS';
+  });
+
+  const [customSchoolSubtitle, setCustomSchoolSubtitle] = useState(() => {
+    try {
+      const saved = localStorage.getItem('bsel_certificate_school_header');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.subtitle) return parsed.subtitle;
+      }
+    } catch (_) {}
+    return 'VISION FOUNDATION';
+  });
+
+  const [customSchoolMotto, setCustomSchoolMotto] = useState(() => {
+    try {
+      const saved = localStorage.getItem('bsel_certificate_school_header');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.motto) return parsed.motto;
+      }
+    } catch (_) {}
+    return 'EDUCATION • EMPOWERMENT • EXCELLENCE';
+  });
+
+  const [customSchoolLogo, setCustomSchoolLogo] = useState(() => {
+    try {
+      const saved = localStorage.getItem('bsel_certificate_school_header');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.logo) return parsed.logo;
+      }
+    } catch (_) {}
+    return null;
+  });
+
+  const handleSaveSchoolDetails = (name, subtitle, motto, logo) => {
+    try {
+      localStorage.setItem(
+        'bsel_certificate_school_header',
+        JSON.stringify({ name, subtitle, motto, logo })
+      );
+    } catch (_) {}
+  };
+
+  const handleSchoolLogoChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const dataUrl = event.target.result;
+        setCustomSchoolLogo(dataUrl);
+        handleSaveSchoolDetails(customSchoolName, customSchoolSubtitle, customSchoolMotto, dataUrl);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleDirectorSignChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const dataUrl = event.target.result;
+        setCustomDirectorSign(dataUrl);
+        try {
+          localStorage.setItem('bsel_certificate_director_signature', dataUrl);
+        } catch (_) {}
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveDirectorSign = () => {
+    setCustomDirectorSign(null);
+    try {
+      localStorage.removeItem('bsel_certificate_director_signature');
+    } catch (_) {}
+  };
+
+  const getSchoolNameFontSize = (text) => {
+    const len = (text || '').trim().length;
+    if (len <= 7) return 'clamp(20px, 4.2vw, 33px)';
+    if (len <= 10) return 'clamp(17.5px, 3.7vw, 28px)';
+    if (len <= 13) return 'clamp(15px, 3.2vw, 24px)';
+    if (len <= 16) return 'clamp(13px, 2.75vw, 20.5px)';
+    if (len <= 20) return 'clamp(11.5px, 2.4vw, 18px)';
+    return 'clamp(10px, 2.1vw, 15.5px)';
+  };
+
+  const getSchoolSubtitleFontSize = (text) => {
+    const len = (text || '').trim().length;
+    if (len <= 12) return 'clamp(10px, 2.0vw, 15.5px)';
+    if (len <= 18) return 'clamp(9px, 1.75vw, 13.5px)';
+    return 'clamp(8px, 1.5vw, 11.5px)';
+  };
+
+  const getSchoolMottoFontSize = (text) => {
+    const len = (text || '').trim().length;
+    if (len <= 16) return 'clamp(7px, 1.35vw, 10.5px)';
+    if (len <= 22) return 'clamp(6.5px, 1.2vw, 9.5px)';
+    return 'clamp(6px, 1.05vw, 8.5px)';
+  };
 
   if (!student) return null;
 
@@ -222,22 +306,21 @@ export default function OfficialMarksheetView({
 
   const courseName = student.program || student.courseName || 'Abacus';
 
-  let subjects = getCourseSubjectModules(courseName);
+  // Marks saved by the admin on the "Student Marksheet" entry page
+  const savedSheet = getSavedMarksheet(student);
 
-  if (Array.isArray(student.subjects) && student.subjects.length === 5) {
-    const firstSub = (student.subjects[0]?.name || '').toLowerCase();
-    const cLower = courseName.toLowerCase();
+  // Marks appear automatically once the admin has saved them
+  const showMarks = showMarksFlag || Boolean(savedSheet);
 
-    const isMismatch =
-      (!cLower.includes('abacus') && firstSub.includes('abacus')) ||
-      (cLower.includes('html') && !firstSub.includes('html')) ||
-      (cLower.includes('css') && !firstSub.includes('css')) ||
-      (cLower.includes('python') && !firstSub.includes('python'));
-
-    if (!isMismatch) {
-      subjects = student.subjects;
-    }
-  }
+  const subjects = savedSheet
+    ? savedSheet.subjects.map((s) => ({
+        ...s,
+        assessment: s.assessment ?? s.max,
+        pct: `${Math.round(
+          ((Number(s.marks) || 0) / (Number(s.max) || 100)) * 100
+        )}%`,
+      }))
+    : getCourseSubjectModules(courseName);
 
   const totalMax = subjects.reduce(
     (sum, s) => sum + (Number(s.max) || 100),
@@ -245,7 +328,7 @@ export default function OfficialMarksheetView({
   );
 
   const totalMarks = subjects.reduce(
-    (sum, s) => sum + (Number(s.marks) || 95),
+    (sum, s) => sum + (Number(s.marks) || 0),
     0
   );
 
@@ -253,12 +336,7 @@ export default function OfficialMarksheetView({
     ? ((totalMarks / totalMax) * 100).toFixed(1)
     : '0.0';
 
-  const overallGrade =
-    Number(percentage) >= 95
-      ? 'A+'
-      : Number(percentage) >= 85
-        ? 'A'
-        : 'B+';
+  const overallGrade = getGrade(Number(percentage));
 
   const regNo =
     getStudentRegisterNumber(student) ||
@@ -433,6 +511,103 @@ export default function OfficialMarksheetView({
     >
 
       {/* =====================================================
+          0. TOP-RIGHT SCHOOL HEADER (LINE 1, 2, 3) & SCHOOL LOGO
+      ===================================================== */}
+
+      <div
+        onClick={() => !standalone && setIsFormModalOpen(true)}
+        className={`absolute flex flex-col items-center justify-center text-center select-none px-0.5 ${
+          standalone ? '' : 'cursor-pointer hover:ring-1 hover:ring-amber-400/50 rounded-md transition'
+        }`}
+        style={{
+          top: '2.7%',
+          left: '55.4%',
+          right: '13.5%',
+          height: '9.1%',
+        }}
+        title={standalone ? '' : 'Click to customize School Name, Logo & Principal Signature'}
+      >
+        {customSchoolName && (
+          <div
+            className="tracking-normal uppercase text-center w-full whitespace-nowrap"
+            style={{
+              color: '#13427a',
+              fontFamily: "'Cinzel', 'Outfit', 'Plus Jakarta Sans', sans-serif",
+              fontWeight: 900,
+              fontSize: getSchoolNameFontSize(customSchoolName),
+              letterSpacing: (customSchoolName || '').trim().length > 13 ? '-0.02em' : '0.02em',
+              lineHeight: 1.02,
+              textShadow: '0 0.5px 1px rgba(19, 66, 122, 0.2)',
+            }}
+          >
+            {customSchoolName}
+          </div>
+        )}
+
+        {customSchoolSubtitle && (
+          <div
+            className="uppercase mt-0.5 text-center w-full whitespace-nowrap"
+            style={{
+              color: '#13427a',
+              fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif",
+              fontWeight: 800,
+              fontSize: getSchoolSubtitleFontSize(customSchoolSubtitle),
+              letterSpacing: (customSchoolSubtitle || '').trim().length > 18 ? '0.05em' : '0.09em',
+              lineHeight: 1.05,
+            }}
+          >
+            {customSchoolSubtitle}
+          </div>
+        )}
+
+        {customSchoolMotto && (
+          <div
+            className="uppercase mt-0.5 text-center w-full whitespace-nowrap"
+            style={{
+              color: '#13427a',
+              fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif",
+              fontWeight: 700,
+              fontSize: getSchoolMottoFontSize(customSchoolMotto),
+              letterSpacing: '0.07em',
+              lineHeight: 1.05,
+            }}
+          >
+            {customSchoolMotto}
+          </div>
+        )}
+      </div>
+
+      {/* Extreme Right Corner: School Logo Container */}
+      <div
+        onClick={() => !standalone && setIsFormModalOpen(true)}
+        className={`absolute flex items-center justify-center select-none rounded-md overflow-hidden ${
+          standalone ? '' : 'cursor-pointer hover:ring-1 hover:ring-amber-400/50 transition'
+        }`}
+        style={{
+          top: '4.3%',
+          right: '5.2%',
+          width: '8.2%',
+          height: '6.2%',
+        }}
+        title={standalone ? '' : 'Click to upload/change School Logo'}
+      >
+        {customSchoolLogo ? (
+          <img
+            src={customSchoolLogo}
+            alt={customSchoolName || 'School Logo'}
+            className="w-full h-full object-contain drop-shadow-sm"
+          />
+        ) : !standalone ? (
+          <div className="w-full h-full border border-dashed border-[#13427a]/30 hover:border-amber-500/80 bg-white/40 flex flex-col items-center justify-center p-0.5 text-center transition group/slot print:hidden">
+            <ImageIcon className="w-3.5 h-3.5 text-[#13427a]/40 group-hover/slot:text-amber-500 mb-0.5" />
+            <span className="text-[5.5px] font-bold text-[#13427a]/60 uppercase leading-tight font-sans">
+              Logo
+            </span>
+          </div>
+        ) : null}
+      </div>
+
+      {/* =====================================================
           1. STUDENT & COURSE DETAILS
       ===================================================== */}
 
@@ -574,68 +749,6 @@ export default function OfficialMarksheetView({
         }}
       >
         {address}
-      </div>
-
-      {/* =====================================================
-          2. QR CODE
-      ===================================================== */}
-
-      <div
-        className="absolute bg-white flex items-center justify-center overflow-hidden p-1 shadow-2xs"
-        style={{
-          left: '63.4%',
-          top: '24.7%',
-          width: '11.2%',
-          height: '8.0%',
-        }}
-      >
-        <svg
-          viewBox="0 0 100 100"
-          className="w-full h-full text-[#081d3d] fill-current"
-        >
-          <rect x="5" y="5" width="28" height="28" fill="#081d3d" />
-          <rect x="9" y="9" width="20" height="20" fill="#ffffff" />
-          <rect x="13" y="13" width="12" height="12" fill="#081d3d" />
-
-          <rect x="67" y="5" width="28" height="28" fill="#081d3d" />
-          <rect x="71" y="9" width="20" height="20" fill="#ffffff" />
-          <rect x="75" y="13" width="12" height="12" fill="#081d3d" />
-
-          <rect x="5" y="67" width="28" height="28" fill="#081d3d" />
-          <rect x="9" y="71" width="20" height="20" fill="#ffffff" />
-          <rect x="13" y="75" width="12" height="12" fill="#081d3d" />
-
-          <rect x="38" y="8" width="6" height="6" />
-          <rect x="48" y="14" width="6" height="6" />
-          <rect x="56" y="8" width="6" height="6" />
-          <rect x="38" y="24" width="6" height="6" />
-          <rect x="48" y="28" width="6" height="6" />
-          <rect x="56" y="22" width="6" height="6" />
-
-          <rect x="8" y="38" width="6" height="6" />
-          <rect x="18" y="46" width="6" height="6" />
-          <rect x="26" y="38" width="6" height="6" />
-          <rect x="38" y="38" width="8" height="8" fill="#c59b27" />
-          <rect x="48" y="46" width="6" height="6" />
-          <rect x="58" y="38" width="6" height="6" />
-          <rect x="68" y="46" width="6" height="6" />
-          <rect x="78" y="38" width="6" height="6" />
-          <rect x="86" y="46" width="6" height="6" />
-
-          <rect x="38" y="58" width="6" height="6" />
-          <rect x="48" y="66" width="6" height="6" />
-          <rect x="58" y="58" width="6" height="6" />
-          <rect x="68" y="66" width="6" height="6" />
-          <rect x="78" y="58" width="6" height="6" />
-          <rect x="86" y="68" width="6" height="6" />
-
-          <rect x="38" y="78" width="6" height="6" />
-          <rect x="48" y="86" width="6" height="6" />
-          <rect x="58" y="78" width="6" height="6" />
-          <rect x="68" y="86" width="6" height="6" />
-          <rect x="78" y="78" width="6" height="6" />
-          <rect x="88" y="86" width="6" height="6" />
-        </svg>
       </div>
 
       {/* =====================================================
@@ -1044,48 +1157,52 @@ export default function OfficialMarksheetView({
       )}
 
       {/* =====================================================
-          7. CENTER DIRECTOR / PRINCIPAL SIGNATURE
+          7. CENTER DIRECTOR / PRINCIPAL SIGNATURE (Uploadable PNG/JPG)
       ===================================================== */}
 
       <div
-        className="
-          absolute
-          flex
-          items-end
-          justify-center
-          select-none
-          pointer-events-none
-        "
+        onClick={() => !standalone && setIsFormModalOpen(true)}
+        className={`absolute flex items-end justify-center select-none ${
+          standalone ? '' : 'cursor-pointer group/sign hover:ring-1 hover:ring-amber-400/50 rounded transition'
+        }`}
         style={{
           top: '94.0%',
           left: '18.44%',
           width: '16.0%',
-          height: '4.5%',
+          height: '5.5%',
           transform: 'translate(-50%, -100%)',
         }}
+        title={standalone ? '' : 'Click to open form & manage Principal signature'}
       >
-        <svg
-          viewBox="0 0 113 42"
-          className="
-            h-full
-            w-auto
-            text-[#081d3d]
-            fill-current
-            drop-shadow-2xs
-          "
-        >
-          <path d="
-            M 41 37 L 39 39 L 37 39 L 35 41 L 33 41 L 35 41 L 36 40 L 39 40 L 44 37 Z
-            M 7 37 L 4 41 L 6 41 Z
-            M 14 33 L 12 35 L 10 35 L 12 35 Z
-            M 60 32 L 58 34 L 53 35 L 57 35 L 59 33 L 62 32 Z
-            M 25 28 L 23 29 L 21 31 L 19 31 L 21 31 L 22 30 L 27 29 Z
-            M 20 13 L 19 16 L 20 18 L 22 18 L 24 20 L 32 21 L 36 23 L 38 25 L 40 28 L 40 30 L 37 33 L 37 34 L 35 36 L 33 37 L 31 37 L 28 40 L 26 41 L 23 41 L 26 41 L 30 40 L 33 38 L 36 36 L 43 30 L 46 31 L 53 29 L 51 26 L 48 25 L 46 27 L 43 27 L 40 24 L 37 22 L 34 22 L 26 18 L 23 18 L 21 16 L 22 13 Z
-            M 27 9 L 25 10 L 24 12 L 26 11 L 29 9 Z
-            M 76 6 L 75 8 L 74 10 L 73 14 L 70 20 L 68 22 L 68 23 L 67 24 L 65 25 L 63 25 L 61 24 L 55 26 L 55 28 L 59 28 L 61 26 L 64 27 L 65 26 L 68 27 L 66 31 L 69 31 L 69 28 L 71 26 L 78 26 L 84 24 L 86 24 L 87 25 L 89 25 L 91 23 L 93 22 L 96 23 L 96 24 L 101 25 L 103 24 L 101 24 L 100 23 L 97 22 L 97 20 L 93 19 L 93 21 L 91 23 L 89 23 L 87 21 L 84 21 L 82 22 L 78 25 L 73 24 L 74 22 L 75 21 L 78 20 L 77 17 L 74 16 L 74 14 L 79 7 L 80 5 L 80 3 Z
-            M 42 2 L 39 3 L 37 4 L 35 6 L 32 7 L 35 7 L 40 4 L 43 4 L 47 2 L 49 5 L 43 10 L 46 9 L 50 5 L 49 2 L 48 2 Z
-          " />
-        </svg>
+        {customDirectorSign ? (
+          <div className="relative h-full w-full flex items-end justify-center">
+            <img
+              src={customDirectorSign}
+              alt="Center Director / Principal Signature"
+              className="max-h-full max-w-full object-contain drop-shadow-2xs"
+            />
+            {!standalone && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRemoveDirectorSign();
+                }}
+                className="absolute -top-1.5 -right-1.5 bg-red-600 hover:bg-red-700 text-white rounded-full p-0.5 opacity-0 group-hover/sign:opacity-100 transition shadow-sm print:hidden"
+                title="Remove Signature"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            )}
+          </div>
+        ) : !standalone ? (
+          <div className="w-full h-full border border-dashed border-[#081d3d]/30 hover:border-amber-500/80 bg-white/40 flex items-center justify-center gap-1 px-1 transition print:hidden">
+            <PenTool className="w-2.5 h-2.5 text-[#081d3d]/45 shrink-0" />
+            <span className="text-[6.5px] font-bold text-[#081d3d]/60 uppercase leading-none">
+              Upload Sign
+            </span>
+          </div>
+        ) : null}
       </div>
 
     </div>
@@ -1107,7 +1224,7 @@ export default function OfficialMarksheetView({
     <div className="
       fixed
       inset-0
-      z-50
+      z-[150]
       overflow-y-auto
       overflow-x-hidden
       bg-slate-900/85
@@ -1273,7 +1390,7 @@ export default function OfficialMarksheetView({
           "
         >
           <ArrowLeft className="w-4 h-4 shrink-0" />
-          <span>Back to Student List</span>
+          <span>Back to Student Details</span>
         </button>
 
         {/* Action Buttons */}
@@ -1287,19 +1404,19 @@ export default function OfficialMarksheetView({
           sm:w-auto
         ">
 
-          {/* Remove / Show Marks */}
+          {/* Customize Marksheet Form */}
           <button
             type="button"
-            onClick={() => setShowMarks((prev) => !prev)}
+            onClick={() => setIsFormModalOpen(true)}
             className="
               flex-1
               sm:flex-none
               px-2
               sm:px-3
               py-2
-              bg-white/10
-              hover:bg-white/20
-              text-white
+              bg-amber-500/20
+              hover:bg-amber-500/30
+              text-amber-300
               rounded-lg
               text-[10px]
               sm:text-xs
@@ -1310,14 +1427,13 @@ export default function OfficialMarksheetView({
               justify-center
               gap-1
               border
-              border-white/20
+              border-amber-400/40
               cursor-pointer
             "
-            title="Toggle marks display on/off"
+            title="Customize School Name, Logo & Principal Signature"
           >
-            <span>
-              {showMarks ? 'Remove Marks' : 'Show Marks'}
-            </span>
+            <PenTool className="w-3.5 h-3.5 shrink-0" />
+            <span>Customize</span>
           </button>
 
           {/* Download PDF */}
@@ -1397,6 +1513,213 @@ export default function OfficialMarksheetView({
 
         </div>
       </div>
+
+      {/* Hidden file inputs for School Logo & Principal Signature */}
+      <input
+        type="file"
+        ref={schoolLogoInputRef}
+        accept="image/png,image/jpeg,image/jpg,image/webp"
+        className="hidden"
+        onChange={handleSchoolLogoChange}
+      />
+      <input
+        type="file"
+        ref={directorSignInputRef}
+        accept="image/png,image/jpeg,image/jpg,image/webp"
+        className="hidden"
+        onChange={handleDirectorSignChange}
+      />
+
+      {/* Pop-up Customization Form Modal */}
+      {isFormModalOpen && (
+        <div
+          className="fixed inset-0 z-[170] flex items-center justify-center bg-black/75 backdrop-blur-sm p-3 sm:p-4 print:hidden"
+          onClick={() => setIsFormModalOpen(false)}
+        >
+          <div
+            className="bg-slate-900 border border-slate-700 rounded-2xl p-4 sm:p-6 max-w-xl w-full shadow-2xl text-white flex flex-col gap-4 max-h-[92vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-slate-700/80 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center">
+                  <Building2 className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm sm:text-base font-bold text-white">
+                    Marksheet Customization Form
+                  </h3>
+                  <p className="text-[11px] text-slate-400">
+                    Update branch details, school logo & principal signature
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsFormModalOpen(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Form Fields */}
+            <div className="flex flex-col gap-3.5">
+              {/* Line 1 */}
+              <div className="flex flex-col gap-1">
+                <label className="text-[11px] font-semibold text-slate-300 flex justify-between">
+                  <span>Line 1: School / Branch Name <span className="text-amber-400 font-bold">(Max 20 chars, Big & Bold)</span></span>
+                  <span className="text-amber-400 font-bold">{customSchoolName.length}/20</span>
+                </label>
+                <input
+                  type="text"
+                  value={customSchoolName}
+                  maxLength={20}
+                  placeholder="e.g. RISING STARS"
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setCustomSchoolName(v);
+                    handleSaveSchoolDetails(v, customSchoolSubtitle, customSchoolMotto, customSchoolLogo);
+                  }}
+                  className="px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white font-serif uppercase tracking-wider text-sm font-black focus:outline-none focus:border-amber-400"
+                />
+              </div>
+
+              {/* Line 2 */}
+              <div className="flex flex-col gap-1">
+                <label className="text-[11px] font-semibold text-slate-300 flex justify-between">
+                  <span>Line 2: Subtitle / Division <span className="text-amber-400 font-bold">(Max 25 chars, Medium)</span></span>
+                  <span className="text-amber-400 font-bold">{customSchoolSubtitle.length}/25</span>
+                </label>
+                <input
+                  type="text"
+                  value={customSchoolSubtitle}
+                  maxLength={25}
+                  placeholder="e.g. VISION FOUNDATION"
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setCustomSchoolSubtitle(v);
+                    handleSaveSchoolDetails(customSchoolName, v, customSchoolMotto, customSchoolLogo);
+                  }}
+                  className="px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white font-sans uppercase tracking-widest text-xs font-bold focus:outline-none focus:border-amber-400"
+                />
+              </div>
+
+              {/* Line 3 */}
+              <div className="flex flex-col gap-1">
+                <label className="text-[11px] font-semibold text-slate-300 flex justify-between">
+                  <span>Line 3: Motto / Tagline <span className="text-amber-400 font-bold">(Max 30 chars, Small)</span></span>
+                  <span className="text-amber-400 font-bold">{customSchoolMotto.length}/30</span>
+                </label>
+                <input
+                  type="text"
+                  value={customSchoolMotto}
+                  maxLength={30}
+                  placeholder="e.g. EDUCATION ? EMPOWERMENT ? EXCELLENCE"
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setCustomSchoolMotto(v);
+                    handleSaveSchoolDetails(customSchoolName, customSchoolSubtitle, v, customSchoolLogo);
+                  }}
+                  className="px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white font-sans uppercase tracking-wider text-xs focus:outline-none focus:border-amber-400"
+                />
+              </div>
+
+              {/* Uploads Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-800">
+                {/* School Logo */}
+                <div className="bg-slate-950/70 border border-slate-800 p-3 rounded-xl flex flex-col gap-2">
+                  <span className="text-[11px] font-bold text-slate-300 flex items-center gap-1.5">
+                    <ImageIcon className="w-3.5 h-3.5 text-amber-400" />
+                    School Logo (PNG, JPG)
+                  </span>
+                  <div className="flex items-center gap-3">
+                    {customSchoolLogo ? (
+                      <div className="w-12 h-12 bg-white/10 rounded-lg p-1 border border-slate-700 shrink-0">
+                        <img src={customSchoolLogo} alt="Logo" className="w-full h-full object-contain" />
+                      </div>
+                    ) : (
+                      <div className="w-12 h-12 border border-dashed border-slate-700 rounded-lg flex items-center justify-center shrink-0 text-slate-500">
+                        <ImageIcon className="w-5 h-5" />
+                      </div>
+                    )}
+                    <div className="flex flex-col gap-1 flex-1">
+                      <button
+                        type="button"
+                        onClick={() => schoolLogoInputRef.current?.click()}
+                        className="px-2.5 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-lg text-xs transition cursor-pointer text-center"
+                      >
+                        {customSchoolLogo ? 'Change Logo' : 'Upload Logo'}
+                      </button>
+                      {customSchoolLogo && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCustomSchoolLogo(null);
+                            handleSaveSchoolDetails(customSchoolName, customSchoolSubtitle, customSchoolMotto, null);
+                          }}
+                          className="text-[10px] text-red-400 hover:underline cursor-pointer text-left"
+                        >
+                          Remove Logo
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Principal Signature */}
+                <div className="bg-slate-950/70 border border-slate-800 p-3 rounded-xl flex flex-col gap-2">
+                  <span className="text-[11px] font-bold text-slate-300 flex items-center gap-1.5">
+                    <PenTool className="w-3.5 h-3.5 text-sky-400" />
+                    Principal Signature (PNG, JPG)
+                  </span>
+                  <div className="flex items-center gap-3">
+                    {customDirectorSign ? (
+                      <div className="w-12 h-12 bg-white/10 rounded-lg p-1 border border-slate-700 shrink-0 flex items-center justify-center">
+                        <img src={customDirectorSign} alt="Signature" className="max-h-full max-w-full object-contain" />
+                      </div>
+                    ) : (
+                      <div className="w-12 h-12 border border-dashed border-slate-700 rounded-lg flex items-center justify-center shrink-0 text-slate-500">
+                        <PenTool className="w-5 h-5" />
+                      </div>
+                    )}
+                    <div className="flex flex-col gap-1 flex-1">
+                      <button
+                        type="button"
+                        onClick={() => directorSignInputRef.current?.click()}
+                        className="px-2.5 py-1.5 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-lg text-xs transition cursor-pointer text-center"
+                      >
+                        {customDirectorSign ? 'Change Signature' : 'Upload Signature'}
+                      </button>
+                      {customDirectorSign && (
+                        <button
+                          type="button"
+                          onClick={handleRemoveDirectorSign}
+                          className="text-[10px] text-red-400 hover:underline cursor-pointer text-left"
+                        >
+                          Remove Signature
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
+              <button
+                type="button"
+                onClick={() => setIsFormModalOpen(false)}
+                className="px-5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs sm:text-sm transition cursor-pointer shadow-md"
+              >
+                Save & Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* =====================================================
           MARKSHEET PREVIEW

@@ -232,31 +232,29 @@ export default function Certificate({
   };
   const { line1: addressLine1, line2: addressLine2 } = formatAddress(centreAddress);
 
-  // Dynamic font sizing so full school details are prominent, bold and strictly single-line without '...' truncation
+  // Dynamic font sizing scaled proportionally (1024/724) to match OfficialMarksheetView's exact visual dimensions
   const getSchoolNameFontSize = (text) => {
     const len = (text || '').trim().length;
-    if (len <= 7) return '26px';    // Big & Bold (e.g. 'OXFORD', 'B★SEL')
-    if (len <= 10) return '23px';   // e.g. 'APEX ACADEMY'
-    if (len <= 13) return '21px';   // e.g. 'RISING STARS'
-    if (len <= 16) return '19px';   // e.g. 'RISING STARS HI'
-    if (len <= 20) return '17px';   // up to 20 chars
-    return '15px';                  // 21+ chars cleanly scaled
+    if (len <= 7) return 'clamp(26px, 5.8vw, 46px)';
+    if (len <= 10) return 'clamp(23px, 5.1vw, 39px)';
+    if (len <= 13) return 'clamp(20px, 4.4vw, 34px)';
+    if (len <= 16) return 'clamp(17px, 3.8vw, 29px)';
+    if (len <= 20) return 'clamp(15px, 3.3vw, 25px)';
+    return 'clamp(13px, 2.9vw, 22px)';
   };
 
   const getSchoolSubtitleFontSize = (text) => {
     const len = (text || '').trim().length;
-    if (len <= 12) return '15px';
-    if (len <= 18) return '13.5px';
-    if (len <= 24) return '12px';
-    return '11px';
+    if (len <= 12) return 'clamp(13px, 2.8vw, 22px)';
+    if (len <= 18) return 'clamp(11.5px, 2.4vw, 19px)';
+    return 'clamp(10.5px, 2.1vw, 16px)';
   };
 
   const getSchoolMottoFontSize = (text) => {
     const len = (text || '').trim().length;
-    if (len <= 16) return '12px';
-    if (len <= 22) return '10.5px';
-    if (len <= 28) return '9.5px';
-    return '8.5px';
+    if (len <= 16) return 'clamp(9.5px, 1.9vw, 15px)';
+    if (len <= 22) return 'clamp(8.5px, 1.7vw, 13.5px)';
+    return 'clamp(8px, 1.5vw, 12px)';
   };
 
   const handleDownloadPdf = async () => {
@@ -592,24 +590,25 @@ export default function Certificate({
             onClick={() => setIsFormModalOpen(true)}
             className="absolute flex flex-col items-center justify-center text-center select-none cursor-pointer hover:ring-1 hover:ring-amber-400/50 rounded-md transition px-1"
             style={{
-              top: '20px',
-              left: '566px',
-              right: '128px',
-              height: '124px'
+              top: '2.8%',
+              left: '55.3%',
+              right: '12.5%',
+              height: '17.1%'
             }}
             title="Click to open Certificate Customization Form"
           >
             {/* Line 1: School Name (Heavy Bold weight 900, sized cleanly, never truncating with '...') */}
             {customSchoolName && (
               <div 
-                className="tracking-wider uppercase text-center w-full whitespace-nowrap"
+                className="tracking-normal uppercase text-center w-full whitespace-nowrap"
                 style={{
                   color: '#13427a',
                   fontFamily: "'Cinzel', 'Outfit', 'Plus Jakarta Sans', sans-serif",
                   fontWeight: 900,
                   fontSize: getSchoolNameFontSize(customSchoolName),
-                  lineHeight: 1.15,
-                  textShadow: '0 0.5px 1px rgba(19, 66, 122, 0.25)'
+                  letterSpacing: (customSchoolName || '').trim().length > 13 ? '-0.02em' : '0.02em',
+                  lineHeight: 1.02,
+                  textShadow: '0 0.5px 1px rgba(19, 66, 122, 0.2)'
                 }}
               >
                 {customSchoolName}
@@ -619,14 +618,14 @@ export default function Certificate({
             {/* Line 2: Subtitle (Heavy Bold weight 800) */}
             {customSchoolSubtitle && (
               <div 
-                className="uppercase mt-1.5 text-center w-full whitespace-nowrap"
+                className="uppercase mt-0.5 text-center w-full whitespace-nowrap"
                 style={{
                   color: '#13427a',
                   fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif",
                   fontWeight: 800,
                   fontSize: getSchoolSubtitleFontSize(customSchoolSubtitle),
-                  letterSpacing: '0.12em',
-                  lineHeight: 1.15
+                  letterSpacing: (customSchoolSubtitle || '').trim().length > 18 ? '0.05em' : '0.09em',
+                  lineHeight: 1.05
                 }}
               >
                 {customSchoolSubtitle}
@@ -636,14 +635,14 @@ export default function Certificate({
             {/* Line 3: Motto / Tagline (Bold weight 700) */}
             {customSchoolMotto && (
               <div 
-                className="uppercase mt-1 text-center w-full whitespace-nowrap"
+                className="uppercase mt-0.5 text-center w-full whitespace-nowrap"
                 style={{
                   color: '#13427a',
                   fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif",
                   fontWeight: 700,
                   fontSize: getSchoolMottoFontSize(customSchoolMotto),
-                  letterSpacing: '0.08em',
-                  lineHeight: 1.15
+                  letterSpacing: '0.07em',
+                  lineHeight: 1.05
                 }}
               >
                 {customSchoolMotto}
@@ -656,10 +655,10 @@ export default function Certificate({
             onClick={() => setIsFormModalOpen(true)}
             className="absolute flex items-center justify-center select-none cursor-pointer rounded-md overflow-hidden hover:ring-1 hover:ring-amber-400/50 transition"
             style={{
-              top: '38px',
-              right: '36px',
-              width: '86px',
-              height: '86px'
+              top: '5.2%',
+              right: '3.5%',
+              width: '8.4%',
+              height: '11.9%'
             }}
             title="Click to open Certificate Customization Form (School Logo)"
           >
@@ -764,8 +763,8 @@ export default function Certificate({
             <span className="text-[#13427a] font-black tracking-wider">{displayCourseUpper}</span>
           </div>
 
-          {/* 4. LEVEL & GRADE (Perfectly Centered Inside the Gold Hexagon Badge at exact y: 51.7% / 373.5px) */}
-          <div 
+          {/* 4. LEVEL (Perfectly Centered Inside the Gold Hexagon Badge at exact y: 51.7% / 373.5px) */}
+          <div
             className="absolute -translate-x-1/2 -translate-y-1/2 flex items-center justify-center text-center font-black uppercase text-[#13427a] select-none pointer-events-none"
             style={{
               top: '51.7%',
@@ -779,12 +778,6 @@ export default function Certificate({
             }}
           >
             <span className="text-[#13427a] font-black">{formattedLevel}</span>
-            {formattedGrade && (
-              <>
-                <span className="mx-2 text-[#13427a] font-black">•</span>
-                <span className="text-[#13427a] font-black">{formattedGrade}</span>
-              </>
-            )}
           </div>
 
           {/* =========================================================================
