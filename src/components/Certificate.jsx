@@ -561,6 +561,90 @@ export default function Certificate({
         </span>
       </div>
 
+      {/* Scoped CSS for Perfect Mobile Responsive Scaling */}
+      <style>{`
+        .certificate-container {
+          container-type: inline-size;
+        }
+
+        /* Mobile View Scaling: Keeps all elements perfectly proportioned without overlaps */
+        @container (max-width: 640px) {
+          .cert-school-name {
+            font-size: clamp(7px, 2.1cqw, 13px) !important;
+            letter-spacing: 0.01em !important;
+            line-height: 1.05 !important;
+          }
+          .cert-school-subtitle {
+            font-size: clamp(5.2px, 1.45cqw, 9.5px) !important;
+            letter-spacing: 0.03em !important;
+            line-height: 1.05 !important;
+          }
+          .cert-school-motto {
+            font-size: clamp(3.8px, 1.05cqw, 6.8px) !important;
+            letter-spacing: 0.02em !important;
+            line-height: 1.05 !important;
+          }
+          .cert-candidate-name {
+            font-size: clamp(12px, 3.2cqw, 22px) !important;
+            line-height: 1.05 !important;
+          }
+          .cert-course-title {
+            font-size: clamp(7px, 1.7cqw, 12px) !important;
+            line-height: 1.1 !important;
+          }
+          .cert-level-text {
+            font-size: clamp(5.5px, 1.35cqw, 9px) !important;
+            line-height: 1 !important;
+          }
+          .cert-table-value {
+            font-size: clamp(4.2px, 1.05cqw, 7.5px) !important;
+            line-height: 1 !important;
+          }
+          .cert-table-value-lg {
+            font-size: clamp(3.8px, 0.95cqw, 7px) !important;
+            line-height: 1 !important;
+          }
+        }
+
+        @media (max-width: 640px) {
+          .cert-school-name {
+            font-size: clamp(7px, 2.1vw, 13px) !important;
+            letter-spacing: 0.01em !important;
+            line-height: 1.05 !important;
+          }
+          .cert-school-subtitle {
+            font-size: clamp(5.2px, 1.45vw, 9.5px) !important;
+            letter-spacing: 0.03em !important;
+            line-height: 1.05 !important;
+          }
+          .cert-school-motto {
+            font-size: clamp(3.8px, 1.05vw, 6.8px) !important;
+            letter-spacing: 0.02em !important;
+            line-height: 1.05 !important;
+          }
+          .cert-candidate-name {
+            font-size: clamp(12px, 3.2vw, 22px) !important;
+            line-height: 1.05 !important;
+          }
+          .cert-course-title {
+            font-size: clamp(7px, 1.7vw, 12px) !important;
+            line-height: 1.1 !important;
+          }
+          .cert-level-text {
+            font-size: clamp(5.5px, 1.35vw, 9px) !important;
+            line-height: 1 !important;
+          }
+          .cert-table-value {
+            font-size: clamp(4.2px, 1.05vw, 7.5px) !important;
+            line-height: 1 !important;
+          }
+          .cert-table-value-lg {
+            font-size: clamp(3.8px, 0.95vw, 7px) !important;
+            line-height: 1 !important;
+          }
+        }
+      `}</style>
+
       {/* =========================================================================
           OFFICIAL HIGH-RESOLUTION CERTIFICATE CANVAS
           Rendered using the user's custom template background with dynamic editable overlays
@@ -576,7 +660,8 @@ export default function Certificate({
             backgroundImage: `url(${certificateTemplate})`,
             backgroundSize: '100% 100%',
             backgroundRepeat: 'no-repeat',
-            backgroundPosition: 'center center'
+            backgroundPosition: 'center center',
+            containerType: 'inline-size'
           }}
         >
           {/* ===================================================================
@@ -600,7 +685,7 @@ export default function Certificate({
             {/* Line 1: School Name (Heavy Bold weight 900, sized cleanly, never truncating with '...') */}
             {customSchoolName && (
               <div 
-                className="tracking-normal uppercase text-center w-full whitespace-nowrap"
+                className="tracking-normal uppercase text-center w-full whitespace-nowrap cert-school-name"
                 style={{
                   color: '#13427a',
                   fontFamily: "'Cinzel', 'Outfit', 'Plus Jakarta Sans', sans-serif",
@@ -618,7 +703,7 @@ export default function Certificate({
             {/* Line 2: Subtitle (Heavy Bold weight 800) */}
             {customSchoolSubtitle && (
               <div 
-                className="uppercase mt-0.5 text-center w-full whitespace-nowrap"
+                className="uppercase mt-0.5 text-center w-full whitespace-nowrap cert-school-subtitle"
                 style={{
                   color: '#13427a',
                   fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif",
@@ -635,7 +720,7 @@ export default function Certificate({
             {/* Line 3: Motto / Tagline (Bold weight 700) */}
             {customSchoolMotto && (
               <div 
-                className="uppercase mt-0.5 text-center w-full whitespace-nowrap"
+                className="uppercase mt-0.5 text-center w-full whitespace-nowrap cert-school-motto"
                 style={{
                   color: '#13427a',
                   fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif",
@@ -735,7 +820,7 @@ export default function Certificate({
             }}
           >
             <span 
-              className="capitalize text-[#13427a] font-serif font-bold italic block truncate px-2"
+              className="capitalize text-[#13427a] font-serif font-bold italic block truncate px-2 cert-candidate-name"
               style={{
                 fontSize: 'clamp(20px, 3.0vw, 36px)',
                 letterSpacing: '0.025em',
@@ -760,7 +845,7 @@ export default function Certificate({
               lineHeight: 1.2
             }}
           >
-            <span className="text-[#13427a] font-black tracking-wider">{displayCourseUpper}</span>
+            <span className="text-[#13427a] font-black tracking-wider cert-course-title">{displayCourseUpper}</span>
           </div>
 
           {/* 4. LEVEL (Perfectly Centered Inside the Gold Hexagon Badge at exact y: 51.7% / 373.5px) */}
@@ -777,7 +862,7 @@ export default function Certificate({
               lineHeight: 1
             }}
           >
-            <span className="text-[#13427a] font-black">{formattedLevel}</span>
+            <span className="text-[#13427a] font-black cert-level-text">{formattedLevel}</span>
           </div>
 
           {/* =========================================================================
@@ -792,7 +877,7 @@ export default function Certificate({
           {/* --- LEFT COLUMN VALUES --- */}
           {/* Row 1: Registration No */}
           <div 
-            className="absolute font-bold text-[#13427a] select-none truncate flex items-center"
+            className="absolute font-bold text-[#13427a] select-none truncate flex items-center cert-table-value"
             style={{
               top: '64.3%',
               left: '22.6%',
@@ -810,7 +895,7 @@ export default function Certificate({
 
           {/* Row 2: Certificate No */}
           <div 
-            className="absolute font-bold text-[#13427a] select-none truncate flex items-center"
+            className="absolute font-bold text-[#13427a] select-none truncate flex items-center cert-table-value"
             style={{
               top: '67.3%',
               left: '22.6%',
@@ -828,7 +913,7 @@ export default function Certificate({
 
           {/* Row 3: Course */}
           <div 
-            className="absolute font-bold text-[#13427a] select-none uppercase flex items-center"
+            className="absolute font-bold text-[#13427a] select-none uppercase flex items-center cert-table-value-lg"
             style={{
               top: '70.2%',
               left: '22.6%',
@@ -846,7 +931,7 @@ export default function Certificate({
 
           {/* Row 4: Level */}
           <div 
-            className="absolute font-bold text-[#13427a] select-none truncate capitalize flex items-center"
+            className="absolute font-bold text-[#13427a] select-none truncate capitalize flex items-center cert-table-value"
             style={{
               top: '73.2%',
               left: '22.6%',
@@ -864,7 +949,7 @@ export default function Certificate({
 
           {/* Row 5: Duration */}
           <div 
-            className="absolute font-bold text-[#13427a] select-none truncate capitalize flex items-center"
+            className="absolute font-bold text-[#13427a] select-none truncate capitalize flex items-center cert-table-value"
             style={{
               top: '76.2%',
               left: '22.6%',
@@ -883,7 +968,7 @@ export default function Certificate({
           {/* --- RIGHT COLUMN VALUES --- */}
           {/* Row 1: School / Examination Centre */}
           <div 
-            className="absolute font-bold text-[#13427a] select-none truncate capitalize flex items-center"
+            className="absolute font-bold text-[#13427a] select-none truncate capitalize flex items-center cert-table-value"
             style={{
               top: '64.3%',
               left: '76.5%',
@@ -901,7 +986,7 @@ export default function Certificate({
 
           {/* Row 2: Code */}
           <div 
-            className="absolute font-bold text-[#13427a] select-none truncate flex items-center"
+            className="absolute font-bold text-[#13427a] select-none truncate flex items-center cert-table-value"
             style={{
               top: '67.3%',
               left: '76.5%',
@@ -919,7 +1004,7 @@ export default function Certificate({
 
           {/* Row 3: Address Line 1 */}
           <div 
-            className="absolute font-bold text-[#13427a] select-none truncate capitalize flex items-center"
+            className="absolute font-bold text-[#13427a] select-none truncate capitalize flex items-center cert-table-value-lg"
             style={{
               top: '70.2%',
               left: '76.5%',
@@ -938,7 +1023,7 @@ export default function Certificate({
           {/* Row 4: Address Line 2 (graceful wrapping into blank Row 4 area on the right) */}
           {addressLine2 && (
             <div 
-              className="absolute font-bold text-[#13427a] select-none truncate capitalize flex items-center"
+              className="absolute font-bold text-[#13427a] select-none truncate capitalize flex items-center cert-table-value-lg"
               style={{
                 top: '73.2%',
                 left: '76.5%',
@@ -957,7 +1042,7 @@ export default function Certificate({
 
           {/* Row 5: Date of Issue */}
           <div 
-            className="absolute font-bold text-[#13427a] select-none truncate flex items-center"
+            className="absolute font-bold text-[#13427a] select-none truncate flex items-center cert-table-value"
             style={{
               top: '76.2%',
               left: '76.5%',
