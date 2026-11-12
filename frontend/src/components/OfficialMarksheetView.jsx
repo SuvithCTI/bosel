@@ -13,188 +13,148 @@ import {
   getStudentRegisterNumber,
 } from '../utils/studentDataHelpers';
 import { getCoursePrefix } from '../utils/authStorage';
+import { getSavedMarksheet, getGrade } from '../utils/marksheetStorage';
 import marksheetOfficialTemplate from '../assets/marksheet_official_template.jpg';
 
 // ============================================================
 // COURSE SUBJECT MODULES
 // ============================================================
 
+const DEMO_MARKS = [96, 98, 94, 97, 95];
+
+// [keywords matched in the course name, 5 subject names]
+// Order matters: the first match wins.
+const COURSE_RULES = [
+  [['html'], [
+    'HTML5 Semantic Structure & Tags',
+    'Forms, Input Validation & Tables',
+    'Hyperlinks, Layouts & Media Tags',
+    'Responsive Architecture & Web DOM',
+    'Live Web Project & Viva Voce',
+  ]],
+  [['css'], [
+    'CSS Syntax, Selectors & Cascade',
+    'Box Model, Margins & Padding',
+    'Flexbox & CSS Grid Page Layouts',
+    'Media Queries & Responsive UI',
+    'Web Styling Portfolio & Viva',
+  ]],
+  [['python'], [
+    'Python Syntax & Data Types',
+    'Control Flow & Conditional Logic',
+    'Functions, Loops & String Handling',
+    'Data Structures & Problem Solving',
+    'Python Code Project & Viva Voce',
+  ]],
+  [['comput'], [
+    'Computer Architecture & Hardware',
+    'Operating Systems & File Handling',
+    'Internet Security & Cyber Safety',
+    'Keyboarding & Speed Typing Drills',
+    'IT Application Lab & Viva Voce',
+  ]],
+  [['office', 'ms'], [
+    'MS Word Document Formatting',
+    'MS Excel Formulas & Data Charts',
+    'MS PowerPoint Slide Design',
+    'Office Automation & Productivity',
+    'Applied Office Project & Viva',
+  ]],
+  [['photo'], [
+    'Interface, Layers & Selection Tools',
+    'Photo Retouching & Color Grading',
+    'Masking & Creative Composition',
+    'Banner, Poster & Graphic Design',
+    'Design Portfolio Review & Viva',
+  ]],
+  [['canva'], [
+    'Visual Design Hierarchy & Layouts',
+    'Typography & Color Harmony',
+    'Brand Kits & Social Media Assets',
+    'Poster, Flyer & Presentation Deck',
+    'Design Portfolio Assessment',
+  ]],
+  [['ai', 'artificial'], [
+    'Fundamentals of Artificial Intelligence',
+    'Prompt Engineering & Generative AI',
+    'AI Multimedia & Visual Synthesis',
+    'Digital Ethics & Fact Verification',
+    'Applied AI Capstone Project & Viva',
+  ]],
+  [['handwrit', 'calligraph'], [
+    'Basic Letter Formation & Slant',
+    'Cursive Flow & Ligature Joins',
+    'Word Spacing & Line Proportions',
+    'Speed Transcription Under Clock',
+    'Spotless Notebook Presentation',
+  ]],
+  [['art', 'draw'], [
+    'Freehand Sketching & Line Contour',
+    'Colour Theory & Shading Gradients',
+    'Thematic Creative Composition',
+    'Object, Perspective & Still Life',
+    'Art Portfolio & Viva Voce',
+  ]],
+  [['phonic', 'read'], [
+    '42 Core Phonemes & Letter Sounds',
+    'CVC Word Blending & Segmenting',
+    'Digraphs, Diphthongs & Sight Words',
+    'Oral Reading Fluency & Expression',
+    'Reading Comprehension & Viva',
+  ]],
+  [['memory', 'mnemon'], [
+    'Cognitive Concentration & Focus',
+    'Number Pegs & Mnemonic Systems',
+    'Memory Palace (Method of Loci)',
+    'Speed Face & Name Retention Drills',
+    'Memory Olympiad Practical Exam',
+  ]],
+  [['dance', 'bharatanatyam'], [
+    'Adavus & Basic Footwork Drills',
+    'Asamyutta & Samyutta Hastas (Mudras)',
+    'Rhythm, Tala & Laya Precision',
+    'Abhinaya, Facial Expression & Posture',
+    'Recital Performance & Guru Viva',
+  ]],
+  [['language', 'speak'], [
+    'Phonetics, Accent & Enunciation',
+    'Grammar Foundations & Sentences',
+    'Vocabulary & Contextual Phrases',
+    'Public Speaking & Extempore Drills',
+    'Conversational Fluency & Viva',
+  ]],
+  [['athletic', 'sport'], [
+    'Physical Conditioning & Warm-up',
+    'Sprint Technique & Cadence Drills',
+    'Agility, Balance & Coordination',
+    'Cardio Stamina & Field Endurance',
+    'Athletic Track Benchmark Exam',
+  ]],
+];
+
+// Default: Abacus Speed Arithmetic
+const ABACUS_SUBJECTS = [
+  'Abacus Operations & Bead Technique',
+  'Small Friend & Big Friend Formulas',
+  'Mental Arithmetic & Visual Anzan',
+  'Rapid Multi-Row Calculation Drills',
+  'Speed Arithmetic Accuracy & Viva',
+];
+
 export const getCourseSubjectModules = (courseName = '') => {
-  const c = courseName.toLowerCase();
+  const c = String(courseName).toLowerCase();
+  const rule = COURSE_RULES.find(([keys]) => keys.some((k) => c.includes(k)));
+  const names = rule ? rule[1] : ABACUS_SUBJECTS;
 
-  // 1. HTML5 & Web Development
-  if (c.includes('html')) {
-    return [
-      { id: 1, name: 'HTML5 Semantic Structure & Tags', max: 100, assessment: 100, practical: 100, marks: 96, pct: '96%' },
-      { id: 2, name: 'Forms, Input Validation & Tables', max: 100, assessment: 100, practical: 100, marks: 98, pct: '98%' },
-      { id: 3, name: 'Hyperlinks, Layouts & Media Tags', max: 100, assessment: 100, practical: 100, marks: 94, pct: '94%' },
-      { id: 4, name: 'Responsive Architecture & Web DOM', max: 100, assessment: 100, practical: 100, marks: 97, pct: '97%' },
-      { id: 5, name: 'Live Web Project & Viva Voce', max: 100, assessment: 100, practical: 100, marks: 95, pct: '95%' },
-    ];
-  }
-
-  // 2. CSS3 & Styling
-  if (c.includes('css')) {
-    return [
-      { id: 1, name: 'CSS Syntax, Selectors & Cascade', max: 100, assessment: 100, practical: 100, marks: 96, pct: '96%' },
-      { id: 2, name: 'Box Model, Margins & Padding', max: 100, assessment: 100, practical: 100, marks: 98, pct: '98%' },
-      { id: 3, name: 'Flexbox & CSS Grid Page Layouts', max: 100, assessment: 100, practical: 100, marks: 94, pct: '94%' },
-      { id: 4, name: 'Media Queries & Responsive UI', max: 100, assessment: 100, practical: 100, marks: 97, pct: '97%' },
-      { id: 5, name: 'Web Styling Portfolio & Viva', max: 100, assessment: 100, practical: 100, marks: 95, pct: '95%' },
-    ];
-  }
-
-  // 3. Python Programming
-  if (c.includes('python')) {
-    return [
-      { id: 1, name: 'Python Syntax & Data Types', max: 100, assessment: 100, practical: 100, marks: 96, pct: '96%' },
-      { id: 2, name: 'Control Flow & Conditional Logic', max: 100, assessment: 100, practical: 100, marks: 98, pct: '98%' },
-      { id: 3, name: 'Functions, Loops & String Handling', max: 100, assessment: 100, practical: 100, marks: 94, pct: '94%' },
-      { id: 4, name: 'Data Structures & Problem Solving', max: 100, assessment: 100, practical: 100, marks: 97, pct: '97%' },
-      { id: 5, name: 'Python Code Project & Viva Voce', max: 100, assessment: 100, practical: 100, marks: 95, pct: '95%' },
-    ];
-  }
-
-  // 4. Computer Fundamentals
-  if (c.includes('comput')) {
-    return [
-      { id: 1, name: 'Computer Architecture & Hardware', max: 100, assessment: 100, practical: 100, marks: 96, pct: '96%' },
-      { id: 2, name: 'Operating Systems & File Handling', max: 100, assessment: 100, practical: 100, marks: 98, pct: '98%' },
-      { id: 3, name: 'Internet Security & Cyber Safety', max: 100, assessment: 100, practical: 100, marks: 94, pct: '94%' },
-      { id: 4, name: 'Keyboarding & Speed Typing Drills', max: 100, assessment: 100, practical: 100, marks: 97, pct: '97%' },
-      { id: 5, name: 'IT Application Lab & Viva Voce', max: 100, assessment: 100, practical: 100, marks: 95, pct: '95%' },
-    ];
-  }
-
-  // 5. MS Office
-  if (c.includes('office') || c.includes('ms')) {
-    return [
-      { id: 1, name: 'MS Word Document Formatting', max: 100, assessment: 100, practical: 100, marks: 96, pct: '96%' },
-      { id: 2, name: 'MS Excel Formulas & Data Charts', max: 100, assessment: 100, practical: 100, marks: 98, pct: '98%' },
-      { id: 3, name: 'MS PowerPoint Slide Design', max: 100, assessment: 100, practical: 100, marks: 94, pct: '94%' },
-      { id: 4, name: 'Office Automation & Productivity', max: 100, assessment: 100, practical: 100, marks: 97, pct: '97%' },
-      { id: 5, name: 'Applied Office Project & Viva', max: 100, assessment: 100, practical: 100, marks: 95, pct: '95%' },
-    ];
-  }
-
-  // 6. Photoshop
-  if (c.includes('photo')) {
-    return [
-      { id: 1, name: 'Interface, Layers & Selection Tools', max: 100, assessment: 100, practical: 100, marks: 96, pct: '96%' },
-      { id: 2, name: 'Photo Retouching & Color Grading', max: 100, assessment: 100, practical: 100, marks: 98, pct: '98%' },
-      { id: 3, name: 'Masking & Creative Composition', max: 100, assessment: 100, practical: 100, marks: 94, pct: '94%' },
-      { id: 4, name: 'Banner, Poster & Graphic Design', max: 100, assessment: 100, practical: 100, marks: 97, pct: '97%' },
-      { id: 5, name: 'Design Portfolio Review & Viva', max: 100, assessment: 100, practical: 100, marks: 95, pct: '95%' },
-    ];
-  }
-
-  // 7. Canva Graphic Design
-  if (c.includes('canva')) {
-    return [
-      { id: 1, name: 'Visual Design Hierarchy & Layouts', max: 100, assessment: 100, practical: 100, marks: 96, pct: '96%' },
-      { id: 2, name: 'Typography & Color Harmony', max: 100, assessment: 100, practical: 100, marks: 98, pct: '98%' },
-      { id: 3, name: 'Brand Kits & Social Media Assets', max: 100, assessment: 100, practical: 100, marks: 94, pct: '94%' },
-      { id: 4, name: 'Poster, Flyer & Presentation Deck', max: 100, assessment: 100, practical: 100, marks: 97, pct: '97%' },
-      { id: 5, name: 'Design Portfolio Assessment', max: 100, assessment: 100, practical: 100, marks: 95, pct: '95%' },
-    ];
-  }
-
-  // 8. AI & Digital Skills
-  if (c.includes('ai') || c.includes('artificial')) {
-    return [
-      { id: 1, name: 'Fundamentals of Artificial Intelligence', max: 100, assessment: 100, practical: 100, marks: 96, pct: '96%' },
-      { id: 2, name: 'Prompt Engineering & Generative AI', max: 100, assessment: 100, practical: 100, marks: 98, pct: '98%' },
-      { id: 3, name: 'AI Multimedia & Visual Synthesis', max: 100, assessment: 100, practical: 100, marks: 94, pct: '94%' },
-      { id: 4, name: 'Digital Ethics & Fact Verification', max: 100, assessment: 100, practical: 100, marks: 97, pct: '97%' },
-      { id: 5, name: 'Applied AI Capstone Project & Viva', max: 100, assessment: 100, practical: 100, marks: 95, pct: '95%' },
-    ];
-  }
-
-  // 9. Handwriting & Calligraphy
-  if (c.includes('handwrit') || c.includes('calligraph')) {
-    return [
-      { id: 1, name: 'Basic Letter Formation & Slant', max: 100, assessment: 100, practical: 100, marks: 96, pct: '96%' },
-      { id: 2, name: 'Cursive Flow & Ligature Joins', max: 100, assessment: 100, practical: 100, marks: 98, pct: '98%' },
-      { id: 3, name: 'Word Spacing & Line Proportions', max: 100, assessment: 100, practical: 100, marks: 94, pct: '94%' },
-      { id: 4, name: 'Speed Transcription Under Clock', max: 100, assessment: 100, practical: 100, marks: 97, pct: '97%' },
-      { id: 5, name: 'Spotless Notebook Presentation', max: 100, assessment: 100, practical: 100, marks: 95, pct: '95%' },
-    ];
-  }
-
-  // 10. Drawing & Visual Arts
-  if (c.includes('art') || c.includes('draw')) {
-    return [
-      { id: 1, name: 'Freehand Sketching & Line Contour', max: 100, assessment: 100, practical: 100, marks: 96, pct: '96%' },
-      { id: 2, name: 'Colour Theory & Shading Gradients', max: 100, assessment: 100, practical: 100, marks: 98, pct: '98%' },
-      { id: 3, name: 'Thematic Creative Composition', max: 100, assessment: 100, practical: 100, marks: 94, pct: '94%' },
-      { id: 4, name: 'Object, Perspective & Still Life', max: 100, assessment: 100, practical: 100, marks: 97, pct: '97%' },
-      { id: 5, name: 'Art Portfolio & Viva Voce', max: 100, assessment: 100, practical: 100, marks: 95, pct: '95%' },
-    ];
-  }
-
-  // 11. Phonics & Reading
-  if (c.includes('phonic') || c.includes('read')) {
-    return [
-      { id: 1, name: '42 Core Phonemes & Letter Sounds', max: 100, assessment: 100, practical: 100, marks: 96, pct: '96%' },
-      { id: 2, name: 'CVC Word Blending & Segmenting', max: 100, assessment: 100, practical: 100, marks: 98, pct: '98%' },
-      { id: 3, name: 'Digraphs, Diphthongs & Sight Words', max: 100, assessment: 100, practical: 100, marks: 94, pct: '94%' },
-      { id: 4, name: 'Oral Reading Fluency & Expression', max: 100, assessment: 100, practical: 100, marks: 97, pct: '97%' },
-      { id: 5, name: 'Reading Comprehension & Viva', max: 100, assessment: 100, practical: 100, marks: 95, pct: '95%' },
-    ];
-  }
-
-  // 12. Memory Challenge
-  if (c.includes('memory') || c.includes('mnemon')) {
-    return [
-      { id: 1, name: 'Cognitive Concentration & Focus', max: 100, assessment: 100, practical: 100, marks: 96, pct: '96%' },
-      { id: 2, name: 'Number Pegs & Mnemonic Systems', max: 100, assessment: 100, practical: 100, marks: 98, pct: '98%' },
-      { id: 3, name: 'Memory Palace (Method of Loci)', max: 100, assessment: 100, practical: 100, marks: 94, pct: '94%' },
-      { id: 4, name: 'Speed Face & Name Retention Drills', max: 100, assessment: 100, practical: 100, marks: 97, pct: '97%' },
-      { id: 5, name: 'Memory Olympiad Practical Exam', max: 100, assessment: 100, practical: 100, marks: 95, pct: '95%' },
-    ];
-  }
-
-  // 13. Classical Dance / Bharatanatyam
-  if (c.includes('dance') || c.includes('bharatanatyam')) {
-    return [
-      { id: 1, name: 'Adavus & Basic Footwork Drills', max: 100, assessment: 100, practical: 100, marks: 96, pct: '96%' },
-      { id: 2, name: 'Asamyutta & Samyutta Hastas (Mudras)', max: 100, assessment: 100, practical: 100, marks: 98, pct: '98%' },
-      { id: 3, name: 'Rhythm, Tala & Laya Precision', max: 100, assessment: 100, practical: 100, marks: 94, pct: '94%' },
-      { id: 4, name: 'Abhinaya, Facial Expression & Posture', max: 100, assessment: 100, practical: 100, marks: 97, pct: '97%' },
-      { id: 5, name: 'Recital Performance & Guru Viva', max: 100, assessment: 100, practical: 100, marks: 95, pct: '95%' },
-    ];
-  }
-
-  // 14. Language & Speaking
-  if (c.includes('language') || c.includes('speak')) {
-    return [
-      { id: 1, name: 'Phonetics, Accent & Enunciation', max: 100, assessment: 100, practical: 100, marks: 96, pct: '96%' },
-      { id: 2, name: 'Grammar Foundations & Sentences', max: 100, assessment: 100, practical: 100, marks: 98, pct: '98%' },
-      { id: 3, name: 'Vocabulary & Contextual Phrases', max: 100, assessment: 100, practical: 100, marks: 94, pct: '94%' },
-      { id: 4, name: 'Public Speaking & Extempore Drills', max: 100, assessment: 100, practical: 100, marks: 97, pct: '97%' },
-      { id: 5, name: 'Conversational Fluency & Viva', max: 100, assessment: 100, practical: 100, marks: 95, pct: '95%' },
-    ];
-  }
-
-  // 15. Athletics & Sports
-  if (c.includes('athletic') || c.includes('sport')) {
-    return [
-      { id: 1, name: 'Physical Conditioning & Warm-up', max: 100, assessment: 100, practical: 100, marks: 96, pct: '96%' },
-      { id: 2, name: 'Sprint Technique & Cadence Drills', max: 100, assessment: 100, practical: 100, marks: 98, pct: '98%' },
-      { id: 3, name: 'Agility, Balance & Coordination', max: 100, assessment: 100, practical: 100, marks: 94, pct: '94%' },
-      { id: 4, name: 'Cardio Stamina & Field Endurance', max: 100, assessment: 100, practical: 100, marks: 97, pct: '97%' },
-      { id: 5, name: 'Athletic Track Benchmark Exam', max: 100, assessment: 100, practical: 100, marks: 95, pct: '95%' },
-    ];
-  }
-
-  // 16. Default: Abacus Speed Arithmetic
-  return [
-    { id: 1, name: 'Abacus Operations & Bead Technique', max: 100, assessment: 100, practical: 100, marks: 96, pct: '96%' },
-    { id: 2, name: 'Small Friend & Big Friend Formulas', max: 100, assessment: 100, practical: 100, marks: 98, pct: '98%' },
-    { id: 3, name: 'Mental Arithmetic & Visual Anzan', max: 100, assessment: 100, practical: 100, marks: 94, pct: '94%' },
-    { id: 4, name: 'Rapid Multi-Row Calculation Drills', max: 100, assessment: 100, practical: 100, marks: 97, pct: '97%' },
-    { id: 5, name: 'Speed Arithmetic Accuracy & Viva', max: 100, assessment: 100, practical: 100, marks: 95, pct: '95%' },
-  ];
+  return names.map((name, i) => ({
+    id: i + 1,
+    name,
+    max: 100,
+    assessment: 100,
+    practical: 100,
+    marks: DEMO_MARKS[i],
+    pct: `${DEMO_MARKS[i]}%`,
+  }));
 };
 
 // ============================================================
@@ -211,7 +171,7 @@ export default function OfficialMarksheetView({
   const fileInputRef = useRef(null);
 
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
-  const [showMarks, setShowMarks] = useState(defaultShowMarks);
+  const [showMarksFlag] = useState(defaultShowMarks);
   const [uploadedPhoto, setUploadedPhoto] = useState(null);
 
   const schoolLogoInputRef = useRef(null);
@@ -346,22 +306,21 @@ export default function OfficialMarksheetView({
 
   const courseName = student.program || student.courseName || 'Abacus';
 
-  let subjects = getCourseSubjectModules(courseName);
+  // Marks saved by the admin on the "Student Marksheet" entry page
+  const savedSheet = getSavedMarksheet(student);
 
-  if (Array.isArray(student.subjects) && student.subjects.length === 5) {
-    const firstSub = (student.subjects[0]?.name || '').toLowerCase();
-    const cLower = courseName.toLowerCase();
+  // Marks appear automatically once the admin has saved them
+  const showMarks = showMarksFlag || Boolean(savedSheet);
 
-    const isMismatch =
-      (!cLower.includes('abacus') && firstSub.includes('abacus')) ||
-      (cLower.includes('html') && !firstSub.includes('html')) ||
-      (cLower.includes('css') && !firstSub.includes('css')) ||
-      (cLower.includes('python') && !firstSub.includes('python'));
-
-    if (!isMismatch) {
-      subjects = student.subjects;
-    }
-  }
+  const subjects = savedSheet
+    ? savedSheet.subjects.map((s) => ({
+        ...s,
+        assessment: s.assessment ?? s.max,
+        pct: `${Math.round(
+          ((Number(s.marks) || 0) / (Number(s.max) || 100)) * 100
+        )}%`,
+      }))
+    : getCourseSubjectModules(courseName);
 
   const totalMax = subjects.reduce(
     (sum, s) => sum + (Number(s.max) || 100),
@@ -369,7 +328,7 @@ export default function OfficialMarksheetView({
   );
 
   const totalMarks = subjects.reduce(
-    (sum, s) => sum + (Number(s.marks) || 95),
+    (sum, s) => sum + (Number(s.marks) || 0),
     0
   );
 
@@ -377,12 +336,7 @@ export default function OfficialMarksheetView({
     ? ((totalMarks / totalMax) * 100).toFixed(1)
     : '0.0';
 
-  const overallGrade =
-    Number(percentage) >= 95
-      ? 'A+'
-      : Number(percentage) >= 85
-        ? 'A'
-        : 'B+';
+  const overallGrade = getGrade(Number(percentage));
 
   const regNo =
     getStudentRegisterNumber(student) ||
