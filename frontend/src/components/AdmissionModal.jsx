@@ -397,19 +397,6 @@ export default function AdmissionModal({
     }
   }, [isOpen]);
 
-  if (!isOpen) return null;
-
-  const filteredDistricts = TAMIL_NADU_DISTRICTS.filter((d) =>
-    d.toLowerCase().includes(districtSearch.toLowerCase().trim())
-  );
-
-  const allBranchOptions = availableBranches.filter((b) => b !== 'Other');
-
-  const filteredBranches = allBranchOptions.filter((b) => {
-    const term = branchSearch.toLowerCase().trim();
-    return b.toLowerCase().includes(term);
-  });
-
   const branchSchools = useMemo(() => {
     const bName = (formData.branch || '').toLowerCase().trim();
     if (!bName) return schoolsList.map(s => s.name).filter(Boolean);
@@ -428,6 +415,19 @@ export default function AdmissionModal({
     if (!term) return branchSchools;
     return branchSchools.filter(name => name.toLowerCase().includes(term));
   }, [branchSchools, schoolSearch]);
+
+  if (!isOpen) return null;
+
+  const filteredDistricts = TAMIL_NADU_DISTRICTS.filter((d) =>
+    d.toLowerCase().includes(districtSearch.toLowerCase().trim())
+  );
+
+  const allBranchOptions = availableBranches.filter((b) => b !== 'Other');
+
+  const filteredBranches = allBranchOptions.filter((b) => {
+    const term = branchSearch.toLowerCase().trim();
+    return b.toLowerCase().includes(term);
+  });
 
   // Auto calculate age from Date of Birth & determine Academic Stage (Field 5 -> 6 & Category)
   const handleDobChange = (e) => {
