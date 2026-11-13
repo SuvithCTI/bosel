@@ -343,10 +343,11 @@ export default function AdmissionModal({
     if (isOpen) {
       setFormData(prev => ({
         ...prev,
-        date: new Date().toISOString().split('T')[0]
+        date: new Date().toISOString().split('T')[0],
+        ...(skipPayment ? { admissionCategory: 'School' } : {})
       }));
     }
-  }, [initialProgram, initialFee, initialBranch, isOpen, coursesList]);
+  }, [initialProgram, initialFee, initialBranch, isOpen, coursesList, skipPayment]);
 
   // Click outside listener for district and branch dropdowns
   useEffect(() => {
@@ -842,13 +843,20 @@ export default function AdmissionModal({
       alert('Please select a Branch (Field 2).');
       return false;
     }
-    if (!formData.admissionCategory) {
-      alert('Please select Admission Through (Branch or Academy).');
-      return false;
-    }
-    if (formData.admissionCategory === 'Academy' && !formData.institution?.trim()) {
-      alert('Please enter Academy Name.');
-      return false;
+    if (skipPayment || formData.admissionCategory === 'School') {
+      if (!formData.institution?.trim()) {
+        alert('Please enter School Name.');
+        return false;
+      }
+    } else {
+      if (!formData.admissionCategory) {
+        alert('Please select Admission Through (Branch or Academy).');
+        return false;
+      }
+      if (formData.admissionCategory === 'Academy' && !formData.institution?.trim()) {
+        alert('Please enter Academy Name.');
+        return false;
+      }
     }
     if (!formData.parentName.trim()) {
       alert('Please enter Father or Mother Name.');
@@ -945,6 +953,9 @@ export default function AdmissionModal({
       try {
         const account = registerStudentAccount({
           ...formData,
+          admissionCategory: 'School',
+          institution: (formData.institution || '').trim(),
+          schoolName: (formData.institution || '').trim(),
           feePaymentType: 'Paid at Branch',
           paymentMode: 'Direct Branch Registration',
           receiptRefNo: activeReceiptRef,
@@ -1486,79 +1497,125 @@ export default function AdmissionModal({
                   </div>
                 </div>
 
-                {/* Category of Admission under Branch: Branch / Academy */}
+                {/* Category of Admission under Branch */}
                 {formData.branch && (
-                  <div className="pt-0.5 space-y-2 animate-in fade-in duration-150">
-                    <div>
-                      <label className="block text-[11px] sm:text-xs font-black text-slate-800 mb-1 flex items-center justify-between">
-                        <span className="flex items-center gap-1.5">
-                          <GraduationCap className="w-3.5 h-3.5 text-sky-700" />
-                          <span>Admission Through <span className="text-rose-600">*</span></span>
-                        </span>
-                        <span className="text-[10px] font-semibold text-slate-400">
-                          Select category
-                        </span>
-                      </label>
-                      <div className="grid grid-cols-2 gap-2">
-                        {[
-                          { id: 'Branch', label: 'Branch', icon: Building2 },
-                          { id: 'Academy', label: 'Academy', icon: GraduationCap }
-                        ].map(({ id, label, icon: Icon }) => {
-                          const isSelected = formData.admissionCategory === id;
-                          return (
-                            <button
-                              key={id}
-                              type="button"
-                              onClick={() => {
-                                setFormData(prev => ({
-                                  ...prev,
-                                  admissionCategory: id,
-                                  institution: id === 'Branch' ? prev.branch : (prev.admissionCategory === id ? prev.institution : ''),
-                                  schoolName: id === 'Branch' ? prev.branch : (prev.admissionCategory === id ? prev.schoolName : '')
-                                }));
-                              }}
-                              className={`py-2 px-2 sm:px-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                                isSelected
-                                  ? 'bg-sky-600 border-sky-600 text-white shadow-xs scale-[1.01]'
-                                  : 'bg-white border-slate-300 text-slate-700 hover:border-sky-300 hover:bg-sky-50/50'
-                              }`}
-                            >
-                              <Icon className={`w-3.5 h-3.5 ${isSelected ? 'text-white' : 'text-sky-600'}`} />
-                              <span>{label}</span>
-                            </button>
-                          );
-                        })}
+                  skipPayment ? (
+                    /* In Branch Admin: Admission Through is FIXED to School */
+                    <div className="pt-0.5 space-y-2 animate-in fade-in duration-150">
+                      <div>
+                        <label className="block text-[11px] sm:text-xs font-black text-slate-800 mb-1 flex items-center justify-between">
+                          <span className="flex items-center gap-1.5">
+                            <School className="w-3.5 h-3.5 text-sky-700" />
+                            <span>Admission Through <span className="text-rose-600">*</span></span>
+                          </span>
+                          <span className="text-[10px] font-bold text-sky-700 bg-sky-50 px-2 py-0.5 rounded-full border border-sky-200">
+                            Fixed: School
+                          </span>
+                        </label>
+                        <div className="w-full py-2 px-3 rounded-xl border border-sky-500 bg-sky-50 text-sky-950 font-bold text-xs flex items-center gap-2 shadow-2xs">
+                          <School className="w-4 h-4 text-sky-600 shrink-0" />
+                          <span>School</span>
+                          <span className="text-[10px] text-slate-500 font-medium ml-auto">(Affiliated School Admission)</span>
+                        </div>
                       </div>
-                    </div>
 
-                    {/* If Academy is selected: enter Academy Name */}
-                    {formData.admissionCategory === 'Academy' && (
-                      <div className="pt-0.5 animate-in fade-in slide-in-from-top-1 duration-150">
+                      {/* School Name Manual Entry */}
+                      <div className="pt-0.5 animate-in fade-in duration-150">
                         <label className="block text-[11px] sm:text-xs font-black text-slate-800 mb-0.5 sm:mb-1 flex items-center gap-1.5">
-                          <GraduationCap className="w-3.5 h-3.5 text-sky-700" />
-                          <span>Academy Name <span className="text-rose-600">*</span></span>
+                          <School className="w-3.5 h-3.5 text-sky-700" />
+                          <span>School Name <span className="text-rose-600">*</span></span>
                         </label>
                         <input
                           type="text"
                           required
-                          placeholder="Enter Academy Name..."
+                          placeholder="Enter student's School Name..."
                           value={formData.institution || ''}
                           onChange={(e) => {
                             const val = e.target.value;
                             setFormData(prev => ({
                               ...prev,
                               institution: val,
-                              schoolName: val
+                              schoolName: val,
+                              admissionCategory: 'School'
                             }));
                           }}
                           className="w-full px-2.5 sm:px-3 py-2 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none text-base sm:text-sm shadow-2xs placeholder:text-slate-400 placeholder:font-normal"
                           autoFocus
                         />
                       </div>
-                    )}
+                    </div>
+                  ) : (
+                    /* Regular / Website: Branch or Academy selection */
+                    <div className="pt-0.5 space-y-2 animate-in fade-in duration-150">
+                      <div>
+                        <label className="block text-[11px] sm:text-xs font-black text-slate-800 mb-1 flex items-center justify-between">
+                          <span className="flex items-center gap-1.5">
+                            <GraduationCap className="w-3.5 h-3.5 text-sky-700" />
+                            <span>Admission Through <span className="text-rose-600">*</span></span>
+                          </span>
+                          <span className="text-[10px] font-semibold text-slate-400">
+                            Select category
+                          </span>
+                        </label>
+                        <div className="grid grid-cols-2 gap-2">
+                          {[
+                            { id: 'Branch', label: 'Branch', icon: Building2 },
+                            { id: 'Academy', label: 'Academy', icon: GraduationCap }
+                          ].map(({ id, label, icon: Icon }) => {
+                            const isSelected = formData.admissionCategory === id;
+                            return (
+                              <button
+                                key={id}
+                                type="button"
+                                onClick={() => {
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    admissionCategory: id,
+                                    institution: id === 'Branch' ? prev.branch : (prev.admissionCategory === id ? prev.institution : ''),
+                                    schoolName: id === 'Branch' ? prev.branch : (prev.admissionCategory === id ? prev.schoolName : '')
+                                  }));
+                                }}
+                                className={`py-2 px-2 sm:px-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                                  isSelected
+                                    ? 'bg-sky-600 border-sky-600 text-white shadow-xs scale-[1.01]'
+                                    : 'bg-white border-slate-300 text-slate-700 hover:border-sky-300 hover:bg-sky-50/50'
+                                }`}
+                              >
+                                <Icon className={`w-3.5 h-3.5 ${isSelected ? 'text-white' : 'text-sky-600'}`} />
+                                <span>{label}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
 
-                    {/* If Branch is selected: nothing opens */}
-                  </div>
+                      {/* If Academy is selected: enter Academy Name */}
+                      {formData.admissionCategory === 'Academy' && (
+                        <div className="pt-0.5 animate-in fade-in slide-in-from-top-1 duration-150">
+                          <label className="block text-[11px] sm:text-xs font-black text-slate-800 mb-0.5 sm:mb-1 flex items-center gap-1.5">
+                            <GraduationCap className="w-3.5 h-3.5 text-sky-700" />
+                            <span>Academy Name <span className="text-rose-600">*</span></span>
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            placeholder="Enter Academy Name..."
+                            value={formData.institution || ''}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setFormData(prev => ({
+                                ...prev,
+                                institution: val,
+                                schoolName: val
+                              }));
+                            }}
+                            className="w-full px-2.5 sm:px-3 py-2 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none text-base sm:text-sm shadow-2xs placeholder:text-slate-400 placeholder:font-normal"
+                            autoFocus
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )
                 )}
 
                 {/* 3. Multi-Course & Level Selection Desk */}
