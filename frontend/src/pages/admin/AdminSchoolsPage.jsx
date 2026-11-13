@@ -21,7 +21,6 @@ import {
   TAMIL_NADU_DISTRICTS,
   getStoredBranchCredentials,
   saveBranchCredentials,
-  resetBranchCredentialsToDefault,
   getDistrictSlug,
   getDefaultCredentialsForDistrict,
   getCredentialsForBranchOrSchool
@@ -35,13 +34,11 @@ export default function AdminSchoolsPage({
   showToast = () => {}
 }) {
   const [credentialsMap, setCredentialsMap] = useState(() => getStoredBranchCredentials());
-  const [showDistrictModal, setShowDistrictModal] = useState(false);
   const [editingBranch, setEditingBranch] = useState(null);
   const [editEmail, setEditEmail] = useState('');
   const [editPassword, setEditPassword] = useState('');
   const [copiedKey, setCopiedKey] = useState(null);
   const [visiblePasswords, setVisiblePasswords] = useState({});
-  const [searchDistrictQuery, setSearchDistrictQuery] = useState('');
   const [searchMainBranchQuery, setSearchMainBranchQuery] = useState('');
 
   // Sync credentials on storage update events
@@ -113,13 +110,7 @@ export default function AdminSchoolsPage({
     setEditPassword(def.password);
   };
 
-  const handleDirectReset = (slug, districtName) => {
-    resetBranchCredentialsToDefault(slug || districtName);
-    setCredentialsMap(getStoredBranchCredentials());
-    showToast(`Reset ${districtName} to default formula credentials.`);
-  };
-
-  // Official 38 Tamil Nadu District Branches (Pure branches, no schools, no "regional branch")
+  // Official 38 Tamil Nadu District Branches directly displayed on the page
   const all38DistrictBranches = useMemo(() => {
     return TAMIL_NADU_DISTRICTS.map((district, idx) => {
       const slug = getDistrictSlug(district);
@@ -155,27 +146,6 @@ export default function AdminSchoolsPage({
     });
   }, [all38DistrictBranches, searchMainBranchQuery]);
 
-  // Filtered districts list for modal
-  const filteredDistricts = useMemo(() => {
-    const q = searchDistrictQuery.toLowerCase().trim();
-    return TAMIL_NADU_DISTRICTS.map((d) => {
-      const slug = getDistrictSlug(d);
-      const creds = credentialsMap[slug] || getDefaultCredentialsForDistrict(d);
-      return {
-        district: d,
-        slug,
-        creds
-      };
-    }).filter((item) => {
-      if (!q) return true;
-      return (
-        item.district.toLowerCase().includes(q) ||
-        item.slug.toLowerCase().includes(q) ||
-        item.creds.email.toLowerCase().includes(q)
-      );
-    });
-  }, [searchDistrictQuery, credentialsMap]);
-
   return (
     <div className="space-y-4 animate-in fade-in duration-200">
       {/* Header Banner */}
@@ -190,22 +160,12 @@ export default function AdminSchoolsPage({
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
-          {/* 38 Districts Credentials Manager Button */}
-          <button
-            type="button"
-            onClick={() => setShowDistrictModal(true)}
-            className="flex-1 lg:flex-none px-3.5 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-black rounded-xl text-xs transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
-          >
-            <KeyRound className="w-4 h-4 text-slate-950" />
-            <span>District Branch Credentials (38 TN Districts)</span>
-          </button>
-
+        <div className="flex items-center gap-2.5 w-full lg:w-auto">
           {/* Add New Branch */}
           <button
             type="button"
             onClick={() => setShowAddSchoolModal(true)}
-            className="flex-1 lg:flex-none px-3.5 py-2 bg-[#0c234b] hover:bg-[#163e7c] text-white rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
+            className="flex-1 lg:flex-none px-4 py-2 bg-[#0c234b] hover:bg-[#163e7c] text-white rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
           >
             <Plus className="w-4 h-4 text-amber-400" />
             <span>Add New Branch</span>
@@ -378,179 +338,7 @@ export default function AdminSchoolsPage({
       </div>
 
       {/* =========================================================================
-          MODAL 1: 38 TAMIL NADU DISTRICTS CREDENTIALS MANAGER
-          ========================================================================= */}
-      {showDistrictModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-in fade-in duration-150">
-          <div className="bg-white rounded-3xl max-w-4xl w-full border border-slate-200 shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
-            {/* Modal Header */}
-            <div className="px-6 py-4 bg-[#0c234b] text-white flex items-center justify-between">
-              <div>
-                <h3 className="text-base font-black flex items-center gap-2">
-                  <ShieldCheck className="w-5 h-5 text-amber-400" />
-                  <span>38 Tamil Nadu District Branch Credentials Manager</span>
-                </h3>
-                <p className="text-xs text-blue-200/80 mt-0.5">
-                  Super Admin control center: Only through these credentials can each branch log in. Default formula: <code className="text-amber-300 font-mono">bsel+districtname@bsel.org</code> / <code className="text-amber-300 font-mono">districtname+bsel</code>.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowDistrictModal(false)}
-                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Filter Search Bar */}
-            <div className="p-4 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
-              <div className="relative w-full sm:w-80">
-                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  placeholder="Search district (e.g. Tenkasi, Chennai, Madurai)..."
-                  value={searchDistrictQuery}
-                  onChange={(e) => setSearchDistrictQuery(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600"
-                />
-              </div>
-
-              <div className="text-xs font-bold text-slate-600">
-                Showing <strong className="text-blue-900">{filteredDistricts.length}</strong> of 38 Districts
-              </div>
-            </div>
-
-            {/* Districts Credentials Table */}
-            <div className="overflow-y-auto p-4 space-y-2 flex-1">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {filteredDistricts.map(({ district, slug, creds }) => {
-                  const emailKey = `modal_email_${slug}`;
-                  const passKey = `modal_pass_${slug}`;
-                  const isPassVisible = !!visiblePasswords[passKey];
-
-                  return (
-                    <div
-                      key={slug}
-                      className="bg-white p-3.5 rounded-2xl border border-slate-200 hover:border-blue-300 shadow-xs hover:shadow-sm transition flex flex-col justify-between gap-2.5"
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <div className="flex items-center gap-1.5">
-                            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                            <h4 className="text-xs font-black text-slate-950">{district} Branch</h4>
-                          </div>
-                          <span className="text-[10px] text-slate-400 font-medium">
-                            {slug.toUpperCase()} District Centre
-                          </span>
-                        </div>
-
-                        <div className="flex items-center gap-1">
-                          <button
-                            type="button"
-                            onClick={() => handleOpenEditModal(district)}
-                            className="px-2 py-1 text-[10px] font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg transition flex items-center gap-1 cursor-pointer"
-                            title="Edit this district's login credentials"
-                          >
-                            <Edit3 className="w-3 h-3" />
-                            <span>Edit</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleDirectReset(slug, district)}
-                            className="p-1 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition cursor-pointer"
-                            title="Reset to default formula credentials"
-                          >
-                            <RotateCcw className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Credential rows */}
-                      <div className="bg-slate-50 p-2 rounded-xl border border-slate-100 space-y-1.5 text-xs">
-                        {/* Email */}
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-1.5 truncate">
-                            <Mail className="w-3 h-3 text-blue-600 shrink-0" />
-                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Email:</span>
-                            <span className="font-mono text-[11px] font-bold text-blue-900 truncate">
-                              {creds.email}
-                            </span>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => copyToClipboard(creds.email, emailKey)}
-                            className="p-1 text-slate-400 hover:text-blue-700 rounded transition cursor-pointer shrink-0"
-                            title="Copy email"
-                          >
-                            {copiedKey === emailKey ? (
-                              <Check className="w-3.5 h-3.5 text-emerald-600" />
-                            ) : (
-                              <Copy className="w-3.5 h-3.5" />
-                            )}
-                          </button>
-                        </div>
-
-                        {/* Password */}
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-1.5 truncate">
-                            <KeyRound className="w-3 h-3 text-amber-500 shrink-0" />
-                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Pass:</span>
-                            <span className="font-mono text-[11px] font-bold text-amber-900">
-                              {isPassVisible ? creds.password : '••••••••••••'}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-0.5 shrink-0">
-                            <button
-                              type="button"
-                              onClick={() => togglePasswordVisibility(passKey)}
-                              className="p-1 text-slate-400 hover:text-slate-700 rounded transition cursor-pointer"
-                              title={isPassVisible ? 'Hide' : 'Show'}
-                            >
-                              {isPassVisible ? (
-                                <EyeOff className="w-3.5 h-3.5" />
-                              ) : (
-                                <Eye className="w-3.5 h-3.5" />
-                              )}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => copyToClipboard(creds.password, passKey)}
-                              className="p-1 text-slate-400 hover:text-blue-700 rounded transition cursor-pointer"
-                              title="Copy password"
-                            >
-                              {copiedKey === passKey ? (
-                                <Check className="w-3.5 h-3.5 text-emerald-600" />
-                              ) : (
-                                <Copy className="w-3.5 h-3.5" />
-                              )}
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Modal Footer */}
-            <div className="px-6 py-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
-              <span>All 38 districts configured with secure standard formulas.</span>
-              <button
-                type="button"
-                onClick={() => setShowDistrictModal(false)}
-                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold transition cursor-pointer"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* =========================================================================
-          MODAL 2: EDIT SPECIFIC BRANCH CREDENTIALS MODAL
+          EDIT SPECIFIC BRANCH CREDENTIALS MODAL (Simple, focused dialog)
           ========================================================================= */}
       {editingBranch && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
