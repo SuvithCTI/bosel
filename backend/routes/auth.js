@@ -98,12 +98,12 @@ router.post('/login', async (req, res) => {
         'besel2026'
       ];
       if (validDistPasswords.includes(cleanPassword)) {
-        const formattedBranch = distSlug.charAt(0).toUpperCase() + distSlug.slice(1) + ' Regional Branch';
+        const formattedBranch = distSlug.charAt(0).toUpperCase() + distSlug.slice(1) + ' Branch';
         return res.json({
           success: true,
           user: {
-            userId: `bsel+${distSlug}@bsel.org`,
-            email: `bsel+${distSlug}@bsel.org`,
+            userId: `bsel${distSlug}@bsel.org`,
+            email: `bsel${distSlug}@bsel.org`,
             studentName: `${formattedBranch} Administrator`,
             name: `${formattedBranch} Administrator`,
             role: 'Branch Head',

@@ -102,8 +102,8 @@ export const getDefaultCredentialsForDistrict = (districtName) => {
     slug,
     district: prettyDistrict,
     branchName: prettyDistrict.includes('Branch') ? prettyDistrict : `${prettyDistrict} Branch`,
-    email: `bsel+${slug}@bsel.org`,
-    password: `${slug}+bsel`
+    email: `bsel${slug}@bsel.org`,
+    password: `${slug}bsel`
   };
 };
 
@@ -121,15 +121,37 @@ export const getStoredBranchCredentials = () => {
     const raw = localStorage.getItem('bsel_branch_credentials');
     const existing = raw ? JSON.parse(raw) : {};
 
-    // Ensure all 38 districts exist with defaults
+    // Ensure all 38 districts exist with defaults (without '+')
     let modified = false;
     const combined = { ...existing };
 
     TAMIL_NADU_DISTRICTS.forEach((d) => {
       const defaultCreds = getDefaultCredentialsForDistrict(d);
-      if (!combined[defaultCreds.slug]) {
+      const curr = combined[defaultCreds.slug];
+      if (!curr) {
         combined[defaultCreds.slug] = defaultCreds;
         modified = true;
+      } else {
+        // Automatically sanitize and remove any '+' from email or password
+        let changed = false;
+        let newEmail = curr.email || defaultCreds.email;
+        let newPass = curr.password || defaultCreds.password;
+        if (newEmail.includes('+')) {
+          newEmail = newEmail.replace(/\+/g, '');
+          changed = true;
+        }
+        if (newPass.includes('+')) {
+          newPass = newPass.replace(/\+/g, '');
+          changed = true;
+        }
+        if (changed) {
+          combined[defaultCreds.slug] = {
+            ...curr,
+            email: newEmail,
+            password: newPass
+          };
+          modified = true;
+        }
       }
     });
 

@@ -141,7 +141,7 @@ export default function AdminSchoolsPage({
             <span>Authorized District Branches Network</span>
           </h2>
           <p className="text-xs text-slate-500 mt-0.5">
-            Super Admin sets official Branch Login credentials. Default Email: <code className="text-blue-700 font-bold bg-blue-50 px-1 py-0.5 rounded">bsel+districtname@bsel.org</code> | Default Password: <code className="text-amber-700 font-bold bg-amber-50 px-1 py-0.5 rounded">districtname+bsel</code>.
+            Super Admin sets official Branch Login credentials. Default Email: <code className="text-blue-700 font-bold bg-blue-50 px-1 py-0.5 rounded">bseldistrictname@bsel.org</code> | Default Password: <code className="text-amber-700 font-bold bg-amber-50 px-1 py-0.5 rounded">districtnamebsel</code>.
           </p>
         </div>
 
@@ -305,7 +305,7 @@ export default function AdminSchoolsPage({
               <div className="space-y-1">
                 <label className="text-xs font-black text-slate-800 flex items-center justify-between">
                   <span>Branch Login Email</span>
-                  <span className="text-[10px] text-slate-400 font-normal">Standard: bsel+district@bsel.org</span>
+                  <span className="text-[10px] text-slate-400 font-normal">Standard: bseldistrict@bsel.org</span>
                 </label>
                 <div className="relative">
                   <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -315,7 +315,7 @@ export default function AdminSchoolsPage({
                     value={editEmail}
                     onChange={(e) => setEditEmail(e.target.value)}
                     className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600"
-                    placeholder="bsel+districtname@bsel.org"
+                    placeholder="bseldistrictname@bsel.org"
                   />
                 </div>
               </div>
@@ -324,7 +324,7 @@ export default function AdminSchoolsPage({
               <div className="space-y-1">
                 <label className="text-xs font-black text-slate-800 flex items-center justify-between">
                   <span>Branch Login Password</span>
-                  <span className="text-[10px] text-slate-400 font-normal">Standard: district+bsel</span>
+                  <span className="text-[10px] text-slate-400 font-normal">Standard: districtbsel</span>
                 </label>
                 <div className="relative">
                   <KeyRound className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -334,7 +334,7 @@ export default function AdminSchoolsPage({
                     value={editPassword}
                     onChange={(e) => setEditPassword(e.target.value)}
                     className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600"
-                    placeholder="districtname+bsel"
+                    placeholder="districtnamebsel"
                   />
                 </div>
               </div>
@@ -346,7 +346,7 @@ export default function AdminSchoolsPage({
                 className="text-[11px] font-bold text-amber-700 hover:text-amber-800 flex items-center gap-1 cursor-pointer transition"
               >
                 <RotateCcw className="w-3 h-3" />
-                <span>Reset to formula default (bsel+{editingBranch.slug}@bsel.org / {editingBranch.slug}+bsel)</span>
+                <span>Reset to formula default (bsel{editingBranch.slug}@bsel.org / {editingBranch.slug}bsel)</span>
               </button>
 
               {/* Modal Actions */}
