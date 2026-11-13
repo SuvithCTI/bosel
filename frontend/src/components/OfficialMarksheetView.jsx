@@ -383,26 +383,26 @@ export default function OfficialMarksheetView({
 
   const getSchoolNameFontSize = (text) => {
     const len = (text || '').trim().length;
-    if (len <= 7) return 'clamp(20px, 4.2vw, 33px)';
-    if (len <= 10) return 'clamp(17.5px, 3.7vw, 28px)';
-    if (len <= 13) return 'clamp(15px, 3.2vw, 24px)';
-    if (len <= 16) return 'clamp(13px, 2.75vw, 20.5px)';
-    if (len <= 20) return 'clamp(11.5px, 2.4vw, 18px)';
-    return 'clamp(10px, 2.1vw, 15.5px)';
+    if (len <= 7) return 'clamp(17px, 3.6vw, 28px)';
+    if (len <= 10) return 'clamp(15px, 3.15vw, 24px)';
+    if (len <= 13) return 'clamp(13px, 2.7vw, 20.5px)';
+    if (len <= 16) return 'clamp(11px, 2.35vw, 17.5px)';
+    if (len <= 20) return 'clamp(9.8px, 2.05vw, 15.3px)';
+    return 'clamp(8.5px, 1.8vw, 13px)';
   };
 
   const getSchoolSubtitleFontSize = (text) => {
     const len = (text || '').trim().length;
-    if (len <= 12) return 'clamp(10px, 2.0vw, 15.5px)';
-    if (len <= 18) return 'clamp(9px, 1.75vw, 13.5px)';
-    return 'clamp(8px, 1.5vw, 11.5px)';
+    if (len <= 12) return 'clamp(8.5px, 1.7vw, 13px)';
+    if (len <= 18) return 'clamp(7.7px, 1.5vw, 11.5px)';
+    return 'clamp(6.8px, 1.28vw, 9.8px)';
   };
 
   const getSchoolMottoFontSize = (text) => {
     const len = (text || '').trim().length;
-    if (len <= 16) return 'clamp(7px, 1.35vw, 10.5px)';
-    if (len <= 22) return 'clamp(6.5px, 1.2vw, 9.5px)';
-    return 'clamp(6px, 1.05vw, 8.5px)';
+    if (len <= 16) return 'clamp(6px, 1.15vw, 9px)';
+    if (len <= 22) return 'clamp(5.5px, 1.02vw, 8.1px)';
+    return 'clamp(5.1px, 0.9vw, 7.2px)';
   };
 
   if (!student) return null;
@@ -642,7 +642,7 @@ export default function OfficialMarksheetView({
           <div
             className="tracking-normal uppercase text-center w-full whitespace-nowrap"
             style={{
-              color: '#13427a',
+              color: '#0b2a55',
               fontFamily: "'Cinzel', 'Outfit', 'Plus Jakarta Sans', sans-serif",
               fontWeight: 900,
               fontSize: getSchoolNameFontSize(customSchoolName),
@@ -659,7 +659,7 @@ export default function OfficialMarksheetView({
           <div
             className="uppercase mt-0.5 text-center w-full whitespace-nowrap"
             style={{
-              color: '#13427a',
+              color: '#0b2a55',
               fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif",
               fontWeight: 800,
               fontSize: getSchoolSubtitleFontSize(customSchoolSubtitle),
@@ -675,7 +675,7 @@ export default function OfficialMarksheetView({
           <div
             className="uppercase mt-0.5 text-center w-full whitespace-nowrap"
             style={{
-              color: '#13427a',
+              color: '#0b2a55',
               fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif",
               fontWeight: 700,
               fontSize: getSchoolMottoFontSize(customSchoolMotto),
@@ -710,9 +710,9 @@ export default function OfficialMarksheetView({
             className="w-full h-full object-contain drop-shadow-sm"
           />
         ) : !standalone ? (
-          <div className="w-full h-full border border-dashed border-[#13427a]/30 hover:border-amber-500/80 bg-white/40 flex flex-col items-center justify-center p-0.5 text-center transition group/slot print:hidden">
-            <ImageIcon className="w-3.5 h-3.5 text-[#13427a]/40 group-hover/slot:text-amber-500 mb-0.5" />
-            <span className="text-[5.5px] font-bold text-[#13427a]/60 uppercase leading-tight font-sans">
+          <div className="w-full h-full border border-dashed border-[#0b2a55]/30 hover:border-amber-500/80 bg-white/40 flex flex-col items-center justify-center p-0.5 text-center transition group/slot print:hidden">
+            <ImageIcon className="w-3.5 h-3.5 text-[#0b2a55]/60 group-hover/slot:text-amber-500 mb-0.5" />
+            <span className="text-[5.5px] font-bold text-[#0b2a55] uppercase leading-tight font-sans">
               Logo
             </span>
           </div>
