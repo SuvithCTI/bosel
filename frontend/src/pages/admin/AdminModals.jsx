@@ -253,6 +253,7 @@ export default function AdminModals({
         setActivePage={setActivePage}
         initialBranch={currentAdminRole === 'Branch Head' ? activeBranch : null}
         lockBranch={currentAdminRole === 'Branch Head'}
+        skipPayment={currentAdminRole === 'Branch Head'}
         onSuccess={(account) => {
           setUsersList(getRegisteredUsers());
           if (account) {

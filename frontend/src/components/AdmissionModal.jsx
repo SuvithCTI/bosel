@@ -191,6 +191,7 @@ export default function AdmissionModal({
   initialFee = null,
   initialBranch = null,
   lockBranch = false,
+  skipPayment = false,
   onSuccess = null
 }) {
   const [coursesList, setCoursesList] = useState(() => getStoredCourses());
@@ -920,11 +921,52 @@ export default function AdmissionModal({
   };
 
   const handleSubmit = (e) => {
-    e.preventDefault();
+    e?.preventDefault();
 
     if (!validateStep1()) {
       setFormStep(1);
       modalBodyRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
+    // Branch Admin Direct Admission: skip payment step and directly generate credentials
+    if (skipPayment) {
+      const cleanPhone = formData.phone.replace(/\D/g, '');
+      if (isPhoneNumberRegistered(cleanPhone)) {
+        setPhoneError('Mobile number already exists! An account is already registered with this mobile number.');
+        alert(`Mobile number ${cleanPhone} already exists! Please provide a different phone number.`);
+        return;
+      }
+
+      setPhotoError(false);
+      setDistrictError(false);
+      const activeReceiptRef = `BRANCH-${formData.branch || 'ADMIN'}-${Math.floor(100000 + Math.random() * 900000)}`;
+
+      try {
+        const account = registerStudentAccount({
+          ...formData,
+          feePaymentType: 'Paid at Branch',
+          paymentMode: 'Direct Branch Registration',
+          receiptRefNo: activeReceiptRef,
+          declaration: true,
+          name: formData.studentName,
+          program: formData.courseName
+        });
+        setCreatedAccount(account);
+        setShowPassword(true);
+        setSubmitted(true);
+        if (onSuccess) {
+          try {
+            onSuccess(account);
+          } catch (err) {
+            console.error('onSuccess error:', err);
+          }
+        }
+        modalBodyRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+      } catch (regErr) {
+        alert(regErr.message || 'Unable to register student account.');
+        setPhoneError(regErr.message);
+      }
       return;
     }
 
@@ -1074,8 +1116,8 @@ export default function AdmissionModal({
             Official candidate enrollment and course admission registry.
           </p>
 
-          {/* Form Step Progress Bar (hidden once admission is confirmed) */}
-          {!submitted && (
+          {/* Form Step Progress Bar (hidden once admission is confirmed or if skipPayment is active) */}
+          {!submitted && !skipPayment && (
             <div className="grid grid-cols-2 gap-2 mt-3 pt-2.5 border-t border-white/20 text-center text-xs font-bold">
               <button
                 type="button"
@@ -1118,6 +1160,17 @@ export default function AdmissionModal({
                 </span>
                 <span className="truncate">2. Fees & Declaration</span>
               </button>
+            </div>
+          )}
+          {!submitted && skipPayment && (
+            <div className="mt-2.5 pt-2 border-t border-white/20 flex items-center justify-between text-xs">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-[11px] font-black">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Branch Direct Admission (Direct Credentials)</span>
+              </span>
+              <span className="text-[11px] text-sky-200 font-semibold hidden sm:inline">
+                Instant Account Generation
+              </span>
             </div>
           )}
         </div>
@@ -2127,16 +2180,27 @@ export default function AdmissionModal({
                 </div>
               </div>
 
-              {/* PAGE 1 BOTTOM ACTION BUTTON: PROCEED TO PAYMENT */}
+              {/* PAGE 1 BOTTOM ACTION BUTTON: PROCEED TO PAYMENT OR DIRECT REGISTER */}
               <div className="pt-2">
-                <button
-                  type="button"
-                  onClick={handleProceedToPayment}
-                  className="w-full bg-[#0F2B5C] hover:bg-[#18458F] active:scale-[0.99] text-white py-3 sm:py-3.5 rounded-xl font-black text-xs sm:text-sm transition flex items-center justify-center gap-2 shadow-md hover:shadow-lg cursor-pointer min-h-[46px]"
-                >
-                  <span>Proceed to Fee & Payment (Step 2 of 2)</span>
-                  <ArrowRight className="w-4 h-4 text-amber-400" />
-                </button>
+                {skipPayment ? (
+                  <button
+                    type="submit"
+                    onClick={handleSubmit}
+                    className="w-full bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white py-3 sm:py-3.5 rounded-xl font-black text-xs sm:text-sm transition flex items-center justify-center gap-2 shadow-md hover:shadow-lg cursor-pointer min-h-[46px]"
+                  >
+                    <CheckCircle2 className="w-4 h-4 text-emerald-200" />
+                    <span>Register Student & Get Login Credentials</span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleProceedToPayment}
+                    className="w-full bg-[#0F2B5C] hover:bg-[#18458F] active:scale-[0.99] text-white py-3 sm:py-3.5 rounded-xl font-black text-xs sm:text-sm transition flex items-center justify-center gap-2 shadow-md hover:shadow-lg cursor-pointer min-h-[46px]"
+                  >
+                    <span>Proceed to Fee & Payment (Step 2 of 2)</span>
+                    <ArrowRight className="w-4 h-4 text-amber-400" />
+                  </button>
+                )}
               </div>
             </div>
           ) : (
