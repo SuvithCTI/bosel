@@ -137,12 +137,12 @@ export {
   getMarksheetSubjects
 };
 
-// Default Authorized Regional Branches
+// Default Authorized District Branches
 const DEFAULT_PARTNER_SCHOOLS = [
   {
     code: 'BSEL-BR-101',
-    name: 'B★SEL Tenkasi Regional Branch',
-    branchName: 'Tenkasi Regional Branch',
+    name: 'B★SEL Tenkasi Branch',
+    branchName: 'Tenkasi Branch',
     city: 'Surandai, Tenkasi, Tamil Nadu',
     principal: 'Mrs. Thangam Sivaji',
     coordinator: 'Mr. S. Sivakumar',
@@ -152,8 +152,8 @@ const DEFAULT_PARTNER_SCHOOLS = [
   },
   {
     code: 'BSEL-BR-102',
-    name: 'B★SEL Tirunelveli Regional Branch',
-    branchName: 'Tirunelveli Regional Branch',
+    name: 'B★SEL Tirunelveli Branch',
+    branchName: 'Tirunelveli Branch',
     city: 'Tirunelveli, Tamil Nadu',
     principal: 'Dr. P. Muthukumar',
     coordinator: 'Mrs. S. Gandhimathi',
@@ -163,36 +163,36 @@ const DEFAULT_PARTNER_SCHOOLS = [
   },
   {
     code: 'BSEL-BR-103',
-    name: 'B★SEL Chennai Central Branch',
-    branchName: 'Chennai Central Branch',
+    name: 'B★SEL Chennai Branch',
+    branchName: 'Chennai Branch',
     city: 'Chennai, Tamil Nadu',
     principal: 'Dr. S. Ranganathan',
     coordinator: 'Mrs. K. Malathi',
     phone: '+91 98400 12345',
     studentsCount: 240,
-    status: 'Authorized Regional Branch'
+    status: 'Authorized Branch'
   },
   {
     code: 'BSEL-BR-104',
-    name: 'B★SEL Coimbatore Regional Branch',
-    branchName: 'Coimbatore Regional Branch',
+    name: 'B★SEL Coimbatore Branch',
+    branchName: 'Coimbatore Branch',
     city: 'RS Puram, Coimbatore, Tamil Nadu',
     principal: 'Dr. M. Gurumurthy',
     coordinator: 'Mrs. Lakshmi Priya',
     phone: '+91 94433 22110',
     studentsCount: 190,
-    status: 'Authorized Regional Branch'
+    status: 'Authorized Branch'
   },
   {
     code: 'BSEL-BR-105',
-    name: 'B★SEL Madurai Regional Branch',
-    branchName: 'Madurai Regional Branch',
+    name: 'B★SEL Madurai Branch',
+    branchName: 'Madurai Branch',
     city: 'Madurai, Tamil Nadu',
     principal: 'Mr. K. Siraj',
     coordinator: 'Mrs. P. Shanthi',
     phone: '+91 98801 55443',
     studentsCount: 160,
-    status: 'Authorized Regional Branch'
+    status: 'Authorized Branch'
   }
 ];
 
@@ -1587,7 +1587,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                     }`}
                   >
                     <Building className={`w-4 h-4 shrink-0 ${activeTab === 'schools' ? 'text-amber-400' : 'text-slate-500'}`} />
-                    <span className="truncate">Regional Branches</span>
+                    <span className="truncate">District Branches</span>
                   </button>
 
                   <button

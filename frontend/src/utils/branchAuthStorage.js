@@ -101,7 +101,7 @@ export const getDefaultCredentialsForDistrict = (districtName) => {
   return {
     slug,
     district: prettyDistrict,
-    branchName: prettyDistrict.includes('Branch') ? prettyDistrict : `${prettyDistrict} Regional Branch`,
+    branchName: prettyDistrict.includes('Branch') ? prettyDistrict : `${prettyDistrict} Branch`,
     email: `bsel+${slug}@bsel.org`,
     password: `${slug}+bsel`
   };
