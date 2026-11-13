@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   X, 
   GraduationCap, 
@@ -33,7 +33,6 @@ import {
 } from 'lucide-react';
 import { registerStudentAccount, generateRegisterNumber, isPhoneNumberRegistered } from '../utils/authStorage';
 import { getStoredCourses } from '../data/coursesData';
-import { getStoredSchools } from '../data/schoolsData';
 import { replacePhotoBackground } from '../utils/photoSegmentation';
 import { ACADEMIC_STAGES, getAcademicStageFromAge } from '../utils/academicStages';
 
@@ -195,16 +194,12 @@ export default function AdmissionModal({
   onSuccess = null
 }) {
   const [coursesList, setCoursesList] = useState(() => getStoredCourses());
-  const [schoolsList, setSchoolsList] = useState(() => getStoredSchools());
 
   useEffect(() => {
     const handleCourses = () => setCoursesList(getStoredCourses());
-    const handleSchools = () => setSchoolsList(getStoredSchools());
     window.addEventListener('bsel_courses_updated', handleCourses);
-    window.addEventListener('bsel_schools_updated', handleSchools);
     return () => {
       window.removeEventListener('bsel_courses_updated', handleCourses);
-      window.removeEventListener('bsel_schools_updated', handleSchools);
     };
   }, []);
 
@@ -278,11 +273,6 @@ export default function AdmissionModal({
   const [isOtherBranch, setIsOtherBranch] = useState(false);
   const [customBranchName, setCustomBranchName] = useState('');
   const branchDropdownRef = useRef(null);
-  const [schoolDropdownOpen, setSchoolDropdownOpen] = useState(false);
-  const [schoolSearch, setSchoolSearch] = useState('');
-  const [isOtherSchool, setIsOtherSchool] = useState(false);
-  const [customSchoolName, setCustomSchoolName] = useState('');
-  const schoolDropdownRef = useRef(null);
   const [phoneError, setPhoneError] = useState('');
   const [photoError, setPhotoError] = useState(false);
   const [pincodeLoading, setPincodeLoading] = useState(false);
@@ -356,7 +346,7 @@ export default function AdmissionModal({
     }
   }, [initialProgram, initialFee, initialBranch, isOpen, coursesList]);
 
-  // Click outside listener for district, branch and school dropdowns
+  // Click outside listener for district and branch dropdowns
   useEffect(() => {
     function handleClickOutside(event) {
       if (districtDropdownRef.current && !districtDropdownRef.current.contains(event.target)) {
@@ -364,9 +354,6 @@ export default function AdmissionModal({
       }
       if (branchDropdownRef.current && !branchDropdownRef.current.contains(event.target)) {
         setBranchDropdownOpen(false);
-      }
-      if (schoolDropdownRef.current && !schoolDropdownRef.current.contains(event.target)) {
-        setSchoolDropdownOpen(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
@@ -396,25 +383,6 @@ export default function AdmissionModal({
       setIsCameraOpen(false);
     }
   }, [isOpen]);
-
-  const branchSchools = useMemo(() => {
-    const bName = (formData.branch || '').toLowerCase().trim();
-    if (!bName) return schoolsList.map(s => s.name).filter(Boolean);
-    const matched = schoolsList.filter(s => {
-      const b = (s.branchName || s.branch || '').toLowerCase();
-      const c = (s.city || '').toLowerCase();
-      const n = (s.name || '').toLowerCase();
-      return b.includes(bName) || c.includes(bName) || n.includes(bName);
-    });
-    const others = schoolsList.filter(s => !matched.includes(s));
-    return Array.from(new Set([...matched.map(s => s.name), ...others.map(s => s.name)].filter(Boolean)));
-  }, [formData.branch, schoolsList]);
-
-  const filteredSchools = useMemo(() => {
-    const term = schoolSearch.toLowerCase().trim();
-    if (!term) return branchSchools;
-    return branchSchools.filter(name => name.toLowerCase().includes(term));
-  }, [branchSchools, schoolSearch]);
 
   if (!isOpen) return null;
 
@@ -872,13 +840,8 @@ export default function AdmissionModal({
       alert('Please select a Branch (Field 2).');
       return false;
     }
-    if (isOtherSchool) {
-      if (!customSchoolName.trim()) {
-        alert('Please enter your School or Academy Name.');
-        return false;
-      }
-    } else if (!formData.institution?.trim()) {
-      alert('Please select or enter School or Academy Name.');
+    if (!formData.institution?.trim()) {
+      alert('Please enter School or Academy Name.');
       return false;
     }
     if (!formData.parentName.trim()) {
@@ -1023,10 +986,6 @@ export default function AdmissionModal({
     setCopiedUpi(false);
     setIsOtherBranch(false);
     setCustomBranchName('');
-    setIsOtherSchool(false);
-    setCustomSchoolName('');
-    setSchoolDropdownOpen(false);
-    setSchoolSearch('');
     const resetCourse = initialProgram || 'Abacus Speed Arithmetic';
     const resetLevels = getLevelsForCourse(resetCourse, coursesList);
     const resetFee = parseCourseFee(resetCourse, coursesList);
@@ -1466,156 +1425,30 @@ export default function AdmissionModal({
                   </div>
                 </div>
 
-                {/* School or Academy Selection under Branch */}
+                {/* School or Academy Name (Manual Entry under Branch) */}
                 {formData.branch && (
-                  <div className="pt-0.5 animate-in fade-in duration-150 relative" ref={schoolDropdownRef}>
+                  <div className="pt-0.5 animate-in fade-in duration-150">
                     <label className="block text-[11px] sm:text-xs font-black text-slate-800 mb-0.5 sm:mb-1 flex items-center justify-between">
                       <span className="flex items-center gap-1.5">
                         <School className="w-3.5 h-3.5 text-sky-700" />
-                        <span>School or Academy <span className="text-rose-600">*</span></span>
+                        <span>School or Academy Name <span className="text-rose-600">*</span></span>
                       </span>
-                      {isOtherSchool && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setIsOtherSchool(false);
-                            setCustomSchoolName('');
-                            const defaultSchool = branchSchools[0] || '';
-                            setFormData(prev => ({
-                              ...prev,
-                              institution: defaultSchool,
-                              schoolName: defaultSchool
-                            }));
-                          }}
-                          className="text-[10px] text-sky-700 hover:underline font-bold cursor-pointer"
-                        >
-                          Choose from list
-                        </button>
-                      )}
                     </label>
-
-                    {/* School Dropdown Trigger */}
-                    <div className="relative">
-                      <button
-                        type="button"
-                        onClick={() => setSchoolDropdownOpen(prev => !prev)}
-                        className={`w-full px-2.5 sm:px-3 py-2 border rounded-lg sm:rounded-xl text-left font-semibold text-xs sm:text-sm flex items-center justify-between shadow-2xs transition cursor-pointer ${
-                          schoolDropdownOpen 
-                            ? 'bg-white border-sky-500 ring-2 ring-sky-500/20 text-slate-950' 
-                            : 'bg-white border-slate-300 hover:border-slate-400 text-slate-950'
-                        }`}
-                      >
-                        <span className="truncate">
-                          {isOtherSchool 
-                            ? (customSchoolName.trim() ? customSchoolName : '★ Other (Enter School / Academy Name)')
-                            : (formData.institution || 'Select School or Academy')}
-                        </span>
-                        {schoolDropdownOpen ? (
-                          <ChevronUp className="w-3.5 h-3.5 text-slate-500 shrink-0 ml-1" />
-                        ) : (
-                          <ChevronDown className="w-3.5 h-3.5 text-slate-500 shrink-0 ml-1" />
-                        )}
-                      </button>
-
-                      {/* Dropdown Menu */}
-                      {schoolDropdownOpen && (
-                        <div className="absolute z-30 left-0 right-0 top-full mt-1 bg-white border border-slate-300 rounded-xl shadow-xl overflow-hidden animate-in fade-in duration-100">
-                          <div className="p-1.5 border-b border-slate-200 bg-slate-50">
-                            <input
-                              type="text"
-                              placeholder="Search school or academy..."
-                              value={schoolSearch}
-                              onChange={(e) => setSchoolSearch(e.target.value)}
-                              className="w-full px-2 py-1 text-xs text-slate-950 font-semibold border border-slate-300 rounded-md focus:outline-none focus:border-sky-500 bg-white"
-                              autoFocus
-                            />
-                          </div>
-                          <div className="max-h-52 overflow-y-auto p-1 divide-y divide-slate-100">
-                            {filteredSchools.map((sName) => {
-                              const isSelected = !isOtherSchool && (formData.institution === sName);
-                              return (
-                                <button
-                                  key={sName}
-                                  type="button"
-                                  onClick={() => {
-                                    setIsOtherSchool(false);
-                                    setCustomSchoolName('');
-                                    setFormData(prev => ({
-                                      ...prev,
-                                      institution: sName,
-                                      schoolName: sName
-                                    }));
-                                    setSchoolDropdownOpen(false);
-                                    setSchoolSearch('');
-                                  }}
-                                  className={`w-full text-left px-2.5 py-1.5 text-xs font-semibold rounded-md transition flex items-center justify-between cursor-pointer ${
-                                    isSelected ? 'bg-sky-50 text-sky-900 font-bold' : 'text-slate-700 hover:bg-slate-100'
-                                  }`}
-                                >
-                                  <span className="truncate">{sName}</span>
-                                  {isSelected && <Check className="w-3 h-3 text-sky-600 shrink-0" />}
-                                </button>
-                              );
-                            })}
-
-                            {filteredSchools.length === 0 && (
-                              <div className="p-2 text-center text-xs text-slate-500">
-                                No matching schools found
-                              </div>
-                            )}
-
-                            {/* Option to enter School/Academy manually */}
-                            <div className="pt-1 mt-1 border-t border-slate-200">
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setIsOtherSchool(true);
-                                  setFormData(prev => ({
-                                    ...prev,
-                                    institution: customSchoolName.trim() || 'Other',
-                                    schoolName: customSchoolName.trim() || 'Other'
-                                  }));
-                                  setSchoolDropdownOpen(false);
-                                  setSchoolSearch('');
-                                }}
-                                className={`w-full text-left px-2.5 py-1.5 text-xs font-bold rounded-md transition flex items-center justify-between cursor-pointer ${
-                                  isOtherSchool ? 'bg-amber-50 text-amber-900' : 'text-amber-700 hover:bg-amber-50'
-                                }`}
-                              >
-                                <span className="truncate">★ Other (Enter School / Academy Name)</span>
-                                {isOtherSchool && <Check className="w-3 h-3 text-amber-600 shrink-0" />}
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Manual Input revealed when '★ Other' is selected */}
-                    {isOtherSchool && (
-                      <div className="mt-2 p-2.5 bg-amber-50/70 border border-amber-200 rounded-xl text-left animate-in fade-in duration-150">
-                        <label className="block text-[11px] font-bold text-amber-950 mb-1">
-                          Enter School or Academy Name <span className="text-rose-600">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          placeholder="e.g. St. Joseph's Matric School..."
-                          value={customSchoolName}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            setCustomSchoolName(val);
-                            setFormData(prev => ({
-                              ...prev,
-                              institution: val,
-                              schoolName: val
-                            }));
-                          }}
-                          className="w-full px-2.5 sm:px-3 py-2 bg-white border border-amber-300 rounded-lg text-slate-950 font-semibold focus:ring-2 focus:ring-amber-500 focus:outline-none text-base sm:text-sm shadow-2xs placeholder:text-slate-400 placeholder:font-normal"
-                          autoFocus
-                        />
-                      </div>
-                    )}
+                    <input
+                      type="text"
+                      required
+                      placeholder="Enter student's School or Academy Name..."
+                      value={formData.institution || ''}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setFormData(prev => ({
+                          ...prev,
+                          institution: val,
+                          schoolName: val
+                        }));
+                      }}
+                      className="w-full px-2.5 sm:px-3 py-2 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none text-base sm:text-sm shadow-2xs placeholder:text-slate-400 placeholder:font-normal"
+                    />
                   </div>
                 )}
 
