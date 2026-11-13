@@ -169,129 +169,94 @@ export default function AdminSchoolsPage({
           return (
             <div
               key={branch.code}
-              className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between hover:shadow-md transition relative group"
+              className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col justify-between gap-3"
             >
-              <div className="space-y-3">
-                {/* Header & Status */}
-                <div className="flex items-start justify-between gap-2">
-                  <span className="font-mono text-[10px] font-black text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
-                    {branch.code}
-                  </span>
-                  <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-emerald-50 text-emerald-700 border border-emerald-200">
-                    {branch.status || 'Authorized Branch'}
-                  </span>
-                </div>
-
-                {/* Name & City */}
-                <div>
+              {/* Branch Name */}
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span>
                   <h3 className="text-sm font-black text-slate-950 leading-snug">{branch.name}</h3>
-                  <div className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
-                    <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                    <span className="truncate">{branch.city}</span>
-                  </div>
+                </div>
+                <span className="font-mono text-[10px] font-black text-slate-500 bg-slate-100 px-2 py-0.5 rounded shrink-0">
+                  {branch.code}
+                </span>
+              </div>
+
+              {/* OFFICIAL BRANCH LOGIN CREDENTIALS BOX */}
+              <div className="rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50/80 via-sky-50/40 to-white p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-blue-900">
+                    <Lock className="w-3 h-3 text-blue-600" />
+                    Branch Login Access
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => handleOpenEditModal(branch)}
+                    className="inline-flex items-center gap-1 text-[10px] font-bold text-blue-700 hover:text-blue-900 bg-blue-100/70 hover:bg-blue-200/80 px-2 py-0.5 rounded-md transition cursor-pointer"
+                    title="Edit this branch's login email and password"
+                  >
+                    <Edit3 className="w-2.5 h-2.5" />
+                    Edit
+                  </button>
                 </div>
 
-                {/* Director & Coordinator Info */}
-                <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-[11px] space-y-0.5">
-                  <div>Centre Director: <strong className="text-slate-800">{branch.principal || 'Branch Director'}</strong></div>
-                  <div>Branch Coordinator: <strong className="text-slate-800">{branch.coordinator || 'Branch Coordinator'}</strong></div>
-                  <div>Contact: <strong className="text-slate-800">{branch.phone || '+91 98652 19131'}</strong></div>
-                </div>
-
-                {/* OFFICIAL BRANCH LOGIN CREDENTIALS BOX */}
-                <div className="rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50/80 via-sky-50/40 to-white p-3 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-blue-900">
-                      <Lock className="w-3 h-3 text-blue-600" />
-                      Branch Login Access
+                {/* Email row */}
+                <div className="flex items-center justify-between gap-1.5 bg-white/90 px-2.5 py-1.5 rounded-lg border border-blue-100 text-xs">
+                  <div className="flex items-center gap-1.5 truncate">
+                    <Mail className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                    <span className="font-mono text-[11px] font-semibold text-slate-800 truncate" title={creds.email}>
+                      {creds.email}
                     </span>
-                    <button
-                      type="button"
-                      onClick={() => handleOpenEditModal(branch)}
-                      className="inline-flex items-center gap-1 text-[10px] font-bold text-blue-700 hover:text-blue-900 bg-blue-100/70 hover:bg-blue-200/80 px-2 py-0.5 rounded-md transition cursor-pointer"
-                      title="Edit this branch's login email and password"
-                    >
-                      <Edit3 className="w-2.5 h-2.5" />
-                      Edit
-                    </button>
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => copyToClipboard(creds.email, emailKey)}
+                    className="p-1 text-slate-400 hover:text-blue-700 hover:bg-blue-50 rounded transition cursor-pointer shrink-0"
+                    title="Copy email"
+                  >
+                    {copiedKey === emailKey ? (
+                      <Check className="w-3.5 h-3.5 text-emerald-600" />
+                    ) : (
+                      <Copy className="w-3.5 h-3.5" />
+                    )}
+                  </button>
+                </div>
 
-                  {/* Email row */}
-                  <div className="flex items-center justify-between gap-1.5 bg-white/90 px-2.5 py-1.5 rounded-lg border border-blue-100 text-xs">
-                    <div className="flex items-center gap-1.5 truncate">
-                      <Mail className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-                      <span className="font-mono text-[11px] font-semibold text-slate-800 truncate" title={creds.email}>
-                        {creds.email}
-                      </span>
-                    </div>
+                {/* Password row */}
+                <div className="flex items-center justify-between gap-1.5 bg-white/90 px-2.5 py-1.5 rounded-lg border border-blue-100 text-xs">
+                  <div className="flex items-center gap-1.5 truncate">
+                    <KeyRound className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                    <span className="font-mono text-[11px] font-semibold text-slate-800">
+                      {isPassVisible ? creds.password : '••••••••••••'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-0.5 shrink-0">
                     <button
                       type="button"
-                      onClick={() => copyToClipboard(creds.email, emailKey)}
-                      className="p-1 text-slate-400 hover:text-blue-700 hover:bg-blue-50 rounded transition cursor-pointer shrink-0"
-                      title="Copy email"
+                      onClick={() => togglePasswordVisibility(passKey)}
+                      className="p-1 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded transition cursor-pointer"
+                      title={isPassVisible ? 'Hide password' : 'Show password'}
                     >
-                      {copiedKey === emailKey ? (
+                      {isPassVisible ? (
+                        <EyeOff className="w-3.5 h-3.5" />
+                      ) : (
+                        <Eye className="w-3.5 h-3.5" />
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => copyToClipboard(creds.password, passKey)}
+                      className="p-1 text-slate-400 hover:text-blue-700 hover:bg-blue-50 rounded transition cursor-pointer"
+                      title="Copy password"
+                    >
+                      {copiedKey === passKey ? (
                         <Check className="w-3.5 h-3.5 text-emerald-600" />
                       ) : (
                         <Copy className="w-3.5 h-3.5" />
                       )}
                     </button>
                   </div>
-
-                  {/* Password row */}
-                  <div className="flex items-center justify-between gap-1.5 bg-white/90 px-2.5 py-1.5 rounded-lg border border-blue-100 text-xs">
-                    <div className="flex items-center gap-1.5 truncate">
-                      <KeyRound className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                      <span className="font-mono text-[11px] font-semibold text-slate-800">
-                        {isPassVisible ? creds.password : '••••••••••••'}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-0.5 shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => togglePasswordVisibility(passKey)}
-                        className="p-1 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded transition cursor-pointer"
-                        title={isPassVisible ? 'Hide password' : 'Show password'}
-                      >
-                        {isPassVisible ? (
-                          <EyeOff className="w-3.5 h-3.5" />
-                        ) : (
-                          <Eye className="w-3.5 h-3.5" />
-                        )}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => copyToClipboard(creds.password, passKey)}
-                        className="p-1 text-slate-400 hover:text-blue-700 hover:bg-blue-50 rounded transition cursor-pointer"
-                        title="Copy password"
-                      >
-                        {copiedKey === passKey ? (
-                          <Check className="w-3.5 h-3.5 text-emerald-600" />
-                        ) : (
-                          <Copy className="w-3.5 h-3.5" />
-                        )}
-                      </button>
-                    </div>
-                  </div>
                 </div>
-              </div>
-
-              {/* Bottom Actions */}
-              <div className="flex items-center justify-between gap-2 mt-4 pt-3 border-t border-slate-100">
-                <span className="text-xs font-extrabold text-sky-800">
-                  {branch.studentsCount} Active Students
-                </span>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveBranch(branch.branchName || branch.name);
-                    handleRoleSwitch('Branch Head');
-                  }}
-                  className="px-2.5 py-1 text-xs font-black bg-emerald-50 text-emerald-800 hover:bg-emerald-100 rounded-lg transition cursor-pointer"
-                >
-                  Open Branch Desk →
-                </button>
               </div>
             </div>
           );
