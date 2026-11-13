@@ -836,8 +836,8 @@ export default function AdmissionModal({
       alert('Please enter Student Full Name (Field 4).');
       return false;
     }
-    if (isOtherBranch && (!customBranchName.trim() || formData.branch === 'Other')) {
-      alert('Please enter your School or Academy Name for the branch (Field 2).');
+    if (!formData.institution?.trim()) {
+      alert('Please enter School or Academy Name.');
       return false;
     }
     if (!formData.parentName.trim()) {
@@ -1421,20 +1421,16 @@ export default function AdmissionModal({
                   </div>
                 </div>
 
-                {/* School or Academy Name (Manual Entry under Branch) */}
+                {/* School or Academy Name (Compulsory Entry under Branch) */}
                 {formData.branch && (
                   <div className="pt-0.5 animate-in fade-in duration-150">
-                    <label className="block text-[11px] sm:text-xs font-black text-slate-800 mb-0.5 sm:mb-1 flex items-center justify-between">
-                      <span className="flex items-center gap-1.5">
-                        <School className="w-3.5 h-3.5 text-sky-700" />
-                        <span>School or Academy Name</span>
-                      </span>
-                      <span className="text-[10px] font-semibold text-slate-400">
-                        Enter manually
-                      </span>
+                    <label className="block text-[11px] sm:text-xs font-black text-slate-800 mb-0.5 sm:mb-1 flex items-center gap-1.5">
+                      <School className="w-3.5 h-3.5 text-sky-700" />
+                      <span>School or Academy Name <span className="text-rose-600">*</span></span>
                     </label>
                     <input
                       type="text"
+                      required
                       placeholder="Enter student's School or Academy Name..."
                       value={formData.institution || ''}
                       onChange={(e) => {
