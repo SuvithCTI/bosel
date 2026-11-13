@@ -16,6 +16,7 @@ import {
   ChevronUp,
   Upload,
   Building2,
+  School,
   MapPin,
   CreditCard,
   QrCode,
@@ -220,6 +221,8 @@ export default function AdmissionModal({
     date: new Date().toISOString().split('T')[0], // 1. Date
     registerNumber: initialRegNumber, // 2. Register number [non-editable]
     branch: defaultBranch, // 3. Branch
+    institution: '', // School / Academy Name (manual entry)
+    schoolName: '',
     courseName: initialCourse, // 4. Course Name (kept for backward compat)
     selectedCourses: [
       {
@@ -986,6 +989,8 @@ export default function AdmissionModal({
       date: new Date().toISOString().split('T')[0],
       registerNumber: generateRegisterNumber(resetCourse),
       branch: initialBranch || 'Tenkasi',
+      institution: '',
+      schoolName: '',
       courseName: resetCourse,
       selectedCourses: [
         {
@@ -1389,7 +1394,6 @@ export default function AdmissionModal({
                                   setFormData(prev => ({ 
                                     ...prev, 
                                     branch: b,
-                                    institution: b,
                                     district: (!prev.district || prev.district === prev.branch || prev.district === 'Tenkasi') ? b : prev.district
                                   }));
                                   setBranchDropdownOpen(false);
@@ -1416,6 +1420,35 @@ export default function AdmissionModal({
                     )}
                   </div>
                 </div>
+
+                {/* School or Academy Name (Manual Entry under Branch) */}
+                {formData.branch && (
+                  <div className="pt-0.5 animate-in fade-in duration-150">
+                    <label className="block text-[11px] sm:text-xs font-black text-slate-800 mb-0.5 sm:mb-1 flex items-center justify-between">
+                      <span className="flex items-center gap-1.5">
+                        <School className="w-3.5 h-3.5 text-sky-700" />
+                        <span>School or Academy Name</span>
+                      </span>
+                      <span className="text-[10px] font-semibold text-slate-400">
+                        Enter manually
+                      </span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Enter student's School or Academy Name..."
+                      value={formData.institution || ''}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setFormData(prev => ({
+                          ...prev,
+                          institution: val,
+                          schoolName: val
+                        }));
+                      }}
+                      className="w-full px-2.5 sm:px-3 py-2 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none text-base sm:text-sm shadow-2xs placeholder:text-slate-400 placeholder:font-normal"
+                    />
+                  </div>
+                )}
 
                 {/* 3. Multi-Course & Level Selection Desk */}
                 <div className="space-y-2 pt-1 border-t border-slate-200">
