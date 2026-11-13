@@ -1173,17 +1173,6 @@ export default function AdmissionModal({
               </button>
             </div>
           )}
-          {!submitted && skipPayment && (
-            <div className="mt-2.5 pt-2 border-t border-white/20 flex items-center justify-between text-xs">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-[11px] font-black">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Branch Direct Admission (Direct Credentials)</span>
-              </span>
-              <span className="text-[11px] text-sky-200 font-semibold hidden sm:inline">
-                Instant Account Generation
-              </span>
-            </div>
-          )}
         </div>
 
         {/* Modal Scrollable Body */}
@@ -1407,17 +1396,9 @@ export default function AdmissionModal({
                   </div>
 
                   <div className="relative" ref={branchDropdownRef}>
-                    <div className="flex items-center justify-between mb-0.5 sm:mb-1">
-                      <label className="block text-[11px] sm:text-xs font-black text-slate-800 truncate">
-                        2. Branch *
-                      </label>
-                      {lockBranch && (
-                        <span className="text-[10px] font-black text-sky-800 bg-sky-100 px-1.5 py-0.5 rounded flex items-center gap-1">
-                          <Lock className="w-2.5 h-2.5 text-sky-700" />
-                          <span>Branch Assigned</span>
-                        </span>
-                      )}
-                    </div>
+                    <label className="block text-[11px] sm:text-xs font-black text-slate-800 mb-0.5 sm:mb-1 truncate">
+                      2. Branch *
+                    </label>
 
                     <button
                       type="button"
@@ -1503,19 +1484,13 @@ export default function AdmissionModal({
                     /* In Branch Admin: Admission Through is FIXED to School */
                     <div className="pt-0.5 space-y-2 animate-in fade-in duration-150">
                       <div>
-                        <label className="block text-[11px] sm:text-xs font-black text-slate-800 mb-1 flex items-center justify-between">
-                          <span className="flex items-center gap-1.5">
-                            <School className="w-3.5 h-3.5 text-sky-700" />
-                            <span>Admission Through <span className="text-rose-600">*</span></span>
-                          </span>
-                          <span className="text-[10px] font-bold text-sky-700 bg-sky-50 px-2 py-0.5 rounded-full border border-sky-200">
-                            Fixed: School
-                          </span>
+                        <label className="block text-[11px] sm:text-xs font-black text-slate-800 mb-1 flex items-center gap-1.5">
+                          <School className="w-3.5 h-3.5 text-sky-700" />
+                          <span>Admission Through <span className="text-rose-600">*</span></span>
                         </label>
                         <div className="w-full py-2 px-3 rounded-xl border border-sky-500 bg-sky-50 text-sky-950 font-bold text-xs flex items-center gap-2 shadow-2xs">
                           <School className="w-4 h-4 text-sky-600 shrink-0" />
                           <span>School</span>
-                          <span className="text-[10px] text-slate-500 font-medium ml-auto">(Affiliated School Admission)</span>
                         </div>
                       </div>
 
