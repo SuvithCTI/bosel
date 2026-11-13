@@ -842,15 +842,11 @@ export default function AdmissionModal({
       return false;
     }
     if (!formData.admissionCategory) {
-      alert('Please select Admission Through (Branch, Academy, or School).');
+      alert('Please select Admission Through (Branch or Academy).');
       return false;
     }
     if (formData.admissionCategory === 'Academy' && !formData.institution?.trim()) {
       alert('Please enter Academy Name.');
-      return false;
-    }
-    if (formData.admissionCategory === 'School' && !formData.institution?.trim()) {
-      alert('Please enter School Name.');
       return false;
     }
     if (!formData.parentName.trim()) {
@@ -1437,7 +1433,7 @@ export default function AdmissionModal({
                   </div>
                 </div>
 
-                {/* Category of Admission under Branch: Branch / Academy / School */}
+                {/* Category of Admission under Branch: Branch / Academy */}
                 {formData.branch && (
                   <div className="pt-0.5 space-y-2 animate-in fade-in duration-150">
                     <div>
@@ -1450,11 +1446,10 @@ export default function AdmissionModal({
                           Select category
                         </span>
                       </label>
-                      <div className="grid grid-cols-3 gap-2">
+                      <div className="grid grid-cols-2 gap-2">
                         {[
                           { id: 'Branch', label: 'Branch', icon: Building2 },
-                          { id: 'Academy', label: 'Academy', icon: GraduationCap },
-                          { id: 'School', label: 'School', icon: School }
+                          { id: 'Academy', label: 'Academy', icon: GraduationCap }
                         ].map(({ id, label, icon: Icon }) => {
                           const isSelected = formData.admissionCategory === id;
                           return (
@@ -1494,32 +1489,6 @@ export default function AdmissionModal({
                           type="text"
                           required
                           placeholder="Enter Academy Name..."
-                          value={formData.institution || ''}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            setFormData(prev => ({
-                              ...prev,
-                              institution: val,
-                              schoolName: val
-                            }));
-                          }}
-                          className="w-full px-2.5 sm:px-3 py-2 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none text-base sm:text-sm shadow-2xs placeholder:text-slate-400 placeholder:font-normal"
-                          autoFocus
-                        />
-                      </div>
-                    )}
-
-                    {/* If School is selected: enter School Name */}
-                    {formData.admissionCategory === 'School' && (
-                      <div className="pt-0.5 animate-in fade-in slide-in-from-top-1 duration-150">
-                        <label className="block text-[11px] sm:text-xs font-black text-slate-800 mb-0.5 sm:mb-1 flex items-center gap-1.5">
-                          <School className="w-3.5 h-3.5 text-sky-700" />
-                          <span>School Name <span className="text-rose-600">*</span></span>
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          placeholder="Enter School Name..."
                           value={formData.institution || ''}
                           onChange={(e) => {
                             const val = e.target.value;
