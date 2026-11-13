@@ -1,4 +1,5 @@
 // Local storage and authentication management for BSEL users
+import { verifyBranchLogin } from './branchAuthStorage';
 
 const DEFAULT_USERS = [
   {
@@ -731,7 +732,23 @@ export const validateLogin = (enteredUserId, enteredPassword) => {
     }
   }
 
-  // 2. Guaranteed Branch Admin / Branch Head Check (supports branch.admin or any branch)
+  // 2. Official District Branch Login Check (bsel+districtname@bsel.org / districtname+bsel)
+  const branchAuthResult = verifyBranchLogin(cleanId, cleanPassword);
+  if (branchAuthResult) {
+    if (branchAuthResult.success) {
+      return {
+        success: true,
+        user: branchAuthResult.user
+      };
+    } else if (branchAuthResult.isBranch) {
+      return {
+        success: false,
+        message: branchAuthResult.message
+      };
+    }
+  }
+
+  // Fallback branch legacy identifiers (supports branch.admin or any branch prefix)
   if (cleanId.startsWith('branch.') || cleanId.startsWith('branch-') || cleanId === 'branch' || cleanId.includes('tenkasi') || cleanId.includes('chennai') || cleanId.includes('coimbatore')) {
     const branchUsers = getRegisteredUsers().filter(u => u.role === 'Branch Head' || u.role === 'Branch Admin');
     let matchedBranchHead = branchUsers.find(b => 

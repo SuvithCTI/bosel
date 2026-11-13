@@ -749,7 +749,7 @@ export default function LoginPage({
                       type="text"
                       required
                       autoComplete="username"
-                      placeholder="e.g. BSEL-98XXXXXXXX or 10-digit mobile"
+                      placeholder="e.g. BSEL-98XXXXXXXX or bsel+districtname@bsel.org"
                       value={userId}
                       onChange={(event) => {
                         setUserId(event.target.value);
@@ -780,7 +780,7 @@ export default function LoginPage({
                       type={showPassword ? 'text' : 'password'}
                       required
                       autoComplete="current-password"
-                      placeholder="Enter registered mobile / password"
+                      placeholder="Enter password (e.g. districtname+bsel or mobile)"
                       value={password}
                       onChange={(event) => {
                         setPassword(event.target.value);
@@ -839,8 +839,8 @@ export default function LoginPage({
                     <button
                       type="button"
                       onClick={() => {
-                        setUserId('branch.admin');
-                        setPassword('branch123');
+                        setUserId('bsel+tenkasi@bsel.org');
+                        setPassword('tenkasi+bsel');
                         setErrorMessage('');
                       }}
                       className="w-full py-1.5 px-1 sm:px-2 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/50 text-amber-300 font-semibold rounded-lg text-xs transition active:scale-95 cursor-pointer text-center flex items-center justify-center min-h-[36px]"

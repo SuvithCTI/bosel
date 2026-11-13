@@ -1802,6 +1802,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
               setShowAddSchoolModal={setShowAddSchoolModal}
               setActiveBranch={setActiveBranch}
               handleRoleSwitch={handleRoleSwitch}
+              showToast={showToast}
             />
           )}
 
