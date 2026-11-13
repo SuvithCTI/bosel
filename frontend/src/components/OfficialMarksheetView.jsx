@@ -4,7 +4,11 @@ import {
   Download,
   Printer,
   Loader2,
-  Upload, Building2, Image as ImageIcon, X, PenTool,
+  Upload,
+  Building2,
+  Image as ImageIcon,
+  X,
+  PenTool,
 } from 'lucide-react';
 
 import { exportPdfFromElement } from '../utils/pdfExport';
@@ -23,15 +27,13 @@ import MarksheetTemplate from './MarksheetTemplate';
 const WATERMARK_TEXT = 'B★SEL';
 const WATERMARK_LOGO_SRC = '/bsel_logo.png';
 
-// Small straight text grid across the whole page
-const TILE_COLS = 9;          // how many words across the page
-const TILE_ROWS = 34;         // how many rows down the page
-const TILE_FONT_SIZE = 12;    // size of each small word (sheet units)
-const TILE_OPACITY = 0.1;     // lower = lighter
+const TILE_COLS = 9;
+const TILE_ROWS = 34;
+const TILE_FONT_SIZE = 12;
+const TILE_OPACITY = 0.1;
 
-// Large centre logo
 const CENTER_LOGO_WIDTH = '45%';
-const CENTER_OPACITY = 0.08;  // lower = lighter
+const CENTER_OPACITY = 0.08;
 
 // ============================================================
 // COURSE SUBJECT MODULES
@@ -39,8 +41,6 @@ const CENTER_OPACITY = 0.08;  // lower = lighter
 
 const DEMO_MARKS = [96, 98, 94, 97, 95];
 
-// [keywords matched in the course name, 5 subject names]
-// Order matters: the first match wins.
 const COURSE_RULES = [
   [['html'], [
     'HTML5 Semantic Structure & Tags',
@@ -149,7 +149,6 @@ const COURSE_RULES = [
   ]],
 ];
 
-// Default: Abacus Speed Arithmetic
 const ABACUS_SUBJECTS = [
   'Abacus Operations & Bead Technique',
   'Small Friend & Big Friend Formulas',
@@ -176,13 +175,8 @@ export const getCourseSubjectModules = (courseName = '') => {
 
 // ============================================================
 // WATERMARK LAYER
-// Sits behind all marksheet content (zIndex 0).
-// - Small straight "B★SEL" text grid, clipped to the inside of the frame
-// - Large centre B★SEL logo (img, low opacity)
-// pointer-events-none so it never blocks clicks on the fields.
 // ============================================================
 
-// Inner frame area of the template (matches the inner rect in MarksheetTemplate)
 const FRAME_CLIP = { x: 24, y: 24, width: 676, height: 976 };
 
 function BselWatermark() {
@@ -208,7 +202,6 @@ function BselWatermark() {
       className="absolute inset-0 overflow-hidden pointer-events-none select-none"
       style={{ zIndex: 0 }}
     >
-      {/* Small straight text, clipped to the inside of the frame */}
       <svg
         viewBox={`0 0 ${PAGE_W} ${PAGE_H}`}
         preserveAspectRatio="xMidYMid meet"
@@ -245,7 +238,6 @@ function BselWatermark() {
         </g>
       </svg>
 
-      {/* Large centre logo */}
       <img
         src={WATERMARK_LOGO_SRC}
         alt=""
@@ -273,6 +265,8 @@ export default function OfficialMarksheetView({
   onClose,
   standalone = false,
   defaultShowMarks = false,
+  hideMarks = false,
+  paperType = null,
 }) {
   const sheetRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -413,11 +407,10 @@ export default function OfficialMarksheetView({
 
   const courseName = student.program || student.courseName || 'Abacus';
 
-  // Marks saved by the admin on the "Student Marksheet" entry page
   const savedSheet = getSavedMarksheet(student);
 
-  // Marks appear automatically once the admin has saved them
-  const showMarks = showMarksFlag || Boolean(savedSheet);
+  // Marks are hidden when hideMarks is set (used for question paper page 1)
+  const showMarks = !hideMarks && (showMarksFlag || Boolean(savedSheet));
 
   const subjects = savedSheet
     ? savedSheet.subjects.map((s) => ({
@@ -450,7 +443,6 @@ export default function OfficialMarksheetView({
     student.registrationNo ||
     'AB27-001';
 
-  // Certificate number
   const coursePrefix = getCoursePrefix(courseName);
   const level = student.level || student.courseLevel || 'Level 1';
 
@@ -546,7 +538,6 @@ export default function OfficialMarksheetView({
 
     reader.readAsDataURL(file);
 
-    // Allow selecting the same image again
     e.target.value = '';
   };
 
@@ -575,7 +566,6 @@ export default function OfficialMarksheetView({
     }
   };
 
-  // Exact vertical row positions for the official template
   const tableRowPositions = [
     '54.59%',
     '58.15%',
@@ -619,6 +609,36 @@ export default function OfficialMarksheetView({
 
       {/* Full-page BSEL watermark (behind all content) */}
       <BselWatermark />
+
+      {/* =====================================================
+          PAPER TYPE BOX (A / B / C / D / E) - only when passed in
+      ===================================================== */}
+      {paperType && (
+        <div
+          className="absolute flex flex-col items-center justify-center border-2 border-[#0b2a55] bg-amber-300 rounded-sm shadow-sm"
+          style={{
+            left: '84.5%',
+            top: '13.2%',
+            width: '8.8%',
+            height: '4.6%',
+            zIndex: 1,
+          }}
+          title="Paper Type"
+        >
+          <span
+            className="text-[7px] font-black uppercase text-[#0b2a55] leading-none"
+            style={{ fontFamily: 'Arial, sans-serif' }}
+          >
+            Type
+          </span>
+          <span
+            className="text-[14px] font-black text-[#0b2a55] leading-none mt-0.5"
+            style={{ fontFamily: "'Times New Roman', Times, serif" }}
+          >
+            {paperType}
+          </span>
+        </div>
+      )}
 
       {/* =====================================================
           0. TOP-RIGHT SCHOOL HEADER (LINE 1, 2, 3) & SCHOOL LOGO
@@ -723,7 +743,6 @@ export default function OfficialMarksheetView({
           1. STUDENT & COURSE DETAILS
       ===================================================== */}
 
-      {/* Registration Number */}
       <div
         className="absolute font-bold text-[#081d3d] text-[10px] sm:text-[12.5px] -translate-y-1/2 truncate"
         style={{
@@ -738,7 +757,6 @@ export default function OfficialMarksheetView({
         {regNo}
       </div>
 
-      {/* Certificate Number */}
       <div
         className="absolute font-bold text-[#081d3d] text-[10px] sm:text-[12.5px] -translate-y-1/2 truncate"
         style={{
@@ -753,7 +771,6 @@ export default function OfficialMarksheetView({
         {certNo}
       </div>
 
-      {/* Student Name */}
       <div
         className="absolute font-bold text-[#081d3d] uppercase text-[10.5px] sm:text-[13px] -translate-y-1/2 truncate"
         style={{
@@ -768,7 +785,6 @@ export default function OfficialMarksheetView({
         {studentName}
       </div>
 
-      {/* Parent / Guardian */}
       <div
         className="absolute font-bold text-[#081d3d] capitalize text-[10px] sm:text-[12.5px] -translate-y-1/2 truncate"
         style={{
@@ -783,7 +799,6 @@ export default function OfficialMarksheetView({
         {parentName}
       </div>
 
-      {/* Date of Birth */}
       <div
         className="absolute font-bold text-[#081d3d] text-[10px] sm:text-[12.5px] -translate-y-1/2 truncate"
         style={{
@@ -798,7 +813,6 @@ export default function OfficialMarksheetView({
         {dob}
       </div>
 
-      {/* Course */}
       <div
         className="absolute font-bold text-[#081d3d] capitalize text-[10px] sm:text-[12.5px] -translate-y-1/2 truncate"
         style={{
@@ -813,7 +827,6 @@ export default function OfficialMarksheetView({
         {courseName}
       </div>
 
-      {/* Level */}
       <div
         className="absolute font-bold text-[#081d3d] capitalize text-[10px] sm:text-[12.5px] -translate-y-1/2 truncate"
         style={{
@@ -828,7 +841,6 @@ export default function OfficialMarksheetView({
         {level}
       </div>
 
-      {/* Duration */}
       <div
         className="absolute font-bold text-[#081d3d] capitalize text-[10px] sm:text-[12.5px] -translate-y-1/2 truncate"
         style={{
@@ -843,7 +855,6 @@ export default function OfficialMarksheetView({
         {duration}
       </div>
 
-      {/* School / Exam Centre */}
       <div
         className="absolute font-bold text-[#081d3d] capitalize text-[10px] sm:text-[12px] -translate-y-1/2 truncate"
         style={{
@@ -858,7 +869,6 @@ export default function OfficialMarksheetView({
         {school}
       </div>
 
-      {/* Address */}
       <div
         className="absolute font-bold text-[#081d3d] capitalize text-[9.5px] sm:text-[11.5px] -translate-y-1/2 truncate"
         style={{
@@ -874,7 +884,7 @@ export default function OfficialMarksheetView({
       </div>
 
       {/* =====================================================
-          3. STUDENT PHOTO
+          STUDENT PHOTO
       ===================================================== */}
 
       <div
@@ -934,7 +944,6 @@ export default function OfficialMarksheetView({
                 strokeWidth="2.5"
                 strokeDasharray="4 2"
               />
-
               <circle
                 cx="50"
                 cy="50"
@@ -943,14 +952,11 @@ export default function OfficialMarksheetView({
                 stroke="#081d3d"
                 strokeWidth="1.2"
               />
-
               <circle cx="50" cy="50" r="34" fill="#081d3d" />
-
               <path
                 d="M50 24 L53.5 35 L65 35 L55.8 41.8 L59.3 52.8 L50 46 L40.7 52.8 L44.2 41.8 L35 35 L46.5 35 Z"
                 fill="#c59b27"
               />
-
               <path
                 d="M42 58 Q50 63 58 58"
                 stroke="#c59b27"
@@ -986,7 +992,6 @@ export default function OfficialMarksheetView({
           </div>
         )}
 
-        {/* Change Photo Overlay */}
         <div className="
           absolute
           inset-0
@@ -1003,7 +1008,6 @@ export default function OfficialMarksheetView({
           no-print
         ">
           <Upload className="w-3.5 h-3.5 text-amber-400 mb-0.5" />
-
           <span className="
             text-[6.5px]
             font-black
@@ -1016,7 +1020,6 @@ export default function OfficialMarksheetView({
         </div>
       </div>
 
-      {/* Hidden Photo Input */}
       <input
         type="file"
         ref={fileInputRef}
@@ -1026,7 +1029,7 @@ export default function OfficialMarksheetView({
       />
 
       {/* =====================================================
-          4. SUBJECT MARKS TABLE
+          SUBJECT MARKS TABLE (hidden when hideMarks is set)
       ===================================================== */}
 
       {showMarks &&
@@ -1035,18 +1038,8 @@ export default function OfficialMarksheetView({
 
           return (
             <React.Fragment key={sub.id || idx}>
-
-              {/* Subject / Module */}
               <div
-                className="
-                  absolute
-                  font-bold
-                  text-[#081d3d]
-                  text-[9.5px]
-                  sm:text-[11.5px]
-                  truncate
-                  -translate-y-1/2
-                "
+                className="absolute font-bold text-[#081d3d] text-[9.5px] sm:text-[11.5px] truncate -translate-y-1/2"
                 style={{
                   left: '13.0%',
                   top: topY,
@@ -1059,18 +1052,8 @@ export default function OfficialMarksheetView({
                 {sub.name}
               </div>
 
-              {/* Max Marks */}
               <div
-                className="
-                  absolute
-                  font-bold
-                  text-[#081d3d]
-                  text-[10px]
-                  sm:text-[12.5px]
-                  -translate-x-1/2
-                  -translate-y-1/2
-                  text-center
-                "
+                className="absolute font-bold text-[#081d3d] text-[10px] sm:text-[12.5px] -translate-x-1/2 -translate-y-1/2 text-center"
                 style={{
                   left: '46.41%',
                   top: topY,
@@ -1082,18 +1065,8 @@ export default function OfficialMarksheetView({
                 {sub.max}
               </div>
 
-              {/* Assessment */}
               <div
-                className="
-                  absolute
-                  font-bold
-                  text-[#081d3d]
-                  text-[10px]
-                  sm:text-[12.5px]
-                  -translate-x-1/2
-                  -translate-y-1/2
-                  text-center
-                "
+                className="absolute font-bold text-[#081d3d] text-[10px] sm:text-[12.5px] -translate-x-1/2 -translate-y-1/2 text-center"
                 style={{
                   left: '61.40%',
                   top: topY,
@@ -1105,18 +1078,8 @@ export default function OfficialMarksheetView({
                 {sub.assessment || sub.practical}
               </div>
 
-              {/* Marks Obtained */}
               <div
-                className="
-                  absolute
-                  font-black
-                  text-[#081d3d]
-                  text-[10.5px]
-                  sm:text-[13px]
-                  -translate-x-1/2
-                  -translate-y-1/2
-                  text-center
-                "
+                className="absolute font-black text-[#081d3d] text-[10.5px] sm:text-[13px] -translate-x-1/2 -translate-y-1/2 text-center"
                 style={{
                   left: '76.31%',
                   top: topY,
@@ -1128,18 +1091,8 @@ export default function OfficialMarksheetView({
                 {sub.marks}
               </div>
 
-              {/* Percentage */}
               <div
-                className="
-                  absolute
-                  font-bold
-                  text-[#081d3d]
-                  text-[10px]
-                  sm:text-[12.5px]
-                  -translate-x-1/2
-                  -translate-y-1/2
-                  text-center
-                "
+                className="absolute font-bold text-[#081d3d] text-[10px] sm:text-[12.5px] -translate-x-1/2 -translate-y-1/2 text-center"
                 style={{
                   left: '89.36%',
                   top: topY,
@@ -1155,29 +1108,18 @@ export default function OfficialMarksheetView({
                       100
                   )}%`}
               </div>
-
             </React.Fragment>
           );
         })}
 
       {/* =====================================================
-          5. SUMMARY SECTION
+          SUMMARY SECTION (hidden when hideMarks is set)
       ===================================================== */}
 
       {showMarks && (
         <>
-          {/* Total Marks */}
           <div
-            className="
-              absolute
-              font-black
-              text-[#081d3d]
-              text-xs
-              sm:text-base
-              -translate-x-1/2
-              -translate-y-1/2
-              text-center
-            "
+            className="absolute font-black text-[#081d3d] text-xs sm:text-base -translate-x-1/2 -translate-y-1/2 text-center"
             style={{
               left: '18.51%',
               top: '79.54%',
@@ -1189,18 +1131,8 @@ export default function OfficialMarksheetView({
             {totalMax}
           </div>
 
-          {/* Marks Obtained */}
           <div
-            className="
-              absolute
-              font-black
-              text-[#081d3d]
-              text-xs
-              sm:text-base
-              -translate-x-1/2
-              -translate-y-1/2
-              text-center
-            "
+            className="absolute font-black text-[#081d3d] text-xs sm:text-base -translate-x-1/2 -translate-y-1/2 text-center"
             style={{
               left: '39.43%',
               top: '79.54%',
@@ -1212,18 +1144,8 @@ export default function OfficialMarksheetView({
             {totalMarks}
           </div>
 
-          {/* Percentage */}
           <div
-            className="
-              absolute
-              font-black
-              text-[#081d3d]
-              text-xs
-              sm:text-base
-              -translate-x-1/2
-              -translate-y-1/2
-              text-center
-            "
+            className="absolute font-black text-[#081d3d] text-xs sm:text-base -translate-x-1/2 -translate-y-1/2 text-center"
             style={{
               left: '60.36%',
               top: '79.54%',
@@ -1235,18 +1157,8 @@ export default function OfficialMarksheetView({
             {percentage}%
           </div>
 
-          {/* Grade */}
           <div
-            className="
-              absolute
-              font-black
-              text-[#b45309]
-              text-sm
-              sm:text-xl
-              -translate-x-1/2
-              -translate-y-1/2
-              text-center
-            "
+            className="absolute font-black text-[#b45309] text-sm sm:text-xl -translate-x-1/2 -translate-y-1/2 text-center"
             style={{
               left: '83.29%',
               top: '79.54%',
@@ -1261,22 +1173,12 @@ export default function OfficialMarksheetView({
       )}
 
       {/* =====================================================
-          6. DATE OF ISSUE
+          DATE OF ISSUE (hidden when hideMarks is set)
       ===================================================== */}
 
       {showMarks && (
         <div
-          className="
-            absolute
-            font-bold
-            text-[#081d3d]
-            text-[10px]
-            sm:text-[12.5px]
-            -translate-x-1/2
-            -translate-y-1/2
-            text-center
-            whitespace-nowrap
-          "
+          className="absolute font-bold text-[#081d3d] text-[10px] sm:text-[12.5px] -translate-x-1/2 -translate-y-1/2 text-center whitespace-nowrap"
           style={{
             left: '83.43%',
             top: '85.55%',
@@ -1290,7 +1192,7 @@ export default function OfficialMarksheetView({
       )}
 
       {/* =====================================================
-          7. CENTER DIRECTOR / PRINCIPAL SIGNATURE (Uploadable PNG/JPG)
+          PRINCIPAL SIGNATURE
       ===================================================== */}
 
       <div
@@ -1371,10 +1273,6 @@ export default function OfficialMarksheetView({
       sm:p-4
     ">
 
-      {/* =====================================================
-          PRINT & RESPONSIVE STYLES
-      ===================================================== */}
-
       <style>{`
         @media print {
           @page {
@@ -1423,7 +1321,6 @@ export default function OfficialMarksheetView({
           }
         }
 
-        /* Mobile toolbar */
         @media (max-width: 640px) {
           .marksheet-toolbar {
             border-radius: 10px;
@@ -1467,10 +1364,6 @@ export default function OfficialMarksheetView({
         }
       `}</style>
 
-      {/* =====================================================
-          TOP TOOLBAR
-      ===================================================== */}
-
       <div className="
         no-print
         marksheet-toolbar
@@ -1498,7 +1391,6 @@ export default function OfficialMarksheetView({
         border-amber-400/40
       ">
 
-        {/* Back Button */}
         <button
           type="button"
           onClick={onClose}
@@ -1527,7 +1419,6 @@ export default function OfficialMarksheetView({
           <span>Back to Student Details</span>
         </button>
 
-        {/* Action Buttons */}
         <div className="
           marksheet-action-buttons
           flex
@@ -1537,8 +1428,6 @@ export default function OfficialMarksheetView({
           w-full
           sm:w-auto
         ">
-
-          {/* Customize Marksheet Form */}
           <button
             type="button"
             onClick={() => setIsFormModalOpen(true)}
@@ -1570,7 +1459,6 @@ export default function OfficialMarksheetView({
             <span>Customize</span>
           </button>
 
-          {/* Download PDF */}
           <button
             type="button"
             onClick={handleDownloadPdf}
@@ -1614,7 +1502,6 @@ export default function OfficialMarksheetView({
             </span>
           </button>
 
-          {/* Print */}
           <button
             type="button"
             onClick={handlePrint}
@@ -1644,11 +1531,9 @@ export default function OfficialMarksheetView({
             <Printer className="w-3.5 h-3.5 shrink-0" />
             <span>Print</span>
           </button>
-
         </div>
       </div>
 
-      {/* Hidden file inputs for School Logo & Principal Signature */}
       <input
         type="file"
         ref={schoolLogoInputRef}
@@ -1664,7 +1549,6 @@ export default function OfficialMarksheetView({
         onChange={handleDirectorSignChange}
       />
 
-      {/* Pop-up Customization Form Modal */}
       {isFormModalOpen && (
         <div
           className="fixed inset-0 z-[170] flex items-center justify-center bg-black/75 backdrop-blur-sm p-3 sm:p-4 print:hidden"
@@ -1674,7 +1558,6 @@ export default function OfficialMarksheetView({
             className="bg-slate-900 border border-slate-700 rounded-2xl p-4 sm:p-6 max-w-xl w-full shadow-2xl text-white flex flex-col gap-4 max-h-[92vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-slate-700/80 pb-3">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center">
@@ -1698,9 +1581,7 @@ export default function OfficialMarksheetView({
               </button>
             </div>
 
-            {/* Form Fields */}
             <div className="flex flex-col gap-3.5">
-              {/* Line 1 */}
               <div className="flex flex-col gap-1">
                 <label className="text-[11px] font-semibold text-slate-300 flex justify-between">
                   <span>Line 1: School / Branch Name <span className="text-amber-400 font-bold">(Max 20 chars, Big & Bold)</span></span>
@@ -1720,7 +1601,6 @@ export default function OfficialMarksheetView({
                 />
               </div>
 
-              {/* Line 2 */}
               <div className="flex flex-col gap-1">
                 <label className="text-[11px] font-semibold text-slate-300 flex justify-between">
                   <span>Line 2: Subtitle / Division <span className="text-amber-400 font-bold">(Max 25 chars, Medium)</span></span>
@@ -1740,7 +1620,6 @@ export default function OfficialMarksheetView({
                 />
               </div>
 
-              {/* Line 3 */}
               <div className="flex flex-col gap-1">
                 <label className="text-[11px] font-semibold text-slate-300 flex justify-between">
                   <span>Line 3: Motto / Tagline <span className="text-amber-400 font-bold">(Max 30 chars, Small)</span></span>
@@ -1760,9 +1639,7 @@ export default function OfficialMarksheetView({
                 />
               </div>
 
-              {/* Uploads Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-800">
-                {/* School Logo */}
                 <div className="bg-slate-950/70 border border-slate-800 p-3 rounded-xl flex flex-col gap-2">
                   <span className="text-[11px] font-bold text-slate-300 flex items-center gap-1.5">
                     <ImageIcon className="w-3.5 h-3.5 text-amber-400" />
@@ -1802,7 +1679,6 @@ export default function OfficialMarksheetView({
                   </div>
                 </div>
 
-                {/* Principal Signature */}
                 <div className="bg-slate-950/70 border border-slate-800 p-3 rounded-xl flex flex-col gap-2">
                   <span className="text-[11px] font-bold text-slate-300 flex items-center gap-1.5">
                     <PenTool className="w-3.5 h-3.5 text-sky-400" />
@@ -1841,7 +1717,6 @@ export default function OfficialMarksheetView({
               </div>
             </div>
 
-            {/* Modal Actions */}
             <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
               <button
                 type="button"
@@ -1854,10 +1729,6 @@ export default function OfficialMarksheetView({
           </div>
         </div>
       )}
-
-      {/* =====================================================
-          MARKSHEET PREVIEW
-      ===================================================== */}
 
       <div className="
         w-full
