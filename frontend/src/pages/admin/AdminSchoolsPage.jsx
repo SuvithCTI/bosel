@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
-  School,
+  Building2,
   Plus,
   MapPin,
   KeyRound,
@@ -15,7 +15,7 @@ import {
   X,
   Lock,
   Mail,
-  ExternalLink
+  Building
 } from 'lucide-react';
 import {
   TAMIL_NADU_DISTRICTS,
@@ -26,6 +26,7 @@ import {
   getDefaultCredentialsForDistrict,
   getCredentialsForBranchOrSchool
 } from '../../utils/branchAuthStorage';
+import { DEFAULT_PARTNER_SCHOOLS } from '../../data/schoolsData';
 
 export default function AdminSchoolsPage({
   schoolsList,
@@ -36,12 +37,14 @@ export default function AdminSchoolsPage({
 }) {
   const [credentialsMap, setCredentialsMap] = useState(() => getStoredBranchCredentials());
   const [showDistrictModal, setShowDistrictModal] = useState(false);
-  const [editingBranch, setEditingBranch] = useState(null); // { slug, name, district, email, password }
+  const [editingBranch, setEditingBranch] = useState(null);
   const [editEmail, setEditEmail] = useState('');
   const [editPassword, setEditPassword] = useState('');
   const [copiedKey, setCopiedKey] = useState(null);
   const [visiblePasswords, setVisiblePasswords] = useState({});
   const [searchDistrictQuery, setSearchDistrictQuery] = useState('');
+  const [searchMainBranchQuery, setSearchMainBranchQuery] = useState('');
+  const [branchViewMode, setBranchViewMode] = useState('active'); // 'active' | 'all38'
 
   // Sync credentials on storage update events
   useEffect(() => {
@@ -118,6 +121,62 @@ export default function AdminSchoolsPage({
     showToast(`Reset ${districtName} to default formula credentials.`);
   };
 
+  // Strictly filter out any school records to ensure ONLY branches are shown
+  const activeBranches = useMemo(() => {
+    const list = Array.isArray(schoolsList) ? schoolsList : [];
+    const filtered = list.filter((s) => {
+      const name = (s.name || '').toLowerCase();
+      const isSchool =
+        (name.includes('school') ||
+         name.includes('nursery') ||
+         name.includes('matriculation') ||
+         name.includes('middle school') ||
+         name.includes('vidya')) &&
+        !name.includes('branch');
+      return !isSchool;
+    });
+
+    if (filtered.length > 0) return filtered;
+    return DEFAULT_PARTNER_SCHOOLS;
+  }, [schoolsList]);
+
+  // All 38 Tamil Nadu District Branches
+  const all38DistrictBranches = useMemo(() => {
+    return TAMIL_NADU_DISTRICTS.map((district, idx) => {
+      const slug = getDistrictSlug(district);
+      const creds = credentialsMap[slug] || getDefaultCredentialsForDistrict(district);
+      const code = `BSEL-${slug.toUpperCase().slice(0, 3)}-${String(idx + 1).padStart(2, '0')}`;
+      return {
+        code,
+        name: `B★SEL ${district} Regional Branch`,
+        branchName: `${district} Regional Branch`,
+        city: `${district}, Tamil Nadu`,
+        principal: district === 'Tenkasi' ? 'Mrs. Thangam Sivaji' : `${district} Branch Director`,
+        coordinator: district === 'Tenkasi' ? 'Mr. S. Sivakumar' : `${district} Coordinator`,
+        phone: district === 'Tenkasi' ? '+91 98652 19131' : '+91 98400 12345',
+        studentsCount: district === 'Tenkasi' ? 110 : district === 'Chennai' ? 240 : district === 'Coimbatore' ? 190 : 120,
+        status: district === 'Tenkasi' ? 'Authorized Franchise Branch' : 'Authorized Regional Branch',
+        slug,
+        creds
+      };
+    });
+  }, [credentialsMap]);
+
+  // Branches to render depending on active tab & search query
+  const displayedBranches = useMemo(() => {
+    const baseList = branchViewMode === 'all38' ? all38DistrictBranches : activeBranches;
+    const q = searchMainBranchQuery.toLowerCase().trim();
+    if (!q) return baseList;
+    return baseList.filter((b) => {
+      return (
+        (b.name || '').toLowerCase().includes(q) ||
+        (b.city || '').toLowerCase().includes(q) ||
+        (b.code || '').toLowerCase().includes(q) ||
+        (b.branchName || '').toLowerCase().includes(q)
+      );
+    });
+  }, [branchViewMode, all38DistrictBranches, activeBranches, searchMainBranchQuery]);
+
   // Filtered districts list for the 38 TN Districts manager modal
   const filteredDistricts = useMemo(() => {
     const q = searchDistrictQuery.toLowerCase().trim();
@@ -145,8 +204,8 @@ export default function AdminSchoolsPage({
       <div className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-sm flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
         <div>
           <h2 className="text-base font-black text-slate-950 flex items-center gap-2">
-            <School className="w-5 h-5 text-orange-500" />
-            <span>Authorized Branches & Partner Schools Network</span>
+            <Building2 className="w-5 h-5 text-amber-500" />
+            <span>Authorized Regional Branches Network</span>
           </h2>
           <p className="text-xs text-slate-500 mt-0.5">
             Super Admin sets official Branch Login credentials. Default Email: <code className="text-blue-700 font-bold bg-blue-50 px-1 py-0.5 rounded">bsel+districtname@bsel.org</code> | Default Password: <code className="text-amber-700 font-bold bg-amber-50 px-1 py-0.5 rounded">districtname+bsel</code>.
@@ -164,56 +223,97 @@ export default function AdminSchoolsPage({
             <span>District Branch Credentials (38 TN Districts)</span>
           </button>
 
-          {/* Affiliate New Centre */}
+          {/* Add New Branch */}
           <button
             type="button"
             onClick={() => setShowAddSchoolModal(true)}
             className="flex-1 lg:flex-none px-3.5 py-2 bg-[#0c234b] hover:bg-[#163e7c] text-white rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
           >
             <Plus className="w-4 h-4 text-amber-400" />
-            <span>Affiliate New Centre</span>
+            <span>Add New Branch</span>
           </button>
         </div>
       </div>
 
-      {/* Network School/Branch Cards Grid */}
+      {/* View Switcher & Search Bar */}
+      <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl w-full sm:w-auto">
+          <button
+            type="button"
+            onClick={() => setBranchViewMode('active')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-black transition cursor-pointer flex items-center gap-1.5 ${
+              branchViewMode === 'active'
+                ? 'bg-white text-blue-950 shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <Building className="w-3.5 h-3.5 text-amber-500" />
+            <span>Regional Branches ({activeBranches.length})</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setBranchViewMode('all38')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-black transition cursor-pointer flex items-center gap-1.5 ${
+              branchViewMode === 'all38'
+                ? 'bg-white text-blue-950 shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
+            <span>All 38 TN District Branches (38)</span>
+          </button>
+        </div>
+
+        <div className="relative w-full sm:w-72">
+          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            placeholder="Search branches by district, city, or code..."
+            value={searchMainBranchQuery}
+            onChange={(e) => setSearchMainBranchQuery(e.target.value)}
+            className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600"
+          />
+        </div>
+      </div>
+
+      {/* Network Branch Cards Grid (PURE BRANCHES ONLY) */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {schoolsList.map((school) => {
-          const creds = getCredentialsForBranchOrSchool(school);
-          const emailKey = `email_${school.code}_${creds.slug}`;
-          const passKey = `pass_${school.code}_${creds.slug}`;
+        {displayedBranches.map((branch) => {
+          const creds = getCredentialsForBranchOrSchool(branch);
+          const emailKey = `email_${branch.code}_${creds.slug}`;
+          const passKey = `pass_${branch.code}_${creds.slug}`;
           const isPassVisible = !!visiblePasswords[passKey];
 
           return (
             <div
-              key={school.code}
+              key={branch.code}
               className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between hover:shadow-md transition relative group"
             >
               <div className="space-y-3">
                 {/* Header & Status */}
                 <div className="flex items-start justify-between gap-2">
                   <span className="font-mono text-[10px] font-black text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
-                    {school.code}
+                    {branch.code}
                   </span>
                   <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-emerald-50 text-emerald-700 border border-emerald-200">
-                    {school.status}
+                    {branch.status || 'Authorized Regional Branch'}
                   </span>
                 </div>
 
                 {/* Name & City */}
                 <div>
-                  <h3 className="text-sm font-black text-slate-950 leading-snug">{school.name}</h3>
+                  <h3 className="text-sm font-black text-slate-950 leading-snug">{branch.name}</h3>
                   <div className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
                     <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                    <span className="truncate">{school.city}</span>
+                    <span className="truncate">{branch.city}</span>
                   </div>
                 </div>
 
-                {/* Principal & Coordinator Info */}
+                {/* Principal/Director & Coordinator Info */}
                 <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-[11px] space-y-0.5">
-                  <div>Principal/Head: <strong className="text-slate-800">{school.principal}</strong></div>
-                  <div>Coordinator: <strong className="text-slate-800">{school.coordinator}</strong></div>
-                  <div>Contact: <strong className="text-slate-800">{school.phone}</strong></div>
+                  <div>Centre Director: <strong className="text-slate-800">{branch.principal || 'Branch Director'}</strong></div>
+                  <div>Branch Coordinator: <strong className="text-slate-800">{branch.coordinator || 'Regional Coordinator'}</strong></div>
+                  <div>Contact: <strong className="text-slate-800">{branch.phone || '+91 98652 19131'}</strong></div>
                 </div>
 
                 {/* OFFICIAL BRANCH LOGIN CREDENTIALS BOX */}
@@ -225,7 +325,7 @@ export default function AdminSchoolsPage({
                     </span>
                     <button
                       type="button"
-                      onClick={() => handleOpenEditModal(school)}
+                      onClick={() => handleOpenEditModal(branch)}
                       className="inline-flex items-center gap-1 text-[10px] font-bold text-blue-700 hover:text-blue-900 bg-blue-100/70 hover:bg-blue-200/80 px-2 py-0.5 rounded-md transition cursor-pointer"
                       title="Edit this branch's login email and password"
                     >
@@ -297,13 +397,13 @@ export default function AdminSchoolsPage({
               {/* Bottom Actions */}
               <div className="flex items-center justify-between gap-2 mt-4 pt-3 border-t border-slate-100">
                 <span className="text-xs font-extrabold text-sky-800">
-                  {school.studentsCount} Active Students
+                  {branch.studentsCount} Active Students
                 </span>
 
                 <button
                   type="button"
                   onClick={() => {
-                    setActiveBranch(school.name);
+                    setActiveBranch(branch.branchName || branch.name);
                     handleRoleSwitch('Branch Head');
                   }}
                   className="px-2.5 py-1 text-xs font-black bg-emerald-50 text-emerald-800 hover:bg-emerald-100 rounded-lg transition cursor-pointer"
@@ -425,7 +525,7 @@ export default function AdminSchoolsPage({
                             {copiedKey === emailKey ? (
                               <Check className="w-3 h-3 text-emerald-600" />
                             ) : (
-                              <Copy className="w-3 h-3" />
+                              <Copy className="w-3.5 h-3.5" />
                             )}
                           </button>
                         </div>
@@ -449,7 +549,7 @@ export default function AdminSchoolsPage({
                               {isPassVisible ? (
                                 <EyeOff className="w-3 h-3" />
                               ) : (
-                                <Eye className="w-3 h-3" />
+                                <Eye className="w-3.5 h-3.5" />
                               )}
                             </button>
                             <button
@@ -461,7 +561,7 @@ export default function AdminSchoolsPage({
                               {copiedKey === passKey ? (
                                 <Check className="w-3 h-3 text-emerald-600" />
                               ) : (
-                                <Copy className="w-3 h-3" />
+                                <Copy className="w-3.5 h-3.5" />
                               )}
                             </button>
                           </div>

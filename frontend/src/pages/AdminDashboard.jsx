@@ -137,22 +137,11 @@ export {
   getMarksheetSubjects
 };
 
-// Default Partner Schools / Branches
+// Default Authorized Regional Branches
 const DEFAULT_PARTNER_SCHOOLS = [
   {
-    code: 'BSEL-CTR-101',
-    name: 'Vidya Mandir Senior Secondary School',
-    branchName: 'Chennai Central Branch',
-    city: 'Chennai, Tamil Nadu',
-    principal: 'Dr. S. Ranganathan',
-    coordinator: 'Mrs. K. Malathi',
-    phone: '+91 98400 12345',
-    studentsCount: 240,
-    status: 'Active Partner'
-  },
-  {
-    code: 'BSEL-CTR-102',
-    name: 'B★SEL Tenkasi Regional Academy',
+    code: 'BSEL-BR-101',
+    name: 'B★SEL Tenkasi Regional Branch',
     branchName: 'Tenkasi Regional Branch',
     city: 'Surandai, Tenkasi, Tamil Nadu',
     principal: 'Mrs. Thangam Sivaji',
@@ -162,37 +151,48 @@ const DEFAULT_PARTNER_SCHOOLS = [
     status: 'Authorized Franchise Branch'
   },
   {
-    code: 'BSEL-CTR-103',
-    name: 'Bharatiya Vidya Bhavan Matriculation',
-    branchName: 'Coimbatore Branch',
+    code: 'BSEL-BR-102',
+    name: 'B★SEL Tirunelveli Regional Branch',
+    branchName: 'Tirunelveli Regional Branch',
+    city: 'Tirunelveli, Tamil Nadu',
+    principal: 'Dr. P. Muthukumar',
+    coordinator: 'Mrs. S. Gandhimathi',
+    phone: '+91 98652 19131',
+    studentsCount: 140,
+    status: 'Authorized Franchise Branch'
+  },
+  {
+    code: 'BSEL-BR-103',
+    name: 'B★SEL Chennai Central Branch',
+    branchName: 'Chennai Central Branch',
+    city: 'Chennai, Tamil Nadu',
+    principal: 'Dr. S. Ranganathan',
+    coordinator: 'Mrs. K. Malathi',
+    phone: '+91 98400 12345',
+    studentsCount: 240,
+    status: 'Authorized Regional Branch'
+  },
+  {
+    code: 'BSEL-BR-104',
+    name: 'B★SEL Coimbatore Regional Branch',
+    branchName: 'Coimbatore Regional Branch',
     city: 'RS Puram, Coimbatore, Tamil Nadu',
     principal: 'Dr. M. Gurumurthy',
     coordinator: 'Mrs. Lakshmi Priya',
     phone: '+91 94433 22110',
-    studentsCount: 160,
-    status: 'Active Partner'
+    studentsCount: 190,
+    status: 'Authorized Regional Branch'
   },
   {
-    code: 'BSEL-CTR-104',
-    name: 'National Public School',
-    branchName: 'Bengaluru Branch',
-    city: 'Bengaluru, Karnataka',
-    principal: 'Prof. Ananth Kumar',
-    coordinator: 'Mr. Pradeep Shenoy',
+    code: 'BSEL-BR-105',
+    name: 'B★SEL Madurai Regional Branch',
+    branchName: 'Madurai Regional Branch',
+    city: 'Madurai, Tamil Nadu',
+    principal: 'Mr. K. Siraj',
+    coordinator: 'Mrs. P. Shanthi',
     phone: '+91 98801 55443',
-    studentsCount: 180,
-    status: 'Active Partner'
-  },
-  {
-    code: 'BSEL-CTR-105',
-    name: 'DAV Senior Secondary School',
-    branchName: 'Mogappair Chennai Branch',
-    city: 'Mogappair, Chennai',
-    principal: 'Mrs. V. Meenakshi',
-    coordinator: 'Mr. R. Sundaram',
-    phone: '+91 98412 87654',
-    studentsCount: 195,
-    status: 'Active Partner'
+    studentsCount: 160,
+    status: 'Authorized Regional Branch'
   }
 ];
 
@@ -1586,8 +1586,8 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                         : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950'
                     }`}
                   >
-                    <School className={`w-4 h-4 shrink-0 ${activeTab === 'schools' ? 'text-orange-400' : 'text-slate-500'}`} />
-                    <span className="truncate">Branches & Centres</span>
+                    <Building className={`w-4 h-4 shrink-0 ${activeTab === 'schools' ? 'text-amber-400' : 'text-slate-500'}`} />
+                    <span className="truncate">Regional Branches</span>
                   </button>
 
                   <button

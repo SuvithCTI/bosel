@@ -1,70 +1,15 @@
-// Central Master Partner Schools & Branches Repository for B★SEL
+// Central Master Regional Branches Repository for B★SEL
 
 export const DEFAULT_SCHOOLS_SECTION_HEADER = {
-  label: 'Our School Community',
-  heading: 'Growing Together',
-  description: 'Celebrating the schools and educational communities involved in our learning activities and student recognition programs.'
+  label: 'Our Branch Network',
+  heading: 'Regional Branches & Centres',
+  description: 'Official B★SEL Regional Branches, accredited franchise academies, and district examination centres across Tamil Nadu.'
 };
 
 export const DEFAULT_PARTNER_SCHOOLS = [
   {
-    code: 'BSEL-CTR-101',
-    name: 'RC Middle School',
-    branchName: 'Uthumalai Regional Centre',
-    city: 'Uthumalai, Tamil Nadu',
-    principal: 'Rev. Fr. Principal',
-    coordinator: 'Mr. S. Albert',
-    phone: '+91 98652 19131',
-    studentsCount: 420,
-    status: 'Active Partner'
-  },
-  {
-    code: 'BSEL-CTR-102',
-    name: 'Sacred Heart Nursery & Primary School',
-    branchName: 'Panagudi Study Centre',
-    city: 'Panagudi, Tamil Nadu',
-    principal: 'Sr. Mary Superior',
-    coordinator: 'Mrs. A. Rosy',
-    phone: '+91 98400 12345',
-    studentsCount: 170,
-    status: 'Active Partner'
-  },
-  {
-    code: 'BSEL-CTR-103',
-    name: 'Amaravathi Matriculation School',
-    branchName: 'Amaravathi Centre',
-    city: 'Tamil Nadu',
-    principal: 'Dr. K. Amaravathi',
-    coordinator: 'Mr. V. Raman',
-    phone: '+91 94433 22110',
-    studentsCount: 190,
-    status: 'Active Partner'
-  },
-  {
-    code: 'BSEL-CTR-104',
-    name: 'Muslims Committee School',
-    branchName: 'Veeranam Centre',
-    city: 'Veeranam, Tamil Nadu',
-    principal: 'Janab M. Hameed',
-    coordinator: 'Mr. K. Siraj',
-    phone: '+91 98801 55443',
-    studentsCount: 120,
-    status: 'Active Partner'
-  },
-  {
-    code: 'BSEL-CTR-105',
-    name: 'St. Maries Nursery and Primary School',
-    branchName: 'Tuticorin Coastal Centre',
-    city: 'Tuticorin, Tamil Nadu',
-    principal: 'Mrs. D. Maria',
-    coordinator: 'Mr. P. Paul',
-    phone: '+91 98412 87654',
-    studentsCount: 160,
-    status: 'Active Partner'
-  },
-  {
-    code: 'BSEL-CTR-106',
-    name: 'B★SEL Tenkasi Regional Academy',
+    code: 'BSEL-BR-101',
+    name: 'B★SEL Tenkasi Regional Branch',
     branchName: 'Tenkasi Regional Branch',
     city: 'Surandai, Tenkasi, Tamil Nadu',
     principal: 'Mrs. Thangam Sivaji',
@@ -74,10 +19,10 @@ export const DEFAULT_PARTNER_SCHOOLS = [
     status: 'Authorized Franchise Branch'
   },
   {
-    code: 'BSEL-CTR-107',
-    name: 'B★SEL Tirunelveli Regional Academy',
+    code: 'BSEL-BR-102',
+    name: 'B★SEL Tirunelveli Regional Branch',
     branchName: 'Tirunelveli Regional Branch',
-    city: 'Tirunelveli, Tirunelveli, Tamil Nadu',
+    city: 'Tirunelveli, Tamil Nadu',
     principal: 'Dr. P. Muthukumar',
     coordinator: 'Mrs. S. Gandhimathi',
     phone: '+91 98652 19131',
@@ -85,15 +30,70 @@ export const DEFAULT_PARTNER_SCHOOLS = [
     status: 'Authorized Franchise Branch'
   },
   {
-    code: 'BSEL-CTR-108',
-    name: 'B★SEL Erode Regional Academy',
+    code: 'BSEL-BR-103',
+    name: 'B★SEL Chennai Central Branch',
+    branchName: 'Chennai Central Branch',
+    city: 'Chennai, Tamil Nadu',
+    principal: 'Dr. S. Ranganathan',
+    coordinator: 'Mrs. K. Malathi',
+    phone: '+91 98400 12345',
+    studentsCount: 240,
+    status: 'Authorized Regional Branch'
+  },
+  {
+    code: 'BSEL-BR-104',
+    name: 'B★SEL Coimbatore Regional Branch',
+    branchName: 'Coimbatore Regional Branch',
+    city: 'RS Puram, Coimbatore, Tamil Nadu',
+    principal: 'Dr. M. Gurumurthy',
+    coordinator: 'Mrs. Lakshmi Priya',
+    phone: '+91 94433 22110',
+    studentsCount: 190,
+    status: 'Authorized Regional Branch'
+  },
+  {
+    code: 'BSEL-BR-105',
+    name: 'B★SEL Madurai Regional Branch',
+    branchName: 'Madurai Regional Branch',
+    city: 'Madurai, Tamil Nadu',
+    principal: 'Mr. K. Siraj',
+    coordinator: 'Mrs. P. Shanthi',
+    phone: '+91 98801 55443',
+    studentsCount: 160,
+    status: 'Authorized Regional Branch'
+  },
+  {
+    code: 'BSEL-BR-106',
+    name: 'B★SEL Salem Regional Branch',
+    branchName: 'Salem Regional Branch',
+    city: 'Salem, Tamil Nadu',
+    principal: 'Mrs. D. Maria',
+    coordinator: 'Mr. P. Paul',
+    phone: '+91 98412 87654',
+    studentsCount: 150,
+    status: 'Authorized Regional Branch'
+  },
+  {
+    code: 'BSEL-BR-107',
+    name: 'B★SEL Erode Regional Branch',
     branchName: 'Erode Regional Branch',
-    city: 'Erode, Erode, Tamil Nadu',
+    city: 'Erode, Tamil Nadu',
     principal: 'Mr. V. Sakthivel',
     coordinator: 'Mrs. M. Kavitha',
     phone: '+91 98427 65432',
     studentsCount: 125,
     status: 'Authorized Franchise Branch'
+  },
+  {
+    code: 'BSEL-BR-108',
+    name: 'B★SEL Tiruchirappalli (Trichy) Regional Branch',
+    branchName: 'Trichy Regional Branch',
+    city: 'Tiruchirappalli, Tamil Nadu',
+    principal: 'Rev. Fr. Principal',
+    coordinator: 'Mr. S. Albert',
+    phone: '+91 98652 19131',
+    studentsCount: 180,
+    status: 'Authorized Regional Branch'
   }
 ];
 
@@ -131,17 +131,18 @@ export const getStoredSchools = () => {
     }
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed) && parsed.length > 0) {
-      // Ensure all 8 default schools exist if fewer are present initially
-      if (parsed.length < DEFAULT_PARTNER_SCHOOLS.length) {
-        const existingNames = new Set(parsed.map(s => (s.name || '').toLowerCase().trim()));
-        const missing = DEFAULT_PARTNER_SCHOOLS.filter(s => !existingNames.has((s.name || '').toLowerCase().trim()));
-        if (missing.length > 0) {
-          const merged = [...parsed, ...missing];
-          localStorage.setItem('bsel_partner_schools', JSON.stringify(merged));
-          return merged;
-        }
+      // Purge any non-branch school entries (e.g. RC Middle School, Muslims Committee School)
+      const pureBranches = parsed.filter(s => {
+        const name = (s.name || '').toLowerCase();
+        return !name.includes('school') && !name.includes('nursery') && !name.includes('matriculation') && !name.includes('middle');
+      });
+
+      // If schools were purged or branches are missing, restore pure default branches
+      if (pureBranches.length < DEFAULT_PARTNER_SCHOOLS.length) {
+        localStorage.setItem('bsel_partner_schools', JSON.stringify(DEFAULT_PARTNER_SCHOOLS));
+        return DEFAULT_PARTNER_SCHOOLS;
       }
-      return parsed;
+      return pureBranches;
     }
     return DEFAULT_PARTNER_SCHOOLS;
   } catch {
