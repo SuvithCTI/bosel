@@ -14,7 +14,24 @@ import {
 } from '../utils/studentDataHelpers';
 import { getCoursePrefix } from '../utils/authStorage';
 import { getSavedMarksheet, getGrade } from '../utils/marksheetStorage';
-import marksheetOfficialTemplate from '../assets/marksheet_official_template.jpg';
+import MarksheetTemplate from './MarksheetTemplate';
+
+// ============================================================
+// WATERMARK SETTINGS
+// ============================================================
+
+const WATERMARK_TEXT = 'B★SEL';
+const WATERMARK_LOGO_SRC = '/bsel_logo.png';
+
+// Small straight text grid across the whole page
+const TILE_COLS = 9;          // how many words across the page
+const TILE_ROWS = 34;         // how many rows down the page
+const TILE_FONT_SIZE = 12;    // size of each small word (sheet units)
+const TILE_OPACITY = 0.1;     // lower = lighter
+
+// Large centre logo
+const CENTER_LOGO_WIDTH = '45%';
+const CENTER_OPACITY = 0.08;  // lower = lighter
 
 // ============================================================
 // COURSE SUBJECT MODULES
@@ -156,6 +173,96 @@ export const getCourseSubjectModules = (courseName = '') => {
     pct: `${DEMO_MARKS[i]}%`,
   }));
 };
+
+// ============================================================
+// WATERMARK LAYER
+// Sits behind all marksheet content (zIndex 0).
+// - Small straight "B★SEL" text grid, clipped to the inside of the frame
+// - Large centre B★SEL logo (img, low opacity)
+// pointer-events-none so it never blocks clicks on the fields.
+// ============================================================
+
+// Inner frame area of the template (matches the inner rect in MarksheetTemplate)
+const FRAME_CLIP = { x: 24, y: 24, width: 676, height: 976 };
+
+function BselWatermark() {
+  const PAGE_W = 724;
+  const PAGE_H = 1024;
+  const cellW = PAGE_W / TILE_COLS;
+  const cellH = PAGE_H / TILE_ROWS;
+
+  const tiles = [];
+  for (let r = 0; r < TILE_ROWS; r++) {
+    for (let c = 0; c < TILE_COLS; c++) {
+      tiles.push({
+        key: `${r}-${c}`,
+        x: c * cellW + cellW / 2,
+        y: r * cellH + cellH / 2,
+      });
+    }
+  }
+
+  return (
+    <div
+      aria-hidden="true"
+      className="absolute inset-0 overflow-hidden pointer-events-none select-none"
+      style={{ zIndex: 0 }}
+    >
+      {/* Small straight text, clipped to the inside of the frame */}
+      <svg
+        viewBox={`0 0 ${PAGE_W} ${PAGE_H}`}
+        preserveAspectRatio="xMidYMid meet"
+        className="absolute inset-0 w-full h-full"
+      >
+        <defs>
+          <clipPath id="bsel-watermark-clip">
+            <rect
+              x={FRAME_CLIP.x}
+              y={FRAME_CLIP.y}
+              width={FRAME_CLIP.width}
+              height={FRAME_CLIP.height}
+            />
+          </clipPath>
+        </defs>
+
+        <g clipPath="url(#bsel-watermark-clip)">
+          {tiles.map((t) => (
+            <text
+              key={t.key}
+              x={t.x}
+              y={t.y}
+              textAnchor="middle"
+              dominantBaseline="middle"
+              fontFamily="'Times New Roman', Times, serif"
+              fontWeight="700"
+              fontSize={TILE_FONT_SIZE}
+              fill="#0b2a55"
+              fillOpacity={TILE_OPACITY}
+            >
+              {WATERMARK_TEXT}
+            </text>
+          ))}
+        </g>
+      </svg>
+
+      {/* Large centre logo */}
+      <img
+        src={WATERMARK_LOGO_SRC}
+        alt=""
+        draggable={false}
+        className="absolute"
+        style={{
+          left: '50%',
+          top: '50%',
+          width: CENTER_LOGO_WIDTH,
+          height: 'auto',
+          opacity: CENTER_OPACITY,
+          transform: 'translate(-50%, -50%)',
+        }}
+      />
+    </div>
+  );
+}
 
 // ============================================================
 // OFFICIAL MARKSHEET COMPONENT
@@ -502,13 +609,16 @@ export default function OfficialMarksheetView({
       style={{
         aspectRatio: '724 / 1024',
         boxSizing: 'border-box',
-        backgroundImage: `url(${marksheetOfficialTemplate})`,
-        backgroundSize: '100% 100%',
-        backgroundRepeat: 'no-repeat',
-        backgroundPosition: 'center center',
+        backgroundColor: '#ffffff',
         fontFamily: "'Times New Roman', Times, serif",
       }}
     >
+
+      {/* Vector template: borders, headings, table grid, boxes, labels */}
+      <MarksheetTemplate />
+
+      {/* Full-page BSEL watermark (behind all content) */}
+      <BselWatermark />
 
       {/* =====================================================
           0. TOP-RIGHT SCHOOL HEADER (LINE 1, 2, 3) & SCHOOL LOGO
@@ -524,6 +634,7 @@ export default function OfficialMarksheetView({
           left: '55.4%',
           right: '13.5%',
           height: '9.1%',
+          zIndex: 1,
         }}
         title={standalone ? '' : 'Click to customize School Name, Logo & Principal Signature'}
       >
@@ -588,6 +699,7 @@ export default function OfficialMarksheetView({
           right: '5.2%',
           width: '8.2%',
           height: '6.2%',
+          zIndex: 1,
         }}
         title={standalone ? '' : 'Click to upload/change School Logo'}
       >
@@ -620,6 +732,7 @@ export default function OfficialMarksheetView({
           maxWidth: '32.5%',
           fontFamily: "'Times New Roman', Times, serif",
           lineHeight: 1,
+          zIndex: 1,
         }}
       >
         {regNo}
@@ -634,6 +747,7 @@ export default function OfficialMarksheetView({
           maxWidth: '32.5%',
           fontFamily: "'Times New Roman', Times, serif",
           lineHeight: 1,
+          zIndex: 1,
         }}
       >
         {certNo}
@@ -648,6 +762,7 @@ export default function OfficialMarksheetView({
           maxWidth: '32.5%',
           fontFamily: "'Times New Roman', Times, serif",
           lineHeight: 1,
+          zIndex: 1,
         }}
       >
         {studentName}
@@ -662,6 +777,7 @@ export default function OfficialMarksheetView({
           maxWidth: '32.5%',
           fontFamily: "'Times New Roman', Times, serif",
           lineHeight: 1,
+          zIndex: 1,
         }}
       >
         {parentName}
@@ -676,6 +792,7 @@ export default function OfficialMarksheetView({
           maxWidth: '32.5%',
           fontFamily: "'Times New Roman', Times, serif",
           lineHeight: 1,
+          zIndex: 1,
         }}
       >
         {dob}
@@ -690,6 +807,7 @@ export default function OfficialMarksheetView({
           maxWidth: '32.5%',
           fontFamily: "'Times New Roman', Times, serif",
           lineHeight: 1,
+          zIndex: 1,
         }}
       >
         {courseName}
@@ -704,6 +822,7 @@ export default function OfficialMarksheetView({
           maxWidth: '32.5%',
           fontFamily: "'Times New Roman', Times, serif",
           lineHeight: 1,
+          zIndex: 1,
         }}
       >
         {level}
@@ -718,6 +837,7 @@ export default function OfficialMarksheetView({
           maxWidth: '32.5%',
           fontFamily: "'Times New Roman', Times, serif",
           lineHeight: 1,
+          zIndex: 1,
         }}
       >
         {duration}
@@ -732,6 +852,7 @@ export default function OfficialMarksheetView({
           maxWidth: '32.5%',
           fontFamily: "'Times New Roman', Times, serif",
           lineHeight: 1,
+          zIndex: 1,
         }}
       >
         {school}
@@ -746,6 +867,7 @@ export default function OfficialMarksheetView({
           maxWidth: '32.5%',
           fontFamily: "'Times New Roman', Times, serif",
           lineHeight: 1,
+          zIndex: 1,
         }}
       >
         {address}
@@ -774,6 +896,7 @@ export default function OfficialMarksheetView({
           top: '22.9%',
           width: '14.2%',
           height: '11.5%',
+          zIndex: 1,
         }}
         title="Click to upload/change photo"
       >
@@ -930,6 +1053,7 @@ export default function OfficialMarksheetView({
                   maxWidth: '27.5%',
                   fontFamily: "'Times New Roman', Times, serif",
                   lineHeight: 1,
+                  zIndex: 1,
                 }}
               >
                 {sub.name}
@@ -952,6 +1076,7 @@ export default function OfficialMarksheetView({
                   top: topY,
                   fontFamily: "'Times New Roman', Times, serif",
                   lineHeight: 1,
+                  zIndex: 1,
                 }}
               >
                 {sub.max}
@@ -974,6 +1099,7 @@ export default function OfficialMarksheetView({
                   top: topY,
                   fontFamily: "'Times New Roman', Times, serif",
                   lineHeight: 1,
+                  zIndex: 1,
                 }}
               >
                 {sub.assessment || sub.practical}
@@ -996,6 +1122,7 @@ export default function OfficialMarksheetView({
                   top: topY,
                   fontFamily: "'Times New Roman', Times, serif",
                   lineHeight: 1,
+                  zIndex: 1,
                 }}
               >
                 {sub.marks}
@@ -1018,6 +1145,7 @@ export default function OfficialMarksheetView({
                   top: topY,
                   fontFamily: "'Times New Roman', Times, serif",
                   lineHeight: 1,
+                  zIndex: 1,
                 }}
               >
                 {sub.pct ||
@@ -1055,6 +1183,7 @@ export default function OfficialMarksheetView({
               top: '79.54%',
               fontFamily: "'Times New Roman', Times, serif",
               lineHeight: 1,
+              zIndex: 1,
             }}
           >
             {totalMax}
@@ -1077,6 +1206,7 @@ export default function OfficialMarksheetView({
               top: '79.54%',
               fontFamily: "'Times New Roman', Times, serif",
               lineHeight: 1,
+              zIndex: 1,
             }}
           >
             {totalMarks}
@@ -1099,6 +1229,7 @@ export default function OfficialMarksheetView({
               top: '79.54%',
               fontFamily: "'Times New Roman', Times, serif",
               lineHeight: 1,
+              zIndex: 1,
             }}
           >
             {percentage}%
@@ -1121,6 +1252,7 @@ export default function OfficialMarksheetView({
               top: '79.54%',
               fontFamily: "'Times New Roman', Times, serif",
               lineHeight: 1,
+              zIndex: 1,
             }}
           >
             {overallGrade}
@@ -1150,6 +1282,7 @@ export default function OfficialMarksheetView({
             top: '85.55%',
             fontFamily: "'Times New Roman', Times, serif",
             lineHeight: 1,
+            zIndex: 1,
           }}
         >
           {issueDate}
@@ -1171,6 +1304,7 @@ export default function OfficialMarksheetView({
           width: '16.0%',
           height: '5.5%',
           transform: 'translate(-50%, -100%)',
+          zIndex: 1,
         }}
         title={standalone ? '' : 'Click to open form & manage Principal signature'}
       >
@@ -1616,7 +1750,7 @@ export default function OfficialMarksheetView({
                   type="text"
                   value={customSchoolMotto}
                   maxLength={30}
-                  placeholder="e.g. EDUCATION ? EMPOWERMENT ? EXCELLENCE"
+                  placeholder="e.g. EDUCATION • EMPOWERMENT • EXCELLENCE"
                   onChange={(e) => {
                     const v = e.target.value;
                     setCustomSchoolMotto(v);
