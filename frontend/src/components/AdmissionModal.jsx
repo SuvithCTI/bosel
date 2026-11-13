@@ -387,15 +387,10 @@ export default function AdmissionModal({
     d.toLowerCase().includes(districtSearch.toLowerCase().trim())
   );
 
-  const allBranchOptions = availableBranches.includes('Other')
-    ? availableBranches
-    : [...availableBranches, 'Other'];
+  const allBranchOptions = availableBranches.filter((b) => b !== 'Other');
 
   const filteredBranches = allBranchOptions.filter((b) => {
     const term = branchSearch.toLowerCase().trim();
-    if (b === 'Other') {
-      return term === '' || 'other'.includes(term) || 'others'.includes(term) || 'school'.includes(term);
-    }
     return b.toLowerCase().includes(term);
   });
 
@@ -1358,9 +1353,7 @@ export default function AdmissionModal({
                       }`}
                     >
                       <span className="truncate">
-                        {isOtherBranch 
-                          ? (customBranchName.trim() ? `Other: ${customBranchName}` : 'Other (Enter School Name)')
-                          : (formData.branch || 'Select Branch')}
+                        {formData.branch || 'Select Branch'}
                       </span>
                       {!lockBranch && (
                         branchDropdownOpen ? (
@@ -1376,7 +1369,7 @@ export default function AdmissionModal({
                         <div className="p-1.5 border-b border-slate-200 bg-slate-50">
                           <input
                             type="text"
-                            placeholder="Search district or type 'other'..."
+                            placeholder="Search district or branch..."
                             value={branchSearch}
                             onChange={(e) => setBranchSearch(e.target.value)}
                             className="w-full px-2 py-1 text-xs text-slate-950 font-semibold border border-slate-300 rounded-md focus:outline-none focus:border-sky-500 bg-white"
@@ -1385,29 +1378,20 @@ export default function AdmissionModal({
                         </div>
                         <div className="max-h-48 overflow-y-auto p-1 divide-y divide-slate-100">
                           {filteredBranches.map((b) => {
-                            const isSelected = isOtherBranch ? b === 'Other' : formData.branch === b;
+                            const isSelected = formData.branch === b;
                             return (
                               <button
                                 key={b}
                                 type="button"
                                 onClick={() => {
-                                  if (b === 'Other') {
-                                    setIsOtherBranch(true);
-                                    setFormData(prev => ({
-                                      ...prev,
-                                      branch: customBranchName.trim() || 'Other',
-                                      institution: customBranchName.trim() || 'Other'
-                                    }));
-                                  } else {
-                                    setIsOtherBranch(false);
-                                    setCustomBranchName('');
-                                    setFormData(prev => ({ 
-                                      ...prev, 
-                                      branch: b,
-                                      institution: b,
-                                      district: (!prev.district || prev.district === prev.branch || prev.district === 'Tenkasi') ? b : prev.district
-                                    }));
-                                  }
+                                  setIsOtherBranch(false);
+                                  setCustomBranchName('');
+                                  setFormData(prev => ({ 
+                                    ...prev, 
+                                    branch: b,
+                                    institution: b,
+                                    district: (!prev.district || prev.district === prev.branch || prev.district === 'Tenkasi') ? b : prev.district
+                                  }));
                                   setBranchDropdownOpen(false);
                                   setBranchSearch('');
                                 }}
@@ -1416,7 +1400,7 @@ export default function AdmissionModal({
                                 }`}
                               >
                                 <span className="truncate">
-                                  {b === 'Other' ? '★ Other (Enter School / Academy Name)' : b}
+                                  {b}
                                 </span>
                                 {isSelected && <Check className="w-3 h-3 text-sky-600 shrink-0" />}
                               </button>
@@ -1432,48 +1416,6 @@ export default function AdmissionModal({
                     )}
                   </div>
                 </div>
-
-                {/* School / Academy Name Input (Revealed across full width when 'Other' is selected) */}
-                {isOtherBranch && !lockBranch && (
-                  <div className="p-3 bg-sky-50/90 border border-sky-300 rounded-xl text-left animate-in fade-in duration-150">
-                    <div className="flex items-center justify-between mb-1.5">
-                      <label className="block text-xs font-black text-sky-950">
-                        Enter School / Academy Name *
-                      </label>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsOtherBranch(false);
-                          setCustomBranchName('');
-                          setFormData(prev => ({ ...prev, branch: defaultBranch, institution: defaultBranch }));
-                        }}
-                        className="text-[11px] text-sky-700 hover:underline font-bold"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. St. Joseph's Matric School, Tenkasi"
-                      value={customBranchName}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setCustomBranchName(val);
-                        setFormData(prev => ({
-                          ...prev,
-                          branch: val.trim() || 'Other',
-                          institution: val.trim() || 'Other'
-                        }));
-                      }}
-                      className="w-full px-3 py-2 bg-white border border-sky-400 rounded-lg text-slate-950 font-semibold focus:ring-2 focus:ring-sky-500 focus:outline-none text-sm shadow-2xs"
-                      autoFocus
-                    />
-                    <p className="text-[10px] text-slate-500 mt-1">
-                      Enter the full school or learning centre name where the candidate studies.
-                    </p>
-                  </div>
-                )}
 
                 {/* 3. Multi-Course & Level Selection Desk */}
                 <div className="space-y-2 pt-1 border-t border-slate-200">
