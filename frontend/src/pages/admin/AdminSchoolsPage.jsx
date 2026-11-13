@@ -141,7 +141,7 @@ export default function AdminSchoolsPage({
             <span>Authorized District Branches Network</span>
           </h2>
           <p className="text-xs text-slate-500 mt-0.5">
-            Super Admin sets official Branch Login credentials. Default Email: <code className="text-blue-700 font-bold bg-blue-50 px-1 py-0.5 rounded">bseldistrictname@bsel.org</code> | Default Password: <code className="text-amber-700 font-bold bg-amber-50 px-1 py-0.5 rounded">districtnamebsel</code>.
+            Super Admin sets official Branch Login credentials.
           </p>
         </div>
 
