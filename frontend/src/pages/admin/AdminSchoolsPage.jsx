@@ -39,7 +39,6 @@ export default function AdminSchoolsPage({
   const [editPassword, setEditPassword] = useState('');
   const [copiedKey, setCopiedKey] = useState(null);
   const [visiblePasswords, setVisiblePasswords] = useState({});
-  const [searchMainBranchQuery, setSearchMainBranchQuery] = useState('');
 
   // Sync credentials on storage update events
   useEffect(() => {
@@ -132,20 +131,6 @@ export default function AdminSchoolsPage({
     });
   }, [credentialsMap]);
 
-  // Filtered list of branches
-  const displayedBranches = useMemo(() => {
-    const q = searchMainBranchQuery.toLowerCase().trim();
-    if (!q) return all38DistrictBranches;
-    return all38DistrictBranches.filter((b) => {
-      return (
-        (b.name || '').toLowerCase().includes(q) ||
-        (b.city || '').toLowerCase().includes(q) ||
-        (b.code || '').toLowerCase().includes(q) ||
-        (b.branchName || '').toLowerCase().includes(q)
-      );
-    });
-  }, [all38DistrictBranches, searchMainBranchQuery]);
-
   return (
     <div className="space-y-4 animate-in fade-in duration-200">
       {/* Header Banner */}
@@ -173,33 +158,9 @@ export default function AdminSchoolsPage({
         </div>
       </div>
 
-      {/* Search Bar & Branch Counter */}
-      <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <span className="flex items-center gap-1.5 text-xs font-black text-slate-900 bg-slate-100 px-3 py-1.5 rounded-xl">
-            <Building className="w-3.5 h-3.5 text-amber-500" />
-            <span>38 Tamil Nadu District Branches</span>
-          </span>
-          <span className="text-xs text-slate-500 font-semibold">
-            Showing <strong className="text-blue-900 font-black">{displayedBranches.length}</strong> branches
-          </span>
-        </div>
-
-        <div className="relative w-full sm:w-80">
-          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            placeholder="Search branches by district, city, or code..."
-            value={searchMainBranchQuery}
-            onChange={(e) => setSearchMainBranchQuery(e.target.value)}
-            className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600"
-          />
-        </div>
-      </div>
-
       {/* Network Branch Cards Grid (PURE DISTRICT BRANCHES ONLY) */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {displayedBranches.map((branch) => {
+        {all38DistrictBranches.map((branch) => {
           const creds = getCredentialsForBranchOrSchool(branch);
           const emailKey = `email_${branch.code}_${creds.slug}`;
           const passKey = `pass_${branch.code}_${creds.slug}`;
