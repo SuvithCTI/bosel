@@ -1,1106 +1,1139 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Upload, Download, Loader2, Building2, ChevronDown, ChevronUp, Image as ImageIcon, X, PenTool } from 'lucide-react';
+
+import { Upload, Download, Loader2, Building2, Image as ImageIcon, X, PenTool } from 'lucide-react';
+
 import { exportPdfFromElement } from '../utils/pdfExport';
+
 import { getCoursePrefix } from '../utils/authStorage';
-import certificateTemplate from '../assets/certificate_official_template.jpg';
 
-export default function Certificate({
-  studentName = '',
-  courseName = 'Abacus',
-  programPrefix = '',
-  level = 'Level 1',
-  grade = 'A',
-  duration = '6 Months',
-  registrationNo = 'DR26-001',
-  certificateNo = 'BSEL/DR/L1/0001',
-  centreName = 'Tenkasi',
-  centreCode = '545454',
-  centreAddress = 'Podanur',
-  issueDate = '05-10-2026',
-  studentPhoto = null,
-  certificateType = 'COMPLETION',
-  onPhotoUpload = null,
-  showControls = true,
-  showUploadPhoto = false,
-  className = '',
-  schoolName = '',
-  schoolSubtitle = '',
-  schoolMotto = '',
-  schoolLogo = null,
-  onSchoolLogoUpload = null,
-  directorSignature = null,
-  onDirectorSignatureUpload = null
-}) {
-  const certificateRef = useRef(null);
-  const fileInputRef = useRef(null);
-  const schoolLogoInputRef = useRef(null);
-  const directorSignInputRef = useRef(null);
-  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
-  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+import shieldLogo from '../assets/bsel-shield-logo.png';
 
-  // Director / Principal Signature state with localStorage persistence
-  const [customDirectorSign, setCustomDirectorSign] = useState(() => {
-    if (directorSignature) return directorSignature;
-    try {
-      const saved = localStorage.getItem('bsel_certificate_director_signature');
-      if (saved) return saved;
-    } catch (_) {}
-    return null;
-  });
+import lionSeal from '../assets/rising-stars-seal.png';
 
-  useEffect(() => {
-    if (directorSignature) setCustomDirectorSign(directorSignature);
-  }, [directorSignature]);
+import msmeLogo from '../assets/msme-logo.png';
 
-  const handleDirectorSignChange = (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const dataUrl = event.target.result;
-        setCustomDirectorSign(dataUrl);
-        try {
-          localStorage.setItem('bsel_certificate_director_signature', dataUrl);
-        } catch (_) {}
-        if (onDirectorSignatureUpload) {
-          onDirectorSignatureUpload(dataUrl);
-        }
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+import iafLogo from '../assets/iaf-logo.png';
 
-  const handleRemoveDirectorSign = () => {
-    setCustomDirectorSign(null);
-    try {
-      localStorage.removeItem('bsel_certificate_director_signature');
-    } catch (_) {}
-    if (onDirectorSignatureUpload) {
-      onDirectorSignatureUpload(null);
-    }
-  };
+import isoLogo from '../assets/iso-9001-logo.png';
+import authSignSeal from '../assets/authorized-signature-seal.png';
 
-  // Load saved school details from localStorage or props
-  const [customSchoolName, setCustomSchoolName] = useState(() => {
-    if (schoolName) return schoolName;
-    try {
-      const saved = localStorage.getItem('bsel_certificate_school_header');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed.name) return parsed.name;
-      }
-    } catch {}
-    return centreName ? `${centreName.toUpperCase()}` : 'RISING STARS';
-  });
+const NAVY = '#13427a';
 
-  const [customSchoolSubtitle, setCustomSchoolSubtitle] = useState(() => {
-    if (schoolSubtitle) return schoolSubtitle;
-    try {
-      const saved = localStorage.getItem('bsel_certificate_school_header');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed.subtitle) return parsed.subtitle;
-      }
-    } catch {}
-    return 'VISION FOUNDATION';
-  });
+const GOLD = '#c9a227';
 
-  const [customSchoolMotto, setCustomSchoolMotto] = useState(() => {
-    if (schoolMotto) return schoolMotto;
-    try {
-      const saved = localStorage.getItem('bsel_certificate_school_header');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed.motto) return parsed.motto;
-      }
-    } catch {}
-    return 'EDUCATION • EMPOWERMENT • EXCELLENCE';
-  });
+const KEY_SIGN = 'bsel_certificate_director_signature';
 
-  const [customSchoolLogo, setCustomSchoolLogo] = useState(() => {
-    if (schoolLogo) return schoolLogo;
-    try {
-      const saved = localStorage.getItem('bsel_certificate_school_header');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed.logo) return parsed.logo;
-      }
-    } catch {}
-    return null;
-  });
+const KEY_HEADER = 'bsel_certificate_school_header';
 
-  // Sync state if props change
-  useEffect(() => {
-    if (schoolName) setCustomSchoolName(schoolName);
-  }, [schoolName]);
+const readHeader = () => {
 
-  useEffect(() => {
-    if (schoolSubtitle) setCustomSchoolSubtitle(schoolSubtitle);
-  }, [schoolSubtitle]);
+  try {
 
-  useEffect(() => {
-    if (schoolMotto) setCustomSchoolMotto(schoolMotto);
-  }, [schoolMotto]);
+    return JSON.parse(localStorage.getItem(KEY_HEADER) || '{}');
 
-  useEffect(() => {
-    if (schoolLogo) setCustomSchoolLogo(schoolLogo);
-  }, [schoolLogo]);
+  } catch {
 
-  // Persist customized school details to localStorage
-  const handleSaveSchoolDetails = (name, subtitle, motto, logo) => {
-    try {
-      localStorage.setItem('bsel_certificate_school_header', JSON.stringify({
-        name,
-        subtitle,
-        motto,
-        logo
-      }));
-    } catch (e) {
-      console.warn('Failed to persist school header to localStorage:', e);
-    }
-  };
+    return {};
 
-  const handleSchoolLogoChange = (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const dataUrl = event.target.result;
-        setCustomSchoolLogo(dataUrl);
-        handleSaveSchoolDetails(customSchoolName, customSchoolSubtitle, customSchoolMotto, dataUrl);
-        if (onSchoolLogoUpload) {
-          onSchoolLogoUpload(dataUrl);
-        }
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  // Clean custom course name without any forced 'MindSparc' prefix
-  const rawCourse = courseName || 'ABACUS';
-  const displayCourseUpper = rawCourse
-    .replace(/^Mindsparc\s*[-–:]*\s*/i, '')
-    .trim()
-    .toUpperCase();
-
-  // Clean Level & Grade formatting (stripping stray colons and admission statuses)
-  const rawLevel = (level || 'Level 1').trim();
-  const cleanLevel = rawLevel.replace(/^[:\s-]+/, '').trim();
-  const formattedLevel = cleanLevel.toUpperCase();
-
-  const rawGrade = (grade || '').trim();
-  const cleanGrade = rawGrade.replace(/^[:\s-]+/, '').trim().toUpperCase();
-  const isExcludedGrade = !cleanGrade || 
-    cleanGrade === 'ADMITTED' || 
-    cleanGrade === 'GRADE ADMITTED' || 
-    cleanGrade.includes('ADMIT') ||
-    cleanGrade === 'ENROLLED' ||
-    cleanGrade === 'PENDING';
-
-  const formattedGrade = !isExcludedGrade
-    ? cleanGrade.startsWith('GRADE')
-      ? cleanGrade
-      : `GRADE ${cleanGrade}`
-    : '';
-
-  // Intelligent Certificate Number calculation matching course prefix and registration
-  const coursePrefix = getCoursePrefix(displayCourseUpper);
-  const regDigits = String(registrationNo).replace(/\D/g, '');
-  const seqDigits = regDigits ? String(parseInt(regDigits.slice(-3), 10) || 1).padStart(4, '0') : '0001';
-  const cleanLvlDigits = cleanLevel.replace(/\D/g, '') || '1';
-
-  let displayCertNo = certificateNo;
-  if (!displayCertNo || displayCertNo === 'BSEL/ABACUS/L1/0007' || (coursePrefix !== 'AB' && (displayCertNo.includes('ABACUS') || displayCertNo.includes('BSEL/AB/')))) {
-    displayCertNo = `BSEL/${coursePrefix}/L${cleanLvlDigits}/${seqDigits}`;
   }
 
-  // Address formatting helper: formats in Title Case and splits gracefully across rows 3 and 4
-  const formatAddress = (addr) => {
-    if (!addr) return { line1: 'Tenkasi, Tamil Nadu', line2: '' };
-    const cleaned = addr.replace(/,([^\s])/g, ', $1').trim();
-    const words = cleaned.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
-    const titleCased = words.join(' ');
-    const parts = titleCased.split(', ');
-    if (parts.length >= 2 && titleCased.length > 20) {
-      const mid = Math.ceil(parts.length / 2);
-      return {
-        line1: parts.slice(0, mid).join(', ') + ',',
-        line2: parts.slice(mid).join(', ')
-      };
+};
+
+const readSignature = () => {
+
+  try {
+
+    return localStorage.getItem(KEY_SIGN) || null;
+
+  } catch {
+
+    return null;
+
+  }
+
+};
+
+const formatAddress = (addr) => {
+
+  if (!addr) return { line1: 'Tenkasi, Tamil Nadu', line2: '' };
+
+  const cleaned = addr.replace(/,([^\s])/g, ', $1').trim();
+
+  const titleCased = cleaned
+
+    .split(' ')
+
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+
+    .join(' ');
+
+  const parts = titleCased.split(', ');
+
+  if (parts.length >= 2 && titleCased.length > 20) {
+
+    const mid = Math.ceil(parts.length / 2);
+
+    return {
+
+      line1: parts.slice(0, mid).join(', ') + ',',
+
+      line2: parts.slice(mid).join(', '),
+
+    };
+
+  }
+
+  return { line1: titleCased, line2: '' };
+
+};
+
+const readFileAsDataUrl = (file, cb) => {
+
+  const reader = new FileReader();
+
+  reader.onload = (e) => cb(e.target.result);
+
+  reader.readAsDataURL(file);
+
+};
+
+export default function Certificate({
+
+  studentName = '',
+
+  courseName = 'Abacus',
+
+  level = 'Level 1',
+
+  duration = '6 Months',
+
+  registrationNo = 'DR26-001',
+
+  certificateNo = '',
+
+  centreName = 'Tenkasi',
+
+  centreCode = '545454',
+
+  centreAddress = 'Podanur',
+
+  issueDate = '05-10-2026',
+
+  studentPhoto = null,
+
+  certificateType = 'Certificate of Completion',
+
+  onPhotoUpload = null,
+
+  showControls = true,
+
+  className = '',
+
+  schoolName = '',
+
+  schoolSubtitle = '',
+
+  schoolMotto = '',
+
+  schoolLogo = null,
+
+  onSchoolLogoUpload = null,
+
+  directorSignature = null,
+
+  onDirectorSignatureUpload = null,
+
+}) {
+
+  const wrapperRef = useRef(null);
+
+  const photoInputRef = useRef(null);
+
+  const logoInputRef = useRef(null);
+
+  const signInputRef = useRef(null);
+
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+
+  // ----- School header (name / subtitle / motto / logo), persisted -----
+
+  const saved = readHeader();
+
+  const [headerName, setHeaderName] = useState(schoolName || saved.name || centreName?.toUpperCase() || 'RISING STARS');
+
+  const [headerSubtitle, setHeaderSubtitle] = useState(schoolSubtitle || saved.subtitle || 'VISION FOUNDATION');
+
+  const [headerMotto, setHeaderMotto] = useState(schoolMotto || saved.motto || 'EDUCATION • EMPOWERMENT • EXCELLENCE');
+
+  const [headerLogo, setHeaderLogo] = useState(schoolLogo || saved.logo || null);
+
+  // ----- Principal signature, persisted -----
+
+  const [directorSign, setDirectorSign] = useState(directorSignature || readSignature());
+
+  useEffect(() => { if (schoolName) setHeaderName(schoolName); }, [schoolName]);
+
+  useEffect(() => { if (schoolSubtitle) setHeaderSubtitle(schoolSubtitle); }, [schoolSubtitle]);
+
+  useEffect(() => { if (schoolMotto) setHeaderMotto(schoolMotto); }, [schoolMotto]);
+
+  useEffect(() => { if (schoolLogo) setHeaderLogo(schoolLogo); }, [schoolLogo]);
+
+  useEffect(() => { if (directorSignature) setDirectorSign(directorSignature); }, [directorSignature]);
+
+  const saveHeader = (next) => {
+
+    try {
+
+      localStorage.setItem(KEY_HEADER, JSON.stringify({
+
+        name: headerName, subtitle: headerSubtitle, motto: headerMotto, logo: headerLogo, ...next,
+
+      }));
+
+    } catch (e) {
+
+      console.warn('Could not persist certificate header:', e);
+
     }
-    return { line1: titleCased, line2: '' };
-  };
-  const { line1: addressLine1, line2: addressLine2 } = formatAddress(centreAddress);
 
-  // Dynamic font sizing scaled proportionally (1024/724) to match OfficialMarksheetView's exact visual dimensions
-  const getSchoolNameFontSize = (text) => {
-    const len = (text || '').trim().length;
-    if (len <= 7) return 'clamp(26px, 5.8vw, 46px)';
-    if (len <= 10) return 'clamp(23px, 5.1vw, 39px)';
-    if (len <= 13) return 'clamp(20px, 4.4vw, 34px)';
-    if (len <= 16) return 'clamp(17px, 3.8vw, 29px)';
-    if (len <= 20) return 'clamp(15px, 3.3vw, 25px)';
-    return 'clamp(13px, 2.9vw, 22px)';
   };
 
-  const getSchoolSubtitleFontSize = (text) => {
-    const len = (text || '').trim().length;
-    if (len <= 12) return 'clamp(13px, 2.8vw, 22px)';
-    if (len <= 18) return 'clamp(11.5px, 2.4vw, 19px)';
-    return 'clamp(10.5px, 2.1vw, 16px)';
+  // ----- Derived certificate values -----
+
+  const courseUpper = (courseName || 'ABACUS')
+
+    .replace(/^Mindsparc\s*[-–:]*\s*/i, '')
+
+    .trim()
+
+    .toUpperCase();
+
+  const cleanLevel = (level || 'Level 1').trim().replace(/^[:\s-]+/, '').trim();
+
+  const levelDigits = cleanLevel.replace(/\D/g, '') || '1';
+
+  const coursePrefix = getCoursePrefix(courseUpper);
+
+  const regDigits = String(registrationNo).replace(/\D/g, '');
+
+  const seqDigits = regDigits ? String(parseInt(regDigits.slice(-3), 10) || 1).padStart(4, '0') : '0001';
+
+  let displayCertNo = certificateNo;
+
+  if (!displayCertNo || (coursePrefix !== 'AB' && (displayCertNo.includes('ABACUS') || displayCertNo.includes('BSEL/AB/')))) {
+
+    displayCertNo = `BSEL/${coursePrefix}/L${levelDigits}/${seqDigits}`;
+
+  }
+
+  const { line1: addr1, line2: addr2 } = formatAddress(centreAddress);
+
+  const formatCertificateTitle = (type) => {
+    if (!type) return 'Certificate of Completion';
+    const trimmed = String(type).trim();
+    if (/^certificate\s+of/i.test(trimmed)) {
+      return trimmed
+        .split(' ')
+        .map((w, i) => (i === 1 && w.toLowerCase() === 'of') ? 'of' : w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+        .join(' ');
+    }
+    const cleanWord = trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase();
+    return `Certificate of ${cleanWord}`;
   };
 
-  const getSchoolMottoFontSize = (text) => {
-    const len = (text || '').trim().length;
-    if (len <= 16) return 'clamp(9.5px, 1.9vw, 15px)';
-    if (len <= 22) return 'clamp(8.5px, 1.7vw, 13.5px)';
-    return 'clamp(8px, 1.5vw, 12px)';
-  };
+  const displayCertTitle = formatCertificateTitle(certificateType);
+
+  const nameFontSize =
+    headerName.length <= 8 ? 32 :
+    headerName.length <= 12 ? 28 : 24.5;
+
+  const subtitleFontSize =
+    headerSubtitle.length <= 12 ? 20 :
+    headerSubtitle.length <= 17 ? 18 :
+    headerSubtitle.length <= 22 ? 16.5 : 15;
+
+  const mottoFontSize =
+    headerMotto.length <= 18 ? 15 :
+    headerMotto.length <= 24 ? 13.5 :
+    headerMotto.length <= 30 ? 12 : 11;
+
+  // ----- Handlers -----
 
   const handleDownloadPdf = async () => {
-    if (!certificateRef.current || isDownloadingPdf) return;
+
+    if (!wrapperRef.current || isDownloadingPdf) return;
+
     setIsDownloadingPdf(true);
+
     try {
+
       const safeStudent = (studentName || 'Candidate').trim().replace(/[^a-zA-Z0-9]/g, '_');
-      const safeCourse = (displayCourseUpper || 'Course').trim().replace(/[^a-zA-Z0-9]/g, '_');
-      const fileName = `BSEL_${safeCourse}_Certificate_${safeStudent}.pdf`;
 
-      await exportPdfFromElement(certificateRef.current, {
-        filename: fileName,
+      const safeCourse = (courseUpper || 'Course').replace(/[^a-zA-Z0-9]/g, '_');
+
+      await exportPdfFromElement(wrapperRef.current, {
+
+        filename: `BSEL_${safeCourse}_Certificate_${safeStudent}.pdf`,
+
         orientation: 'landscape',
+
         margin: 0,
+
         backgroundColor: '#ffffff',
-        scale: 3
+
+        scale: 3,
+
       });
+
     } catch (err) {
-      console.error('Direct PDF Generation failed:', err);
+
+      console.error('PDF generation failed:', err);
+
     } finally {
+
       setIsDownloadingPdf(false);
+
     }
+
   };
 
-  const handlePhotoChange = (e) => {
+  const handleLogoFile = (e) => {
+
     const file = e.target.files?.[0];
-    if (file && onPhotoUpload) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        onPhotoUpload(event.target.result);
-      };
-      reader.readAsDataURL(file);
-    }
+
+    if (!file) return;
+
+    readFileAsDataUrl(file, (url) => {
+
+      setHeaderLogo(url);
+
+      saveHeader({ logo: url });
+
+      onSchoolLogoUpload?.(url);
+
+    });
+
   };
+
+  const handleSignFile = (e) => {
+
+    const file = e.target.files?.[0];
+
+    if (!file) return;
+
+    readFileAsDataUrl(file, (url) => {
+
+      setDirectorSign(url);
+
+      try { localStorage.setItem(KEY_SIGN, url); } catch {}
+
+      onDirectorSignatureUpload?.(url);
+
+    });
+
+  };
+
+  const removeSignature = () => {
+
+    setDirectorSign(null);
+
+    try { localStorage.removeItem(KEY_SIGN); } catch {}
+
+    onDirectorSignatureUpload?.(null);
+
+  };
+
+  const handlePhotoFile = (e) => {
+
+    const file = e.target.files?.[0];
+
+    if (file && onPhotoUpload) readFileAsDataUrl(file, onPhotoUpload);
+
+  };
+
+  // ----- Render -----
 
   return (
-    <div className={`flex flex-col items-center certificate-wrapper w-full ${className}`}>
-      {/* Top Controls Toolbar */}
-      {/* Hidden file inputs for programmatic triggers */}
-      <input
-        type="file"
-        ref={schoolLogoInputRef}
-        accept="image/png,image/jpeg,image/jpg,image/webp"
-        className="hidden"
-        onChange={handleSchoolLogoChange}
-      />
-      <input
-        type="file"
-        ref={directorSignInputRef}
-        accept="image/png,image/jpeg,image/jpg,image/webp"
-        className="hidden"
-        onChange={handleDirectorSignChange}
-      />
-      {showUploadPhoto && (
-        <input
-          type="file"
-          ref={fileInputRef}
-          accept="image/*"
-          className="hidden"
-          onChange={handlePhotoChange}
-        />
+
+    <div className={`flex flex-col items-center w-full ${className}`}>
+
+      <input type="file" ref={logoInputRef} accept="image/png,image/jpeg,image/webp" className="hidden" onChange={handleLogoFile} />
+
+      <input type="file" ref={signInputRef} accept="image/png,image/jpeg,image/webp" className="hidden" onChange={handleSignFile} />
+
+      {onPhotoUpload && (
+
+        <input type="file" ref={photoInputRef} accept="image/*" className="hidden" onChange={handlePhotoFile} />
+
       )}
 
-      {/* Top Controls Toolbar: Action buttons visible for Branch Admin */}
       {showControls && (
+
         <div className="w-full max-w-[1024px] mb-3 bg-slate-900/95 text-white p-2.5 sm:p-3 rounded-2xl shadow-xl border border-slate-700 print:hidden flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
-            <div className="text-xs font-semibold text-slate-200 truncate">
-              Official B★SEL Certificate: <strong className="text-amber-400 capitalize">{studentName || 'Candidate Name'}</strong> — <span className="text-amber-300 font-bold uppercase">{displayCourseUpper}</span>
-            </div>
+
+          <div className="text-xs font-semibold text-slate-200 truncate">
+
+            Official B★SEL Certificate: <strong className="text-amber-400 capitalize">{studentName || 'Candidate Name'}</strong> — <span className="text-amber-300 font-bold uppercase">{courseUpper}</span>
+
           </div>
 
-          {/* Action buttons: Customize Form & Download PDF */}
           <div className="flex items-center gap-2 shrink-0">
+
             <button
+
               type="button"
+
               onClick={() => setIsFormModalOpen(true)}
-              className="px-3 py-1.5 sm:px-3.5 sm:py-2 bg-amber-500 hover:bg-amber-400 active:scale-[0.98] text-slate-950 font-black rounded-xl text-xs sm:text-sm transition flex items-center justify-center gap-1.5 shadow-md cursor-pointer"
-              title="Open Certificate Customization Form (School Details, Logo & Principal Signature)"
+
+              className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl text-xs sm:text-sm flex items-center gap-1.5 cursor-pointer"
+
             >
-              <PenTool className="w-3.5 h-3.5 text-slate-950" />
+
+              <PenTool className="w-3.5 h-3.5" />
+
               <span>Customize Certificate</span>
+
             </button>
 
             <button
+
               type="button"
+
               onClick={handleDownloadPdf}
+
               disabled={isDownloadingPdf}
-              className="px-3.5 py-1.5 sm:px-4 sm:py-2 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] disabled:opacity-60 text-white font-black rounded-xl text-xs sm:text-sm transition flex items-center justify-center gap-1.5 shadow-md cursor-pointer"
+
+              className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white font-black rounded-xl text-xs sm:text-sm flex items-center gap-1.5 cursor-pointer"
+
             >
-              {isDownloadingPdf ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Generating PDF...</span>
-                </>
-              ) : (
-                <>
-                  <Download className="w-4 h-4" />
-                  <span>Download PDF</span>
-                </>
-              )}
+
+              {isDownloadingPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+
+              <span>{isDownloadingPdf ? 'Generating PDF...' : 'Download PDF'}</span>
+
             </button>
+
           </div>
+
         </div>
+
       )}
 
-      {/* Pop-up Customization Form Modal */}
       {isFormModalOpen && (
-        <div 
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-3 sm:p-4 print:hidden animate-in fade-in duration-150"
+
+        <div
+
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-3 print:hidden"
+
           onClick={() => setIsFormModalOpen(false)}
+
         >
-          <div 
-            className="bg-slate-900 border border-slate-700 rounded-2xl p-4 sm:p-6 max-w-xl w-full shadow-2xl text-white flex flex-col gap-4 animate-in zoom-in-95 duration-200 max-h-[92vh] overflow-y-auto"
+
+          <div
+
+            className="bg-slate-900 border border-slate-700 rounded-2xl p-4 sm:p-6 max-w-xl w-full text-white flex flex-col gap-4 max-h-[92vh] overflow-y-auto"
+
             onClick={(e) => e.stopPropagation()}
+
           >
-            {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-slate-700/80 pb-3">
+
+            <div className="flex items-center justify-between border-b border-slate-700 pb-3">
+
               <div className="flex items-center gap-2.5">
+
                 <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center">
+
                   <Building2 className="w-4 h-4" />
+
                 </div>
+
                 <div>
-                  <h3 className="text-sm sm:text-base font-bold text-white">
-                    Certificate Customization Form
-                  </h3>
-                  <p className="text-[11px] text-slate-400">
-                    Edit school details, logo, and principal signature
-                  </p>
+
+                  <h3 className="text-sm sm:text-base font-bold">Certificate Customization Form</h3>
+
+                  <p className="text-[11px] text-slate-400">Edit school details, logo, and principal signature</p>
+
                 </div>
+
               </div>
-              <button
-                type="button"
-                onClick={() => setIsFormModalOpen(false)}
-                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition cursor-pointer"
-                aria-label="Close modal"
-              >
+
+              <button type="button" onClick={() => setIsFormModalOpen(false)} className="text-slate-400 hover:text-white p-1" aria-label="Close">
+
                 <X className="w-5 h-5" />
+
               </button>
+
             </div>
 
-            {/* Form Fields */}
             <div className="flex flex-col gap-3.5 text-xs">
-              {/* Line 1 */}
-              <div className="flex flex-col gap-1">
-                <label className="text-[11px] font-semibold text-slate-300 flex justify-between">
-                  <span>Line 1: School / Branch Name <span className="text-amber-400 font-bold">(Max 20 chars, Big & Bold)</span></span>
-                  <span className="text-amber-400 font-bold">{customSchoolName.length}/20</span>
-                </label>
-                <input
-                  type="text"
-                  value={customSchoolName}
-                  maxLength={20}
-                  placeholder="e.g. RISING STARS"
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    setCustomSchoolName(v);
-                    handleSaveSchoolDetails(v, customSchoolSubtitle, customSchoolMotto, customSchoolLogo);
-                  }}
-                  className="px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white font-serif uppercase tracking-wider text-xs focus:outline-none focus:border-amber-400 font-black text-sm"
-                />
-              </div>
 
-              {/* Line 2 */}
-              <div className="flex flex-col gap-1">
-                <label className="text-[11px] font-semibold text-slate-300 flex justify-between">
-                  <span>Line 2: Subtitle / Division <span className="text-amber-400 font-bold">(Max 25 chars, Medium)</span></span>
-                  <span className="text-amber-400 font-bold">{customSchoolSubtitle.length}/25</span>
-                </label>
-                <input
-                  type="text"
-                  value={customSchoolSubtitle}
-                  maxLength={25}
-                  placeholder="e.g. VISION FOUNDATION"
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    setCustomSchoolSubtitle(v);
-                    handleSaveSchoolDetails(customSchoolName, v, customSchoolMotto, customSchoolLogo);
-                  }}
-                  className="px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white font-sans uppercase tracking-widest text-xs focus:outline-none focus:border-amber-400 font-bold"
-                />
-              </div>
+              <label className="flex flex-col gap-1">
 
-              {/* Line 3 */}
-              <div className="flex flex-col gap-1">
-                <label className="text-[11px] font-semibold text-slate-300 flex justify-between">
-                  <span>Line 3: Motto / Tagline <span className="text-amber-400 font-bold">(Max 30 chars, Small)</span></span>
-                  <span className="text-amber-400 font-bold">{customSchoolMotto.length}/30</span>
-                </label>
+                <span className="text-[11px] font-semibold text-slate-300">Line 1: School / Branch Name <span className="text-amber-400 font-bold">(Max 16)</span></span>
                 <input
                   type="text"
-                  value={customSchoolMotto}
+                  value={headerName}
+                  maxLength={16}
+
+                  onChange={(e) => { setHeaderName(e.target.value); saveHeader({ name: e.target.value }); }}
+
+                  className="px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white uppercase font-bold focus:outline-none focus:border-amber-400"
+
+                />
+
+              </label>
+
+              <label className="flex flex-col gap-1">
+
+                <span className="text-[11px] font-semibold text-slate-300">Line 2: Subtitle / Division <span className="text-amber-400 font-bold">(Max 22)</span></span>
+                <input
+                  type="text"
+                  value={headerSubtitle}
+                  maxLength={22}
+
+                  onChange={(e) => { setHeaderSubtitle(e.target.value); saveHeader({ subtitle: e.target.value }); }}
+
+                  className="px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white uppercase focus:outline-none focus:border-amber-400"
+
+                />
+
+              </label>
+
+              <label className="flex flex-col gap-1">
+
+                <span className="text-[11px] font-semibold text-slate-300">Line 3: Motto / Tagline <span className="text-amber-400 font-bold">(Max 30)</span></span>
+                <input
+                  type="text"
+                  value={headerMotto}
                   maxLength={30}
-                  placeholder="e.g. EDUCATION • EMPOWERMENT • EXCELLENCE"
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    setCustomSchoolMotto(v);
-                    handleSaveSchoolDetails(customSchoolName, customSchoolSubtitle, v, customSchoolLogo);
-                  }}
-                  className="px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white font-sans uppercase tracking-wider text-xs focus:outline-none focus:border-amber-400"
+
+                  onChange={(e) => { setHeaderMotto(e.target.value); saveHeader({ motto: e.target.value }); }}
+
+                  className="px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white uppercase focus:outline-none focus:border-amber-400"
+
                 />
-              </div>
 
-              {/* Uploads Grid */}
+              </label>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-800">
-                {/* School Logo */}
+
                 <div className="bg-slate-950/70 border border-slate-800 p-3 rounded-xl flex flex-col gap-2">
+
                   <span className="text-[11px] font-bold text-slate-300 flex items-center gap-1.5">
-                    <ImageIcon className="w-3.5 h-3.5 text-amber-400" />
-                    School Logo (PNG, JPG)
+
+                    <ImageIcon className="w-3.5 h-3.5 text-amber-400" /> School Logo (top right)
+
                   </span>
+
                   <div className="flex items-center gap-3">
-                    {customSchoolLogo ? (
-                      <div className="w-12 h-12 bg-white/10 rounded-lg p-1 border border-slate-700 shrink-0">
-                        <img src={customSchoolLogo} alt="Logo" className="w-full h-full object-contain" />
-                      </div>
-                    ) : (
-                      <div className="w-12 h-12 border border-dashed border-slate-700 rounded-lg flex items-center justify-center shrink-0 text-slate-500">
-                        <ImageIcon className="w-5 h-5" />
-                      </div>
-                    )}
-                    <div className="flex flex-col gap-1 flex-1">
-                      <button
-                        type="button"
-                        onClick={() => schoolLogoInputRef.current?.click()}
-                        className="px-2.5 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-lg text-xs transition cursor-pointer text-center"
-                      >
-                        {customSchoolLogo ? 'Change Logo' : 'Upload Logo'}
+
+                    <div className="w-12 h-12 bg-white/10 rounded-lg p-1 border border-slate-700 shrink-0 flex items-center justify-center">
+
+                      {headerLogo ? <img src={headerLogo} alt="Logo" className="max-h-full max-w-full object-contain" /> : <ImageIcon className="w-5 h-5 text-slate-500" />}
+
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+
+                      <button type="button" onClick={() => logoInputRef.current?.click()} className="px-2.5 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-lg text-xs">
+
+                        {headerLogo ? 'Change Logo' : 'Upload Logo'}
+
                       </button>
-                      {customSchoolLogo && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setCustomSchoolLogo(null);
-                            handleSaveSchoolDetails(customSchoolName, customSchoolSubtitle, customSchoolMotto, null);
-                          }}
-                          className="text-[10px] text-red-400 hover:underline cursor-pointer text-left"
-                        >
+
+                      {headerLogo && (
+
+                        <button type="button" onClick={() => { setHeaderLogo(null); saveHeader({ logo: null }); }} className="text-[10px] text-red-400 hover:underline text-left">
+
                           Remove Logo
+
                         </button>
+
                       )}
+
                     </div>
+
                   </div>
+
                 </div>
 
-                {/* Principal Signature */}
                 <div className="bg-slate-950/70 border border-slate-800 p-3 rounded-xl flex flex-col gap-2">
+
                   <span className="text-[11px] font-bold text-slate-300 flex items-center gap-1.5">
-                    <PenTool className="w-3.5 h-3.5 text-sky-400" />
-                    Principal Signature (PNG, JPG)
+
+                    <PenTool className="w-3.5 h-3.5 text-sky-400" /> Principal Signature
+
                   </span>
+
                   <div className="flex items-center gap-3">
-                    {customDirectorSign ? (
-                      <div className="w-12 h-12 bg-white/10 rounded-lg p-1 border border-slate-700 shrink-0 flex items-center justify-center">
-                        <img src={customDirectorSign} alt="Signature" className="max-h-full max-w-full object-contain" />
-                      </div>
-                    ) : (
-                      <div className="w-12 h-12 border border-dashed border-slate-700 rounded-lg flex items-center justify-center shrink-0 text-slate-500">
-                        <PenTool className="w-5 h-5" />
-                      </div>
-                    )}
-                    <div className="flex flex-col gap-1 flex-1">
-                      <button
-                        type="button"
-                        onClick={() => directorSignInputRef.current?.click()}
-                        className="px-2.5 py-1.5 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-lg text-xs transition cursor-pointer text-center"
-                      >
-                        {customDirectorSign ? 'Change Signature' : 'Upload Signature'}
-                      </button>
-                      {customDirectorSign && (
-                        <button
-                          type="button"
-                          onClick={handleRemoveDirectorSign}
-                          className="text-[10px] text-red-400 hover:underline cursor-pointer text-left"
-                        >
-                          Remove Signature
-                        </button>
-                      )}
+
+                    <div className="w-12 h-12 bg-white/10 rounded-lg p-1 border border-slate-700 shrink-0 flex items-center justify-center">
+
+                      {directorSign ? <img src={directorSign} alt="Signature" className="max-h-full max-w-full object-contain" /> : <PenTool className="w-5 h-5 text-slate-500" />}
+
                     </div>
+
+                    <div className="flex flex-col gap-1">
+
+                      <button type="button" onClick={() => signInputRef.current?.click()} className="px-2.5 py-1.5 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-lg text-xs">
+
+                        {directorSign ? 'Change Signature' : 'Upload Signature'}
+
+                      </button>
+
+                      {directorSign && (
+
+                        <button type="button" onClick={removeSignature} className="text-[10px] text-red-400 hover:underline text-left">
+
+                          Remove Signature
+
+                        </button>
+
+                      )}
+
+                    </div>
+
                   </div>
+
                 </div>
+
               </div>
+
             </div>
 
-            {/* Modal Actions */}
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
-              <button
-                type="button"
-                onClick={() => setIsFormModalOpen(false)}
-                className="px-5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs sm:text-sm transition cursor-pointer shadow-md"
-              >
+            <div className="flex justify-end pt-3 border-t border-slate-800">
+
+              <button type="button" onClick={() => setIsFormModalOpen(false)} className="px-5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-sm">
+
                 Save & Done
+
               </button>
+
             </div>
+
           </div>
+
         </div>
+
       )}
 
-      {/* Mobile Rotational Tip Badge */}
-      <div className="w-full max-w-[1024px] mb-2 px-1 flex items-center justify-between text-[11px] text-slate-600 font-semibold sm:hidden print:hidden">
-        <span className="text-slate-700">
-          Tip: Rotate phone to landscape for full preview
-        </span>
-      </div>
+      {/* ===== Certificate (vector, print-ready) ===== */}
 
-      {/* Scoped CSS for Perfect Mobile Responsive Scaling */}
-      <style>{`
-        .certificate-container {
-          container-type: inline-size;
-        }
+      <div ref={wrapperRef} className="w-full max-w-[1024px]">
 
-        /* Mobile View Scaling: Keeps all elements perfectly proportioned without overlaps */
-        @container (max-width: 640px) {
-          .cert-school-name {
-            font-size: clamp(7px, 2.1cqw, 13px) !important;
-            letter-spacing: 0.01em !important;
-            line-height: 1.05 !important;
-          }
-          .cert-school-subtitle {
-            font-size: clamp(5.2px, 1.45cqw, 9.5px) !important;
-            letter-spacing: 0.03em !important;
-            line-height: 1.05 !important;
-          }
-          .cert-school-motto {
-            font-size: clamp(3.8px, 1.05cqw, 6.8px) !important;
-            letter-spacing: 0.02em !important;
-            line-height: 1.05 !important;
-          }
-          .cert-candidate-name {
-            font-size: clamp(12px, 3.2cqw, 22px) !important;
-            line-height: 1.05 !important;
-          }
-          .cert-course-title {
-            font-size: clamp(7px, 1.7cqw, 12px) !important;
-            line-height: 1.1 !important;
-          }
-          .cert-level-text {
-            font-size: clamp(5.5px, 1.35cqw, 9px) !important;
-            line-height: 1 !important;
-          }
-          .cert-table-value {
-            font-size: clamp(4.2px, 1.05cqw, 7.5px) !important;
-            line-height: 1 !important;
-          }
-          .cert-table-value-lg {
-            font-size: clamp(3.8px, 0.95cqw, 7px) !important;
-            line-height: 1 !important;
-          }
-        }
+        <svg viewBox="0 0 1024 723" xmlns="http://www.w3.org/2000/svg" className="w-full h-auto block bg-white shadow-2xl print:shadow-none">
 
-        @media (max-width: 640px) {
-          .cert-school-name {
-            font-size: clamp(7px, 2.1vw, 13px) !important;
-            letter-spacing: 0.01em !important;
-            line-height: 1.05 !important;
-          }
-          .cert-school-subtitle {
-            font-size: clamp(5.2px, 1.45vw, 9.5px) !important;
-            letter-spacing: 0.03em !important;
-            line-height: 1.05 !important;
-          }
-          .cert-school-motto {
-            font-size: clamp(3.8px, 1.05vw, 6.8px) !important;
-            letter-spacing: 0.02em !important;
-            line-height: 1.05 !important;
-          }
-          .cert-candidate-name {
-            font-size: clamp(12px, 3.2vw, 22px) !important;
-            line-height: 1.05 !important;
-          }
-          .cert-course-title {
-            font-size: clamp(7px, 1.7vw, 12px) !important;
-            line-height: 1.1 !important;
-          }
-          .cert-level-text {
-            font-size: clamp(5.5px, 1.35vw, 9px) !important;
-            line-height: 1 !important;
-          }
-          .cert-table-value {
-            font-size: clamp(4.2px, 1.05vw, 7.5px) !important;
-            line-height: 1 !important;
-          }
-          .cert-table-value-lg {
-            font-size: clamp(3.8px, 0.95vw, 7px) !important;
-            line-height: 1 !important;
-          }
-        }
-      `}</style>
+          <defs>
 
-      {/* =========================================================================
-          OFFICIAL HIGH-RESOLUTION CERTIFICATE CANVAS
-          Rendered using the user's custom template background with dynamic editable overlays
-          ========================================================================= */}
-      <div className="w-full max-w-[1024px]">
-        <div 
-          ref={certificateRef}
-          id="printable-certificate"
-          className="relative bg-white text-[#13427a] shadow-2xl select-none certificate-container overflow-hidden w-full font-serif"
-          style={{
-            aspectRatio: '1024 / 723',
-            boxSizing: 'border-box',
-            backgroundImage: `url(${certificateTemplate})`,
-            backgroundSize: '100% 100%',
-            backgroundRepeat: 'no-repeat',
-            backgroundPosition: 'center center',
-            containerType: 'inline-size'
-          }}
-        >
-          {/* ===================================================================
-              TOP-RIGHT CORNER: SCHOOL DETAILS & CUSTOM LOGO
-              - Separated into distinct containers so text is 100% centered in its given area
-              - School details dead-centered between Center Medallion and Right School Logo
-              - Guaranteed NO '...' truncation with adaptive font scaling
-              =================================================================== */}
-          {/* Top-Right School Text Details (Dead-centered between Central Medallion and Right School Logo) */}
-          <div 
+            <linearGradient id="bsel-gold" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#f7e29a" />
+              <stop offset="50%" stopColor={GOLD} />
+              <stop offset="100%" stopColor="#8a6a12" />
+            </linearGradient>
+
+            <linearGradient id="bsel-ribbon-bg" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#0a3973" />
+              <stop offset="25%" stopColor="#083063" />
+              <stop offset="70%" stopColor="#05244d" />
+              <stop offset="100%" stopColor="#031938" />
+            </linearGradient>
+
+            <linearGradient id="bsel-gold-trim" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="#b88b20" />
+              <stop offset="15%" stopColor="#fdf0b0" />
+              <stop offset="35%" stopColor="#cfa533" />
+              <stop offset="50%" stopColor="#fff8cf" />
+              <stop offset="65%" stopColor="#cfa533" />
+              <stop offset="85%" stopColor="#fdf0b0" />
+              <stop offset="100%" stopColor="#a37617" />
+            </linearGradient>
+
+            <linearGradient id="bsel-gold-text" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#fff8d6" />
+              <stop offset="30%" stopColor="#fde088" />
+              <stop offset="70%" stopColor="#eabf4e" />
+              <stop offset="100%" stopColor="#b8891f" />
+            </linearGradient>
+
+            <filter id="bsel-text-shadow" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="1.5" stdDeviation="0.8" floodColor="#010710" floodOpacity="0.85" />
+            </filter>
+
+            <pattern id="bsel-wm" width="60" height="30" patternUnits="userSpaceOnUse">
+              <text x="4" y="18" fontFamily="Georgia, serif" fontSize="12" fontWeight="700" fill={NAVY} fillOpacity="0.07">B★SEL</text>
+            </pattern>
+
+            <pattern id="bsel-strip" x="24" y="137" width="46" height="12" patternUnits="userSpaceOnUse">
+              <text x="23" y="9" textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="7.5" fontWeight="800" fill="#ffffff" letterSpacing="0.5">B★SEL</text>
+            </pattern>
+
+            <pattern id="bsel-strip" x="24" y="137" width="46" height="12" patternUnits="userSpaceOnUse">
+              <text x="23" y="9" textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="7.5" fontWeight="800" fill="#ffffff" letterSpacing="0.5">B★SEL</text>
+            </pattern>
+
+          </defs>
+
+          {/* Background and borders */}
+
+          <rect width="1024" height="723" fill="#fff" />
+
+          <rect width="1024" height="723" fill="url(#bsel-wm)" />
+
+          <rect x="6" y="6" width="1012" height="711" fill="none" stroke={NAVY} strokeWidth="10" />
+
+          <rect x="24" y="24" width="976" height="675" fill="none" stroke={GOLD} strokeWidth="1.5" />
+
+          {[[24, 14], [1000, 14], [24, 689], [1000, 689]].map(([x, y], i) => (
+
+            <polygon key={i} points={`${x},${y} ${x + 8},${y + 10} ${x},${y + 20} ${x - 8},${y + 10}`} fill={GOLD} />
+
+          ))}
+
+          {/* Header: logos */}
+          <image
+            href={shieldLogo}
+            x="30"
+            y="32"
+            width="120"
+            height="92"
+            preserveAspectRatio="xMidYMid meet"
+          />
+          <image
+            href={lionSeal}
+            x="464"
+            y="35"
+            width="96"
+            height="88"
+            preserveAspectRatio="xMidYMid meet"
+          />
+
+          {/* Header: wordmark */}
+          <text x="274" y="52" textAnchor="middle" fontFamily="Georgia, serif" fontSize="12.5" fill={NAVY}>
+            Presents through its educational initiative
+          </text>
+          <g>
+            <text x="216" y="106" textAnchor="end" fontFamily="Georgia, 'Times New Roman', serif" fontWeight="900" fontSize="56" fill={NAVY}>
+              B
+            </text>
+            <polygon
+              points="242.5,70.0 246.8,82.5 260.1,82.8 249.5,90.8 253.4,103.5 242.5,95.9 231.6,103.5 235.5,90.8 224.9,82.8 238.2,82.5"
+              fill="url(#bsel-gold)"
+              stroke={GOLD}
+              strokeWidth="0.5"
+            />
+            <text x="269" y="106" textAnchor="start" fontFamily="Georgia, 'Times New Roman', serif" fontWeight="900" fontSize="56" fill={NAVY} letterSpacing="1">
+              SEL
+            </text>
+          </g>
+          <text x="278" y="125" textAnchor="middle" fontFamily="Arial, sans-serif" fontWeight="700" fontSize="10.5" letterSpacing="0.2" fill={NAVY}>
+            BOARD OF SKILLS AND EDUCATIONAL LEARNING
+          </text>
+
+          {/* Top-Right Header: School Details & Logo (Clickable to customize) */}
+          <g
             onClick={() => setIsFormModalOpen(true)}
-            className="absolute flex flex-col items-center justify-center text-center select-none cursor-pointer hover:ring-1 hover:ring-amber-400/50 rounded-md transition px-1"
-            style={{
-              top: '2.8%',
-              left: '55.3%',
-              right: '12.5%',
-              height: '17.1%'
-            }}
-            title="Click to open Certificate Customization Form"
+            style={{ cursor: 'pointer' }}
+            title="Click to customize School Details & Logo"
           >
-            {/* Line 1: School Name (Heavy Bold weight 900, sized cleanly, never truncating with '...') */}
-            {customSchoolName && (
-              <div 
-                className="tracking-normal uppercase text-center w-full whitespace-nowrap cert-school-name"
-                style={{
-                  color: '#13427a',
-                  fontFamily: "'Cinzel', 'Outfit', 'Plus Jakarta Sans', sans-serif",
-                  fontWeight: 900,
-                  fontSize: getSchoolNameFontSize(customSchoolName),
-                  letterSpacing: (customSchoolName || '').trim().length > 13 ? '-0.02em' : '0.02em',
-                  lineHeight: 1.02,
-                  textShadow: '0 0.5px 1px rgba(19, 66, 122, 0.2)'
-                }}
+            {/* School / Branch Name (Top at big size for 15 chars) */}
+            {headerName && (
+              <text
+                x={headerLogo ? "722" : "740"}
+                y="58"
+                textAnchor="middle"
+                fontFamily="'Cinzel', 'Outfit', 'Plus Jakarta Sans', Georgia, 'Times New Roman', serif"
+                fontWeight="900"
+                fontSize={nameFontSize}
+                fill={NAVY}
+                letterSpacing={headerName.length > 12 ? "0" : "0.5"}
               >
-                {customSchoolName}
-              </div>
+                {headerName.toUpperCase()}
+              </text>
             )}
 
-            {/* Line 2: Subtitle (Heavy Bold weight 800) */}
-            {customSchoolSubtitle && (
-              <div 
-                className="uppercase mt-0.5 text-center w-full whitespace-nowrap cert-school-subtitle"
-                style={{
-                  color: '#13427a',
-                  fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif",
-                  fontWeight: 800,
-                  fontSize: getSchoolSubtitleFontSize(customSchoolSubtitle),
-                  letterSpacing: (customSchoolSubtitle || '').trim().length > 18 ? '0.05em' : '0.09em',
-                  lineHeight: 1.05
-                }}
+            {/* Subtitle / Division (Fixed for 22 chars) */}
+            {headerSubtitle && (
+              <text
+                x={headerLogo ? "722" : "740"}
+                y="84"
+                textAnchor="middle"
+                fontFamily="'Outfit', 'Plus Jakarta Sans', Arial, sans-serif"
+                fontWeight="800"
+                fontSize={subtitleFontSize}
+                fill={NAVY}
+                letterSpacing={headerSubtitle.length > 18 ? "0.3" : "0.8"}
               >
-                {customSchoolSubtitle}
-              </div>
+                {headerSubtitle.toUpperCase()}
+              </text>
             )}
 
-            {/* Line 3: Motto / Tagline (Bold weight 700) */}
-            {customSchoolMotto && (
-              <div 
-                className="uppercase mt-0.5 text-center w-full whitespace-nowrap cert-school-motto"
-                style={{
-                  color: '#13427a',
-                  fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif",
-                  fontWeight: 700,
-                  fontSize: getSchoolMottoFontSize(customSchoolMotto),
-                  letterSpacing: '0.07em',
-                  lineHeight: 1.05
-                }}
+            {/* Motto / Tagline (Fixed for 30 chars) */}
+            {headerMotto && (
+              <text
+                x={headerLogo ? "722" : "740"}
+                y="109"
+                textAnchor="middle"
+                fontFamily="'Outfit', 'Plus Jakarta Sans', Arial, sans-serif"
+                fontWeight="700"
+                fontSize={mottoFontSize}
+                fill={NAVY}
+                letterSpacing={headerMotto.length > 25 ? "0.2" : "0.5"}
               >
-                {customSchoolMotto}
-              </div>
+                {headerMotto.toUpperCase()}
+              </text>
             )}
-          </div>
 
-          {/* Extreme Right Corner: School Logo Container (Standalone, perfectly positioned) */}
-          <div 
-            onClick={() => setIsFormModalOpen(true)}
-            className="absolute flex items-center justify-center select-none cursor-pointer rounded-md overflow-hidden hover:ring-1 hover:ring-amber-400/50 transition"
-            style={{
-              top: '5.2%',
-              right: '3.5%',
-              width: '8.4%',
-              height: '11.9%'
-            }}
-            title="Click to open Certificate Customization Form (School Logo)"
-          >
-            {customSchoolLogo ? (
-              <img 
-                src={customSchoolLogo} 
-                alt={customSchoolName || 'School Logo'} 
-                className="w-full h-full object-contain drop-shadow-sm" 
+            {/* School Logo */}
+            {headerLogo ? (
+              <image
+                href={headerLogo}
+                x="888"
+                y="30"
+                width="98"
+                height="98"
+                preserveAspectRatio="xMidYMid meet"
               />
             ) : (
-              <div className="w-full h-full border border-dashed border-[#13427a]/30 hover:border-amber-500/80 bg-white/40 flex flex-col items-center justify-center p-1 text-center transition group/slot print:hidden">
-                <ImageIcon className="w-5 h-5 text-[#13427a]/40 group-hover/slot:text-amber-500 mb-1" />
-                <span className="text-[7px] font-bold text-[#13427a]/60 uppercase leading-tight font-sans">
-                  School Logo
-                </span>
-              </div>
+              <g className="print:hidden">
+                <rect
+                  x="890"
+                  y="32"
+                  width="94"
+                  height="94"
+                  rx="8"
+                  fill="#f8fafc"
+                  stroke="#cbd5e1"
+                  strokeWidth="1.2"
+                  strokeDasharray="4 3"
+                />
+                <text
+                  x="937"
+                  y="76"
+                  textAnchor="middle"
+                  fontFamily="Arial, sans-serif"
+                  fontSize="11"
+                  fontWeight="700"
+                  fill="#64748b"
+                >
+                  + LOGO
+                </text>
+                <text
+                  x="937"
+                  y="92"
+                  textAnchor="middle"
+                  fontFamily="Arial, sans-serif"
+                  fontSize="8"
+                  fill="#94a3b8"
+                >
+                  (Click to edit)
+                </text>
+              </g>
             )}
-          </div>
+          </g>
 
-          {/* 1. STUDENT PHOTO (Placed in Left Frame: x: 4.8%, y: 34.0%, w: 10.2%, h: 16.7%) */}
-          <div 
-            onClick={() => onPhotoUpload && fileInputRef.current?.click()}
-            className={`absolute overflow-hidden flex items-center justify-center bg-[#fbf9f2] ${
-              onPhotoUpload ? 'cursor-pointer hover:opacity-95' : ''
-            }`}
-            style={{
-              top: '34.0%',
-              left: '4.8%',
-              width: '10.2%',
-              height: '16.7%'
-            }}
-            title={onPhotoUpload ? 'Click to upload/change photo' : 'Student Photo'}
+          {/* Blue accent stripe */}
+          <rect x="24" y="137" width="976" height="12" fill="#0d2f5c" stroke={GOLD} strokeWidth="0.8" />
+          <rect x="24" y="137" width="976" height="12" fill="url(#bsel-strip)" />
+
+          {/* Title ribbon */}
+          {/* Left Swallowtail Tail */}
+          <polygon
+            points="196,174 240,174 240,224 196,224 220,199"
+            fill="url(#bsel-ribbon-bg)"
+          />
+          {/* Left Tail Gold Trim */}
+          <line x1="196" y1="174" x2="238" y2="174" stroke="url(#bsel-gold-trim)" strokeWidth="2.5" strokeLinecap="round" />
+          <polyline
+            points="196,174 220,199 196,224"
+            fill="none"
+            stroke="url(#bsel-gold-trim)"
+            strokeWidth="2.5"
+            strokeLinejoin="round"
+          />
+          <line x1="196" y1="224" x2="238" y2="224" stroke="url(#bsel-gold-trim)" strokeWidth="2.5" strokeLinecap="round" />
+
+          {/* Right Swallowtail Tail */}
+          <polygon
+            points="784,174 832,174 808,199 832,224 784,224"
+            fill="url(#bsel-ribbon-bg)"
+          />
+          {/* Right Tail Gold Trim */}
+          <line x1="784" y1="174" x2="832" y2="174" stroke="url(#bsel-gold-trim)" strokeWidth="2.5" strokeLinecap="round" />
+          <polyline
+            points="832,174 808,199 832,224"
+            fill="none"
+            stroke="url(#bsel-gold-trim)"
+            strokeWidth="2.5"
+            strokeLinejoin="round"
+          />
+          <line x1="784" y1="224" x2="832" y2="224" stroke="url(#bsel-gold-trim)" strokeWidth="2.5" strokeLinecap="round" />
+
+          {/* 3D Under-fold Shadows */}
+          <polygon points="236,217 236,224 219,217" fill="#020a14" />
+          <polygon points="788,217 788,224 805,217" fill="#020a14" />
+
+          {/* Front Banner Body */}
+          <rect
+            x="236"
+            y="165"
+            width="552"
+            height="52"
+            fill="url(#bsel-ribbon-bg)"
+          />
+
+          {/* Front Banner Top and Bottom Gold Bars */}
+          <rect x="236" y="165" width="552" height="3" fill="url(#bsel-gold-trim)" />
+          <rect x="236" y="214" width="552" height="3" fill="url(#bsel-gold-trim)" />
+
+          {/* Ribbon Text */}
+          <text
+            x="512"
+            y="203"
+            textAnchor="middle"
+            fontFamily="Georgia, 'Times New Roman', serif"
+            fontWeight="700"
+            fontSize="35"
+            fill="url(#bsel-gold-text)"
+            filter="url(#bsel-text-shadow)"
+            letterSpacing="0.6"
           >
-            {studentPhoto ? (
-              <img 
-                src={studentPhoto} 
-                alt={studentName || 'Student'} 
-                className="w-full h-full object-cover" 
+            {displayCertTitle}
+          </text>
+
+          <text
+            x="512"
+            y="244"
+            textAnchor="middle"
+            fontFamily="Georgia, 'Times New Roman', serif"
+            fontWeight="700"
+            fontSize="17.5"
+            letterSpacing="3.5"
+            fill="#09254c"
+          >
+            THIS IS TO CERTIFY THAT
+          </text>
+
+          {/* Student photo (click to upload when onPhotoUpload is provided) */}
+
+          <g onClick={() => onPhotoUpload && photoInputRef.current?.click()} style={{ cursor: onPhotoUpload ? 'pointer' : 'default' }}>
+
+            <rect x="38" y="238" width="118" height="132" fill="#fff" stroke={GOLD} strokeWidth="5" />
+
+            <rect x="46" y="246" width="102" height="116" fill="#fbf9f2" stroke={NAVY} strokeWidth="2.5" />
+
+            {studentPhoto && <image href={studentPhoto} x="46" y="246" width="102" height="116" preserveAspectRatio="xMidYMid slice" />}
+
+          </g>
+
+          {/* Candidate name */}
+
+          <text x="512" y="288" textAnchor="middle" fontFamily="Georgia, serif" fontStyle="italic" fontWeight="700" fontSize="30" fill={NAVY}>
+
+            {studentName || 'Candidate Name'}
+
+          </text>
+
+          <line x1="261" y1="295" x2="763" y2="295" stroke={NAVY} strokeWidth="2" />
+
+          <text x="512" y="317" textAnchor="middle" fontFamily="Georgia, serif" fontWeight="700" fontSize="19" fill={NAVY}>
+
+            has successfully completed
+
+          </text>
+
+          {/* Level hexagon badge */}
+
+          <polygon points="313,372 382,368 382,376" fill={GOLD} />
+
+          <polygon points="642,368 710,372 642,376" fill={GOLD} />
+
+          <polygon points="394,372 414,350 612,350 632,372 612,394 414,394" fill="#fff" stroke={GOLD} strokeWidth="4" />
+
+          <text x="513" y="378" textAnchor="middle" fontFamily="Georgia, serif" fontWeight="700" fontSize="14" letterSpacing="2" fill={NAVY}>
+
+            {cleanLevel.toUpperCase()}
+
+          </text>
+
+          <text x="512" y="413" textAnchor="middle" fontFamily="Georgia, serif" fontWeight="700" fontSize="13.5" fill={NAVY}>
+
+            and has fulfilled the prescribed requirements for the successful completion of the programme.
+
+          </text>
+
+          {/* Details box */}
+
+          <rect x="63" y="436" width="891" height="128" fill="none" stroke={NAVY} strokeWidth="2.5" />
+
+          <line x1="512" y1="451" x2="512" y2="553" stroke={GOLD} strokeWidth="3" />
+
+          <polygon points="512,490 519,498 512,506 505,498" fill={GOLD} />
+
+          <g fontFamily="'Times New Roman', Times, serif" fontWeight="700" fontSize="15" fill={NAVY}>
+
+            {[
+
+              ['Registration No', registrationNo],
+
+              ['Certificate No', displayCertNo],
+
+              ['Course', courseUpper],
+
+              ['Level', cleanLevel],
+
+              ['Duration', duration],
+
+            ].map(([label, value], i) => {
+
+              const y = [464, 485, 507, 528, 550][i];
+
+              return (
+
+                <g key={label}>
+
+                  <text x="82" y={y}>{label}</text>
+
+                  <text x="213" y={y} textAnchor="middle">:</text>
+
+                  <text x="232" y={y}>{value}</text>
+
+                </g>
+
+              );
+
+            })}
+
+            {[
+
+              ['School / Examination Centre', centreName],
+
+              ['Code', centreCode],
+
+              ['Address', addr1],
+
+              [null, addr2],
+
+              ['Date of Issue', issueDate],
+
+            ].map(([label, value], i) => {
+
+              const y = [464, 485, 507, 528, 550][i];
+
+              return (
+
+                <g key={i}>
+
+                  {label && <text x="533" y={y}>{label}</text>}
+
+                  {label && <text x="763" y={y} textAnchor="middle">:</text>}
+
+                  <text x="783" y={y}>{value}</text>
+
+                </g>
+
+              );
+
+            })}
+
+          </g>
+
+          {/* Footer */}
+
+          <line x1="41" y1="577" x2="976" y2="577" stroke={GOLD} strokeWidth="1.5" />
+
+          <text x="512" y="592" textAnchor="middle" fontFamily="Arial, sans-serif" fontWeight="700" fontSize="11" fill={NAVY}>
+
+            REGISTERED UNDER MINISTRY OF MSME, GOVT. OF INDIA
+
+          </text>
+
+          <text x="441" y="603" textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="8.5" fill={NAVY}>Registered Under</text>
+
+          <text x="566" y="603" textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="8.5" fill={NAVY}>Authorized Affiliates</text>
+
+          <image href={msmeLogo} x="410" y="606" width="54" height="60" preserveAspectRatio="xMidYMid meet" />
+
+          <image href={iafLogo} x="478" y="614" width="70" height="43" preserveAspectRatio="xMidYMid meet" />
+
+          <image href={isoLogo} x="566" y="608" width="48" height="48" preserveAspectRatio="xMidYMid meet" />
+
+          <text x="512" y="688" textAnchor="middle" fontFamily="Arial, sans-serif" fontWeight="700" fontSize="11" fill={NAVY}>
+
+            REGISTERED UNDER GOVT. OF TAMIL NADU (REGD. TRUST)
+
+          </text>
+
+          {/* Signatures */}
+          {directorSign ? (
+            <g
+              onClick={() => setIsFormModalOpen(true)}
+              style={{ cursor: 'pointer' }}
+              title="Click to manage Principal Signature"
+            >
+              <image
+                href={directorSign}
+                x="63"
+                y="598"
+                width="160"
+                height="68"
+                preserveAspectRatio="xMidYMax meet"
               />
-            ) : (
-              <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-[#faf6ec] to-[#f2e9d2] p-1 select-none relative group text-center">
-                <svg viewBox="0 0 100 100" className="w-10 h-10 text-[#c59b27] drop-shadow-2xs">
-                  <circle cx="50" cy="50" r="44" fill="none" stroke="#c59b27" strokeWidth="2.5" strokeDasharray="4 2" />
-                  <circle cx="50" cy="50" r="39" fill="none" stroke="#13427a" strokeWidth="1.2" />
-                  <circle cx="50" cy="34" r="34" fill="#13427a" />
-                  <path d="M50 24 L53.5 35 L65 35 L55.8 41.8 L59.3 52.8 L50 46 L40.7 52.8 L44.2 41.8 L35 35 L46.5 35 Z" fill="#c59b27" />
-                  <path d="M42 58 Q50 63 58 58" stroke="#c59b27" strokeWidth="2" fill="none" />
-                </svg>
-                <span className="text-[6.5px] sm:text-[7.5px] font-black uppercase tracking-[0.14em] text-[#13427a] mt-1 font-serif leading-none">
-                  B★SEL SEAL
-                </span>
-                <span className="text-[5px] sm:text-[6px] font-bold uppercase tracking-wider text-[#967228] mt-0.5 leading-none">
-                  OFFICIAL
-                </span>
-
-                {onPhotoUpload && (
-                  <div className="absolute inset-0 bg-[#13427a]/85 text-white opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-1 print:hidden">
-                    <Upload className="w-4 h-4 text-amber-400 mb-0.5" />
-                    <span className="text-[7px] font-black uppercase tracking-wider text-amber-200">Upload</span>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* 2. DYNAMIC CANDIDATE NAME (Resting directly above the underline at y: 40.8%) */}
-          <div 
-            className="absolute -translate-x-1/2 -translate-y-full text-center select-none"
-            style={{
-              top: '40.8%',
-              left: '50.0%',
-              width: '60%',
-              fontFamily: "'Playfair Display', Georgia, serif"
-            }}
-          >
-            <span 
-              className="capitalize text-[#13427a] font-serif font-bold italic block truncate px-2 cert-candidate-name"
-              style={{
-                fontSize: 'clamp(20px, 3.0vw, 36px)',
-                letterSpacing: '0.025em',
-                lineHeight: 1.1,
-                textShadow: '0 1px 1px rgba(19, 66, 122, 0.08)'
-              }}
+            </g>
+          ) : (
+            <g
+              onClick={() => signInputRef.current?.click()}
+              style={{ cursor: 'pointer' }}
+              className="print:hidden"
+              title="Click to upload Principal Signature"
             >
-              {studentName || 'Candidate Name'}
-            </span>
-          </div>
-
-          {/* 3. DYNAMIC COURSE TITLE (Rendered cleanly above the hexagon badge, aligned a little up at y: 45.0%) */}
-          <div 
-            className="absolute -translate-x-1/2 flex items-center justify-center font-bold tracking-[0.09em] uppercase text-center select-none"
-            style={{
-              top: '45.0%',
-              left: '50.0%',
-              maxWidth: '680px',
-              width: 'auto',
-              fontSize: 'clamp(12px, 1.65vw, 17px)',
-              fontFamily: "'Cinzel', Georgia, serif",
-              lineHeight: 1.2
-            }}
-          >
-            <span className="text-[#13427a] font-black tracking-wider cert-course-title">{displayCourseUpper}</span>
-          </div>
-
-          {/* 4. LEVEL (Perfectly Centered Inside the Gold Hexagon Badge at exact y: 51.7% / 373.5px) */}
-          <div
-            className="absolute -translate-x-1/2 -translate-y-1/2 flex items-center justify-center text-center font-black uppercase text-[#13427a] select-none pointer-events-none"
-            style={{
-              top: '51.7%',
-              left: '50.0%',
-              maxWidth: '320px',
-              width: 'max-content',
-              fontSize: 'clamp(10px, 1.4vw, 13.5px)',
-              letterSpacing: '0.14em',
-              fontFamily: "'Cinzel', Georgia, serif",
-              lineHeight: 1
-            }}
-          >
-            <span className="text-[#13427a] font-black cert-level-text">{formattedLevel}</span>
-          </div>
-
-          {/* =========================================================================
-              5. DETAILS GRID / TABLE (LEFT & RIGHT COLUMNS)
-              Rendered in classic 'Times New Roman' with perfect row-by-row baseline alignment
-              Colons: Left x=214px (20.9%), Right x=765px (74.7%)
-              Start x: Left 22.6%, Right 76.5%
-              Row Y Centers:
-              Row 1: 64.3%, Row 2: 67.3%, Row 3: 70.2%, Row 4: 73.2%, Row 5: 76.2%
-              ========================================================================= */}
-          
-          {/* --- LEFT COLUMN VALUES --- */}
-          {/* Row 1: Registration No */}
-          <div 
-            className="absolute font-bold text-[#13427a] select-none truncate flex items-center cert-table-value"
-            style={{
-              top: '64.3%',
-              left: '22.6%',
-              width: '26.5%',
-              maxWidth: '26.5%',
-              transform: 'translateY(-50%)',
-              fontFamily: "'Times New Roman', Times, serif",
-              fontSize: 'clamp(9px, 1.25vw, 13px)',
-              letterSpacing: '0.02em',
-              lineHeight: 1
-            }}
-          >
-            {registrationNo || 'DR26-001'}
-          </div>
-
-          {/* Row 2: Certificate No */}
-          <div 
-            className="absolute font-bold text-[#13427a] select-none truncate flex items-center cert-table-value"
-            style={{
-              top: '67.3%',
-              left: '22.6%',
-              width: '26.5%',
-              maxWidth: '26.5%',
-              transform: 'translateY(-50%)',
-              fontFamily: "'Times New Roman', Times, serif",
-              fontSize: 'clamp(9px, 1.25vw, 13px)',
-              letterSpacing: '0.02em',
-              lineHeight: 1
-            }}
-          >
-            {displayCertNo}
-          </div>
-
-          {/* Row 3: Course */}
-          <div 
-            className="absolute font-bold text-[#13427a] select-none uppercase flex items-center cert-table-value-lg"
-            style={{
-              top: '70.2%',
-              left: '22.6%',
-              width: '27.2%',
-              maxWidth: '27.2%',
-              transform: 'translateY(-50%)',
-              fontFamily: "'Times New Roman', Times, serif",
-              fontSize: displayCourseUpper.length > 25 ? 'clamp(7.5px, 1.0vw, 10.5px)' : 'clamp(9px, 1.25vw, 13px)',
-              letterSpacing: displayCourseUpper.length > 25 ? '0.005em' : '0.02em',
-              lineHeight: 1
-            }}
-          >
-            <span className="truncate">{displayCourseUpper}</span>
-          </div>
-
-          {/* Row 4: Level */}
-          <div 
-            className="absolute font-bold text-[#13427a] select-none truncate capitalize flex items-center cert-table-value"
-            style={{
-              top: '73.2%',
-              left: '22.6%',
-              width: '26.5%',
-              maxWidth: '26.5%',
-              transform: 'translateY(-50%)',
-              fontFamily: "'Times New Roman', Times, serif",
-              fontSize: 'clamp(9px, 1.25vw, 13px)',
-              letterSpacing: '0.02em',
-              lineHeight: 1
-            }}
-          >
-            {level || 'Level 1'}
-          </div>
-
-          {/* Row 5: Duration */}
-          <div 
-            className="absolute font-bold text-[#13427a] select-none truncate capitalize flex items-center cert-table-value"
-            style={{
-              top: '76.2%',
-              left: '22.6%',
-              width: '26.5%',
-              maxWidth: '26.5%',
-              transform: 'translateY(-50%)',
-              fontFamily: "'Times New Roman', Times, serif",
-              fontSize: 'clamp(9px, 1.25vw, 13px)',
-              letterSpacing: '0.02em',
-              lineHeight: 1
-            }}
-          >
-            {duration || '6 Months'}
-          </div>
-
-          {/* --- RIGHT COLUMN VALUES --- */}
-          {/* Row 1: School / Examination Centre */}
-          <div 
-            className="absolute font-bold text-[#13427a] select-none truncate capitalize flex items-center cert-table-value"
-            style={{
-              top: '64.3%',
-              left: '76.5%',
-              width: '16.5%',
-              maxWidth: '16.5%',
-              transform: 'translateY(-50%)',
-              fontFamily: "'Times New Roman', Times, serif",
-              fontSize: 'clamp(9px, 1.25vw, 13px)',
-              letterSpacing: '0.02em',
-              lineHeight: 1
-            }}
-          >
-            {centreName || 'Tenkasi'}
-          </div>
-
-          {/* Row 2: Code */}
-          <div 
-            className="absolute font-bold text-[#13427a] select-none truncate flex items-center cert-table-value"
-            style={{
-              top: '67.3%',
-              left: '76.5%',
-              width: '16.5%',
-              maxWidth: '16.5%',
-              transform: 'translateY(-50%)',
-              fontFamily: "'Times New Roman', Times, serif",
-              fontSize: 'clamp(9px, 1.25vw, 13px)',
-              letterSpacing: '0.02em',
-              lineHeight: 1
-            }}
-          >
-            {centreCode || '545454'}
-          </div>
-
-          {/* Row 3: Address Line 1 */}
-          <div 
-            className="absolute font-bold text-[#13427a] select-none truncate capitalize flex items-center cert-table-value-lg"
-            style={{
-              top: '70.2%',
-              left: '76.5%',
-              width: '16.5%',
-              maxWidth: '16.5%',
-              transform: 'translateY(-50%)',
-              fontFamily: "'Times New Roman', Times, serif",
-              fontSize: 'clamp(8.5px, 1.2vw, 12.5px)',
-              letterSpacing: '0.02em',
-              lineHeight: 1
-            }}
-          >
-            {addressLine1}
-          </div>
-
-          {/* Row 4: Address Line 2 (graceful wrapping into blank Row 4 area on the right) */}
-          {addressLine2 && (
-            <div 
-              className="absolute font-bold text-[#13427a] select-none truncate capitalize flex items-center cert-table-value-lg"
-              style={{
-                top: '73.2%',
-                left: '76.5%',
-                width: '16.5%',
-                maxWidth: '16.5%',
-                transform: 'translateY(-50%)',
-                fontFamily: "'Times New Roman', Times, serif",
-                fontSize: 'clamp(8.5px, 1.2vw, 12.5px)',
-                letterSpacing: '0.02em',
-                lineHeight: 1
-              }}
-            >
-              {addressLine2}
-            </div>
+              <rect
+                x="63"
+                y="615"
+                width="150"
+                height="45"
+                rx="6"
+                fill="#f8fafc"
+                stroke="#cbd5e1"
+                strokeWidth="1.2"
+                strokeDasharray="4 3"
+              />
+              <text
+                x="138"
+                y="642"
+                textAnchor="middle"
+                fontFamily="Arial, sans-serif"
+                fontSize="10"
+                fontWeight="700"
+                fill="#64748b"
+              >
+                + Principal Sign
+              </text>
+            </g>
           )}
 
-          {/* Row 5: Date of Issue */}
-          <div 
-            className="absolute font-bold text-[#13427a] select-none truncate flex items-center cert-table-value"
-            style={{
-              top: '76.2%',
-              left: '76.5%',
-              width: '16.5%',
-              maxWidth: '16.5%',
-              transform: 'translateY(-50%)',
-              fontFamily: "'Times New Roman', Times, serif",
-              fontSize: 'clamp(9px, 1.25vw, 13px)',
-              letterSpacing: '0.02em',
-              lineHeight: 1
-            }}
-          >
-            {issueDate || '05-10-2026'}
-          </div>
+          <text x="63" y="675" fontFamily="Georgia, serif" fontSize="17" fill={NAVY}>Center Director / Principal</text>
 
-          {/* 6. CENTER DIRECTOR / PRINCIPAL SIGNATURE (Centered directly above "Center Director / Principal") */}
-          <div 
-            onClick={() => setIsFormModalOpen(true)}
-            className="absolute flex items-end justify-center select-none cursor-pointer group/sign hover:ring-1 hover:ring-amber-400/50 rounded transition"
-            style={{
-              top: '91.0%',
-              left: '16.1%',
-              width: '16.0%',
-              height: '8.0%',
-              transform: 'translate(-50%, -100%)'
-            }}
-            title="Click to open form & manage Principal signature"
-          >
-            {customDirectorSign ? (
-              <div className="relative h-full w-full flex items-end justify-center">
-                <img 
-                  src={customDirectorSign} 
-                  alt="Center Director / Principal Signature" 
-                  className="max-h-full max-w-full object-contain drop-shadow-2xs" 
-                />
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleRemoveDirectorSign();
-                  }}
-                  className="absolute -top-1.5 -right-1.5 bg-red-600 hover:bg-red-700 text-white rounded-full p-0.5 opacity-0 group-hover/sign:opacity-100 transition shadow-sm print:hidden"
-                  title="Remove Signature"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              </div>
-            ) : (
-              <div className="w-full h-full border border-dashed border-[#13427a]/30 hover:border-amber-500/80 bg-white/40 rounded flex flex-col items-center justify-center p-1 text-center transition print:hidden">
-                <PenTool className="w-3.5 h-3.5 text-[#13427a]/40 group-hover/sign:text-amber-500 mb-0.5" />
-                <span className="text-[6.5px] font-bold text-[#13427a]/60 uppercase leading-none font-sans">
-                  Principal Sign
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
+          {/* Official Authorized Signature & Watermark Stamp */}
+          <image
+            href={authSignSeal}
+            x="825"
+            y="598"
+            width="135"
+            height="70"
+            preserveAspectRatio="xMidYMax meet"
+          />
+
+          <text x="955" y="675" textAnchor="end" fontFamily="Georgia, serif" fontSize="17" fill={NAVY}>Authorized Signature</text>
+
+        </svg>
+
       </div>
+
     </div>
+
   );
+
 }
