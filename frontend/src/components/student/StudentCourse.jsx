@@ -1,31 +1,8 @@
 import React from 'react';
 import {
   BookOpen,
-  CalendarDays,
-  MapPin,
   GraduationCap,
-  FileText,
 } from 'lucide-react';
-
-
-
-function InfoCard({ icon: Icon, label, value }) {
-  return (
-    <div className="rounded-xl border border-slate-200 bg-white p-3 sm:rounded-2xl sm:p-4">
-      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-900 sm:h-10 sm:w-10 sm:rounded-xl">
-        <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
-      </div>
-
-      <p className="mt-2 text-[11px] font-medium text-slate-500 sm:mt-3 sm:text-xs">
-        {label}
-      </p>
-
-      <p className="mt-1 break-words text-xs font-extrabold text-slate-900 sm:text-sm">
-        {value || 'Not available'}
-      </p>
-    </div>
-  );
-}
 
 export default function StudentCourse({
   student,
@@ -50,27 +27,6 @@ export default function StudentCourse({
   const results = Array.isArray(student?.results)
     ? student.results
     : [];
-
-  const institution =
-    student?.institution ||
-    student?.branch ||
-    student?.studyCenter ||
-    'Tenkasi';
-
-  const level = selectedCourses.length > 1
-    ? selectedCourses.map(c => `${c.courseName || c.name}: ${c.level || 'Level 1'}`).join(' | ')
-    : (
-        student?.courseLevel ||
-        student?.level ||
-        student?.grade ||
-        'Level 1'
-      );
-
-  const session =
-    student?.academicSession || '2026–2027';
-
-  const registrationStatus =
-    student?.registrationStatus || 'Registered';
 
   const handleHallTicket = (event) => {
     if (event.hallTicketUrl) {
@@ -131,9 +87,6 @@ export default function StudentCourse({
                   {courseName}
                 </h3>
 
-                <p className="mt-1.5 text-xs text-blue-100 sm:mt-2 sm:text-sm">
-                  Academic session {session}
-                </p>
               </div>
             </div>
 
@@ -141,47 +94,7 @@ export default function StudentCourse({
           </div>
         </div>
 
-        {/* COURSE INFORMATION */}
-
         <div className="p-4 sm:p-7">
-          <h4 className="text-sm font-extrabold text-slate-900 sm:text-base">
-            Course information
-          </h4>
-
-          <p className="mt-1.5 max-w-3xl text-xs leading-6 text-slate-600 sm:mt-2 sm:text-sm sm:leading-7">
-            Your registered program is displayed here.
-            Contact your registered institution for the official
-            syllabus, class schedule, learning materials, and
-            level-specific instructions.
-          </p>
-
-          <div className="mt-4 grid grid-cols-2 gap-2.5 sm:mt-6 sm:grid-cols-2 sm:gap-3 xl:grid-cols-4">
-
-            <InfoCard
-              icon={GraduationCap}
-              label="Course / Level"
-              value={level}
-            />
-
-            <InfoCard
-              icon={CalendarDays}
-              label="Academic Session"
-              value={session}
-            />
-
-            <InfoCard
-              icon={MapPin}
-              label="Registered Institution"
-              value={institution}
-            />
-
-            <InfoCard
-              icon={FileText}
-              label="Official Register No."
-              value={student?.registerNumber || student?.registrationNo || student?.id || student?.userId}
-            />
-          </div>
-
           {selectedCourses.length > 1 && (
             <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50/70 p-3.5 sm:p-5">
               <h5 className="text-xs font-black uppercase tracking-wider text-slate-700 mb-3 flex items-center gap-2">

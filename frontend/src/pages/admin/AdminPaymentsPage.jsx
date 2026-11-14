@@ -153,6 +153,11 @@ export default function AdminPaymentsPage({
             <option value="Competition & Events">Competition & Events</option>
             <option value="Toolkits & Courseware">Toolkits & Courseware</option>
             <option value="Franchise Affiliation">Franchise Affiliation</option>
+            <option value="Monthly Fee">Monthly Fee</option>
+            <option value="Exam Fee">Exam Fee</option>
+            <option value="Event Fee">Event Fee</option>
+            <option value="Book Fee">Book Fee</option>
+            <option value="Others">Others</option>
           </select>
 
           <select

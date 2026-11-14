@@ -13,10 +13,13 @@ import {
   Award,
   BookOpen,
   Globe,
+  Receipt,
 } from 'lucide-react';
 
 import StudentCourse from './StudentCourse';
 import StudentProfile from './StudentProfile';
+import StudentFeePayment from './StudentFeePayment';
+import StudentReceiptsBills from './StudentReceiptsBills';
 import StudentNotifications from './StudentNotifications';
 
 const navigationItems = [];
@@ -56,6 +59,22 @@ export default function StudentDashboard({
   onViewCertificate,
 }) {
   const [activeSection, setActiveSection] = useState('course');
+  const [currentHour, setCurrentHour] = useState(() => new Date().getHours());
+
+  useEffect(() => {
+    const timerId = window.setInterval(() => {
+      setCurrentHour(new Date().getHours());
+    }, 60_000);
+
+    return () => window.clearInterval(timerId);
+  }, []);
+
+  const greeting =
+    currentHour < 12
+      ? 'Good morning'
+      : currentHour < 17
+        ? 'Good afternoon'
+        : 'Good evening';
 
   const [notificationMenuOpen, setNotificationMenuOpen] =
     useState(false);
@@ -64,6 +83,9 @@ export default function StudentDashboard({
     useState(false);
 
   const [profilePopupOpen, setProfilePopupOpen] =
+    useState(false);
+
+  const [receiptsPopupOpen, setReceiptsPopupOpen] =
     useState(false);
 
   const [certificatePopupOpen, setCertificatePopupOpen] =
@@ -231,15 +253,26 @@ export default function StudentDashboard({
   };
 
   const openProfilePopup = () => {
-    setActiveSection('profile');
     setProfileMenuOpen(false);
     setNotificationMenuOpen(false);
     setMobileMenuOpen(false);
     setProfilePopupOpen(true);
   };
 
+  const openReceiptsBills = () => {
+    setProfileMenuOpen(false);
+    setNotificationMenuOpen(false);
+    setMobileMenuOpen(false);
+    setReceiptsPopupOpen(true);
+  };
+
   const closeProfilePopup = () => {
     setProfilePopupOpen(false);
+    setActiveSection('course');
+  };
+
+  const closeReceiptsPopup = () => {
+    setReceiptsPopupOpen(false);
   };
 
   const openCertificates = () => {
@@ -644,6 +677,15 @@ export default function StudentDashboard({
 
                     <button
                       type="button"
+                      onClick={openReceiptsBills}
+                      className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-bold text-slate-700 transition hover:bg-blue-50 hover:text-blue-950"
+                    >
+                      <Receipt className="h-5 w-5 text-emerald-700" />
+                      <span>Receipts / Bills</span>
+                    </button>
+
+                    <button
+                      type="button"
                       onClick={() => {
                         setProfileMenuOpen(false);
                         onVisitWebsite?.();
@@ -751,6 +793,16 @@ export default function StudentDashboard({
 
               <button
                 type="button"
+                onClick={openReceiptsBills}
+                className="mt-1 flex w-full items-center gap-3 rounded-xl px-4 py-3.5 text-left text-sm font-bold text-slate-700 transition hover:bg-emerald-50 hover:text-blue-950"
+              >
+                <Receipt className="h-5 w-5 text-emerald-700" />
+                <span>Receipts / Bills</span>
+                <ChevronRight className="ml-auto h-4 w-4" />
+              </button>
+
+              <button
+                type="button"
                 onClick={openCertificates}
                 className="mt-1 flex w-full items-center gap-3 rounded-xl px-4 py-3.5 text-left text-sm font-bold text-slate-700 transition hover:bg-amber-50 hover:text-blue-950"
               >
@@ -776,23 +828,20 @@ export default function StudentDashboard({
       </header>
 
       {/* DASHBOARD CONTENT */}
-      <div className="mx-auto max-w-[1600px] px-3 py-4 sm:px-6 sm:py-7 lg:px-8 lg:py-8">
-        <section className="relative mb-5 overflow-hidden rounded-2xl bg-gradient-to-r from-[#0F2B5C] via-[#143B7A] to-[#1E4D99] p-4 text-white shadow-lg sm:mb-6 sm:rounded-3xl sm:p-7 lg:p-8">
+      <div className="mx-auto max-w-[1600px] px-3 py-3 sm:px-6 sm:py-5 lg:px-8 lg:py-6">
+        <section className="relative mb-4 overflow-hidden rounded-2xl bg-gradient-to-r from-[#0F2B5C] via-[#143B7A] to-[#1E4D99] px-4 py-3 text-white shadow-lg sm:mb-5 sm:rounded-3xl sm:px-7 sm:py-5 lg:px-8">
           <div className="pointer-events-none absolute -right-10 -top-20 h-56 w-56 rounded-full border-[30px] border-white/5" />
 
           <div className="pointer-events-none absolute -bottom-24 right-32 h-52 w-52 rounded-full bg-amber-400/10 blur-2xl" />
 
           <div className="relative">
-            <h2 className="mt-2 break-words text-lg font-black tracking-tight text-white sm:mt-3 sm:text-3xl lg:text-4xl">
-              Welcome back, {displayName}!
+            <h2 className="break-words text-lg font-black tracking-tight text-white sm:text-3xl lg:text-4xl">
+              {greeting}, {displayName}!
             </h2>
-
-            <p className="mt-1.5 max-w-2xl text-xs leading-5 text-blue-100 sm:mt-2 sm:text-sm sm:leading-6 lg:text-base">
-              Manage your registered course, keep your profile updated,
-              and stay informed about important B★SEL announcements.
-            </p>
           </div>
         </section>
+
+        {activeSection === 'course' && <StudentFeePayment student={student} />}
 
         <main className="min-w-0">{renderSection()}</main>
 
@@ -847,11 +896,47 @@ export default function StudentDashboard({
           </div>
         </div>
       )}
-      
 
+      {receiptsPopupOpen && (
+        <div
+          className="fixed inset-0 z-[130] flex items-start justify-center overflow-y-auto bg-slate-950/70 p-2 backdrop-blur-sm sm:items-center sm:p-6"
+          onClick={closeReceiptsPopup}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="student-receipts-title"
+            className="my-auto flex max-h-[94vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-slate-50 shadow-2xl sm:max-h-[85vh] sm:rounded-3xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-3.5 py-3 sm:px-6">
+              <div className="min-w-0">
+                <h2
+                  id="student-receipts-title"
+                  className="text-base font-black text-blue-950 sm:text-xl"
+                >
+                  Receipts / Bills
+                </h2>
+                <p className="mt-0.5 text-xs text-slate-500 sm:text-sm">
+                  View your fee payments and receipts.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={closeReceiptsPopup}
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-600 transition hover:bg-rose-50 hover:text-rose-600"
+                aria-label="Close receipts and bills"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
 
-
-
+            <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-5">
+              <StudentReceiptsBills student={student} />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* NOTIFICATIONS POPUP */}
       {notificationPopupOpen && (
