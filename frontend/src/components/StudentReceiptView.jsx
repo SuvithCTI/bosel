@@ -29,7 +29,12 @@ function numberToWords(amount) {
   return words[n] || `${n} Rupees Only`;
 }
 
-export default function StudentReceiptView({ student, onClose }) {
+export default function StudentReceiptView({
+  student,
+  onClose,
+  backLabel = 'Back to student list',
+  acknowledgement = false,
+}) {
   const receiptRef = useRef(null);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
@@ -220,7 +225,7 @@ export default function StudentReceiptView({ student, onClose }) {
           <ArrowLeft className="w-4 h-4" />
 
           <span className="hidden sm:inline">
-            Back to student list
+            {backLabel}
           </span>
 
           <span className="sm:hidden">
@@ -338,6 +343,22 @@ export default function StudentReceiptView({ student, onClose }) {
               font-bold
             "
           >
+            {acknowledgement && (
+              <>
+                <div
+                  className="absolute flex items-center justify-center rounded-full bg-[#e5b34d] px-2 text-center font-black uppercase tracking-wide text-[#081d3d]"
+                  style={{
+                    left: '47.7%',
+                    top: '7.3%',
+                    width: '41.6%',
+                    height: '14.9%',
+                    fontSize: 'clamp(8px, 1.8vw, 21px)',
+                  }}
+                >
+                  {student.feeType || 'Course Fee'} Receipt
+                </div>
+              </>
+            )}
 
             {/* 1. RECEIPT NUMBER */}
             <div

@@ -4,7 +4,11 @@ import {
   Download,
   Printer,
   Loader2,
-  Upload, Building2, Image as ImageIcon, X, PenTool,
+  Upload,
+  Building2,
+  Image as ImageIcon,
+  X,
+  PenTool,
 } from 'lucide-react';
 
 import { exportPdfFromElement } from '../utils/pdfExport';
@@ -14,7 +18,22 @@ import {
 } from '../utils/studentDataHelpers';
 import { getCoursePrefix } from '../utils/authStorage';
 import { getSavedMarksheet, getGrade } from '../utils/marksheetStorage';
-import marksheetOfficialTemplate from '../assets/marksheet_official_template.jpg';
+import MarksheetTemplate from './MarksheetTemplate';
+
+// ============================================================
+// WATERMARK SETTINGS
+// ============================================================
+
+const WATERMARK_TEXT = 'B★SEL';
+const WATERMARK_LOGO_SRC = '/bsel_logo.png';
+
+const TILE_COLS = 9;
+const TILE_ROWS = 34;
+const TILE_FONT_SIZE = 12;
+const TILE_OPACITY = 0.1;
+
+const CENTER_LOGO_WIDTH = '45%';
+const CENTER_OPACITY = 0.08;
 
 // ============================================================
 // COURSE SUBJECT MODULES
@@ -22,8 +41,6 @@ import marksheetOfficialTemplate from '../assets/marksheet_official_template.jpg
 
 const DEMO_MARKS = [96, 98, 94, 97, 95];
 
-// [keywords matched in the course name, 5 subject names]
-// Order matters: the first match wins.
 const COURSE_RULES = [
   [['html'], [
     'HTML5 Semantic Structure & Tags',
@@ -132,7 +149,6 @@ const COURSE_RULES = [
   ]],
 ];
 
-// Default: Abacus Speed Arithmetic
 const ABACUS_SUBJECTS = [
   'Abacus Operations & Bead Technique',
   'Small Friend & Big Friend Formulas',
@@ -158,6 +174,89 @@ export const getCourseSubjectModules = (courseName = '') => {
 };
 
 // ============================================================
+// WATERMARK LAYER
+// ============================================================
+
+const FRAME_CLIP = { x: 24, y: 24, width: 676, height: 976 };
+
+function BselWatermark() {
+  const PAGE_W = 724;
+  const PAGE_H = 1024;
+  const cellW = PAGE_W / TILE_COLS;
+  const cellH = PAGE_H / TILE_ROWS;
+
+  const tiles = [];
+  for (let r = 0; r < TILE_ROWS; r++) {
+    for (let c = 0; c < TILE_COLS; c++) {
+      tiles.push({
+        key: `${r}-${c}`,
+        x: c * cellW + cellW / 2,
+        y: r * cellH + cellH / 2,
+      });
+    }
+  }
+
+  return (
+    <div
+      aria-hidden="true"
+      className="absolute inset-0 overflow-hidden pointer-events-none select-none"
+      style={{ zIndex: 0 }}
+    >
+      <svg
+        viewBox={`0 0 ${PAGE_W} ${PAGE_H}`}
+        preserveAspectRatio="xMidYMid meet"
+        className="absolute inset-0 w-full h-full"
+      >
+        <defs>
+          <clipPath id="bsel-watermark-clip">
+            <rect
+              x={FRAME_CLIP.x}
+              y={FRAME_CLIP.y}
+              width={FRAME_CLIP.width}
+              height={FRAME_CLIP.height}
+            />
+          </clipPath>
+        </defs>
+
+        <g clipPath="url(#bsel-watermark-clip)">
+          {tiles.map((t) => (
+            <text
+              key={t.key}
+              x={t.x}
+              y={t.y}
+              textAnchor="middle"
+              dominantBaseline="middle"
+              fontFamily="'Times New Roman', Times, serif"
+              fontWeight="700"
+              fontSize={TILE_FONT_SIZE}
+              fill="#0b2a55"
+              fillOpacity={TILE_OPACITY}
+            >
+              {WATERMARK_TEXT}
+            </text>
+          ))}
+        </g>
+      </svg>
+
+      <img
+        src={WATERMARK_LOGO_SRC}
+        alt=""
+        draggable={false}
+        className="absolute"
+        style={{
+          left: '50%',
+          top: '50%',
+          width: CENTER_LOGO_WIDTH,
+          height: 'auto',
+          opacity: CENTER_OPACITY,
+          transform: 'translate(-50%, -50%)',
+        }}
+      />
+    </div>
+  );
+}
+
+// ============================================================
 // OFFICIAL MARKSHEET COMPONENT
 // ============================================================
 
@@ -166,6 +265,8 @@ export default function OfficialMarksheetView({
   onClose,
   standalone = false,
   defaultShowMarks = false,
+  hideMarks = false,
+  paperType = null,
 }) {
   const sheetRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -276,26 +377,26 @@ export default function OfficialMarksheetView({
 
   const getSchoolNameFontSize = (text) => {
     const len = (text || '').trim().length;
-    if (len <= 7) return 'clamp(20px, 4.2vw, 33px)';
-    if (len <= 10) return 'clamp(17.5px, 3.7vw, 28px)';
-    if (len <= 13) return 'clamp(15px, 3.2vw, 24px)';
-    if (len <= 16) return 'clamp(13px, 2.75vw, 20.5px)';
-    if (len <= 20) return 'clamp(11.5px, 2.4vw, 18px)';
-    return 'clamp(10px, 2.1vw, 15.5px)';
+    if (len <= 7) return 'clamp(17px, 3.6vw, 28px)';
+    if (len <= 10) return 'clamp(15px, 3.15vw, 24px)';
+    if (len <= 13) return 'clamp(13px, 2.7vw, 20.5px)';
+    if (len <= 16) return 'clamp(11px, 2.35vw, 17.5px)';
+    if (len <= 20) return 'clamp(9.8px, 2.05vw, 15.3px)';
+    return 'clamp(8.5px, 1.8vw, 13px)';
   };
 
   const getSchoolSubtitleFontSize = (text) => {
     const len = (text || '').trim().length;
-    if (len <= 12) return 'clamp(10px, 2.0vw, 15.5px)';
-    if (len <= 18) return 'clamp(9px, 1.75vw, 13.5px)';
-    return 'clamp(8px, 1.5vw, 11.5px)';
+    if (len <= 12) return 'clamp(8.5px, 1.7vw, 13px)';
+    if (len <= 18) return 'clamp(7.7px, 1.5vw, 11.5px)';
+    return 'clamp(6.8px, 1.28vw, 9.8px)';
   };
 
   const getSchoolMottoFontSize = (text) => {
     const len = (text || '').trim().length;
-    if (len <= 16) return 'clamp(7px, 1.35vw, 10.5px)';
-    if (len <= 22) return 'clamp(6.5px, 1.2vw, 9.5px)';
-    return 'clamp(6px, 1.05vw, 8.5px)';
+    if (len <= 16) return 'clamp(6px, 1.15vw, 9px)';
+    if (len <= 22) return 'clamp(5.5px, 1.02vw, 8.1px)';
+    return 'clamp(5.1px, 0.9vw, 7.2px)';
   };
 
   if (!student) return null;
@@ -306,11 +407,10 @@ export default function OfficialMarksheetView({
 
   const courseName = student.program || student.courseName || 'Abacus';
 
-  // Marks saved by the admin on the "Student Marksheet" entry page
   const savedSheet = getSavedMarksheet(student);
 
-  // Marks appear automatically once the admin has saved them
-  const showMarks = showMarksFlag || Boolean(savedSheet);
+  // Marks are hidden when hideMarks is set (used for question paper page 1)
+  const showMarks = !hideMarks && (showMarksFlag || Boolean(savedSheet));
 
   const subjects = savedSheet
     ? savedSheet.subjects.map((s) => ({
@@ -343,7 +443,6 @@ export default function OfficialMarksheetView({
     student.registrationNo ||
     'AB27-001';
 
-  // Certificate number
   const coursePrefix = getCoursePrefix(courseName);
   const level = student.level || student.courseLevel || 'Level 1';
 
@@ -439,7 +538,6 @@ export default function OfficialMarksheetView({
 
     reader.readAsDataURL(file);
 
-    // Allow selecting the same image again
     e.target.value = '';
   };
 
@@ -468,7 +566,6 @@ export default function OfficialMarksheetView({
     }
   };
 
-  // Exact vertical row positions for the official template
   const tableRowPositions = [
     '54.59%',
     '58.15%',
@@ -502,13 +599,46 @@ export default function OfficialMarksheetView({
       style={{
         aspectRatio: '724 / 1024',
         boxSizing: 'border-box',
-        backgroundImage: `url(${marksheetOfficialTemplate})`,
-        backgroundSize: '100% 100%',
-        backgroundRepeat: 'no-repeat',
-        backgroundPosition: 'center center',
+        backgroundColor: '#ffffff',
         fontFamily: "'Times New Roman', Times, serif",
       }}
     >
+
+      {/* Vector template: borders, headings, table grid, boxes, labels */}
+      <MarksheetTemplate />
+
+      {/* Full-page BSEL watermark (behind all content) */}
+      <BselWatermark />
+
+      {/* =====================================================
+          PAPER TYPE BOX (A / B / C / D / E) - only when passed in
+      ===================================================== */}
+      {paperType && (
+        <div
+          className="absolute flex flex-col items-center justify-center border-2 border-[#0b2a55] bg-amber-300 rounded-sm shadow-sm"
+          style={{
+            left: '84.5%',
+            top: '13.2%',
+            width: '8.8%',
+            height: '4.6%',
+            zIndex: 1,
+          }}
+          title="Paper Type"
+        >
+          <span
+            className="text-[7px] font-black uppercase text-[#0b2a55] leading-none"
+            style={{ fontFamily: 'Arial, sans-serif' }}
+          >
+            Type
+          </span>
+          <span
+            className="text-[14px] font-black text-[#0b2a55] leading-none mt-0.5"
+            style={{ fontFamily: "'Times New Roman', Times, serif" }}
+          >
+            {paperType}
+          </span>
+        </div>
+      )}
 
       {/* =====================================================
           0. TOP-RIGHT SCHOOL HEADER (LINE 1, 2, 3) & SCHOOL LOGO
@@ -524,6 +654,7 @@ export default function OfficialMarksheetView({
           left: '55.4%',
           right: '13.5%',
           height: '9.1%',
+          zIndex: 1,
         }}
         title={standalone ? '' : 'Click to customize School Name, Logo & Principal Signature'}
       >
@@ -531,7 +662,7 @@ export default function OfficialMarksheetView({
           <div
             className="tracking-normal uppercase text-center w-full whitespace-nowrap"
             style={{
-              color: '#13427a',
+              color: '#0b2a55',
               fontFamily: "'Cinzel', 'Outfit', 'Plus Jakarta Sans', sans-serif",
               fontWeight: 900,
               fontSize: getSchoolNameFontSize(customSchoolName),
@@ -548,7 +679,7 @@ export default function OfficialMarksheetView({
           <div
             className="uppercase mt-0.5 text-center w-full whitespace-nowrap"
             style={{
-              color: '#13427a',
+              color: '#0b2a55',
               fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif",
               fontWeight: 800,
               fontSize: getSchoolSubtitleFontSize(customSchoolSubtitle),
@@ -564,7 +695,7 @@ export default function OfficialMarksheetView({
           <div
             className="uppercase mt-0.5 text-center w-full whitespace-nowrap"
             style={{
-              color: '#13427a',
+              color: '#0b2a55',
               fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif",
               fontWeight: 700,
               fontSize: getSchoolMottoFontSize(customSchoolMotto),
@@ -588,6 +719,7 @@ export default function OfficialMarksheetView({
           right: '5.2%',
           width: '8.2%',
           height: '6.2%',
+          zIndex: 1,
         }}
         title={standalone ? '' : 'Click to upload/change School Logo'}
       >
@@ -598,9 +730,9 @@ export default function OfficialMarksheetView({
             className="w-full h-full object-contain drop-shadow-sm"
           />
         ) : !standalone ? (
-          <div className="w-full h-full border border-dashed border-[#13427a]/30 hover:border-amber-500/80 bg-white/40 flex flex-col items-center justify-center p-0.5 text-center transition group/slot print:hidden">
-            <ImageIcon className="w-3.5 h-3.5 text-[#13427a]/40 group-hover/slot:text-amber-500 mb-0.5" />
-            <span className="text-[5.5px] font-bold text-[#13427a]/60 uppercase leading-tight font-sans">
+          <div className="w-full h-full border border-dashed border-[#0b2a55]/30 hover:border-amber-500/80 bg-white/40 flex flex-col items-center justify-center p-0.5 text-center transition group/slot print:hidden">
+            <ImageIcon className="w-3.5 h-3.5 text-[#0b2a55]/60 group-hover/slot:text-amber-500 mb-0.5" />
+            <span className="text-[5.5px] font-bold text-[#0b2a55] uppercase leading-tight font-sans">
               Logo
             </span>
           </div>
@@ -611,7 +743,6 @@ export default function OfficialMarksheetView({
           1. STUDENT & COURSE DETAILS
       ===================================================== */}
 
-      {/* Registration Number */}
       <div
         className="absolute font-bold text-[#081d3d] text-[10px] sm:text-[12.5px] -translate-y-1/2 truncate"
         style={{
@@ -620,12 +751,12 @@ export default function OfficialMarksheetView({
           maxWidth: '32.5%',
           fontFamily: "'Times New Roman', Times, serif",
           lineHeight: 1,
+          zIndex: 1,
         }}
       >
         {regNo}
       </div>
 
-      {/* Certificate Number */}
       <div
         className="absolute font-bold text-[#081d3d] text-[10px] sm:text-[12.5px] -translate-y-1/2 truncate"
         style={{
@@ -634,12 +765,12 @@ export default function OfficialMarksheetView({
           maxWidth: '32.5%',
           fontFamily: "'Times New Roman', Times, serif",
           lineHeight: 1,
+          zIndex: 1,
         }}
       >
         {certNo}
       </div>
 
-      {/* Student Name */}
       <div
         className="absolute font-bold text-[#081d3d] uppercase text-[10.5px] sm:text-[13px] -translate-y-1/2 truncate"
         style={{
@@ -648,12 +779,12 @@ export default function OfficialMarksheetView({
           maxWidth: '32.5%',
           fontFamily: "'Times New Roman', Times, serif",
           lineHeight: 1,
+          zIndex: 1,
         }}
       >
         {studentName}
       </div>
 
-      {/* Parent / Guardian */}
       <div
         className="absolute font-bold text-[#081d3d] capitalize text-[10px] sm:text-[12.5px] -translate-y-1/2 truncate"
         style={{
@@ -662,12 +793,12 @@ export default function OfficialMarksheetView({
           maxWidth: '32.5%',
           fontFamily: "'Times New Roman', Times, serif",
           lineHeight: 1,
+          zIndex: 1,
         }}
       >
         {parentName}
       </div>
 
-      {/* Date of Birth */}
       <div
         className="absolute font-bold text-[#081d3d] text-[10px] sm:text-[12.5px] -translate-y-1/2 truncate"
         style={{
@@ -676,12 +807,12 @@ export default function OfficialMarksheetView({
           maxWidth: '32.5%',
           fontFamily: "'Times New Roman', Times, serif",
           lineHeight: 1,
+          zIndex: 1,
         }}
       >
         {dob}
       </div>
 
-      {/* Course */}
       <div
         className="absolute font-bold text-[#081d3d] capitalize text-[10px] sm:text-[12.5px] -translate-y-1/2 truncate"
         style={{
@@ -690,12 +821,12 @@ export default function OfficialMarksheetView({
           maxWidth: '32.5%',
           fontFamily: "'Times New Roman', Times, serif",
           lineHeight: 1,
+          zIndex: 1,
         }}
       >
         {courseName}
       </div>
 
-      {/* Level */}
       <div
         className="absolute font-bold text-[#081d3d] capitalize text-[10px] sm:text-[12.5px] -translate-y-1/2 truncate"
         style={{
@@ -704,12 +835,12 @@ export default function OfficialMarksheetView({
           maxWidth: '32.5%',
           fontFamily: "'Times New Roman', Times, serif",
           lineHeight: 1,
+          zIndex: 1,
         }}
       >
         {level}
       </div>
 
-      {/* Duration */}
       <div
         className="absolute font-bold text-[#081d3d] capitalize text-[10px] sm:text-[12.5px] -translate-y-1/2 truncate"
         style={{
@@ -718,12 +849,12 @@ export default function OfficialMarksheetView({
           maxWidth: '32.5%',
           fontFamily: "'Times New Roman', Times, serif",
           lineHeight: 1,
+          zIndex: 1,
         }}
       >
         {duration}
       </div>
 
-      {/* School / Exam Centre */}
       <div
         className="absolute font-bold text-[#081d3d] capitalize text-[10px] sm:text-[12px] -translate-y-1/2 truncate"
         style={{
@@ -732,12 +863,12 @@ export default function OfficialMarksheetView({
           maxWidth: '32.5%',
           fontFamily: "'Times New Roman', Times, serif",
           lineHeight: 1,
+          zIndex: 1,
         }}
       >
         {school}
       </div>
 
-      {/* Address */}
       <div
         className="absolute font-bold text-[#081d3d] capitalize text-[9.5px] sm:text-[11.5px] -translate-y-1/2 truncate"
         style={{
@@ -746,13 +877,14 @@ export default function OfficialMarksheetView({
           maxWidth: '32.5%',
           fontFamily: "'Times New Roman', Times, serif",
           lineHeight: 1,
+          zIndex: 1,
         }}
       >
         {address}
       </div>
 
       {/* =====================================================
-          3. STUDENT PHOTO
+          STUDENT PHOTO
       ===================================================== */}
 
       <div
@@ -774,6 +906,7 @@ export default function OfficialMarksheetView({
           top: '22.9%',
           width: '14.2%',
           height: '11.5%',
+          zIndex: 1,
         }}
         title="Click to upload/change photo"
       >
@@ -811,7 +944,6 @@ export default function OfficialMarksheetView({
                 strokeWidth="2.5"
                 strokeDasharray="4 2"
               />
-
               <circle
                 cx="50"
                 cy="50"
@@ -820,14 +952,11 @@ export default function OfficialMarksheetView({
                 stroke="#081d3d"
                 strokeWidth="1.2"
               />
-
               <circle cx="50" cy="50" r="34" fill="#081d3d" />
-
               <path
                 d="M50 24 L53.5 35 L65 35 L55.8 41.8 L59.3 52.8 L50 46 L40.7 52.8 L44.2 41.8 L35 35 L46.5 35 Z"
                 fill="#c59b27"
               />
-
               <path
                 d="M42 58 Q50 63 58 58"
                 stroke="#c59b27"
@@ -863,7 +992,6 @@ export default function OfficialMarksheetView({
           </div>
         )}
 
-        {/* Change Photo Overlay */}
         <div className="
           absolute
           inset-0
@@ -880,7 +1008,6 @@ export default function OfficialMarksheetView({
           no-print
         ">
           <Upload className="w-3.5 h-3.5 text-amber-400 mb-0.5" />
-
           <span className="
             text-[6.5px]
             font-black
@@ -893,7 +1020,6 @@ export default function OfficialMarksheetView({
         </div>
       </div>
 
-      {/* Hidden Photo Input */}
       <input
         type="file"
         ref={fileInputRef}
@@ -903,7 +1029,7 @@ export default function OfficialMarksheetView({
       />
 
       {/* =====================================================
-          4. SUBJECT MARKS TABLE
+          SUBJECT MARKS TABLE (hidden when hideMarks is set)
       ===================================================== */}
 
       {showMarks &&
@@ -912,112 +1038,67 @@ export default function OfficialMarksheetView({
 
           return (
             <React.Fragment key={sub.id || idx}>
-
-              {/* Subject / Module */}
               <div
-                className="
-                  absolute
-                  font-bold
-                  text-[#081d3d]
-                  text-[9.5px]
-                  sm:text-[11.5px]
-                  truncate
-                  -translate-y-1/2
-                "
+                className="absolute font-bold text-[#081d3d] text-[9.5px] sm:text-[11.5px] truncate -translate-y-1/2"
                 style={{
                   left: '13.0%',
                   top: topY,
                   maxWidth: '27.5%',
                   fontFamily: "'Times New Roman', Times, serif",
                   lineHeight: 1,
+                  zIndex: 1,
                 }}
               >
                 {sub.name}
               </div>
 
-              {/* Max Marks */}
               <div
-                className="
-                  absolute
-                  font-bold
-                  text-[#081d3d]
-                  text-[10px]
-                  sm:text-[12.5px]
-                  -translate-x-1/2
-                  -translate-y-1/2
-                  text-center
-                "
+                className="absolute font-bold text-[#081d3d] text-[10px] sm:text-[12.5px] -translate-x-1/2 -translate-y-1/2 text-center"
                 style={{
                   left: '46.41%',
                   top: topY,
                   fontFamily: "'Times New Roman', Times, serif",
                   lineHeight: 1,
+                  zIndex: 1,
                 }}
               >
                 {sub.max}
               </div>
 
-              {/* Assessment */}
               <div
-                className="
-                  absolute
-                  font-bold
-                  text-[#081d3d]
-                  text-[10px]
-                  sm:text-[12.5px]
-                  -translate-x-1/2
-                  -translate-y-1/2
-                  text-center
-                "
+                className="absolute font-bold text-[#081d3d] text-[10px] sm:text-[12.5px] -translate-x-1/2 -translate-y-1/2 text-center"
                 style={{
                   left: '61.40%',
                   top: topY,
                   fontFamily: "'Times New Roman', Times, serif",
                   lineHeight: 1,
+                  zIndex: 1,
                 }}
               >
                 {sub.assessment || sub.practical}
               </div>
 
-              {/* Marks Obtained */}
               <div
-                className="
-                  absolute
-                  font-black
-                  text-[#081d3d]
-                  text-[10.5px]
-                  sm:text-[13px]
-                  -translate-x-1/2
-                  -translate-y-1/2
-                  text-center
-                "
+                className="absolute font-black text-[#081d3d] text-[10.5px] sm:text-[13px] -translate-x-1/2 -translate-y-1/2 text-center"
                 style={{
                   left: '76.31%',
                   top: topY,
                   fontFamily: "'Times New Roman', Times, serif",
                   lineHeight: 1,
+                  zIndex: 1,
                 }}
               >
                 {sub.marks}
               </div>
 
-              {/* Percentage */}
               <div
-                className="
-                  absolute
-                  font-bold
-                  text-[#081d3d]
-                  text-[10px]
-                  sm:text-[12.5px]
-                  -translate-x-1/2
-                  -translate-y-1/2
-                  text-center
-                "
+                className="absolute font-bold text-[#081d3d] text-[10px] sm:text-[12.5px] -translate-x-1/2 -translate-y-1/2 text-center"
                 style={{
                   left: '89.36%',
                   top: topY,
                   fontFamily: "'Times New Roman', Times, serif",
                   lineHeight: 1,
+                  zIndex: 1,
                 }}
               >
                 {sub.pct ||
@@ -1027,100 +1108,63 @@ export default function OfficialMarksheetView({
                       100
                   )}%`}
               </div>
-
             </React.Fragment>
           );
         })}
 
       {/* =====================================================
-          5. SUMMARY SECTION
+          SUMMARY SECTION (hidden when hideMarks is set)
       ===================================================== */}
 
       {showMarks && (
         <>
-          {/* Total Marks */}
           <div
-            className="
-              absolute
-              font-black
-              text-[#081d3d]
-              text-xs
-              sm:text-base
-              -translate-x-1/2
-              -translate-y-1/2
-              text-center
-            "
+            className="absolute font-black text-[#081d3d] text-xs sm:text-base -translate-x-1/2 -translate-y-1/2 text-center"
             style={{
               left: '18.51%',
               top: '79.54%',
               fontFamily: "'Times New Roman', Times, serif",
               lineHeight: 1,
+              zIndex: 1,
             }}
           >
             {totalMax}
           </div>
 
-          {/* Marks Obtained */}
           <div
-            className="
-              absolute
-              font-black
-              text-[#081d3d]
-              text-xs
-              sm:text-base
-              -translate-x-1/2
-              -translate-y-1/2
-              text-center
-            "
+            className="absolute font-black text-[#081d3d] text-xs sm:text-base -translate-x-1/2 -translate-y-1/2 text-center"
             style={{
               left: '39.43%',
               top: '79.54%',
               fontFamily: "'Times New Roman', Times, serif",
               lineHeight: 1,
+              zIndex: 1,
             }}
           >
             {totalMarks}
           </div>
 
-          {/* Percentage */}
           <div
-            className="
-              absolute
-              font-black
-              text-[#081d3d]
-              text-xs
-              sm:text-base
-              -translate-x-1/2
-              -translate-y-1/2
-              text-center
-            "
+            className="absolute font-black text-[#081d3d] text-xs sm:text-base -translate-x-1/2 -translate-y-1/2 text-center"
             style={{
               left: '60.36%',
               top: '79.54%',
               fontFamily: "'Times New Roman', Times, serif",
               lineHeight: 1,
+              zIndex: 1,
             }}
           >
             {percentage}%
           </div>
 
-          {/* Grade */}
           <div
-            className="
-              absolute
-              font-black
-              text-[#b45309]
-              text-sm
-              sm:text-xl
-              -translate-x-1/2
-              -translate-y-1/2
-              text-center
-            "
+            className="absolute font-black text-[#b45309] text-sm sm:text-xl -translate-x-1/2 -translate-y-1/2 text-center"
             style={{
               left: '83.29%',
               top: '79.54%',
               fontFamily: "'Times New Roman', Times, serif",
               lineHeight: 1,
+              zIndex: 1,
             }}
           >
             {overallGrade}
@@ -1129,27 +1173,18 @@ export default function OfficialMarksheetView({
       )}
 
       {/* =====================================================
-          6. DATE OF ISSUE
+          DATE OF ISSUE (hidden when hideMarks is set)
       ===================================================== */}
 
       {showMarks && (
         <div
-          className="
-            absolute
-            font-bold
-            text-[#081d3d]
-            text-[10px]
-            sm:text-[12.5px]
-            -translate-x-1/2
-            -translate-y-1/2
-            text-center
-            whitespace-nowrap
-          "
+          className="absolute font-bold text-[#081d3d] text-[10px] sm:text-[12.5px] -translate-x-1/2 -translate-y-1/2 text-center whitespace-nowrap"
           style={{
             left: '83.43%',
             top: '85.55%',
             fontFamily: "'Times New Roman', Times, serif",
             lineHeight: 1,
+            zIndex: 1,
           }}
         >
           {issueDate}
@@ -1157,7 +1192,7 @@ export default function OfficialMarksheetView({
       )}
 
       {/* =====================================================
-          7. CENTER DIRECTOR / PRINCIPAL SIGNATURE (Uploadable PNG/JPG)
+          PRINCIPAL SIGNATURE
       ===================================================== */}
 
       <div
@@ -1171,6 +1206,7 @@ export default function OfficialMarksheetView({
           width: '16.0%',
           height: '5.5%',
           transform: 'translate(-50%, -100%)',
+          zIndex: 1,
         }}
         title={standalone ? '' : 'Click to open form & manage Principal signature'}
       >
@@ -1237,10 +1273,6 @@ export default function OfficialMarksheetView({
       sm:p-4
     ">
 
-      {/* =====================================================
-          PRINT & RESPONSIVE STYLES
-      ===================================================== */}
-
       <style>{`
         @media print {
           @page {
@@ -1289,7 +1321,6 @@ export default function OfficialMarksheetView({
           }
         }
 
-        /* Mobile toolbar */
         @media (max-width: 640px) {
           .marksheet-toolbar {
             border-radius: 10px;
@@ -1333,10 +1364,6 @@ export default function OfficialMarksheetView({
         }
       `}</style>
 
-      {/* =====================================================
-          TOP TOOLBAR
-      ===================================================== */}
-
       <div className="
         no-print
         marksheet-toolbar
@@ -1364,7 +1391,6 @@ export default function OfficialMarksheetView({
         border-amber-400/40
       ">
 
-        {/* Back Button */}
         <button
           type="button"
           onClick={onClose}
@@ -1393,7 +1419,6 @@ export default function OfficialMarksheetView({
           <span>Back to Student Details</span>
         </button>
 
-        {/* Action Buttons */}
         <div className="
           marksheet-action-buttons
           flex
@@ -1403,8 +1428,6 @@ export default function OfficialMarksheetView({
           w-full
           sm:w-auto
         ">
-
-          {/* Customize Marksheet Form */}
           <button
             type="button"
             onClick={() => setIsFormModalOpen(true)}
@@ -1436,7 +1459,6 @@ export default function OfficialMarksheetView({
             <span>Customize</span>
           </button>
 
-          {/* Download PDF */}
           <button
             type="button"
             onClick={handleDownloadPdf}
@@ -1480,7 +1502,6 @@ export default function OfficialMarksheetView({
             </span>
           </button>
 
-          {/* Print */}
           <button
             type="button"
             onClick={handlePrint}
@@ -1510,11 +1531,9 @@ export default function OfficialMarksheetView({
             <Printer className="w-3.5 h-3.5 shrink-0" />
             <span>Print</span>
           </button>
-
         </div>
       </div>
 
-      {/* Hidden file inputs for School Logo & Principal Signature */}
       <input
         type="file"
         ref={schoolLogoInputRef}
@@ -1530,7 +1549,6 @@ export default function OfficialMarksheetView({
         onChange={handleDirectorSignChange}
       />
 
-      {/* Pop-up Customization Form Modal */}
       {isFormModalOpen && (
         <div
           className="fixed inset-0 z-[170] flex items-center justify-center bg-black/75 backdrop-blur-sm p-3 sm:p-4 print:hidden"
@@ -1540,7 +1558,6 @@ export default function OfficialMarksheetView({
             className="bg-slate-900 border border-slate-700 rounded-2xl p-4 sm:p-6 max-w-xl w-full shadow-2xl text-white flex flex-col gap-4 max-h-[92vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-slate-700/80 pb-3">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center">
@@ -1564,9 +1581,7 @@ export default function OfficialMarksheetView({
               </button>
             </div>
 
-            {/* Form Fields */}
             <div className="flex flex-col gap-3.5">
-              {/* Line 1 */}
               <div className="flex flex-col gap-1">
                 <label className="text-[11px] font-semibold text-slate-300 flex justify-between">
                   <span>Line 1: School / Branch Name <span className="text-amber-400 font-bold">(Max 20 chars, Big & Bold)</span></span>
@@ -1586,7 +1601,6 @@ export default function OfficialMarksheetView({
                 />
               </div>
 
-              {/* Line 2 */}
               <div className="flex flex-col gap-1">
                 <label className="text-[11px] font-semibold text-slate-300 flex justify-between">
                   <span>Line 2: Subtitle / Division <span className="text-amber-400 font-bold">(Max 25 chars, Medium)</span></span>
@@ -1606,7 +1620,6 @@ export default function OfficialMarksheetView({
                 />
               </div>
 
-              {/* Line 3 */}
               <div className="flex flex-col gap-1">
                 <label className="text-[11px] font-semibold text-slate-300 flex justify-between">
                   <span>Line 3: Motto / Tagline <span className="text-amber-400 font-bold">(Max 30 chars, Small)</span></span>
@@ -1616,7 +1629,7 @@ export default function OfficialMarksheetView({
                   type="text"
                   value={customSchoolMotto}
                   maxLength={30}
-                  placeholder="e.g. EDUCATION ? EMPOWERMENT ? EXCELLENCE"
+                  placeholder="e.g. EDUCATION • EMPOWERMENT • EXCELLENCE"
                   onChange={(e) => {
                     const v = e.target.value;
                     setCustomSchoolMotto(v);
@@ -1626,9 +1639,7 @@ export default function OfficialMarksheetView({
                 />
               </div>
 
-              {/* Uploads Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-800">
-                {/* School Logo */}
                 <div className="bg-slate-950/70 border border-slate-800 p-3 rounded-xl flex flex-col gap-2">
                   <span className="text-[11px] font-bold text-slate-300 flex items-center gap-1.5">
                     <ImageIcon className="w-3.5 h-3.5 text-amber-400" />
@@ -1668,7 +1679,6 @@ export default function OfficialMarksheetView({
                   </div>
                 </div>
 
-                {/* Principal Signature */}
                 <div className="bg-slate-950/70 border border-slate-800 p-3 rounded-xl flex flex-col gap-2">
                   <span className="text-[11px] font-bold text-slate-300 flex items-center gap-1.5">
                     <PenTool className="w-3.5 h-3.5 text-sky-400" />
@@ -1707,7 +1717,6 @@ export default function OfficialMarksheetView({
               </div>
             </div>
 
-            {/* Modal Actions */}
             <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
               <button
                 type="button"
@@ -1720,10 +1729,6 @@ export default function OfficialMarksheetView({
           </div>
         </div>
       )}
-
-      {/* =====================================================
-          MARKSHEET PREVIEW
-      ===================================================== */}
 
       <div className="
         w-full
