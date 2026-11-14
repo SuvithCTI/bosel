@@ -237,7 +237,22 @@ export const api = {
         method: 'POST',
         body: JSON.stringify(payment)
       });
-      if (data && data.success && data.payment) return data.payment;
+      if (data && data.success && data.payment) {
+        const savedPayment = data.payment;
+        addStoredPayment({
+          ...payment,
+          ...savedPayment,
+          id: savedPayment.id || payment.id,
+          receiptNo: savedPayment.receipt_no || savedPayment.receiptNo || payment.receiptNo,
+          payerName: savedPayment.payer_name || savedPayment.payerName || payment.payerName,
+          studentId: savedPayment.student_id || savedPayment.studentId || payment.studentId,
+          paymentMode: savedPayment.payment_mode || savedPayment.paymentMode || payment.paymentMode,
+          refNo: savedPayment.ref_no || savedPayment.refNo || payment.refNo,
+          amountNum: savedPayment.amount_num ?? savedPayment.amountNum ?? payment.amountNum,
+          verifiedBy: savedPayment.verified_by || savedPayment.verifiedBy || payment.verifiedBy,
+        });
+        return savedPayment;
+      }
       return addStoredPayment(payment);
     },
 
