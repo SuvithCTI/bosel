@@ -14,11 +14,29 @@ import {
   BookOpen,
   CheckCircle2,
   Unlock,
+  Shuffle,
 } from 'lucide-react';
 import html2canvas from 'html2canvas-pro';
 import { jsPDF } from 'jspdf';
 import { exportPdfFromElement, triggerDirectPdfDownload } from '../utils/pdfExport';
-import { getStudentPhotoUrl, getStudentRegisterNumber } from '../utils/studentDataHelpers';
+import { getStudentRegisterNumber } from '../utils/studentDataHelpers';
+import OfficialMarksheetView from './OfficialMarksheetView';
+
+// Paper types printed on the question paper
+export const PAPER_TYPES = ['A', 'B', 'C', 'D', 'E'];
+
+// Stable pick per student (same student always gets the same type)
+const typeFromSeed = (seed) => {
+  let h = 0;
+  for (const ch of String(seed)) {
+    h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  }
+  return PAPER_TYPES[h % PAPER_TYPES.length];
+};
+
+// Random pick (used by the "Random Type" button)
+const randomPaperType = () =>
+  PAPER_TYPES[Math.floor(Math.random() * PAPER_TYPES.length)];
 
 // 50 official Abacus Operation problems from official B★SEL test booklet template
 export const DEFAULT_ABACUS_SUMS = [
@@ -89,6 +107,33 @@ export const DEFAULT_SUBJECT_MODULES = [
   { id: 5, name: 'Numerical Proficiency', max: 100, assessment: 100, marks: 95, pct: '95%' }
 ];
 
+const buildDefaultDetails = (student, regNo) => ({
+  regNo: regNo || 'BSEL-AB-1024',
+  certNo: student?.certificateNo || `BSEL/ABACUS/L1/${(regNo || '1024').slice(-4)}`,
+  studentName: student?.studentName || student?.name || 'A. MOHAMED IRFAN',
+  parentName: student?.parentName || student?.fatherName || 'M. ABDUL HAMEED',
+  dob: student?.dob || student?.dateOfBirth || '2016-05-28',
+  course: student?.program || student?.courseName || 'Abacus Speed Arithmetic',
+  level: student?.grade || 'Level 1 (Sub-Junior / Age 5-7)',
+  duration: student?.duration || student?.courseDuration || '6 Months',
+  school: student?.branch || student?.school || 'Tenkasi Regional Branch',
+  address: student?.address || 'Tenkasi, Tamil Nadu',
+  category: 'E',
+  paperType: typeFromSeed(regNo || student?.id || 'default'),
+  testBookletTitle: 'B★SEL-D36 LEVEL 1 TEST -CAT-E-MM',
+  paperCode: 'D36-01',
+  maxMarks1: '25',
+  maxMarks2: '25',
+  timeAllowed1: '10 Mins',
+  timeAllowed2: '10 Mins',
+  section1Title: 'S1-ABACUS OPERATIONS',
+  section1Instruction: 'Instructions: Use the Abacus kit to calculate. Write answers in the boxes.',
+  section2Title: 'S1-ABACUS OPERATIONS',
+  section2Instruction: 'Instructions: Use the Abacus kit to calculate. Write answers in the boxes.',
+  remarks: 'Outstanding computational speed and accuracy in Abacus Level 1.',
+  dateOfIssue: '31 Oct 2026',
+});
+
 export default function StudentQuestionPaperView({ student, onClose }) {
   const page1Ref = useRef(null);
   const page2Ref = useRef(null);
@@ -102,60 +147,25 @@ export default function StudentQuestionPaperView({ student, onClose }) {
   const regNo = getStudentRegisterNumber(student);
   const storageKey = `bsel_custom_qp_${regNo || student?.id || 'default'}`;
 
-  // 1. Student & Exam Meta State
+  // 1. Student & Exam Meta State (used by page 2)
   const [studentDetails, setStudentDetails] = useState(() => {
+    const defaults = buildDefaultDetails(student, regNo);
     try {
       const saved = localStorage.getItem(storageKey);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (parsed.studentDetails) return parsed.studentDetails;
+        if (parsed.studentDetails) {
+          // Merge so older saved records get new fields (like paperType)
+          return { ...defaults, ...parsed.studentDetails };
+        }
       }
     } catch {
       // ignore
     }
-
-    return {
-      regNo: regNo || 'BSEL-AB-1024',
-      certNo: student?.certificateNo || `BSEL/ABACUS/L1/${(regNo || '1024').slice(-4)}`,
-      studentName: student?.studentName || student?.name || 'A. MOHAMED IRFAN',
-      parentName: student?.parentName || student?.fatherName || 'M. ABDUL HAMEED',
-      dob: student?.dob || student?.dateOfBirth || '2016-05-28',
-      course: student?.program || student?.courseName || 'Abacus Speed Arithmetic',
-      level: student?.grade || 'Level 1 (Sub-Junior / Age 5-7)',
-      duration: student?.duration || student?.courseDuration || '6 Months',
-      school: student?.branch || student?.school || 'Tenkasi Regional Branch',
-      address: student?.address || 'Tenkasi, Tamil Nadu',
-      category: 'E',
-      testBookletTitle: 'B★SEL-D36 LEVEL 1 TEST -CAT-E-MM',
-      paperCode: 'D36-01',
-      maxMarks1: '25',
-      maxMarks2: '25',
-      timeAllowed1: '10 Mins',
-      timeAllowed2: '10 Mins',
-      section1Title: 'S1-ABACUS OPERATIONS',
-      section1Instruction: 'Instructions: Use the Abacus kit to calculate. Write answers in the boxes.',
-      section2Title: 'S1-ABACUS OPERATIONS',
-      section2Instruction: 'Instructions: Use the Abacus kit to calculate. Write answers in the boxes.',
-      remarks: 'Outstanding computational speed and accuracy in Abacus Level 1.',
-      dateOfIssue: '31 Oct 2026',
-    };
+    return defaults;
   });
 
-  // 2. Page 1 Subjects & Marks State
-  const [subjects, setSubjects] = useState(() => {
-    try {
-      const saved = localStorage.getItem(storageKey);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed.subjects) return parsed.subjects;
-      }
-    } catch {
-      // ignore
-    }
-    return DEFAULT_SUBJECT_MODULES;
-  });
-
-  // 3. Page 2 Abacus Sums State (S1 to S50)
+  // 2. Page 2 Abacus Sums State (S1 to S50)
   const [abacusSums, setAbacusSums] = useState(() => {
     try {
       const saved = localStorage.getItem(storageKey);
@@ -169,34 +179,9 @@ export default function StudentQuestionPaperView({ student, onClose }) {
     return DEFAULT_ABACUS_SUMS;
   });
 
-  const photoUrl = getStudentPhotoUrl(student);
-
-  // Derived Totals
-  const totalMax = subjects.reduce((sum, s) => sum + Number(s.max || 0), 0);
-  const totalObtained = subjects.reduce((sum, s) => sum + Number(s.marks || 0), 0);
-  const percentage = totalMax > 0 ? ((totalObtained / totalMax) * 100).toFixed(1) : '0.0';
-  const overallGrade =
-    percentage >= 85 ? 'A+' : percentage >= 75 ? 'A' : percentage >= 60 ? 'B' : percentage >= 40 ? 'C' : 'F';
-
   // Handler to update student details
   const updateDetail = (field, val) => {
     setStudentDetails((prev) => ({ ...prev, [field]: val }));
-  };
-
-  // Handler to update subject marks
-  const updateSubject = (id, field, val) => {
-    setSubjects((prev) =>
-      prev.map((s) => {
-        if (s.id !== id) return s;
-        const updated = { ...s, [field]: val };
-        if (field === 'marks' || field === 'max') {
-          const m = Number(field === 'marks' ? val : s.marks) || 0;
-          const mx = Number(field === 'max' ? val : s.max) || 100;
-          updated.pct = `${Math.round((m / (mx || 1)) * 100)}%`;
-        }
-        return updated;
-      })
-    );
   };
 
   // Handler to update a single number inside a sum problem
@@ -258,10 +243,20 @@ export default function StudentQuestionPaperView({ student, onClose }) {
     showTempMsg('Generated fresh random test problems!');
   };
 
+  // Set paper type directly (A-E)
+  const setPaperType = (type) => {
+    updateDetail('paperType', type);
+  };
+
+  // Pick a random paper type
+  const handleRandomType = () => {
+    updateDetail('paperType', randomPaperType());
+  };
+
   // Save changes to localStorage
   const handleSave = () => {
     try {
-      const payload = { studentDetails, subjects, abacusSums };
+      const payload = { studentDetails, abacusSums };
       localStorage.setItem(storageKey, JSON.stringify(payload));
       showTempMsg('All changes saved successfully!');
     } catch (e) {
@@ -273,33 +268,8 @@ export default function StudentQuestionPaperView({ student, onClose }) {
   const handleReset = () => {
     if (!window.confirm('Reset all changes back to the original Word template?')) return;
     localStorage.removeItem(storageKey);
-    setSubjects(DEFAULT_SUBJECT_MODULES);
     setAbacusSums(DEFAULT_ABACUS_SUMS);
-    setStudentDetails({
-      regNo: regNo || 'BSEL-AB-1024',
-      certNo: student?.certificateNo || `BSEL/ABACUS/L1/${(regNo || '1024').slice(-4)}`,
-      studentName: student?.studentName || student?.name || 'A. MOHAMED IRFAN',
-      parentName: student?.parentName || student?.fatherName || 'M. ABDUL HAMEED',
-      dob: student?.dob || student?.dateOfBirth || '2016-05-28',
-      course: student?.program || student?.courseName || 'Abacus Speed Arithmetic',
-      level: student?.grade || 'Level 1 (Sub-Junior / Age 5-7)',
-      duration: student?.duration || student?.courseDuration || '6 Months',
-      school: student?.branch || student?.school || 'Tenkasi Regional Branch',
-      address: student?.address || 'Tenkasi, Tamil Nadu',
-      category: 'E',
-      testBookletTitle: 'B★SEL-D36 LEVEL 1 TEST -CAT-E-MM',
-      paperCode: 'D36-01',
-      maxMarks1: '25',
-      maxMarks2: '25',
-      timeAllowed1: '10 Mins',
-      timeAllowed2: '10 Mins',
-      section1Title: 'S1-ABACUS OPERATIONS',
-      section1Instruction: 'Instructions: Use the Abacus kit to calculate. Write answers in the boxes.',
-      section2Title: 'S1-ABACUS OPERATIONS',
-      section2Instruction: 'Instructions: Use the Abacus kit to calculate. Write answers in the boxes.',
-      remarks: 'Outstanding computational speed and accuracy in Abacus Level 1.',
-      dateOfIssue: '31 Oct 2026',
-    });
+    setStudentDetails(buildDefaultDetails(student, regNo));
     showTempMsg('Reset to original template values.');
   };
 
@@ -493,7 +463,7 @@ export default function StudentQuestionPaperView({ student, onClose }) {
               activeTab === 'page1' ? 'bg-amber-400 text-slate-950 font-black shadow-xs' : 'text-slate-200 hover:text-white'
             }`}
           >
-            Page 1: Grade Card
+            Page 1: Student Details
           </button>
           <button
             type="button"
@@ -573,6 +543,34 @@ export default function StudentQuestionPaperView({ student, onClose }) {
           </div>
 
           <div className="flex items-center gap-1.5 flex-wrap">
+            {/* Paper Type selector */}
+            <div className="flex items-center gap-1 bg-white/70 rounded px-1 py-0.5">
+              <span className="text-[10px] font-black text-slate-900 mr-0.5">TYPE:</span>
+              {PAPER_TYPES.map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setPaperType(t)}
+                  className={`w-6 h-6 rounded text-[11px] font-black transition cursor-pointer ${
+                    studentDetails.paperType === t
+                      ? 'bg-slate-950 text-amber-300 shadow-xs'
+                      : 'bg-white text-slate-950 hover:bg-slate-100'
+                  }`}
+                >
+                  {t}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={handleRandomType}
+                className="ml-0.5 px-1.5 h-6 rounded bg-white hover:bg-slate-100 text-slate-950 text-[10px] font-black flex items-center gap-0.5 cursor-pointer"
+                title="Pick a random paper type"
+              >
+                <Shuffle className="w-3 h-3 text-amber-700" />
+                <span>Random</span>
+              </button>
+            </div>
+
             <button
               type="button"
               onClick={autoCalculateAllAnswers}
@@ -627,331 +625,14 @@ export default function StudentQuestionPaperView({ student, onClose }) {
       <div className="printable-booklet w-full flex flex-col items-center gap-6">
 
         {/* =========================================================================
-            PAGE 1: STUDENT & EXAM DETAILS + GRADE CARD / RESULT SHEET
+            PAGE 1: MARKSHEET LAYOUT (COLUMNS ONLY, NO MARKS)
             ========================================================================= */}
         {(activeTab === 'both' || activeTab === 'page1') && (
           <div
             ref={page1Ref}
-            className="print-page-1 page-break-after-always relative block w-full max-w-[720px] bg-white shadow-2xl rounded-sm select-text text-slate-900 border border-slate-300 p-4 sm:p-5 mx-auto font-sans text-xs"
-            style={{
-              fontFamily: "'Segoe UI', Arial, Helvetica, sans-serif",
-            }}
+            className="print-page-1 page-break-after-always relative block w-full max-w-[724px] mx-auto"
           >
-            {/* Double Border Frame around Page 1 */}
-            <div className="border-4 border-double border-[#0c234b] p-3 sm:p-4">
-
-              {/* 1. TOP HEADER LOGOS & CREST */}
-              <div className="flex items-center justify-between pb-2.5 border-b-2 border-[#0c234b] gap-2">
-                {/* B★SEL Logo */}
-                <div className="flex flex-col items-center text-center max-w-[130px]">
-                  <img
-                    src="/bsel_logo.png"
-                    alt="B★SEL Logo"
-                    className="h-10 sm:h-12 w-auto object-contain"
-                  />
-                  <span className="text-[8px] font-black uppercase tracking-wider text-[#0c234b] mt-0.5 leading-tight">
-                    BOARD OF SKILLS AND EDUCATIONAL LEARNING
-                  </span>
-                </div>
-
-                {/* Center Rising Stars Vision Foundation */}
-                <div className="flex flex-col items-center text-center px-1">
-                  <img
-                    src="/rising_stars_white_bg.png"
-                    alt="Rising Stars Vision Foundation"
-                    className="h-10 sm:h-12 w-auto object-contain"
-                  />
-                  <h2 className="text-[11px] sm:text-[13px] font-black text-[#0c234b] tracking-wider uppercase mt-0.5">
-                    RISING STARS VISION FOUNDATION
-                  </h2>
-                  <span className="text-[8px] font-bold text-amber-700 tracking-widest uppercase">
-                    EDUCATION • EMPOWERMENT • EXCELLENCE
-                  </span>
-                </div>
-
-                {/* Right Seal */}
-                <div className="flex flex-col items-center text-center max-w-[100px]">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-amber-600 flex flex-col items-center justify-center p-0.5 text-center text-[#0c234b]">
-                    <span className="text-[7px] font-black uppercase">TRUST</span>
-                    <span className="text-[9px] font-black">REGD</span>
-                    <span className="text-[6.5px] font-bold">TN/MSME</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* 2. SECTION 1: STUDENT & EXAM DETAILS */}
-              <div className="mt-2.5">
-                <div className="bg-[#0c234b] text-white py-1 px-3 text-center text-xs font-black tracking-widest uppercase rounded-xs">
-                  STUDENT & EXAM DETAILS
-                </div>
-
-                <div className="grid grid-cols-12 gap-2 mt-2 pt-1">
-                  {/* Left Column: Student Details Key-Values */}
-                  <div className="col-span-8 sm:col-span-9 space-y-1 text-[11px]">
-                    {[
-                      { label: 'Registration No.', field: 'regNo' },
-                      { label: 'Certificate No.', field: 'certNo' },
-                      { label: 'Student Name', field: 'studentName', bold: true },
-                      { label: 'Parent / Guardian', field: 'parentName' },
-                      { label: 'Date of Birth', field: 'dob' },
-                      { label: 'Course', field: 'course', bold: true },
-                      { label: 'Level', field: 'level' },
-                      { label: 'Duration', field: 'duration' },
-                      { label: 'School / Exam Centre', field: 'school', bold: true },
-                      { label: 'Address', field: 'address' },
-                    ].map((row) => (
-                      <div key={row.field} className="flex items-center text-[10.5px]">
-                        <span className="w-36 font-bold text-slate-800 shrink-0">
-                          {row.label}
-                        </span>
-                        <span className="font-bold text-slate-600 mr-2 shrink-0">:</span>
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={studentDetails[row.field]}
-                            onChange={(e) => updateDetail(row.field, e.target.value)}
-                            className="flex-1 px-1.5 py-0.5 border border-sky-400 bg-sky-50 font-bold text-slate-900 rounded text-[10.5px] focus:outline-none focus:ring-1 focus:ring-sky-500"
-                          />
-                        ) : (
-                          <span
-                            className={`font-semibold text-slate-950 truncate ${
-                              row.bold ? 'font-black text-[#0c234b]' : ''
-                            }`}
-                          >
-                            {studentDetails[row.field]}
-                          </span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Right Column: MindSpark Booklet Badge + Category + Student Photo */}
-                  <div className="col-span-4 sm:col-span-3 flex flex-col items-center justify-between gap-1.5 pl-2 border-l border-slate-200">
-                    {/* BSEL MindSpark ABACUS TEST BOOKLET logo badge */}
-                    <div className="border border-sky-300 bg-sky-50 px-2 py-1 rounded text-center w-full">
-                      <span className="text-[7.5px] font-black uppercase text-sky-900 block leading-tight">
-                        BSEL MindSpark
-                      </span>
-                      <span className="text-[9.5px] font-black text-[#0c234b] block">
-                        ABACUS
-                      </span>
-                      <span className="text-[7px] font-bold text-amber-700 uppercase block tracking-wider">
-                        TEST BOOKLET
-                      </span>
-                    </div>
-
-                    {/* Category Box */}
-                    <div className="flex flex-col items-center justify-center">
-                      <div className="w-10 h-10 bg-[#0c234b] text-white rounded-md flex items-center justify-center border-2 border-amber-400 shadow-xs">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            maxLength={2}
-                            value={studentDetails.category}
-                            onChange={(e) => updateDetail('category', e.target.value.toUpperCase())}
-                            className="w-8 text-center bg-transparent font-black text-amber-300 text-lg uppercase outline-none"
-                          />
-                        ) : (
-                          <span className="text-xl font-black text-amber-300">
-                            {studentDetails.category}
-                          </span>
-                        )}
-                      </div>
-                      <span className="text-[7.5px] font-black uppercase tracking-wider text-slate-700 mt-0.5">
-                        CATEGORY
-                      </span>
-                    </div>
-
-                    {/* Passport Photo Box */}
-                    <div className="w-20 h-24 sm:w-22 sm:h-26 border-2 border-dashed border-slate-400 bg-slate-50 flex items-center justify-center overflow-hidden rounded-xs p-0.5 shadow-xs">
-                      {photoUrl ? (
-                        <img
-                          src={photoUrl}
-                          alt="Student"
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <span className="text-[8px] font-bold text-slate-400 text-center uppercase p-1">
-                          Passport Photo
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* 3. SECTION 2: GRADE CARD / RESULT SHEET */}
-              <div className="mt-3">
-                <div className="bg-[#0c234b] text-white py-1 px-3 text-center text-xs font-black tracking-widest uppercase rounded-xs">
-                  GRADE CARD / RESULT SHEET
-                </div>
-
-                <div className="bg-slate-100 text-[#0c234b] py-0.5 px-2 text-center text-[10px] font-black uppercase tracking-wider border-x border-[#0c234b] mt-0.5">
-                  SUBJECTS & MARKS OBTAINED
-                </div>
-
-                {/* Table of Marks */}
-                <table className="w-full border-collapse border border-[#0c234b] text-[10.5px] text-center mt-0.5">
-                  <thead>
-                    <tr className="bg-[#0c234b] text-white font-black text-[10px]">
-                      <th className="border border-[#0c234b] py-1 px-1.5 w-10">S.No.</th>
-                      <th className="border border-[#0c234b] py-1 px-2 text-left">Subject / Module</th>
-                      <th className="border border-[#0c234b] py-1 px-1.5 w-20">Max Marks</th>
-                      <th className="border border-[#0c234b] py-1 px-1.5 w-20">Assessment</th>
-                      <th className="border border-[#0c234b] py-1 px-1.5 w-24">Marks Obtained</th>
-                      <th className="border border-[#0c234b] py-1 px-1.5 w-20">Percentage</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {subjects.map((sub, idx) => (
-                      <tr
-                        key={sub.id}
-                        className={idx % 2 === 0 ? 'bg-white' : 'bg-slate-50'}
-                      >
-                        <td className="border border-slate-300 py-1 font-bold">{sub.id}</td>
-                        <td className="border border-slate-300 py-1 px-2 text-left font-bold text-slate-900">
-                          {isEditMode ? (
-                            <input
-                              type="text"
-                              value={sub.name}
-                              onChange={(e) => updateSubject(sub.id, 'name', e.target.value)}
-                              className="w-full px-1 border border-sky-400 rounded bg-sky-50 text-[10.5px]"
-                            />
-                          ) : (
-                            sub.name
-                          )}
-                        </td>
-                        <td className="border border-slate-300 py-1 font-semibold">
-                          {isEditMode ? (
-                            <input
-                              type="number"
-                              value={sub.max}
-                              onChange={(e) => updateSubject(sub.id, 'max', e.target.value)}
-                              className="w-12 text-center border border-sky-400 rounded bg-sky-50 text-[10.5px]"
-                            />
-                          ) : (
-                            sub.max
-                          )}
-                        </td>
-                        <td className="border border-slate-300 py-1 font-semibold">
-                          {isEditMode ? (
-                            <input
-                              type="number"
-                              value={sub.assessment}
-                              onChange={(e) => updateSubject(sub.id, 'assessment', e.target.value)}
-                              className="w-12 text-center border border-sky-400 rounded bg-sky-50 text-[10.5px]"
-                            />
-                          ) : (
-                            sub.assessment
-                          )}
-                        </td>
-                        <td className="border border-slate-300 py-1 font-black text-[#0c234b]">
-                          {isEditMode ? (
-                            <input
-                              type="number"
-                              value={sub.marks}
-                              onChange={(e) => updateSubject(sub.id, 'marks', e.target.value)}
-                              className="w-14 text-center border border-sky-400 rounded bg-sky-50 font-black text-[10.5px]"
-                            />
-                          ) : (
-                            sub.marks
-                          )}
-                        </td>
-                        <td className="border border-slate-300 py-1 font-black text-emerald-700">
-                          {sub.pct}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-
-                {/* Grade Scale Note */}
-                <div className="text-[7.5px] sm:text-[8px] text-slate-600 text-center py-1 border-b border-slate-300 italic">
-                  Grade Details: 85-100% A+ (Excellent) &nbsp; 75-84% A (Very Good) &nbsp; 60-74% B (Good) &nbsp; 40-59% C (Satisfactory) &nbsp; Below 40% F (Failure)
-                </div>
-
-                {/* Summary Row */}
-                <div className="grid grid-cols-12 gap-2 mt-1.5 text-center text-xs">
-                  <div className="col-span-3 border border-[#0c234b] py-1 bg-slate-50">
-                    <span className="block text-[8px] font-bold uppercase text-slate-500">Total Marks</span>
-                    <strong className="text-[11px] font-black text-slate-900">{totalMax}</strong>
-                  </div>
-                  <div className="col-span-3 border border-[#0c234b] py-1 bg-slate-50">
-                    <span className="block text-[8px] font-bold uppercase text-slate-500">Marks Obtained</span>
-                    <strong className="text-[11px] font-black text-[#0c234b]">{totalObtained}</strong>
-                  </div>
-                  <div className="col-span-3 border border-[#0c234b] py-1 bg-slate-50">
-                    <span className="block text-[8px] font-bold uppercase text-slate-500">Percentage</span>
-                    <strong className="text-[11px] font-black text-emerald-700">{percentage}%</strong>
-                  </div>
-                  <div className="col-span-3 border border-[#0c234b] py-1 bg-[#0c234b] text-white">
-                    <span className="block text-[8px] font-bold uppercase text-amber-300">Grade</span>
-                    <strong className="text-sm font-black text-amber-300">{overallGrade}</strong>
-                  </div>
-                </div>
-
-                {/* Remarks & Date of Issue */}
-                <div className="grid grid-cols-12 gap-2 mt-2">
-                  <div className="col-span-8 border border-slate-300 p-1.5 rounded-xs bg-slate-50/50 flex flex-col justify-between">
-                    <div className="flex items-center gap-1 text-[9px] font-bold text-amber-700 uppercase">
-                      <span>★</span>
-                      <span>Remarks</span>
-                    </div>
-                    {isEditMode ? (
-                      <textarea
-                        rows={2}
-                        value={studentDetails.remarks}
-                        onChange={(e) => updateDetail('remarks', e.target.value)}
-                        className="w-full mt-1 p-1 text-[10px] border border-sky-400 bg-sky-50 rounded"
-                      />
-                    ) : (
-                      <p className="text-[10px] font-semibold text-slate-800 italic mt-0.5">
-                        "{studentDetails.remarks}"
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="col-span-4 border border-slate-300 p-1.5 rounded-xs bg-slate-50/50 flex flex-col justify-between">
-                    <span className="text-[8px] font-bold uppercase text-slate-500">Date of Issue</span>
-                    {isEditMode ? (
-                      <input
-                        type="text"
-                        value={studentDetails.dateOfIssue}
-                        onChange={(e) => updateDetail('dateOfIssue', e.target.value)}
-                        className="w-full text-[10px] font-bold p-0.5 border border-sky-400 bg-sky-50 rounded"
-                      />
-                    ) : (
-                      <strong className="text-[10.5px] font-black text-slate-900 mt-1 block">
-                        {studentDetails.dateOfIssue}
-                      </strong>
-                    )}
-                  </div>
-                </div>
-
-                {/* Signatures & Seals Footer */}
-                <div className="mt-4 pt-3 flex items-end justify-between text-[8px] text-center gap-2">
-                  <div className="w-36 flex flex-col items-center">
-                    <div className="w-full border-b border-slate-400 pb-4 mb-1" />
-                    <span className="font-bold text-slate-800">Center Director / Principal</span>
-                  </div>
-
-                  <div className="flex flex-col items-center text-[7.5px] font-bold text-slate-600">
-                    <span className="uppercase tracking-wider">REGISTERED UNDER MINISTRY OF MSME, GOVT. OF INDIA</span>
-                    <span className="uppercase tracking-wider text-amber-800 mt-0.5">REGISTERED UNDER GOVT. OF TAMIL NADU (REGD. TRUST)</span>
-                  </div>
-
-                  <div className="w-36 flex flex-col items-center">
-                    <div className="w-12 h-6 border border-emerald-600 rounded-sm mb-1 text-[7px] text-emerald-700 flex items-center justify-center font-bold">
-                      VERIFIED
-                    </div>
-                    <div className="w-full border-b border-slate-400 mb-1" />
-                    <span className="font-bold text-slate-800">Authorized Signature</span>
-                  </div>
-                </div>
-
-              </div>
-
-            </div>
+            <OfficialMarksheetView student={student} standalone hideMarks />
           </div>
         )}
 
@@ -999,12 +680,21 @@ export default function StudentQuestionPaperView({ student, onClose }) {
                     </div>
                   </div>
 
-                  {/* Right: Sun & Mascot Illustration */}
+                  {/* Right: Sun, Paper Type box & Roll box */}
                   <div className="flex items-center gap-1.5 opacity-90">
                     <svg className="w-8 h-8 text-amber-400" viewBox="0 0 36 36" fill="currentColor">
                       <circle cx="18" cy="18" r="9" fill="#f59e0b" />
                       <path d="M18 2v4M18 30v4M2 18h4M30 18h4M6.7 6.7l2.8 2.8M26.5 26.5l2.8 2.8M6.7 29.3l2.8-2.8M26.5 9.5l2.8-2.8" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round" />
                     </svg>
+
+                    {/* TYPE box (A / B / C / D / E) */}
+                    <div className="w-9 h-10 border-2 border-[#0c234b] bg-amber-300 rounded-sm flex flex-col items-center justify-center shadow-xs">
+                      <span className="text-[6px] font-black uppercase text-[#0c234b] leading-none">Type</span>
+                      <span className="text-lg font-black text-[#0c234b] leading-none mt-0.5">
+                        {studentDetails.paperType}
+                      </span>
+                    </div>
+
                     <div className="w-7 h-9 border-2 border-dashed border-sky-400 rounded-sm flex items-center justify-center text-[7px] font-black text-sky-800 bg-white/80">
                       ROLL
                     </div>
@@ -1024,6 +714,7 @@ export default function StudentQuestionPaperView({ student, onClose }) {
                   <div className="flex items-center gap-3 text-[9.5px]">
                     <span>Reg: <strong className="font-mono font-black">{studentDetails.regNo}</strong></span>
                     <span>Level: <strong>{studentDetails.level.split(' ')[0] || 'L1'}</strong></span>
+                    <span>Type: <strong className="text-[#0c234b] font-black">{studentDetails.paperType}</strong></span>
                     <span className="bg-[#0c234b] text-amber-300 font-black px-2 py-0.5 rounded-full text-[8px]">
                       B★SEL
                     </span>
@@ -1407,8 +1098,8 @@ export default function StudentQuestionPaperView({ student, onClose }) {
                 </div>
               </div>
 
-              {/* Center Code */}
-              <div className="mt-2 text-center text-[10px] font-black text-slate-900 tracking-wider">
+              {/* Center Code (paper code + type) */}
+              <div className="mt-2 text-center text-[10px] font-black text-slate-900 tracking-wider flex items-center justify-center gap-2">
                 {isEditMode ? (
                   <input
                     type="text"
@@ -1417,8 +1108,11 @@ export default function StudentQuestionPaperView({ student, onClose }) {
                     className="text-center border border-sky-400 rounded px-2 py-0.5 font-black text-[10px]"
                   />
                 ) : (
-                  studentDetails.paperCode
+                  <span>{studentDetails.paperCode}</span>
                 )}
+                <span className="bg-[#0c234b] text-amber-300 px-2 py-0.5 rounded-full text-[9px]">
+                  TYPE {studentDetails.paperType}
+                </span>
               </div>
 
             </div>
