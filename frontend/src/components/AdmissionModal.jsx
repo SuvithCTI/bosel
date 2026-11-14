@@ -78,6 +78,106 @@ const TAMIL_NADU_DISTRICTS = [
   'Other District / State'
 ];
 
+// Offline instant lookup mapping for Tamil Nadu PIN codes (0ms response)
+const TN_PIN_SPECIFIC = {
+  '627811': { district: 'Tenkasi', city: 'Surandai', locality: 'Surandai' },
+  '627808': { district: 'Tenkasi', city: 'Sankarankovil', locality: 'Sankarankovil' },
+  '627859': { district: 'Tenkasi', city: 'Shencottai', locality: 'Shencottai' },
+  '627802': { district: 'Tenkasi', city: 'Kadayanallur', locality: 'Kadayanallur' },
+  '627814': { district: 'Tenkasi', city: 'Tenkasi', locality: 'Tenkasi Town' },
+  '627803': { district: 'Tenkasi', city: 'Alangulam', locality: 'Alangulam' },
+  '627805': { district: 'Tenkasi', city: 'Puliyangudi', locality: 'Puliyangudi' },
+  '627807': { district: 'Tenkasi', city: 'Kuruvikulam', locality: 'Kuruvikulam' },
+  '627851': { district: 'Tenkasi', city: 'Ayikudi', locality: 'Ayikudi' },
+  '627861': { district: 'Tenkasi', city: 'Courtallam', locality: 'Courtallam' },
+  '627812': { district: 'Tenkasi', city: 'Pavoorchatram', locality: 'Pavoorchatram' },
+  '627813': { district: 'Tenkasi', city: 'Sivagiri', locality: 'Sivagiri' },
+  '627809': { district: 'Tenkasi', city: 'Rayagiri', locality: 'Rayagiri' },
+  '627806': { district: 'Tenkasi', city: 'Karivalamvandanallur', locality: 'Karivalam' },
+  '627817': { district: 'Tenkasi', city: 'Veerakeralampudur', locality: 'VK Pudur' },
+  '627860': { district: 'Tenkasi', city: 'Sambavar Vadagarai', locality: 'Sambavar' },
+  '627852': { district: 'Tenkasi', city: 'Elathur', locality: 'Elathur' },
+  '627855': { district: 'Tenkasi', city: 'Ilanji', locality: 'Ilanji' },
+  '627857': { district: 'Tenkasi', city: 'Panpoli', locality: 'Panpoli' },
+  '627858': { district: 'Tenkasi', city: 'Pudur', locality: 'Pudur' },
+  '627001': { district: 'Tirunelveli', city: 'Tirunelveli', locality: 'Tirunelveli Town' },
+  '627002': { district: 'Tirunelveli', city: 'Tirunelveli', locality: 'Tirunelveli Junction' },
+  '627003': { district: 'Tirunelveli', city: 'Palayamkottai', locality: 'Palayamkottai' },
+  '627005': { district: 'Tirunelveli', city: 'Palayamkottai', locality: 'Santhi Nagar' },
+  '627007': { district: 'Tirunelveli', city: 'Tirunelveli', locality: 'Pettai' },
+  '627011': { district: 'Tirunelveli', city: 'Tirunelveli', locality: 'Thatchanallur' },
+  '627401': { district: 'Tirunelveli', city: 'Ambasamudram', locality: 'Ambasamudram' },
+  '627105': { district: 'Tirunelveli', city: 'Vallioor', locality: 'Vallioor' },
+  '627117': { district: 'Tirunelveli', city: 'Radhapuram', locality: 'Radhapuram' },
+  '627111': { district: 'Tirunelveli', city: 'Panagudi', locality: 'Panagudi' },
+  '627415': { district: 'Tirunelveli', city: 'Cheranmahadevi', locality: 'Cheranmahadevi' },
+  '627108': { district: 'Tirunelveli', city: 'Nanguneri', locality: 'Nanguneri' },
+  '628001': { district: 'Thoothukudi', city: 'Thoothukudi', locality: 'Tuticorin' },
+  '628203': { district: 'Thoothukudi', city: 'Tiruchendur', locality: 'Tiruchendur' },
+  '628501': { district: 'Thoothukudi', city: 'Kovilpatti', locality: 'Kovilpatti' },
+  '629001': { district: 'Kanyakumari', city: 'Nagercoil', locality: 'Nagercoil' },
+  '629702': { district: 'Kanyakumari', city: 'Kanyakumari', locality: 'Kanyakumari' },
+  '625001': { district: 'Madurai', city: 'Madurai', locality: 'Madurai' },
+  '641001': { district: 'Coimbatore', city: 'Coimbatore', locality: 'Coimbatore' },
+  '642001': { district: 'Coimbatore', city: 'Pollachi', locality: 'Pollachi' },
+  '636001': { district: 'Salem', city: 'Salem', locality: 'Salem' },
+  '638001': { district: 'Erode', city: 'Erode', locality: 'Erode' },
+  '620001': { district: 'Tiruchirappalli (Trichy)', city: 'Tiruchirappalli', locality: 'Trichy' },
+  '600001': { district: 'Chennai', city: 'Chennai', locality: 'Chennai' }
+};
+
+const TN_PREFIX_DISTRICTS = {
+  '600': { district: 'Chennai', city: 'Chennai' },
+  '601': { district: 'Tiruvallur', city: 'Tiruvallur' },
+  '602': { district: 'Tiruvallur', city: 'Poonamallee' },
+  '603': { district: 'Chengalpattu', city: 'Chengalpattu' },
+  '604': { district: 'Viluppuram', city: 'Tindivanam' },
+  '605': { district: 'Viluppuram', city: 'Viluppuram' },
+  '606': { district: 'Kallakurichi', city: 'Kallakurichi' },
+  '607': { district: 'Cuddalore', city: 'Cuddalore' },
+  '608': { district: 'Cuddalore', city: 'Chidambaram' },
+  '609': { district: 'Mayiladuthurai', city: 'Mayiladuthurai' },
+  '610': { district: 'Tiruvarur', city: 'Tiruvarur' },
+  '611': { district: 'Nagapattinam', city: 'Nagapattinam' },
+  '612': { district: 'Thanjavur', city: 'Kumbakonam' },
+  '613': { district: 'Thanjavur', city: 'Thanjavur' },
+  '614': { district: 'Thanjavur', city: 'Pattukkottai' },
+  '620': { district: 'Tiruchirappalli (Trichy)', city: 'Tiruchirappalli' },
+  '621': { district: 'Ariyalur', city: 'Ariyalur' },
+  '622': { district: 'Pudukkottai', city: 'Pudukkottai' },
+  '623': { district: 'Ramanathapuram', city: 'Ramanathapuram' },
+  '624': { district: 'Dindigul', city: 'Dindigul' },
+  '625': { district: 'Madurai', city: 'Madurai' },
+  '626': { district: 'Virudhunagar', city: 'Virudhunagar' },
+  '627': { district: 'Tenkasi', city: 'Tenkasi' },
+  '628': { district: 'Thoothukudi', city: 'Thoothukudi' },
+  '629': { district: 'Kanyakumari', city: 'Nagercoil' },
+  '630': { district: 'Sivaganga', city: 'Karaikudi' },
+  '631': { district: 'Ranipet', city: 'Ranipet' },
+  '632': { district: 'Vellore', city: 'Vellore' },
+  '635': { district: 'Krishnagiri', city: 'Krishnagiri' },
+  '636': { district: 'Salem', city: 'Salem' },
+  '637': { district: 'Namakkal', city: 'Namakkal' },
+  '638': { district: 'Erode', city: 'Erode' },
+  '639': { district: 'Karur', city: 'Karur' },
+  '641': { district: 'Coimbatore', city: 'Coimbatore' },
+  '642': { district: 'Coimbatore', city: 'Pollachi' },
+  '643': { district: 'Nilgiris', city: 'Udhagamandalam (Ooty)' }
+};
+
+const lookupTamilNaduPincode = (pin) => {
+  if (!pin || pin.length < 3) return null;
+  if (TN_PIN_SPECIFIC[pin]) return TN_PIN_SPECIFIC[pin];
+  if (pin.startsWith('6278') || pin.startsWith('6277') || pin.startsWith('6275')) {
+    return { district: 'Tenkasi', city: 'Tenkasi', locality: 'Tenkasi' };
+  }
+  const prefix3 = pin.slice(0, 3);
+  if (TN_PREFIX_DISTRICTS[prefix3]) {
+    return TN_PREFIX_DISTRICTS[prefix3];
+  }
+  return null;
+};
+
 const BSEL_PROGRAMS = [
   'Abacus Speed Arithmetic',
   'Handwriting Excellence & Calligraphy',
@@ -632,14 +732,30 @@ export default function AdmissionModal({
     setFormData(prev => ({ ...prev, aadharNumber: digitsOnly }));
   };
 
-  // Automatic Pincode Lookup (Field 15 -> calls https://api.postalpincode.in/pincode/<PIN>)
+  // Automatic Pincode Lookup (Field 11 -> Instant local lookup + https://api.postalpincode.in/pincode/<PIN>)
   const handlePincodeChange = async (e) => {
     const pin = e.target.value.replace(/\D/g, '').slice(0, 6);
     setFormData(prev => ({ ...prev, pincode: pin }));
 
     if (pin.length === 6) {
+      // 1. Instant local offline lookup (0ms instantaneous auto-fill!)
+      const localMatch = lookupTamilNaduPincode(pin);
+      if (localMatch) {
+        setFormData(prev => ({
+          ...prev,
+          pincode: pin,
+          district: localMatch.district || prev.district,
+          city: localMatch.city || prev.city,
+          village: prev.village || localMatch.locality || localMatch.city || ''
+        }));
+        setDistrictError(false);
+        setPincodeMessage(`✓ Auto-filled: ${localMatch.city}, ${localMatch.district}`);
+      } else {
+        setPincodeMessage('Connecting to postal database...');
+      }
+
+      // 2. Fetch live official India Post data to refine locality & villages
       setPincodeLoading(true);
-      setPincodeMessage('Connecting to postal database...');
       try {
         const response = await fetch(`https://api.postalpincode.in/pincode/${pin}`);
         if (response.ok) {
@@ -659,18 +775,19 @@ export default function AdmissionModal({
               d.toLowerCase() === rawDistrict.toLowerCase() ||
               rawDistrict.toLowerCase().includes(d.toLowerCase()) ||
               d.toLowerCase().includes(rawDistrict.toLowerCase())
-            ) || rawDistrict || 'Tenkasi';
+            ) || rawDistrict || localMatch?.district || 'Tenkasi';
 
             setFormData(prev => ({
               ...prev,
-              city: rawCity || rawDistrict || prev.city,
-              district: matchedDistrict
+              city: rawCity || prev.city || localMatch?.city || '',
+              district: matchedDistrict,
+              village: prev.village || places[0] || ''
             }));
             setDistrictError(false);
             const placeCount = places.length;
-            setPincodeMessage(`✓ Auto-filled: ${matchedDistrict} (${placeCount} place${placeCount > 1 ? 's' : ''} found)`);
+            setPincodeMessage(`✓ Auto-filled: ${rawCity || matchedDistrict}, ${matchedDistrict} (${placeCount} place${placeCount > 1 ? 's' : ''} found)`);
             setTimeout(() => setPincodeMessage(''), 5000);
-          } else {
+          } else if (!localMatch) {
             setAvailablePlaces([]);
             setPincodeMessage('PIN code verified. Please review City & District.');
             setTimeout(() => setPincodeMessage(''), 3000);
@@ -678,14 +795,14 @@ export default function AdmissionModal({
         }
       } catch (err) {
         console.warn('Pincode fetch error:', err);
-        setAvailablePlaces([]);
-        setPincodeMessage('');
       } finally {
         setPincodeLoading(false);
       }
     } else {
       setAvailablePlaces([]);
-      setPincodeMessage('');
+      if (pin.length < 6) {
+        setPincodeMessage('');
+      }
     }
   };
 
@@ -896,24 +1013,24 @@ export default function AdmissionModal({
       alert('Student Passport Photo is compulsory (Field 10). Please upload a student photo before proceeding.');
       return false;
     }
-    if (!formData.address.trim()) {
-      alert('Please enter Residential Address (Field 11).');
+    if (!formData.pincode.trim() || formData.pincode.length < 6) {
+      alert('Please enter a valid 6-digit PIN Code (Field 11).');
+      return false;
+    }
+    if (!formData.district) {
+      setDistrictError(true);
+      alert('Please select District (Field 12).');
+      if (districtDropdownRef.current) {
+        districtDropdownRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
       return false;
     }
     if (!formData.city.trim()) {
       alert('Please enter City / Town (Field 13).');
       return false;
     }
-    if (!formData.district) {
-      setDistrictError(true);
-      alert('Please select District (Field 14).');
-      if (districtDropdownRef.current) {
-        districtDropdownRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-      return false;
-    }
-    if (!formData.pincode.trim() || formData.pincode.length < 6) {
-      alert('Please enter a valid 6-digit PIN Code (Field 15).');
+    if (!formData.address.trim()) {
+      alert('Please enter Residential Address (Field 15).');
       return false;
     }
     setPhotoError(false);
@@ -2037,61 +2154,86 @@ export default function AdmissionModal({
               </div>
 
               {/* SECTION 3: ADDRESS DETAILS */}
-              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 sm:p-4 space-y-2.5">
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 sm:p-4 space-y-3">
                 <span className="text-[10px] sm:text-xs font-black uppercase text-sky-900 tracking-wider flex items-center gap-1.5 border-b border-slate-200 pb-1">
                   <MapPin className="w-3.5 h-3.5 text-sky-700" />
                   <span>Section 3: Address & Location Details</span>
                 </span>
 
-                {/* 11. Address */}
-                <div>
-                  <label className="block text-[11px] sm:text-xs font-black text-slate-800 mb-0.5 sm:mb-1">
-                    11. Residential Address *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.address}
-                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-sky-500 focus:outline-none text-base sm:text-sm shadow-2xs"
-                  />
-                </div>
-
-                {/* 12. Village & 13. City (2-Col on Mobile) */}
-                <div className="grid grid-cols-2 gap-2 sm:gap-4">
-                  <div>
-                    <label className="block text-[11px] sm:text-xs font-black text-slate-800 mb-0.5 sm:mb-1 truncate">
-                      12. Village / Locality
+                {/* 11. PIN Code (FIRST - AUTO-FILLS DISTRICT & CITY) */}
+                <div className="bg-sky-50/70 p-2.5 sm:p-3 rounded-xl border border-sky-200">
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-[11px] sm:text-xs font-black text-sky-950">
+                      11. PIN Code *
                     </label>
-                    <input
-                      type="text"
-                      value={formData.village}
-                      onChange={(e) => setFormData({ ...formData, village: e.target.value })}
-                      className="w-full px-2.5 sm:px-3 py-2 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-sky-500 focus:outline-none text-base sm:text-sm shadow-2xs"
-                    />
+                    {pincodeLoading && (
+                      <span className="text-[10px] text-sky-700 font-bold flex items-center gap-1 animate-pulse">
+                        <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                        <span>Locating...</span>
+                      </span>
+                    )}
                   </div>
-
-                  <div>
-                    <label className="block text-[11px] sm:text-xs font-black text-slate-800 mb-0.5 sm:mb-1 truncate">
-                      13. City / Town *
-                    </label>
+                  <div className="relative">
                     <input
                       type="text"
+                      maxLength="6"
                       required
-                      value={formData.city}
-                      onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                      className="w-full px-2.5 sm:px-3 py-2 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-sky-500 focus:outline-none text-base sm:text-sm shadow-2xs"
+                      placeholder="e.g. 627811"
+                      value={formData.pincode}
+                      onChange={handlePincodeChange}
+                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-black text-base sm:text-sm tracking-wider focus:ring-2 focus:ring-sky-500 focus:outline-none shadow-2xs font-mono"
                     />
+                    {pincodeLoading && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        <Loader2 className="w-4 h-4 animate-spin text-sky-600" />
+                      </div>
+                    )}
                   </div>
+                  {pincodeMessage && (
+                    <p className={`text-[11px] font-bold mt-1.5 ${pincodeMessage.includes('✓') ? 'text-emerald-700' : 'text-slate-600'}`}>
+                      {pincodeMessage}
+                    </p>
+                  )}
+
+                  {/* Places found for this PIN code */}
+                  {availablePlaces.length > 0 && (
+                    <div className="mt-2 p-2 bg-white border border-sky-200 rounded-lg space-y-1">
+                      <span className="text-[9.5px] font-black uppercase tracking-wider text-slate-500 block">
+                        Select your Village / Locality ({availablePlaces.length} places in PIN {formData.pincode}):
+                      </span>
+                      <div className="flex flex-wrap gap-1 max-h-20 overflow-y-auto">
+                        {availablePlaces.map((pl, pIdx) => (
+                          <button
+                            key={pIdx}
+                            type="button"
+                            onClick={() => setFormData(prev => ({ ...prev, village: pl }))}
+                            className={`px-2 py-0.5 rounded text-[10px] font-semibold transition cursor-pointer border ${
+                              formData.village === pl
+                                ? 'bg-sky-600 text-white border-sky-600 shadow-2xs font-bold'
+                                : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-sky-50 hover:border-sky-300'
+                            }`}
+                            title="Click to select this Village / Locality"
+                          >
+                            {pl}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
-                {/* 14. District & 15. PIN Code (2-Col on Mobile) */}
+                {/* 12. District & 13. City / Town (2-Col on Mobile) */}
                 <div className="grid grid-cols-2 gap-2 sm:gap-4">
-                  {/* 14. District Dropdown */}
+                  {/* 12. District Dropdown */}
                   <div className="relative" ref={districtDropdownRef}>
-                    <label className="block text-[11px] sm:text-xs font-black text-slate-800 mb-0.5 sm:mb-1 truncate">
-                      14. District *
-                    </label>
+                    <div className="flex items-center justify-between mb-0.5 sm:mb-1">
+                      <label className="block text-[11px] sm:text-xs font-black text-slate-800 truncate">
+                        12. District *
+                      </label>
+                      {formData.district && formData.pincode?.length === 6 && (
+                        <span className="text-[9.5px] font-bold text-emerald-700">Auto-filled</span>
+                      )}
+                    </div>
                     <button
                       type="button"
                       onClick={() => setDistrictDropdownOpen(!districtDropdownOpen)}
@@ -2148,66 +2290,54 @@ export default function AdmissionModal({
                     )}
                   </div>
 
-                  {/* 15. PIN Code */}
+                  {/* 13. City / Town */}
                   <div>
                     <div className="flex items-center justify-between mb-0.5 sm:mb-1">
                       <label className="block text-[11px] sm:text-xs font-black text-slate-800 truncate">
-                        15. PIN Code *
+                        13. City / Town *
                       </label>
-                      {pincodeLoading && (
-                        <span className="text-[10px] text-sky-700 font-bold flex items-center gap-1 animate-pulse">
-                          <Loader2 className="w-2.5 h-2.5 animate-spin" />
-                          <span>Locating...</span>
-                        </span>
+                      {formData.city && formData.pincode?.length === 6 && (
+                        <span className="text-[9.5px] font-bold text-emerald-700">Auto-filled</span>
                       )}
                     </div>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        maxLength="6"
-                        required
-                        placeholder="e.g. 627811"
-                        value={formData.pincode}
-                        onChange={handlePincodeChange}
-                        className="w-full px-2.5 sm:px-3 py-2 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-sky-500 focus:outline-none text-base sm:text-sm shadow-2xs font-mono"
-                      />
-                      {pincodeLoading && (
-                        <div className="absolute right-2.5 top-1/2 -translate-y-1/2">
-                          <Loader2 className="w-4 h-4 animate-spin text-sky-600" />
-                        </div>
-                      )}
-                    </div>
-                    {pincodeMessage && (
-                      <p className={`text-[10px] font-bold mt-1 ${pincodeMessage.includes('✓') ? 'text-emerald-700' : 'text-slate-500'}`}>
-                        {pincodeMessage}
-                      </p>
-                    )}
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Surandai / Tenkasi"
+                      value={formData.city}
+                      onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                      className="w-full px-2.5 sm:px-3 py-2 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-sky-500 focus:outline-none text-base sm:text-sm shadow-2xs"
+                    />
+                  </div>
+                </div>
 
-                    {/* Places found for this PIN code */}
-                    {availablePlaces.length > 0 && (
-                      <div className="mt-2 p-2 bg-slate-50 border border-slate-200 rounded-lg space-y-1">
-                        <span className="text-[9.5px] font-black uppercase tracking-wider text-slate-500 block">
-                          Places in this PIN ({availablePlaces.length}):
-                        </span>
-                        <div className="flex flex-wrap gap-1 max-h-20 overflow-y-auto">
-                          {availablePlaces.map((pl, pIdx) => (
-                            <button
-                              key={pIdx}
-                              type="button"
-                              onClick={() => setFormData(prev => ({ ...prev, city: pl }))}
-                              className={`px-1.5 py-0.5 rounded text-[10px] font-semibold transition cursor-pointer border ${
-                                formData.city === pl
-                                  ? 'bg-sky-600 text-white border-sky-600'
-                                  : 'bg-white text-slate-700 border-slate-300 hover:border-sky-500 hover:text-sky-900'
-                              }`}
-                              title="Click to set as City / Town"
-                            >
-                              {pl}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                {/* 14. Village / Locality & 15. Residential Address */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
+                  <div>
+                    <label className="block text-[11px] sm:text-xs font-black text-slate-800 mb-0.5 sm:mb-1 truncate">
+                      14. Village / Locality
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Main Road / Street"
+                      value={formData.village}
+                      onChange={(e) => setFormData({ ...formData, village: e.target.value })}
+                      className="w-full px-2.5 sm:px-3 py-2 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-sky-500 focus:outline-none text-base sm:text-sm shadow-2xs"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] sm:text-xs font-black text-slate-800 mb-0.5 sm:mb-1">
+                      15. Residential Address *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Door No, Building, Street Name"
+                      value={formData.address}
+                      onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-sky-500 focus:outline-none text-base sm:text-sm shadow-2xs"
+                    />
                   </div>
                 </div>
               </div>

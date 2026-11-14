@@ -1694,6 +1694,9 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
               totalFranchiseCount={totalFranchiseCount}
               totalRevenueFormatted={totalRevenueFormatted}
               schoolsList={schoolsList}
+              usersList={usersList}
+              eventsList={eventsList}
+              franchiseList={franchiseList}
               setShowAddCourseModal={setShowAddCourseModal}
               setShowAddEventModal={setShowAddEventModal}
               setActiveTab={handleTabSelect}

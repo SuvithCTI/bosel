@@ -21,12 +21,12 @@ export const DEFAULT_FRANCHISE_LEADS = [
     state: 'Tamil Nadu',
     profession: 'Senior Math Educator & Tuition Centre Owner',
     experience: '8 Years teaching Abacus & Vedic Math',
-    spaceAvailable: '1,400 sq ft Commercial Floor',
-    investmentBudget: '₹3 - ₹5 Lakhs',
-    launchTimeline: 'Immediate (Within 30 Days)',
+    interestedProgram: 'Abacus Speed Arithmetic',
+    operatesCenter: 'Yes',
+    partnershipType: 'Authorized Learning Center Franchise',
+    message: 'Inquired about abacus starter kits and faculty certification.',
     status: 'New Franchise Lead',
     date: '25 Jan 2026',
-    notes: 'Inquired about abacus starter kits and faculty certification.',
     agreedToTerms: true
   },
   {
@@ -39,12 +39,12 @@ export const DEFAULT_FRANCHISE_LEADS = [
     state: 'Tamil Nadu',
     profession: 'School Principal (Retd.)',
     experience: '15 Years in School Administration',
-    spaceAvailable: '1,100 sq ft Independent Building',
-    investmentBudget: '₹5 - ₹8 Lakhs',
-    launchTimeline: '1 - 2 Months',
+    interestedProgram: 'All Programs (Multi-Skill Centre)',
+    operatesCenter: 'No',
+    partnershipType: 'Authorized Learning Center Franchise',
+    message: 'Premises approved in central Salem. Inspection on 5th Feb.',
     status: 'Site Inspection Scheduled',
     date: '18 Jan 2026',
-    notes: 'Premises approved in central Salem. Inspection on 5th Feb.',
     agreedToTerms: true
   },
   {
@@ -57,12 +57,12 @@ export const DEFAULT_FRANCHISE_LEADS = [
     state: 'Tamil Nadu',
     profession: 'Computer Science Lecturer',
     experience: '6 Years in Python & Robotics Education',
-    spaceAvailable: '1,800 sq ft IT Park Suite',
-    investmentBudget: '₹6 - ₹10 Lakhs',
-    launchTimeline: 'Next Academic Quarter',
+    interestedProgram: 'Abacus Speed Arithmetic',
+    operatesCenter: 'No',
+    partnershipType: 'Regional Examination / Competition Centre',
+    message: 'Wants to offer both Abacus and Python Coding tracks.',
     status: 'In Discussion',
     date: '14 Jan 2026',
-    notes: 'Wants to offer both Abacus and Python Coding tracks.',
     agreedToTerms: true
   },
   {
@@ -75,12 +75,12 @@ export const DEFAULT_FRANCHISE_LEADS = [
     state: 'Tamil Nadu',
     profession: 'Educational Director',
     experience: '12 Years in Skill & Cognitive Learning',
-    spaceAvailable: '2,000 sq ft Regional Campus',
-    investmentBudget: '₹10+ Lakhs',
-    launchTimeline: 'Active Regional Academy',
+    interestedProgram: 'All Programs (Multi-Skill Centre)',
+    operatesCenter: 'Yes',
+    partnershipType: 'Authorized Learning Center Franchise',
+    message: 'Head branch for Tenkasi district. Centre Director: Mrs. Thangam Sivaji.',
     status: 'Approved Franchise Branch',
     date: '01 Jan 2026',
-    notes: 'Head branch for Tenkasi district. Centre Director: Mrs. Thangam Sivaji.',
     agreedToTerms: true
   },
   {
@@ -93,12 +93,12 @@ export const DEFAULT_FRANCHISE_LEADS = [
     state: 'Tamil Nadu',
     profession: 'Entrepreneur & Former Franchisee',
     experience: '4 Years managing After-School Activity Centers',
-    spaceAvailable: '900 sq ft Near Bypass Road',
-    investmentBudget: '₹3 - ₹4 Lakhs',
-    launchTimeline: 'Within 60 Days',
+    interestedProgram: 'Drawing & Creative Art',
+    operatesCenter: 'Yes',
+    partnershipType: 'Authorized Learning Center Franchise',
+    message: 'Requesting franchise brochure and fee structure details.',
     status: 'New Franchise Lead',
     date: '28 Jan 2026',
-    notes: 'Requesting franchise brochure and fee structure details.',
     agreedToTerms: true
   }
 ];
@@ -112,7 +112,24 @@ export const getStoredFranchiseLeads = () => {
       return DEFAULT_FRANCHISE_LEADS;
     }
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) && parsed.length > 0 ? parsed : DEFAULT_FRANCHISE_LEADS;
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      localStorage.setItem('bsel_franchise_leads', JSON.stringify(DEFAULT_FRANCHISE_LEADS));
+      return DEFAULT_FRANCHISE_LEADS;
+    }
+
+    // Sanitize and migrate fields to ensure only franchise form fields are present
+    const cleaned = parsed.map(lead => {
+      const { spaceAvailable, investmentBudget, launchTimeline, notes, ...rest } = lead;
+      return {
+        ...rest,
+        interestedProgram: rest.interestedProgram || 'All Programs (Multi-Skill Centre)',
+        operatesCenter: rest.operatesCenter || 'No',
+        partnershipType: rest.partnershipType || 'Authorized Learning Center Franchise',
+        message: rest.message || notes || ''
+      };
+    });
+
+    return cleaned;
   } catch {
     return DEFAULT_FRANCHISE_LEADS;
   }
@@ -138,7 +155,7 @@ export const updateFranchiseLeadStatus = (refId, newStatus, newNotes) => {
   leads[index] = {
     ...leads[index],
     status: newStatus,
-    ...(newNotes !== undefined ? { notes: newNotes } : {})
+    ...(newNotes !== undefined ? { message: newNotes } : {})
   };
 
   saveStoredFranchiseLeads(leads);
