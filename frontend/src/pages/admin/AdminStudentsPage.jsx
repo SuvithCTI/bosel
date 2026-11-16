@@ -19,6 +19,7 @@ import {
   FileSpreadsheet
 } from 'lucide-react';
 import StudentAvatar from '../../components/StudentAvatar';
+import { updateUserProfile } from '../../utils/authStorage';
 import {
   getStudentPhotoUrl,
   getStudentRegisterNumber,
@@ -82,8 +83,8 @@ export default function AdminStudentsPage({
   // Fee status options
   const feeStatusOptions = useMemo(() => [
     { value: 'All', label: 'All Fee Statuses' },
-    { value: 'Paid', label: 'Fee Paid / Verified' },
-    { value: 'Pending', label: 'Fee Pending' }
+    { value: 'Paid', label: 'Approved' },
+    { value: 'Pending', label: 'Pending' }
   ], []);
   return (
           <div className="space-y-4 animate-in fade-in duration-200">
@@ -308,16 +309,52 @@ export default function AdminStudentsPage({
                           {/* Fee Status */}
                           <td className="py-3 px-3 whitespace-nowrap">
                             {(() => {
-                              const isPaid = student.feePaymentType === 'Paid' || student.feePaymentType === 'Pay Now';
+                              const isPaid = student.feePaymentType === 'Paid' || student.feePaymentType === 'Pay Now' || student.feePaymentType === 'Approved';
+                              const formattedFee = student.feeAmount 
+                                ? (String(student.feeAmount).trim().startsWith('₹') ? String(student.feeAmount).trim() : `₹${String(student.feeAmount).trim()}`)
+                                : '₹450';
                               return (
-                                <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${
-                                  isPaid
-                                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                                    : 'bg-amber-50 text-amber-700 border border-amber-200'
-                                }`}>
-                                  {isPaid ? <CheckCircle2 className="w-3 h-3 text-emerald-600" /> : <Clock className="w-3 h-3 text-amber-600" />}
-                                  <span>{student.feeAmount || '₹500'} • {isPaid ? 'PAID' : 'PENDING'}</span>
-                                </span>
+                                <div className="flex flex-col items-start gap-1">
+                                  {isPaid ? (
+                                    <span
+                                      className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-2xs select-none"
+                                      title="Fee Verified & Approved"
+                                    >
+                                      <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                                      <span>{formattedFee} • APPROVED</span>
+                                    </span>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const newReceipt = `RCP-DESK-${Math.floor(100000 + Math.random() * 900000)}`;
+                                        updateUserProfile(student.userId, { 
+                                          feePaymentType: 'Approved',
+                                          receiptRefNo: (student.receiptRefNo && !student.receiptRefNo.includes('PAY-LATER')) ? student.receiptRefNo : newReceipt
+                                        });
+                                      }}
+                                      title="Click to Approve Fee Payment (Pay Later)"
+                                      className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase transition cursor-pointer bg-amber-50 text-amber-700 border border-amber-300 hover:bg-emerald-100 hover:text-emerald-800 hover:border-emerald-300 shadow-2xs group"
+                                    >
+                                      <Clock className="w-3 h-3 text-amber-600 group-hover:text-emerald-700" />
+                                      <span>{formattedFee} • PENDING</span>
+                                      <span className="text-[9px] font-bold text-amber-800 group-hover:text-emerald-800 ml-0.5 underline">Approve</span>
+                                    </button>
+                                  )}
+
+                                  {/* Fee Receipt Under Fee Status (Only if Approved) */}
+                                  {isPaid && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleOpenReceiptForStudent?.(student)}
+                                      className="inline-flex items-center gap-1 px-2 py-0.5 bg-sky-50 hover:bg-sky-100 text-sky-800 hover:text-sky-950 border border-sky-200 hover:border-sky-300 font-bold rounded text-[10.5px] transition cursor-pointer shadow-2xs"
+                                      title="View Official Fee Receipt"
+                                    >
+                                      <Receipt className="w-3 h-3 text-sky-600 shrink-0" />
+                                      <span>Fee Receipt</span>
+                                    </button>
+                                  )}
+                                </div>
                               );
                             })()}
                           </td>
@@ -334,15 +371,29 @@ export default function AdminStudentsPage({
                                 <GraduationCap className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                                 <span>Admission</span>
                               </button>
-                              <button
-                                type="button"
-                                onClick={() => handleOpenReceiptForStudent?.(student)}
-                                className="px-2.5 py-1.5 bg-sky-50 hover:bg-sky-100 text-sky-800 border border-sky-200 hover:border-sky-300 font-bold rounded-lg text-xs transition cursor-pointer flex items-center justify-center gap-1.5 shadow-xs whitespace-nowrap"
-                                title="View Fee Receipt"
-                              >
-                                <Receipt className="w-3.5 h-3.5 text-sky-600 shrink-0" />
-                                <span>Receipt</span>
-                              </button>
+
+                              {(() => {
+                                const isPaid = student.feePaymentType === 'Paid' || student.feePaymentType === 'Pay Now' || student.feePaymentType === 'Approved';
+                                return isPaid ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleOpenReceiptForStudent?.(student)}
+                                    className="px-2.5 py-1.5 bg-sky-50 hover:bg-sky-100 text-sky-800 border border-sky-200 hover:border-sky-300 font-bold rounded-lg text-xs transition cursor-pointer flex items-center justify-center gap-1.5 shadow-xs whitespace-nowrap"
+                                    title="View Fee Receipt"
+                                  >
+                                    <Receipt className="w-3.5 h-3.5 text-sky-600 shrink-0" />
+                                    <span>Receipt</span>
+                                  </button>
+                                ) : (
+                                  <span
+                                    className="px-2.5 py-1.5 bg-slate-100 text-slate-400 border border-dashed border-slate-300 font-bold rounded-lg text-xs flex items-center justify-center gap-1.5 shadow-2xs whitespace-nowrap cursor-not-allowed select-none"
+                                    title="Fee receipt available only after fee is Approved"
+                                  >
+                                    <Receipt className="w-3.5 h-3.5 text-slate-400 shrink-0 opacity-40" />
+                                    <span className="opacity-60">Receipt</span>
+                                  </span>
+                                );
+                              })()}
                               <button
                                 type="button"
                                 onClick={() => handleOpenEventRegForStudent?.(student)}

@@ -11,10 +11,14 @@ import {
   Ticket,
   FileSpreadsheet,
   Edit3,
-  Trash2
+  Trash2,
+  FileDown,
+  Printer,
+  Download
 } from 'lucide-react';
 import CompactSelect from '../../components/CompactSelect';
 import StudentAvatar from '../../components/StudentAvatar';
+import { updateUserProfile } from '../../utils/authStorage';
 
 export default function AdminBranchStudentsPage({
   activeBranch = 'Concern Branch',
@@ -29,10 +33,23 @@ export default function AdminBranchStudentsPage({
   handleOpenEventRegForStudent,
   handleOpenQuestionPaperForStudent,
   setEditingStudent,
-  handleDeleteStudent
+  handleDeleteStudent,
+  // Merge as PDF props
+  isMergeMode = false,
+  setIsMergeMode = () => {},
+  selectedStudentIds = [],
+  handleToggleMergeMode = () => {},
+  handleToggleSelectAll = () => {},
+  handleToggleSelectStudent = () => {},
+  handleStartMergeSelected = () => {},
+  setViewingMergedPdfStudent = () => {},
+  showToast = () => {}
 }) {
   // Course filter state
   const [branchCourseFilter, setBranchCourseFilter] = useState('All');
+
+  // Category filter state (Individual, Academy, Franchise)
+  const [branchCategoryFilter, setBranchCategoryFilter] = useState('All');
 
   // List of courses for filtering
   const allCourses = useMemo(() => [
@@ -55,12 +72,40 @@ export default function AdminBranchStudentsPage({
     { value: 'Athletics', label: 'Athletics & Physical Conditioning' }
   ], []);
 
-  // Branch options locked/scoped to the active concern branch
-  const branchOptions = useMemo(() => [
-    { value: activeBranch || 'Branch', label: activeBranch || 'Branch' }
-  ], [activeBranch]);
+  // Category options: Individual, Academy, Franchise
+  const categoryOptions = useMemo(() => [
+    { value: 'All', label: 'All Categories' },
+    { value: 'Individual', label: 'Individual' },
+    { value: 'Academy', label: 'Academy' },
+    { value: 'Franchise', label: 'Franchise' }
+  ], []);
 
-  // Filter students based on course (search is handled upstream or fallback here)
+  const getStudentCategory = (student) => {
+    const cat = (student.admissionCategory || student.category || student.channel || '').toLowerCase();
+    const inst = (student.institution || '').toLowerCase();
+    const branch = (student.branch || '').toLowerCase();
+
+    if (cat.includes('academy') || inst.includes('academy') || inst.includes('tuition')) {
+      return 'Academy';
+    }
+    if (cat.includes('franchise') || cat.includes('branch') || branch.includes('regional branch') || branch.includes('franchise') || inst.includes('regional branch')) {
+      return 'Franchise';
+    }
+    return 'Individual';
+  };
+
+  const getCategoryBadge = (student) => {
+    const category = getStudentCategory(student);
+    if (category === 'Academy') {
+      return { label: 'Academy', bg: 'bg-amber-50 text-amber-700 border-amber-200' };
+    }
+    if (category === 'Franchise') {
+      return { label: 'Franchise', bg: 'bg-purple-50 text-purple-700 border-purple-200' };
+    }
+    return { label: 'Individual', bg: 'bg-sky-50 text-sky-700 border-sky-200' };
+  };
+
+  // Filter students based on course & category (search is handled upstream or fallback here)
   const filteredStudents = useMemo(() => {
     return (branchStudents || []).filter(student => {
       // Course filter
@@ -68,9 +113,35 @@ export default function AdminBranchStudentsPage({
         const prog = (student.program || student.courseName || '').toLowerCase();
         if (!prog.includes(branchCourseFilter.toLowerCase())) return false;
       }
+
+      // Category filter (Individual, Academy, Franchise)
+      if (branchCategoryFilter && branchCategoryFilter !== 'All') {
+        const studentCat = getStudentCategory(student);
+        if (studentCat !== branchCategoryFilter) return false;
+      }
+
       return true;
     });
-  }, [branchStudents, branchCourseFilter]);
+  }, [branchStudents, branchCourseFilter, branchCategoryFilter]);
+
+  // Handle select all for current view
+  const onToggleSelectAll = () => {
+    const visibleIds = filteredStudents.map(s => s.userId);
+    const allSelected = visibleIds.length > 0 && visibleIds.every(id => selectedStudentIds.includes(id));
+    if (allSelected) {
+      visibleIds.forEach(id => {
+        if (selectedStudentIds.includes(id)) {
+          handleToggleSelectStudent(id);
+        }
+      });
+    } else {
+      visibleIds.forEach(id => {
+        if (!selectedStudentIds.includes(id)) {
+          handleToggleSelectStudent(id);
+        }
+      });
+    }
+  };
 
   return (
     <div className="space-y-4 animate-in fade-in duration-200">
@@ -83,10 +154,22 @@ export default function AdminBranchStudentsPage({
               <span>Central Student Registration Monitor</span>
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
-              Monitoring all student enrollments under <span className="font-bold text-sky-700">{activeBranch}</span>, fee status, and official B★SEL register numbers.
+              Monitoring all student enrollments under <span className="font-bold text-sky-700">{activeBranch}</span> and official B★SEL register numbers.
             </p>
           </div>
-          <div className="w-full sm:w-auto">
+          <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap sm:flex-nowrap">
+            <button
+              type="button"
+              onClick={handleToggleMergeMode}
+              className={`w-full sm:w-auto px-3.5 py-2 rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer active:scale-95 ${
+                isMergeMode
+                  ? 'bg-amber-500 hover:bg-amber-600 text-slate-950 ring-2 ring-amber-300 font-black'
+                  : 'bg-[#0c234b] hover:bg-[#153a77] text-white border border-slate-700'
+              }`}
+            >
+              <FileDown className="w-3.5 h-3.5 text-amber-400" />
+              <span>{isMergeMode ? 'Close Merge' : 'Merge as PDF'}</span>
+            </button>
             <button
               type="button"
               onClick={() => setShowAddStudentModal(true)}
@@ -112,12 +195,12 @@ export default function AdminBranchStudentsPage({
             />
           </div>
 
-          {/* Branch Filter (Scoped to active branch) */}
+          {/* Category Filter: Individual, Academy, Franchise */}
           <CompactSelect
-            value={activeBranch}
-            onChange={() => {}}
-            options={branchOptions}
-            placeholder={activeBranch || "Branch"}
+            value={branchCategoryFilter}
+            onChange={setBranchCategoryFilter}
+            options={categoryOptions}
+            placeholder="All Categories"
             maxHeight="max-h-48"
           />
 
@@ -132,12 +215,54 @@ export default function AdminBranchStudentsPage({
         </div>
       </div>
 
+      {/* Merge as PDF Selection Action Banner */}
+      {isMergeMode && (
+        <div className="bg-gradient-to-r from-[#081d3d] to-[#123068] text-white p-3.5 rounded-2xl border border-amber-400/40 shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in duration-150">
+          <div className="flex items-center gap-3 flex-wrap">
+            <label className="flex items-center gap-2 bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-xl cursor-pointer transition select-none border border-white/10">
+              <input
+                type="checkbox"
+                checked={filteredStudents.length > 0 && filteredStudents.every(s => selectedStudentIds.includes(s.userId))}
+                onChange={onToggleSelectAll}
+                className="w-4 h-4 rounded cursor-pointer accent-amber-400"
+              />
+              <span className="text-xs font-bold text-amber-300">
+                Select All ({filteredStudents.length})
+              </span>
+            </label>
+            <div className="text-xs font-medium text-slate-200">
+              <span className="font-black text-amber-400">{selectedStudentIds.length}</span> of {filteredStudents.length} candidate(s) selected
+            </div>
+          </div>
+          <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+            <button
+              type="button"
+              onClick={() => {
+                setIsMergeMode(false);
+              }}
+              className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={selectedStudentIds.length === 0}
+              onClick={handleStartMergeSelected}
+              className="px-4 py-1.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black rounded-xl text-xs transition flex items-center gap-1.5 shadow-md disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer active:scale-95"
+            >
+              <FileDown className="w-3.5 h-3.5" />
+              <span>Download Merged PDF ({selectedStudentIds.length})</span>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Students Roster Table */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         {/* Mobile Horizontal Scroll Cue */}
         <div className="lg:hidden flex items-center justify-between px-3.5 py-2 bg-gradient-to-r from-sky-50 to-indigo-50/50 border-b border-sky-100 text-[11px] text-sky-900 font-medium">
           <span className="flex items-center gap-1.5">
-            <span className="text-sky-600 font-bold">⇄</span> Swipe table to view Parent, Course, Fee & Documents
+            <span className="text-sky-600 font-bold">⇄</span> Swipe table to view Event & Question Paper
           </span>
           <span className="text-[10px] font-bold bg-white text-sky-700 px-2 py-0.5 rounded-full border border-sky-200 shrink-0">
             {filteredStudents.length} Students
@@ -148,26 +273,60 @@ export default function AdminBranchStudentsPage({
           <table className="w-full text-left text-xs min-w-[760px]">
             <thead className="bg-[#081d3d] text-white uppercase text-[10px] tracking-wider font-black">
               <tr>
+                {isMergeMode && (
+                  <th className="py-3 px-3 w-12 text-center">
+                    <div className="flex items-center justify-center">
+                      <input
+                        type="checkbox"
+                        checked={filteredStudents.length > 0 && filteredStudents.every(s => selectedStudentIds.includes(s.userId))}
+                        onChange={onToggleSelectAll}
+                        className="w-4 h-4 rounded cursor-pointer accent-amber-400"
+                        title="Select All Students"
+                      />
+                    </div>
+                  </th>
+                )}
                 <th className="py-3 px-4 sticky left-0 bg-[#081d3d] z-20 shadow-[2px_0_5px_rgba(0,0,0,0.15)]">Student Details</th>
                 <th className="py-3 px-3">Parent & Contact</th>
-                <th className="py-3 px-3">Branch</th>
+                <th className="py-3 px-3">Category</th>
                 <th className="py-3 px-3">Course & Level</th>
-                <th className="py-3 px-3">Fee Status</th>
-                <th className="py-3 px-4 text-center">Documents</th>
+                <th className="py-3 px-3 text-center">Event Registration</th>
+                <th className="py-3 px-3 text-center">Question Paper</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 font-medium">
               {filteredStudents.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-slate-500">
+                  <td colSpan={isMergeMode ? 7 : 6} className="py-8 text-center text-slate-500">
                     No students currently enrolled matching your criteria under {activeBranch}.
                   </td>
                 </tr>
               ) : (
                 filteredStudents.map((student, idx) => {
-                  const isPaid = student.feePaymentType === 'Paid' || student.feePaymentType === 'Pay Now';
+                  const isSelected = selectedStudentIds.includes(student.userId);
                   return (
-                    <tr key={student.userId || idx} className="hover:bg-slate-50/80 transition group">
+                    <tr
+                      key={student.userId || idx}
+                      onClick={(e) => {
+                        if (isMergeMode && !['BUTTON', 'A', 'INPUT', 'SVG', 'PATH'].includes(e.target.tagName)) {
+                          handleToggleSelectStudent(student.userId);
+                        }
+                      }}
+                      className={`hover:bg-slate-50/80 transition group ${isMergeMode ? 'cursor-pointer' : ''} ${
+                        isSelected ? 'bg-amber-50/60 hover:bg-amber-50' : ''
+                      }`}
+                    >
+                      {isMergeMode && (
+                        <td className="py-3 px-3 text-center" onClick={(e) => e.stopPropagation()}>
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => handleToggleSelectStudent(student.userId)}
+                            className="w-4 h-4 rounded cursor-pointer accent-amber-400"
+                          />
+                        </td>
+                      )}
+
                       {/* Student Details (Sticky column for optimal mobile orientation) */}
                       <td className="py-3 px-4 sticky left-0 bg-white z-10 shadow-[2px_0_6px_-2px_rgba(0,0,0,0.06)] group-hover:bg-slate-50 transition">
                         <div className="flex items-center gap-3">
@@ -187,7 +346,7 @@ export default function AdminBranchStudentsPage({
                                 <button
                                   type="button"
                                   onClick={() => setEditingStudent(student)}
-                                  className="text-slate-400 hover:text-sky-700 transition"
+                                  className="text-slate-400 hover:text-sky-700 transition cursor-pointer"
                                   title="Edit Student"
                                 >
                                   <Edit3 className="w-3 h-3" />
@@ -197,7 +356,7 @@ export default function AdminBranchStudentsPage({
                                 <button
                                   type="button"
                                   onClick={() => handleDeleteStudent(student.userId, student.studentName)}
-                                  className="text-slate-400 hover:text-rose-600 transition"
+                                  className="text-slate-400 hover:text-rose-600 transition cursor-pointer"
                                   title="Delete Student"
                                 >
                                   <Trash2 className="w-3 h-3" />
@@ -220,10 +379,10 @@ export default function AdminBranchStudentsPage({
                         </div>
                       </td>
 
-                      {/* Branch */}
+                      {/* Category */}
                       <td className="py-3 px-3 whitespace-nowrap">
-                        <span className="inline-block px-2.5 py-0.5 rounded-full text-[10.5px] font-bold bg-sky-50 text-sky-700 border border-sky-200">
-                          {student.branch || student.institution || activeBranch || 'Branch'}
+                        <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase border shadow-2xs ${getCategoryBadge(student).bg}`}>
+                          {getCategoryBadge(student).label}
                         </span>
                       </td>
 
@@ -235,43 +394,13 @@ export default function AdminBranchStudentsPage({
                         </div>
                       </td>
 
-                      {/* Fee Status */}
-                      <td className="py-3 px-3 whitespace-nowrap">
-                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${
-                          isPaid
-                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                            : 'bg-amber-50 text-amber-700 border border-amber-200'
-                        }`}>
-                          {isPaid ? <CheckCircle2 className="w-3 h-3 text-emerald-600" /> : <Clock className="w-3 h-3 text-amber-600" />}
-                          <span>{student.feeAmount || '₹500'} • {isPaid ? 'PAID' : 'PENDING'}</span>
-                        </span>
-                      </td>
-
-                      {/* Documents Actions (2x2 grid matching Screenshot) */}
-                      <td className="py-3 px-3 text-center">
-                        <div className="grid grid-cols-2 gap-1.5 w-[210px] mx-auto">
-                          <button
-                            type="button"
-                            onClick={() => setViewingAdmissionStudent(student)}
-                            className="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 hover:border-emerald-300 font-bold rounded-lg text-xs transition cursor-pointer flex items-center justify-center gap-1.5 shadow-xs whitespace-nowrap"
-                            title="View Admission Form"
-                          >
-                            <GraduationCap className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                            <span>Admission</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleOpenReceiptForStudent?.(student)}
-                            className="px-2.5 py-1.5 bg-sky-50 hover:bg-sky-100 text-sky-800 border border-sky-200 hover:border-sky-300 font-bold rounded-lg text-xs transition cursor-pointer flex items-center justify-center gap-1.5 shadow-xs whitespace-nowrap"
-                            title="View Fee Receipt"
-                          >
-                            <Receipt className="w-3.5 h-3.5 text-sky-600 shrink-0" />
-                            <span>Receipt</span>
-                          </button>
+                      {/* Event Registration Column */}
+                      <td className="py-3 px-3 text-center whitespace-nowrap">
+                        <div className="inline-flex items-center justify-center gap-1.5">
                           <button
                             type="button"
                             onClick={() => handleOpenEventRegForStudent?.(student)}
-                            className="px-2.5 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-800 border border-purple-200 hover:border-purple-300 font-bold rounded-lg text-xs transition cursor-pointer flex items-center justify-center gap-1.5 shadow-xs whitespace-nowrap"
+                            className="px-2.5 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-800 border border-purple-200 hover:border-purple-300 font-bold rounded-lg text-xs transition cursor-pointer flex items-center justify-center gap-1.5 shadow-xs whitespace-nowrap active:scale-95"
                             title="View Event Registration"
                           >
                             <Ticket className="w-3.5 h-3.5 text-purple-600 shrink-0" />
@@ -279,12 +408,50 @@ export default function AdminBranchStudentsPage({
                           </button>
                           <button
                             type="button"
+                            onClick={() => handleOpenEventRegForStudent?.(student)}
+                            className="p-1.5 bg-slate-50 hover:bg-purple-50 text-slate-600 hover:text-purple-700 border border-slate-200 hover:border-purple-300 rounded-lg transition cursor-pointer shadow-2xs active:scale-95"
+                            title="Print Event Slip"
+                          >
+                            <Printer className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleOpenEventRegForStudent?.(student)}
+                            className="p-1.5 bg-slate-50 hover:bg-purple-50 text-slate-600 hover:text-purple-700 border border-slate-200 hover:border-purple-300 rounded-lg transition cursor-pointer shadow-2xs active:scale-95"
+                            title="Download Event Slip"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </td>
+
+                      {/* Question Paper Column */}
+                      <td className="py-3 px-3 text-center whitespace-nowrap">
+                        <div className="inline-flex items-center justify-center gap-1.5">
+                          <button
+                            type="button"
                             onClick={() => handleOpenQuestionPaperForStudent?.(student)}
-                            className="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 hover:border-amber-300 font-bold rounded-lg text-xs transition cursor-pointer flex items-center justify-center gap-1.5 shadow-xs whitespace-nowrap"
+                            className="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 hover:border-amber-300 font-bold rounded-lg text-xs transition cursor-pointer flex items-center justify-center gap-1.5 shadow-xs whitespace-nowrap active:scale-95"
                             title="View Question Paper"
                           >
                             <FileSpreadsheet className="w-3.5 h-3.5 text-amber-600 shrink-0" />
                             <span>Qn Paper</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleOpenQuestionPaperForStudent?.(student)}
+                            className="p-1.5 bg-slate-50 hover:bg-amber-50 text-slate-600 hover:text-amber-800 border border-slate-200 hover:border-amber-300 rounded-lg transition cursor-pointer shadow-2xs active:scale-95"
+                            title="Print Question Paper"
+                          >
+                            <Printer className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleOpenQuestionPaperForStudent?.(student)}
+                            className="p-1.5 bg-slate-50 hover:bg-amber-50 text-slate-600 hover:text-amber-800 border border-slate-200 hover:border-amber-300 rounded-lg transition cursor-pointer shadow-2xs active:scale-95"
+                            title="Download Question Paper PDF"
+                          >
+                            <Download className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       </td>

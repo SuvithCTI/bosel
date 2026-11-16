@@ -251,9 +251,9 @@ export default function AdminModals({
           setPaymentsList(getStoredPayments());
         }}
         setActivePage={setActivePage}
-        initialBranch={currentAdminRole === 'Branch Head' ? activeBranch : null}
-        lockBranch={currentAdminRole === 'Branch Head'}
-        skipPayment={currentAdminRole === 'Branch Head'}
+        initialBranch={currentAdminRole === 'Branch Head' ? (activeBranch ? activeBranch.replace(/\s+Branch$/i, '') : 'Tenkasi') : 'Tenkasi'}
+        lockBranch={false}
+        skipPayment={false}
         onSuccess={(account) => {
           setUsersList(getRegisteredUsers());
           if (account) {

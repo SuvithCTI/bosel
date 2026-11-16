@@ -958,6 +958,11 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
 
   // 6B. Student Action Handlers (Receipt, Event Registration, Question Paper)
   const handleOpenReceiptForStudent = (student) => {
+    const isApproved = student.feePaymentType === 'Paid' || student.feePaymentType === 'Pay Now' || student.feePaymentType === 'Approved';
+    if (!isApproved) {
+      alert(`Fee Receipt is available only after fee payment is Approved. Please approve the pending fee payment first.`);
+      return;
+    }
     setViewingReceiptStudent(student);
     showToast(`Loaded Official Fee Receipt for ${student.studentName || 'Student'}!`);
   };
@@ -1028,7 +1033,8 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
   };
 
   const handleToggleSelectAll = () => {
-    const visibleIds = filteredStudentsSuperAdmin.map(s => s.userId);
+    const listToUse = currentAdminRole === 'Branch Head' ? branchStudents : filteredStudentsSuperAdmin;
+    const visibleIds = listToUse.map(s => s.userId);
     const allSelected = visibleIds.length > 0 && visibleIds.every(id => selectedStudentIds.includes(id));
     if (allSelected) {
       setSelectedStudentIds(prev => prev.filter(id => !visibleIds.includes(id)));
@@ -1210,7 +1216,8 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
         return p.includes(target) || target.includes(p);
       })();
 
-      const matchPayment = studentPaymentFilter === 'All' || (studentPaymentFilter === 'Paid' ? (u.feePaymentType === 'Paid' || u.feePaymentType === 'Pay Now') : u.feePaymentType !== 'Paid');
+      const isPaidUser = u.feePaymentType === 'Paid' || u.feePaymentType === 'Pay Now' || u.feePaymentType === 'Approved';
+      const matchPayment = studentPaymentFilter === 'All' || (studentPaymentFilter === 'Paid' ? isPaidUser : !isPaidUser);
 
       return matchSearch && matchBranch && matchCourse && matchPayment;
     });
@@ -1864,8 +1871,17 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
               handleOpenReceiptForStudent={handleOpenReceiptForStudent}
               handleOpenEventRegForStudent={handleOpenEventRegForStudent}
               handleOpenQuestionPaperForStudent={handleOpenQuestionPaperForStudent}
+              setViewingMergedPdfStudent={setViewingMergedPdfStudent}
               setEditingStudent={setEditingStudent}
               handleDeleteStudent={handleDeleteStudent}
+              showToast={showToast}
+              isMergeMode={isMergeMode}
+              setIsMergeMode={setIsMergeMode}
+              selectedStudentIds={selectedStudentIds}
+              handleToggleMergeMode={handleToggleMergeMode}
+              handleToggleSelectAll={handleToggleSelectAll}
+              handleToggleSelectStudent={handleToggleSelectStudent}
+              handleStartMergeSelected={handleStartMergeSelected}
             />
           )}
 

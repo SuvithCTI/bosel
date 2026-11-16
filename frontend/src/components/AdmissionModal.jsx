@@ -29,7 +29,8 @@ import {
   RotateCcw,
   Crop,
   Trash2,
-  AlertCircle
+  AlertCircle,
+  Clock
 } from 'lucide-react';
 import { registerStudentAccount, generateRegisterNumber, isPhoneNumberRegistered } from '../utils/authStorage';
 import { getStoredCourses } from '../data/coursesData';
@@ -960,20 +961,19 @@ export default function AdmissionModal({
       alert('Please select a Branch (Field 2).');
       return false;
     }
-    if (skipPayment || formData.admissionCategory === 'School') {
+    if (formData.admissionCategory === 'School') {
       if (!formData.institution?.trim()) {
         alert('Please enter School Name.');
         return false;
       }
-    } else {
-      if (!formData.admissionCategory) {
-        alert('Please select Admission Through (Branch or Academy).');
-        return false;
-      }
-      if (formData.admissionCategory === 'Academy' && !formData.institution?.trim()) {
+    } else if (formData.admissionCategory === 'Academy') {
+      if (!formData.institution?.trim()) {
         alert('Please enter Academy Name.');
         return false;
       }
+    } else if (!formData.admissionCategory) {
+      alert('Please select Admission Through (Branch, School or Academy).');
+      return false;
     }
     if (!formData.parentName.trim()) {
       alert('Please enter Father or Mother Name.');
@@ -1118,9 +1118,9 @@ export default function AdmissionModal({
 
     setPhotoError(false);
     setDistrictError(false);
-    const activeReceiptRef = formData.receiptRefNo?.trim() || (formData.feePaymentType === 'Pay Now' 
-      ? `TXN-${Math.floor(10000000 + Math.random() * 90000000)}` 
-      : 'CASH-PAY-LATER-AT-BRANCH');
+    const activeReceiptRef = formData.receiptRefNo?.trim() || (formData.feePaymentType === 'Pay Later'
+      ? `PAY-LATER-${Math.floor(100000 + Math.random() * 900000)}`
+      : `TXN-${Math.floor(10000000 + Math.random() * 90000000)}`);
 
     try {
       const account = registerStudentAccount({
@@ -1407,8 +1407,10 @@ export default function AdmissionModal({
 
                   <div className="bg-slate-50/70 p-2 rounded-lg border border-slate-100 col-span-2 sm:col-span-1">
                     <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider block">Payment Status</span>
-                    <span className="inline-flex items-center gap-1 font-black text-[11px] mt-0.5 text-emerald-700">
-                      ✓ Paid Online
+                    <span className={`inline-flex items-center gap-1 font-black text-[11px] mt-0.5 ${
+                      formData.feePaymentType === 'Pay Later' ? 'text-amber-700' : 'text-emerald-700'
+                    }`}>
+                      {formData.feePaymentType === 'Pay Later' ? '⏳ Pay Later (Branch Desk)' : '✓ Paid Online'}
                     </span>
                   </div>
 
@@ -1649,9 +1651,10 @@ export default function AdmissionModal({
                             Select category
                           </span>
                         </label>
-                        <div className="grid grid-cols-2 gap-2">
+                        <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
                           {[
                             { id: 'Branch', label: 'Branch', icon: Building2 },
+                            { id: 'School', label: 'School', icon: School },
                             { id: 'Academy', label: 'Academy', icon: GraduationCap }
                           ].map(({ id, label, icon: Icon }) => {
                             const isSelected = formData.admissionCategory === id;
@@ -1663,11 +1666,11 @@ export default function AdmissionModal({
                                   setFormData(prev => ({
                                     ...prev,
                                     admissionCategory: id,
-                                    institution: id === 'Branch' ? prev.branch : (prev.admissionCategory === id ? prev.institution : ''),
-                                    schoolName: id === 'Branch' ? prev.branch : (prev.admissionCategory === id ? prev.schoolName : '')
+                                    institution: id === 'Branch' ? prev.branch : '',
+                                    schoolName: id === 'Branch' ? prev.branch : ''
                                   }));
                                 }}
-                                className={`py-2 px-2 sm:px-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                                className={`py-2 px-1.5 sm:px-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                                   isSelected
                                     ? 'bg-sky-600 border-sky-600 text-white shadow-xs scale-[1.01]'
                                     : 'bg-white border-slate-300 text-slate-700 hover:border-sky-300 hover:bg-sky-50/50'
@@ -1680,6 +1683,32 @@ export default function AdmissionModal({
                           })}
                         </div>
                       </div>
+
+                      {/* If School is selected: enter School Name */}
+                      {formData.admissionCategory === 'School' && (
+                        <div className="pt-0.5 animate-in fade-in slide-in-from-top-1 duration-150">
+                          <label className="block text-[11px] sm:text-xs font-black text-slate-800 mb-0.5 sm:mb-1 flex items-center gap-1.5">
+                            <School className="w-3.5 h-3.5 text-sky-700" />
+                            <span>School Name <span className="text-rose-600">*</span></span>
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            placeholder="Enter affiliated School Name..."
+                            value={formData.institution || ''}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setFormData(prev => ({
+                                ...prev,
+                                institution: val,
+                                schoolName: val
+                              }));
+                            }}
+                            className="w-full px-2.5 sm:px-3 py-2 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none text-base sm:text-sm shadow-2xs placeholder:text-slate-400 placeholder:font-normal"
+                            autoFocus
+                          />
+                        </div>
+                      )}
 
                       {/* If Academy is selected: enter Academy Name */}
                       {formData.admissionCategory === 'Academy' && (
@@ -2442,9 +2471,40 @@ export default function AdmissionModal({
                     <label className="block text-[11px] sm:text-xs font-black text-slate-800 mb-1">
                       16. Fee Payment Option *
                     </label>
-                    <div className="flex items-center gap-2 px-3 py-2 bg-emerald-50 border border-emerald-300 rounded-lg text-emerald-900 font-black text-xs min-h-[38px]">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span>Pay Now (Online UPI / QR Code / Net Banking)</span>
+                    <div className="grid grid-cols-2 gap-1.5 min-h-[38px]">
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({
+                          ...prev,
+                          feePaymentType: 'Pay Now',
+                          paymentMode: prev.paymentMode === 'Cash / Pay at Centre' ? 'UPI / QR Code' : (prev.paymentMode || 'UPI / QR Code')
+                        }))}
+                        className={`px-2 py-2 rounded-lg border text-xs font-black transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                          formData.feePaymentType !== 'Pay Later'
+                            ? 'bg-emerald-600 border-emerald-600 text-white shadow-xs'
+                            : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'
+                        }`}
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                        <span className="truncate">Pay Now</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({
+                          ...prev,
+                          feePaymentType: 'Pay Later',
+                          paymentMode: 'Cash / Pay at Centre'
+                        }))}
+                        className={`px-2 py-2 rounded-lg border text-xs font-black transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                          formData.feePaymentType === 'Pay Later'
+                            ? 'bg-[#0F2B5C] border-[#0F2B5C] text-white shadow-xs'
+                            : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'
+                        }`}
+                      >
+                        <Clock className="w-3.5 h-3.5 shrink-0" />
+                        <span className="truncate">Pay Later</span>
+                      </button>
                     </div>
                   </div>
 
@@ -2459,8 +2519,42 @@ export default function AdmissionModal({
                   </div>
                 </div>
 
-                {/* Interactive Real-Time Payment Methods */}
-                <div className="space-y-3 pt-1 border-t border-slate-200 animate-in fade-in duration-200">
+                {/* Conditional: Pay Later Card OR Real-Time Payment Methods */}
+                {formData.feePaymentType === 'Pay Later' ? (
+                  /* PAY LATER AT BRANCH / CENTRE DESK BANNER */
+                  <div className="bg-sky-50 border-2 border-sky-300 rounded-xl p-3 sm:p-4 text-left space-y-2.5 animate-in fade-in duration-200">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-[#0F2B5C] text-white flex items-center justify-center shrink-0 shadow-xs">
+                          <Clock className="w-4 h-4 text-amber-300" />
+                        </div>
+                        <div>
+                          <h5 className="text-xs sm:text-sm font-black text-slate-900 leading-tight">
+                            Pay Later at Centre / Branch Desk
+                          </h5>
+                          <span className="text-[10px] text-sky-800 font-bold">
+                            Admission will be registered immediately with pending fee status
+                          </span>
+                        </div>
+                      </div>
+                      <span className="text-[9px] uppercase font-black tracking-wider text-amber-800 bg-amber-100 px-2 py-0.5 rounded border border-amber-300 shrink-0">
+                        Pay at Branch
+                      </span>
+                    </div>
+
+                    <div className="bg-white rounded-lg p-3 border border-sky-200 space-y-1.5 text-xs">
+                      <p className="text-slate-700 font-medium leading-relaxed text-[11px] sm:text-xs">
+                        You can submit the admission form right now without immediate online payment. The admission fee of <strong className="text-emerald-700 font-bold">{formData.feeAmount}</strong> can be paid directly at the <strong className="text-slate-900">{formData.branch}</strong> centre desk during physical document verification or class induction.
+                      </p>
+                      <div className="flex items-center gap-1.5 text-[11px] text-emerald-800 font-bold pt-1 border-t border-slate-100">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                        <span>Student register number & student portal login credentials will be generated instantly.</span>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  /* Interactive Real-Time Payment Methods */
+                  <div className="space-y-3 pt-1 border-t border-slate-200 animate-in fade-in duration-200">
                     {/* 18. Payment Mode Selector Tabs */}
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
@@ -2754,6 +2848,7 @@ export default function AdmissionModal({
                       </div>
                     )}
                   </div>
+                )}
               </div>
 
               {/* 21. DECLARATION CHECKBOX */}
@@ -2791,7 +2886,11 @@ export default function AdmissionModal({
                   className="w-full sm:flex-1 bg-[#0F2B5C] hover:bg-[#18458F] active:scale-[0.99] text-white py-3 sm:py-3.5 rounded-xl font-black text-xs sm:text-sm transition flex items-center justify-center gap-2 shadow-md hover:shadow-lg cursor-pointer min-h-[46px]"
                 >
                   <ShieldCheck className="w-4 h-4 text-amber-400" />
-                  <span>Submit Admission Form & Enrol Candidate</span>
+                  <span>
+                    {formData.feePaymentType === 'Pay Later'
+                      ? 'Submit Admission (Pay Later at Branch)'
+                      : 'Submit Admission Form & Enrol Candidate'}
+                  </span>
                 </button>
               </div>
             </div>
