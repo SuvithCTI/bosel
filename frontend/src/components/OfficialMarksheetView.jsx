@@ -36,6 +36,27 @@ const CENTER_LOGO_WIDTH = '45%';
 const CENTER_OPACITY = 0.08;
 
 // ============================================================
+// REMARK SETTINGS (based on overall percentage)
+// ============================================================
+
+const REMARK_RULES = [
+  { min: 90, text: 'Exceptional Performance. Keep shining!' },
+  { min: 80, text: 'Brilliant effort! Aiming for A+ next time.' },
+  { min: 70, text: 'Great job! A little more focus and you will reach the top.' },
+  { min: 60, text: "Fair Performance. Don't give up, you can do better." },
+  { min: 50, text: 'Keep trying! Regular practice is the key to success.' },
+];
+
+// Used for anything below 50% (not specified earlier, edit as needed)
+const REMARK_FALLBACK = 'Keep practicing and you will improve.';
+
+const getRemark = (pct) => {
+  const n = Number(pct);
+  const rule = REMARK_RULES.find((r) => n >= r.min);
+  return rule ? rule.text : REMARK_FALLBACK;
+};
+
+// ============================================================
 // COURSE SUBJECT MODULES
 // ============================================================
 
@@ -438,6 +459,9 @@ export default function OfficialMarksheetView({
 
   const overallGrade = getGrade(Number(percentage));
 
+  // Remark text chosen from the overall percentage (drawn inside the template)
+  const remarkText = getRemark(percentage);
+
   const regNo =
     getStudentRegisterNumber(student) ||
     student.registrationNo ||
@@ -604,8 +628,8 @@ export default function OfficialMarksheetView({
       }}
     >
 
-      {/* Vector template: borders, headings, table grid, boxes, labels */}
-      <MarksheetTemplate />
+      {/* Vector template: borders, headings, table grid, boxes, labels, remark */}
+      <MarksheetTemplate remark={showMarks ? remarkText : null} />
 
       {/* Full-page BSEL watermark (behind all content) */}
       <BselWatermark />

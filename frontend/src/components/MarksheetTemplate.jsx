@@ -36,6 +36,12 @@ const TABLE_COLS = [37, 88, 282, 391, 500, 608, 687];
 const TABLE_HEADERS = ['S.No.', 'Subject / Module', 'Max Marks', 'Assessment', 'Marks Obtained', 'Percentage'];
 const ROW_LINES = [541, 577, 613, 650, 686, 722];
 
+// Remarks box geometry (on the 724 x 1024 grid)
+const REMARK_BOX = { x: 57, y: 852, w: 456, h: 48 };
+const REMARK_STAR = { cx: 85, cy: 884, r: 9 };
+const REMARK_TEXT_X = 102;
+const REMARK_TEXT_Y = 889;
+
 const Corner = ({ x, y, sx, sy }) => (
   <g stroke={GOLD} strokeWidth="1.6" fill="none">
     <path d={`M${x},${y + 58 * sy} L${x},${y} L${x + 60 * sx},${y}`} />
@@ -78,7 +84,7 @@ const Star = ({ cx, cy, r }) => {
   return <polygon points={pts.join(' ')} fill={GOLD} />;
 };
 
-export default function MarksheetTemplate() {
+export default function MarksheetTemplate({ remark = null }) {
   const colCenters = TABLE_COLS.slice(0, -1).map((x, i) => (x + TABLE_COLS[i + 1]) / 2);
 
   return (
@@ -266,12 +272,36 @@ export default function MarksheetTemplate() {
       </text>
 
       {/* ---------- Remarks & Date of Issue ---------- */}
-      <rect x="57" y="852" width="456" height="48" fill="none" stroke={NAVY} strokeWidth="2" />
+      <rect
+        x={REMARK_BOX.x}
+        y={REMARK_BOX.y}
+        width={REMARK_BOX.w}
+        height={REMARK_BOX.h}
+        fill="none"
+        stroke={NAVY}
+        strokeWidth="2"
+      />
       <rect x="62" y="852" width="86" height="18" fill={NAVY} />
       <text x="105" y="865" textAnchor="middle" fontFamily="Arial, sans-serif" fontWeight="bold" fontSize="12" fill="#ffffff">
         Remarks
       </text>
-      <Star cx={85} cy={884} r={9} />
+      <Star cx={REMARK_STAR.cx} cy={REMARK_STAR.cy} r={REMARK_STAR.r} />
+
+      {/* Remark text (drawn only when a remark is provided) */}
+            {remark && (
+        <text
+          x={REMARK_TEXT_X}
+          y={REMARK_TEXT_Y + 1}
+          textAnchor="start"
+          fontFamily={SERIF}
+          fontStyle="italic"
+          fontWeight="bold"
+          fontSize="18"
+          fill={NAVY}
+        >
+          {`\u201C${remark}\u201D`}
+        </text>
+      )}
 
       <rect x="541" y="852" width="124" height="48" fill="none" stroke={NAVY} strokeWidth="2" />
       <rect x="546" y="852" width="108" height="18" fill={NAVY} />
