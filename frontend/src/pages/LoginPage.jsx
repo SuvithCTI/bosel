@@ -633,13 +633,13 @@ export default function LoginPage({
   // Distinct accent border for overall page container.
   // =======================================================
   return (
-    <div className="w-full min-h-screen bg-[#0F2B5C] bg-gradient-to-b from-[#0F2B5C] via-[#0E2856] to-[#0A1D3D] px-4 sm:px-6 lg:px-10 py-6 sm:py-10 flex flex-col justify-center items-center relative overflow-hidden">
+    <div className="w-full min-h-[100dvh] bg-[#0F2B5C] bg-gradient-to-b from-[#0F2B5C] via-[#0E2856] to-[#0A1D3D] px-3 sm:px-6 lg:px-10 py-3 sm:py-6 flex flex-col justify-start md:justify-center items-center relative overflow-x-hidden">
       {/* Subtle theme ambient light */}
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-blue-400/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[450px] h-[450px] bg-blue-400/10 rounded-full blur-3xl pointer-events-none" />
 
-      <div className="w-full max-w-4xl lg:max-w-5xl relative z-10 my-auto">
+      <div className="w-full max-w-3xl lg:max-w-4xl relative z-10 md:my-auto">
         {/* Top Bar with Back Button */}
-        <div className="mb-3 sm:mb-4 flex items-center justify-start">
+        <div className="mb-1.5 sm:mb-3 flex items-center justify-start">
           <button
             type="button"
             onClick={() => {
@@ -658,18 +658,18 @@ export default function LoginPage({
         </div>
 
         {/* OVERALL PAGE CONTAINER: Framed with a distinct accent border in different color (amber/gold) */}
-        <div className="w-full rounded-2xl sm:rounded-3xl border border-amber-400 p-6 sm:p-8 lg:p-10 relative">
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 lg:gap-12 items-center">
+        <div className="w-full rounded-xl sm:rounded-2xl border border-amber-400 p-3 sm:p-5 lg:p-6 relative">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-3 sm:gap-4 lg:gap-6 items-center">
 
             {/* LEFT COLUMN: Logo & Details */}
-            <div className="md:col-span-5 flex flex-col items-center justify-center text-center py-2 sm:py-4">
-              {/* Emblem Logo - Big, Clear & No Animation */}
-              <div className="relative mb-3 flex items-center justify-center">
-                <div className="absolute w-52 h-52 sm:w-60 sm:h-60 rounded-full bg-blue-400/10 blur-2xl pointer-events-none" />
+            <div className="md:col-span-5 flex flex-col items-center justify-center text-center py-0 sm:py-2">
+              {/* Emblem Logo - smaller on mobile */}
+              <div className="relative mb-1.5 sm:mb-2 flex items-center justify-center">
+                <div className="absolute w-20 h-20 sm:w-36 sm:h-36 rounded-full bg-blue-400/10 blur-2xl pointer-events-none" />
                 <img
                   src="/bsel_crest_logo.png"
                   alt="B★SEL Official Emblem Logo"
-                  className="w-48 h-48 sm:w-56 sm:h-56 md:w-64 md:h-64 lg:w-72 lg:h-72 object-contain drop-shadow-[0_10px_25px_rgba(0,0,0,0.5)]"
+                  className="w-20 h-20 sm:w-36 sm:h-36 md:w-40 md:h-40 lg:w-48 lg:h-48 object-contain drop-shadow-[0_8px_18px_rgba(0,0,0,0.5)]"
                   onError={(e) => {
                     e.currentTarget.src = '/bsel_logo.jpg';
                   }}
@@ -677,26 +677,26 @@ export default function LoginPage({
               </div>
 
               {/* Brand Title */}
-              <div className="font-extrabold tracking-wider flex items-center justify-center gap-1.5 font-heading text-2xl sm:text-3xl text-white">
+              <div className="font-extrabold tracking-wider flex items-center justify-center gap-1.5 font-heading text-lg sm:text-2xl text-white">
                 <span className="tracking-widest">B</span>
                 <span className="text-amber-400 font-bold inline-block drop-shadow-sm text-[1.15em] -translate-y-[1px]">★</span>
                 <span className="tracking-widest">SEL</span>
               </div>
 
               {/* Organization Tagline */}
-              <p className="mt-1.5 text-sm sm:text-base font-semibold text-blue-100 max-w-[280px] leading-relaxed">
+              <p className="mt-0.5 sm:mt-1 text-[11px] sm:text-sm font-semibold text-blue-100 max-w-[240px] leading-snug sm:leading-relaxed">
                 Board of Skills and Educational Learning
               </p>
             </div>
 
             {/* RIGHT COLUMN: Form & Credentials */}
-            <div className="md:col-span-7 flex flex-col justify-center space-y-3 max-w-md w-full mx-auto md:mx-0">
+            <div className="md:col-span-7 flex flex-col justify-center space-y-2 sm:space-y-2.5 max-w-sm w-full mx-auto md:mx-0">
               {/* Header */}
               <div className="space-y-0.5">
-                <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+                <h1 className="text-base sm:text-xl font-bold text-white tracking-tight">
                   Student Login Portal
                 </h1>
-                <p className="text-xs text-blue-100/85 font-normal">
+                <p className="text-[11px] sm:text-xs text-blue-100/85 font-normal leading-snug">
                   Sign in to access your course, student profile, and notifications.
                 </p>
               </div>
@@ -705,7 +705,7 @@ export default function LoginPage({
               {errorMessage && (
                 <div
                   role="alert"
-                  className="flex items-start gap-2 rounded-lg border border-rose-400/50 bg-rose-950/60 p-2.5 text-xs text-rose-200"
+                  className="flex items-start gap-2 rounded-lg border border-rose-400/50 bg-rose-950/60 p-2 text-xs text-rose-200"
                 >
                   <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-rose-400" />
                   <div>
@@ -720,13 +720,13 @@ export default function LoginPage({
               )}
 
               {/* Login Form */}
-              <form onSubmit={handleSubmit} className="space-y-2.5 sm:space-y-3">
+              <form onSubmit={handleSubmit} className="space-y-1.5 sm:space-y-2">
                 {/* User ID */}
                 <div>
-                  <div className="mb-1 flex items-center justify-between">
+                  <div className="mb-0.5 sm:mb-1 flex items-center justify-between">
                     <label
                       htmlFor="student-user-id"
-                      className="block text-xs font-semibold uppercase tracking-wider text-slate-200"
+                      className="block text-[11px] font-semibold uppercase tracking-wider text-slate-200"
                     >
                       User ID / Mobile Number
                     </label>
@@ -735,7 +735,7 @@ export default function LoginPage({
                       if (clean.length === 10) {
                         const exists = isPhoneNumberRegistered(clean);
                         return (
-                          <span className={`text-[10.5px] font-bold ${exists ? 'text-emerald-300' : 'text-amber-300'}`}>
+                          <span className={`text-[10px] font-bold ${exists ? 'text-emerald-300' : 'text-amber-300'}`}>
                             {exists ? '✓ Registered Candidate' : '⚠️ Not Registered (Apply Below)'}
                           </span>
                         );
@@ -755,20 +755,20 @@ export default function LoginPage({
                         setUserId(event.target.value);
                         setErrorMessage('');
                       }}
-                      className="w-full h-9 sm:h-10 rounded-lg bg-white border border-slate-300 px-3.5 pr-10 text-xs sm:text-sm font-semibold text-slate-900 placeholder:text-slate-400 placeholder:font-normal outline-none transition focus:border-amber-400 focus:ring-1 focus:ring-amber-400/40"
+                      className="w-full h-8 sm:h-9 rounded-md bg-white border border-slate-300 px-3 pr-9 text-xs sm:text-sm font-semibold text-slate-900 placeholder:text-slate-400 placeholder:font-normal outline-none transition focus:border-amber-400 focus:ring-1 focus:ring-amber-400/40"
                     />
-                    <div className="absolute right-0 top-0 bottom-0 w-10 flex items-center justify-center text-slate-400 pointer-events-none">
-                      <User className="h-4 w-4 text-slate-500" />
+                    <div className="absolute right-0 top-0 bottom-0 w-9 flex items-center justify-center text-slate-400 pointer-events-none">
+                      <User className="h-3.5 w-3.5 text-slate-500" />
                     </div>
                   </div>
                 </div>
 
                 {/* Password */}
                 <div>
-                  <div className="mb-1">
+                  <div className="mb-0.5 sm:mb-1">
                     <label
                       htmlFor="student-password"
-                      className="text-xs font-semibold uppercase tracking-wider text-slate-200"
+                      className="text-[11px] font-semibold uppercase tracking-wider text-slate-200"
                     >
                       Password
                     </label>
@@ -786,45 +786,45 @@ export default function LoginPage({
                         setPassword(event.target.value);
                         setErrorMessage('');
                       }}
-                      className="w-full h-9 sm:h-10 rounded-lg bg-white border border-slate-300 px-3.5 pr-10 text-xs sm:text-sm font-semibold text-slate-900 placeholder:text-slate-400 placeholder:font-normal outline-none transition focus:border-amber-400 focus:ring-1 focus:ring-amber-400/40"
+                      className="w-full h-8 sm:h-9 rounded-md bg-white border border-slate-300 px-3 pr-9 text-xs sm:text-sm font-semibold text-slate-900 placeholder:text-slate-400 placeholder:font-normal outline-none transition focus:border-amber-400 focus:ring-1 focus:ring-amber-400/40"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword((previous) => !previous)}
-                      className="absolute right-0 top-0 bottom-0 w-10 flex items-center justify-center text-slate-400 hover:text-slate-700 transition cursor-pointer"
+                      className="absolute right-0 top-0 bottom-0 w-9 flex items-center justify-center text-slate-400 hover:text-slate-700 transition cursor-pointer"
                       aria-label={showPassword ? 'Hide password' : 'Show password'}
                     >
                       {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
+                        <EyeOff className="h-3.5 w-3.5" />
                       ) : (
-                        <Eye className="h-4 w-4" />
+                        <Eye className="h-3.5 w-3.5" />
                       )}
                     </button>
                   </div>
                 </div>
 
                 {/* Remember User ID */}
-                <label className="flex cursor-pointer items-center gap-2 text-xs font-medium text-slate-200 hover:text-amber-200 transition">
+                <label className="flex cursor-pointer items-center gap-2 text-[11px] font-medium text-slate-200 hover:text-amber-200 transition">
                   <input
                     type="checkbox"
                     checked={rememberMe}
                     onChange={(event) => setRememberMe(event.target.checked)}
-                    className="h-3.5 w-3.5 rounded border-slate-300 bg-white text-blue-700 focus:ring-amber-400"
+                    className="h-3 w-3 rounded border-slate-300 bg-white text-blue-700 focus:ring-amber-400"
                   />
                   Remember User ID
                 </label>
 
                 {/* Portal Access Buttons */}
-                <div className="rounded-xl bg-white/[0.06] p-2.5 sm:p-3 border border-white/15 backdrop-blur-sm">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-bold text-white block uppercase text-[11px] tracking-wider">
+                <div className="rounded-lg bg-white/[0.06] p-1.5 sm:p-2 border border-white/15 backdrop-blur-sm">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="font-bold text-white block uppercase text-[10px] tracking-wider">
                       Portal Access:
                     </span>
-                    <span className="text-[10px] text-blue-200/70 font-medium">
+                    <span className="text-[9px] text-blue-200/70 font-medium">
                       Select Role
                     </span>
                   </div>
-                  <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
+                  <div className="grid grid-cols-3 gap-1.5">
                     <button
                       type="button"
                       onClick={() => {
@@ -832,7 +832,7 @@ export default function LoginPage({
                         setPassword('admin123');
                         setErrorMessage('');
                       }}
-                      className="w-full py-1.5 px-1 sm:px-2 bg-blue-900/50 hover:bg-blue-800/70 border border-blue-400/40 text-blue-100 font-semibold rounded-lg text-[11px] sm:text-xs transition active:scale-95 cursor-pointer text-center flex flex-col items-center justify-center min-h-[36px]"
+                      className="w-full py-1 px-1 bg-blue-900/50 hover:bg-blue-800/70 border border-blue-400/40 text-blue-100 font-semibold rounded-md text-[10px] sm:text-[11px] transition active:scale-95 cursor-pointer text-center flex flex-col items-center justify-center min-h-[28px] sm:min-h-[30px]"
                     >
                       Super Admin
                     </button>
@@ -843,7 +843,7 @@ export default function LoginPage({
                         setPassword('tenkasibsel');
                         setErrorMessage('');
                       }}
-                      className="w-full py-1.5 px-1 sm:px-2 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/50 text-amber-300 font-semibold rounded-lg text-xs transition active:scale-95 cursor-pointer text-center flex items-center justify-center min-h-[36px]"
+                      className="w-full py-1 px-1 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/50 text-amber-300 font-semibold rounded-md text-[10px] sm:text-[11px] transition active:scale-95 cursor-pointer text-center flex items-center justify-center min-h-[28px] sm:min-h-[30px]"
                     >
                       Branch Admin
                     </button>
@@ -855,11 +855,11 @@ export default function LoginPage({
                           setPassword(lastCreds.password);
                           setErrorMessage('');
                         }}
-                        className="w-full py-1.5 px-1 sm:px-2 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/50 text-emerald-200 font-semibold rounded-lg text-[11px] sm:text-xs transition active:scale-95 cursor-pointer text-center flex flex-col items-center justify-center min-h-[36px]"
+                        className="w-full py-1 px-1 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/50 text-emerald-200 font-semibold rounded-md text-[10px] sm:text-[11px] transition active:scale-95 cursor-pointer text-center flex flex-col items-center justify-center min-h-[28px] sm:min-h-[30px]"
                         title={`Enrolled: ${lastCreds.studentName || 'Student'}`}
                       >
-                        <span className="truncate max-w-[85px] sm:max-w-none">{lastCreds.studentName ? lastCreds.studentName.split(' ')[0] : 'Enrolled'}</span>
-                        <span className="text-[9px] text-emerald-300/80 font-mono">My Account</span>
+                        <span className="truncate max-w-[75px] sm:max-w-none">{lastCreds.studentName ? lastCreds.studentName.split(' ')[0] : 'Enrolled'}</span>
+                        <span className="text-[8px] text-emerald-300/80 font-mono">My Account</span>
                       </button>
                     ) : (
                       <button
@@ -868,11 +868,11 @@ export default function LoginPage({
                           setIsAdmissionOpen(true);
                           setErrorMessage('');
                         }}
-                        className="w-full py-1.5 px-1 sm:px-2 bg-sky-500/20 hover:bg-sky-500/30 border border-sky-400/50 text-sky-200 font-semibold rounded-lg text-[11px] sm:text-xs transition active:scale-95 cursor-pointer text-center flex flex-col items-center justify-center min-h-[36px]"
+                        className="w-full py-1 px-1 bg-sky-500/20 hover:bg-sky-500/30 border border-sky-400/50 text-sky-200 font-semibold rounded-md text-[10px] sm:text-[11px] transition active:scale-95 cursor-pointer text-center flex flex-col items-center justify-center min-h-[28px] sm:min-h-[30px]"
                         title="New student? Apply for admission to receive credentials."
                       >
                         <span>New Student</span>
-                        <span className="text-[9px] text-sky-300/80 font-medium">Apply First</span>
+                        <span className="text-[8px] text-sky-300/80 font-medium">Apply First</span>
                       </button>
                     )}
                   </div>
@@ -881,7 +881,7 @@ export default function LoginPage({
                 {/* Submit Button */}
                 <button
                   type="submit"
-                  className="flex w-full h-9 sm:h-10 items-center justify-center gap-1.5 rounded-lg bg-[#143B7A] hover:bg-[#1E4D99] border border-blue-300/30 text-xs sm:text-sm font-bold text-white shadow-sm transition hover:shadow active:scale-[0.99] cursor-pointer"
+                  className="flex w-full h-8 sm:h-9 items-center justify-center gap-1.5 rounded-md bg-[#143B7A] hover:bg-[#1E4D99] border border-blue-300/30 text-xs sm:text-sm font-bold text-white shadow-sm transition hover:shadow active:scale-[0.99] cursor-pointer"
                 >
                   Log In
                   <ArrowRight className="h-3.5 w-3.5" />
@@ -889,18 +889,18 @@ export default function LoginPage({
               </form>
 
               {/* Admission Enquiry Text Link */}
-              <div className="pt-0.5 text-center">
+              <div className="pt-0 sm:pt-0.5 text-center">
                 <button
                   type="button"
                   onClick={() => setIsAdmissionOpen(true)}
-                  className="text-xs font-semibold text-amber-300 hover:text-amber-200 hover:underline transition cursor-pointer"
+                  className="text-[11px] sm:text-xs font-semibold text-amber-300 hover:text-amber-200 hover:underline transition cursor-pointer"
                 >
                   Don&apos;t have credentials? Fill Admission Form to Enroll →
                 </button>
               </div>
 
               {/* Help / Helpline */}
-              <div className="border-t border-white/15 pt-2 text-center text-xs text-blue-100/80">
+              <div className="border-t border-white/15 pt-1.5 sm:pt-2 text-center text-[11px] sm:text-xs text-blue-100/80">
                 Need assistance? Helpline:{' '}
                 <a
                   href="tel:+919840123456"
