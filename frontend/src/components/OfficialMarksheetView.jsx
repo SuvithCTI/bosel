@@ -48,7 +48,7 @@ const REMARK_RULES = [
 ];
 
 // Used for anything below 50% (not specified earlier, edit as needed)
-const REMARK_FALLBACK = 'Keep practicing and you will improve.';
+const REMARK_FALLBACK = "'Don't worry, every expert was once a beginner. Keep trying!";
 
 const getRemark = (pct) => {
   const n = Number(pct);

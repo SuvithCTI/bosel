@@ -296,7 +296,7 @@ export default function MarksheetTemplate({ remark = null }) {
           fontFamily={SERIF}
           fontStyle="italic"
           fontWeight="bold"
-          fontSize="18"
+          fontSize="16"
           fill={NAVY}
         >
           {`\u201C${remark}\u201D`}
