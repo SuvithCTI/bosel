@@ -1739,18 +1739,18 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
 
           {/* SUPER ADMIN: TAB 3 - COURSE MANAGEMENT */}
           {currentAdminRole === 'Super Admin' && activeTab === 'courses' && (
-            <AdminCoursesPage
-              filteredCourses={filteredCourses}
-              courseCategoryFilter={courseCategoryFilter}
-              setCourseCategoryFilter={setCourseCategoryFilter}
-              courseSearch={courseSearch}
-              setCourseSearch={setCourseSearch}
-              setShowAddCourseModal={setShowAddCourseModal}
-              handleStartEditCourse={handleStartEditCourse}
-              handleDeleteCourse={handleDeleteCourse}
-              setCoursesList={setCoursesList}
-              showToast={showToast}
-            />
+          <AdminCoursesPage
+  courses={coursesList}
+  courseCategoryFilter={courseCategoryFilter}
+  setCourseCategoryFilter={setCourseCategoryFilter}
+  courseSearch={courseSearch}
+  setCourseSearch={setCourseSearch}
+  setShowAddCourseModal={setShowAddCourseModal}
+  handleStartEditCourse={handleStartEditCourse}
+  handleDeleteCourse={handleDeleteCourse}
+  setCoursesList={setCoursesList}
+  showToast={showToast}
+/>
           )}
 
           {/* SUPER ADMIN: TAB 4 - EVENT PAGE MANAGEMENT */}
