@@ -743,8 +743,8 @@ export default function Certificate({
               <text x="3" y="14.5" fontFamily="Georgia, serif" fontSize="12" fontWeight="700" fill={NAVY} fillOpacity="0.12">B★SEL</text>
             </pattern>
 
-            <pattern id="bsel-strip" x="24" y="135" width="56" height="20" patternUnits="userSpaceOnUse">
-              <text x="28" y="13.5" textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="8.8" fontWeight="800" fill="#e6c25a" letterSpacing="0.8">B★SEL</text>
+            <pattern id="bsel-strip" x="24" y="134" width="85" height="22" patternUnits="userSpaceOnUse">
+              <text x="42.5" y="15.5" textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="11" fontWeight="800" fill="#ebd287" letterSpacing="2.5">B ★ S E L</text>
             </pattern>
 
           </defs>
@@ -908,8 +908,8 @@ export default function Certificate({
           </g>
 
           {/* Blue accent stripe */}
-          <rect x="24" y="135" width="976" height="20" fill="#0d2f5c" stroke={GOLD} strokeWidth="1" />
-          <rect x="24" y="135" width="976" height="20" fill="url(#bsel-strip)" />
+          <rect x="24" y="134" width="976" height="22" fill="#0b2a55" stroke={GOLD} strokeWidth="1.5" />
+          <rect x="24" y="134" width="976" height="22" fill="url(#bsel-strip)" />
 
           {/* Title ribbon */}
           {/* Left Swallowtail Tail */}
