@@ -433,6 +433,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
   const [showMarksheetModal, setShowMarksheetModal] = useState(false);
   const [selectedMarksheetStudent, setSelectedMarksheetStudent] = useState(null);
   const [viewingMergedPdfStudent, setViewingMergedPdfStudent] = useState(null);
+  const [viewingMergedQuestionPapers, setViewingMergedQuestionPapers] = useState(null);
   const [isMergeMode, setIsMergeMode] = useState(false);
   const [selectedStudentIds, setSelectedStudentIds] = useState([]);
   const [viewingAdmissionStudent, setViewingAdmissionStudent] = useState(null);
@@ -456,6 +457,8 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
   const hasOpenModal = Boolean(
     showAddStudentModal || 
     showMarksheetModal ||
+    viewingMergedPdfStudent ||
+    viewingMergedQuestionPapers ||
     viewingAdmissionStudent ||
     viewingReceiptStudent ||
     viewingEventRegStudent ||
@@ -1049,8 +1052,20 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
       return;
     }
 
-    const selectedStudents = usersList.filter(u => selectedStudentIds.includes(u.userId));
+    const isBranchSection = currentAdminRole === 'Branch Head' || activeTab === 'branch_students';
+    const sourceList = isBranchSection ? branchStudents : usersList;
+    const selectedStudents = sourceList.filter(u => selectedStudentIds.includes(u.userId));
     if (selectedStudents.length === 0) return;
+
+    if (isBranchSection) {
+      // In this section: ONLY QUESTION PAPER SHOULD MERGE AS PDF!
+      setViewingMergedQuestionPapers({
+        students: selectedStudents,
+        branch: activeBranch || 'Branch'
+      });
+      showToast(`Loaded ${selectedStudents.length} Question Paper(s) for merged PDF export.`);
+      return;
+    }
 
     const studentPackages = selectedStudents.map((student, index) => {
       const photo = getStudentPhotoUrl(student, index) || student.studentPhoto || null;
@@ -2066,6 +2081,8 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
         setSelectedMarksheetStudent={setSelectedMarksheetStudent}
         viewingMergedPdfStudent={viewingMergedPdfStudent}
         setViewingMergedPdfStudent={setViewingMergedPdfStudent}
+        viewingMergedQuestionPapers={viewingMergedQuestionPapers}
+        setViewingMergedQuestionPapers={setViewingMergedQuestionPapers}
         viewingAdmissionStudent={viewingAdmissionStudent}
         setViewingAdmissionStudent={setViewingAdmissionStudent}
         viewingReceiptStudent={viewingReceiptStudent}

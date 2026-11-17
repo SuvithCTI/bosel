@@ -26,6 +26,7 @@ import EventRegisterModal from '../../components/EventRegisterModal';
 import StudentQuestionPaperView from '../../components/StudentQuestionPaperView';
 import AdmissionModal from '../../components/AdmissionModal';
 import MergedStudentPdfModal from '../../components/MergedStudentPdfModal';
+import MergedQuestionPaperModal from '../../components/MergedQuestionPaperModal';
 import Logo from '../../components/Logo';
 import { addStoredPayment } from '../../data/paymentsData';
 import { saveStoredSchools } from '../../data/schoolsData';
@@ -57,6 +58,8 @@ export default function AdminModals({
   setSelectedMarksheetStudent,
   viewingMergedPdfStudent,
   setViewingMergedPdfStudent,
+  viewingMergedQuestionPapers,
+  setViewingMergedQuestionPapers,
   viewingAdmissionStudent,
   setViewingAdmissionStudent,
   viewingReceiptStudent,
@@ -167,11 +170,20 @@ export default function AdminModals({
 
   return (
     <>
-      {/* Merged Certificate & Marksheet PDF Modal */}
+      {/* Merged Certificate & Marksheet PDF Modal (Super Admin) */}
       {viewingMergedPdfStudent && (
         <MergedStudentPdfModal
           data={viewingMergedPdfStudent}
           onClose={() => setViewingMergedPdfStudent(null)}
+          showToast={showToast}
+        />
+      )}
+
+      {/* Merged Question Papers PDF Modal (Branch Admin Concern Students) */}
+      {viewingMergedQuestionPapers && (
+        <MergedQuestionPaperModal
+          data={viewingMergedQuestionPapers}
+          onClose={() => setViewingMergedQuestionPapers(null)}
           showToast={showToast}
         />
       )}

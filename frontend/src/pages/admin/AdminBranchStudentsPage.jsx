@@ -12,9 +12,7 @@ import {
   FileSpreadsheet,
   Edit3,
   Trash2,
-  FileDown,
-  Printer,
-  Download
+  FileDown
 } from 'lucide-react';
 import CompactSelect from '../../components/CompactSelect';
 import StudentAvatar from '../../components/StudentAvatar';
@@ -168,7 +166,7 @@ export default function AdminBranchStudentsPage({
               }`}
             >
               <FileDown className="w-3.5 h-3.5 text-amber-400" />
-              <span>{isMergeMode ? 'Close Merge' : 'Merge as PDF'}</span>
+              <span>{isMergeMode ? 'Close Merge' : 'Merge Qn Papers as PDF'}</span>
             </button>
             <button
               type="button"
@@ -251,7 +249,7 @@ export default function AdminBranchStudentsPage({
               className="px-4 py-1.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black rounded-xl text-xs transition flex items-center gap-1.5 shadow-md disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer active:scale-95"
             >
               <FileDown className="w-3.5 h-3.5" />
-              <span>Download Merged PDF ({selectedStudentIds.length})</span>
+              <span>Download Merged Question Papers ({selectedStudentIds.length})</span>
             </button>
           </div>
         </div>
@@ -396,64 +394,28 @@ export default function AdminBranchStudentsPage({
 
                       {/* Event Registration Column */}
                       <td className="py-3 px-3 text-center whitespace-nowrap">
-                        <div className="inline-flex items-center justify-center gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => handleOpenEventRegForStudent?.(student)}
-                            className="px-2.5 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-800 border border-purple-200 hover:border-purple-300 font-bold rounded-lg text-xs transition cursor-pointer flex items-center justify-center gap-1.5 shadow-xs whitespace-nowrap active:scale-95"
-                            title="View Event Registration"
-                          >
-                            <Ticket className="w-3.5 h-3.5 text-purple-600 shrink-0" />
-                            <span>Event</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleOpenEventRegForStudent?.(student)}
-                            className="p-1.5 bg-slate-50 hover:bg-purple-50 text-slate-600 hover:text-purple-700 border border-slate-200 hover:border-purple-300 rounded-lg transition cursor-pointer shadow-2xs active:scale-95"
-                            title="Print Event Slip"
-                          >
-                            <Printer className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleOpenEventRegForStudent?.(student)}
-                            className="p-1.5 bg-slate-50 hover:bg-purple-50 text-slate-600 hover:text-purple-700 border border-slate-200 hover:border-purple-300 rounded-lg transition cursor-pointer shadow-2xs active:scale-95"
-                            title="Download Event Slip"
-                          >
-                            <Download className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEventRegForStudent?.(student)}
+                          className="px-3 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-800 border border-purple-200 hover:border-purple-300 font-bold rounded-lg text-xs transition cursor-pointer inline-flex items-center justify-center gap-1.5 shadow-xs whitespace-nowrap active:scale-95"
+                          title="View Event Registration"
+                        >
+                          <Ticket className="w-3.5 h-3.5 text-purple-600 shrink-0" />
+                          <span>Event</span>
+                        </button>
                       </td>
 
                       {/* Question Paper Column */}
                       <td className="py-3 px-3 text-center whitespace-nowrap">
-                        <div className="inline-flex items-center justify-center gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => handleOpenQuestionPaperForStudent?.(student)}
-                            className="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 hover:border-amber-300 font-bold rounded-lg text-xs transition cursor-pointer flex items-center justify-center gap-1.5 shadow-xs whitespace-nowrap active:scale-95"
-                            title="View Question Paper"
-                          >
-                            <FileSpreadsheet className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                            <span>Qn Paper</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleOpenQuestionPaperForStudent?.(student)}
-                            className="p-1.5 bg-slate-50 hover:bg-amber-50 text-slate-600 hover:text-amber-800 border border-slate-200 hover:border-amber-300 rounded-lg transition cursor-pointer shadow-2xs active:scale-95"
-                            title="Print Question Paper"
-                          >
-                            <Printer className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleOpenQuestionPaperForStudent?.(student)}
-                            className="p-1.5 bg-slate-50 hover:bg-amber-50 text-slate-600 hover:text-amber-800 border border-slate-200 hover:border-amber-300 rounded-lg transition cursor-pointer shadow-2xs active:scale-95"
-                            title="Download Question Paper PDF"
-                          >
-                            <Download className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleOpenQuestionPaperForStudent?.(student)}
+                          className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 hover:border-amber-300 font-bold rounded-lg text-xs transition cursor-pointer inline-flex items-center justify-center gap-1.5 shadow-xs whitespace-nowrap active:scale-95"
+                          title="View Question Paper"
+                        >
+                          <FileSpreadsheet className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                          <span>Qn Paper</span>
+                        </button>
                       </td>
                     </tr>
                   );
