@@ -25,11 +25,8 @@ import EventRegisterModal from '../../components/EventRegisterModal';
 import StudentQuestionPaperView from '../../components/StudentQuestionPaperView';
 import AdmissionModal from '../../components/AdmissionModal';
 import MergedStudentPdfModal from '../../components/MergedStudentPdfModal';
-<<<<<<< HEAD
 import StudentDocumentMergeModal from '../../components/StudentDocumentMergeModal';
-=======
 import MergedQuestionPaperModal from '../../components/MergedQuestionPaperModal';
->>>>>>> 84c8d5ee1944be37c4c3585923c61fe3603f2358
 import Logo from '../../components/Logo';
 import { addStoredPayment } from '../../data/paymentsData';
 import { saveStoredSchools } from '../../data/schoolsData';
@@ -62,13 +59,10 @@ export default function AdminModals({
   setSelectedMarksheetStudent,
   viewingMergedPdfStudent,
   setViewingMergedPdfStudent,
-<<<<<<< HEAD
   viewingStudentDocumentMerge,
   setViewingStudentDocumentMerge,
-=======
   viewingMergedQuestionPapers,
   setViewingMergedQuestionPapers,
->>>>>>> 84c8d5ee1944be37c4c3585923c61fe3603f2358
   viewingAdmissionStudent,
   setViewingAdmissionStudent,
   viewingEventRegStudent,
@@ -186,19 +180,20 @@ export default function AdminModals({
         />
       )}
 
-<<<<<<< HEAD
       {viewingStudentDocumentMerge && (
         <StudentDocumentMergeModal
           type={viewingStudentDocumentMerge.type}
           students={viewingStudentDocumentMerge.students}
           onClose={() => setViewingStudentDocumentMerge(null)}
-=======
+          showToast={showToast}
+        />
+      )}
+
       {/* Merged Question Papers PDF Modal (Branch Admin Concern Students) */}
       {viewingMergedQuestionPapers && (
         <MergedQuestionPaperModal
           data={viewingMergedQuestionPapers}
           onClose={() => setViewingMergedQuestionPapers(null)}
->>>>>>> 84c8d5ee1944be37c4c3585923c61fe3603f2358
           showToast={showToast}
         />
       )}
@@ -1480,20 +1475,17 @@ export default function AdminModals({
                     onChange={(e) => setNewPayment(prev => ({ ...prev, sector: e.target.value }))}
                     className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none bg-white font-bold"
                   >
-<<<<<<< HEAD
                     <option value="Course Tuition">Course Entry Fee</option>
-                    <option value="Competition & Events">Competition & Events</option>
-                    <option value="Toolkits & Courseware">Toolkits & Courseware</option>
-                    <option value="Franchise Affiliation">Franchise Affiliation</option>
-=======
                     <option value="Monthly Fee">Monthly Fee</option>
                     <option value="Exam Fee">Exam Fee</option>
                     <option value="Event Fee">Event Fee</option>
                     <option value="Book Fee">Book Fee</option>
                     <option value="Entry Fee">Entry Fee</option>
                     <option value="Franchise Fee">Franchise Fee</option>
+                    <option value="Competition & Events">Competition & Events</option>
+                    <option value="Toolkits & Courseware">Toolkits & Courseware</option>
+                    <option value="Franchise Affiliation">Franchise Affiliation</option>
                     <option value="Others">Others</option>
->>>>>>> 84c8d5ee1944be37c4c3585923c61fe3603f2358
                   </select>
                 </div>
 

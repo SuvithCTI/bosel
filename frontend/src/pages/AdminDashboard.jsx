@@ -429,11 +429,8 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
   const [showMarksheetModal, setShowMarksheetModal] = useState(false);
   const [selectedMarksheetStudent, setSelectedMarksheetStudent] = useState(null);
   const [viewingMergedPdfStudent, setViewingMergedPdfStudent] = useState(null);
-<<<<<<< HEAD
   const [viewingStudentDocumentMerge, setViewingStudentDocumentMerge] = useState(null);
-=======
   const [viewingMergedQuestionPapers, setViewingMergedQuestionPapers] = useState(null);
->>>>>>> 84c8d5ee1944be37c4c3585923c61fe3603f2358
   const [isMergeMode, setIsMergeMode] = useState(false);
   const [selectedStudentIds, setSelectedStudentIds] = useState([]);
   const [viewingAdmissionStudent, setViewingAdmissionStudent] = useState(null);
@@ -2146,13 +2143,10 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
         setSelectedMarksheetStudent={setSelectedMarksheetStudent}
         viewingMergedPdfStudent={viewingMergedPdfStudent}
         setViewingMergedPdfStudent={setViewingMergedPdfStudent}
-<<<<<<< HEAD
         viewingStudentDocumentMerge={viewingStudentDocumentMerge}
         setViewingStudentDocumentMerge={setViewingStudentDocumentMerge}
-=======
         viewingMergedQuestionPapers={viewingMergedQuestionPapers}
         setViewingMergedQuestionPapers={setViewingMergedQuestionPapers}
->>>>>>> 84c8d5ee1944be37c4c3585923c61fe3603f2358
         viewingAdmissionStudent={viewingAdmissionStudent}
         setViewingAdmissionStudent={setViewingAdmissionStudent}
         viewingEventRegStudent={viewingEventRegStudent}

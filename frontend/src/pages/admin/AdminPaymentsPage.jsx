@@ -89,11 +89,7 @@ export default function AdminPaymentsPage({
             <span>Central Payment Sectors & Financial Management</span>
           </h2>
           <p className="text-xs text-slate-500 mt-0.5">
-<<<<<<< HEAD
-            Complete ledger tracking course entry fees, Event Competitions, Kit Dispatches, and Franchise Affiliation payments.
-=======
             Complete ledger tracking Course Fee, Event Fee, and Franchise Fee payments as offered across the B★SEL website.
->>>>>>> 84c8d5ee1944be37c4c3585923c61fe3603f2358
           </p>
         </div>
 
@@ -124,11 +120,6 @@ export default function AdminPaymentsPage({
       <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
           <div className="text-[10px] font-bold text-slate-400 uppercase">Sector 1</div>
-<<<<<<< HEAD
-          <div className="text-xs font-black text-sky-900 mt-0.5">Course Entry Fees & Admissions</div>
-          <div className="text-xl font-black text-slate-950 mt-1">₹48,500</div>
-          <span className="text-[10px] text-slate-500">Student level admissions</span>
-=======
           <div className="text-xs font-black text-sky-900 mt-0.5">Entry & Monthly Fee</div>
           <div className="text-xl font-black text-slate-950 mt-1">
             ₹{filteredPayments
@@ -140,7 +131,6 @@ export default function AdminPaymentsPage({
               .toLocaleString('en-IN')}
           </div>
           <span className="text-[10px] text-slate-500">Admissions & monthly tuition</span>
->>>>>>> 84c8d5ee1944be37c4c3585923c61fe3603f2358
         </div>
 
         <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
@@ -196,13 +186,10 @@ export default function AdminPaymentsPage({
             className="px-2.5 py-1 text-xs border border-slate-300 rounded-lg outline-none font-bold bg-white"
           >
             <option value="All">All Sectors</option>
-<<<<<<< HEAD
             <option value="Course Tuition">Course Entry Fee</option>
             <option value="Competition & Events">Competition & Events</option>
             <option value="Toolkits & Courseware">Toolkits & Courseware</option>
             <option value="Franchise Affiliation">Franchise Affiliation</option>
-=======
->>>>>>> 84c8d5ee1944be37c4c3585923c61fe3603f2358
             <option value="Monthly Fee">Monthly Fee</option>
             <option value="Exam Fee">Exam Fee</option>
             <option value="Event Fee">Event Fee</option>
