@@ -21,14 +21,15 @@ import {
 import OfficialMarksheetView from '../../components/OfficialMarksheetView';
 import CertificateModal from '../../components/CertificateModal';
 import StudentAdmissionFormView from '../../components/StudentAdmissionFormView';
-import StudentReceiptView from '../../components/StudentReceiptView';
 import EventRegisterModal from '../../components/EventRegisterModal';
 import StudentQuestionPaperView from '../../components/StudentQuestionPaperView';
 import AdmissionModal from '../../components/AdmissionModal';
 import MergedStudentPdfModal from '../../components/MergedStudentPdfModal';
+import StudentDocumentMergeModal from '../../components/StudentDocumentMergeModal';
 import Logo from '../../components/Logo';
 import { addStoredPayment } from '../../data/paymentsData';
 import { saveStoredSchools } from '../../data/schoolsData';
+import { createBranchCredentials } from '../../utils/branchAuthStorage';
 
 import BselReceipt from "../../components/admin/BselReceipt";
 
@@ -57,10 +58,10 @@ export default function AdminModals({
   setSelectedMarksheetStudent,
   viewingMergedPdfStudent,
   setViewingMergedPdfStudent,
+  viewingStudentDocumentMerge,
+  setViewingStudentDocumentMerge,
   viewingAdmissionStudent,
   setViewingAdmissionStudent,
-  viewingReceiptStudent,
-  setViewingReceiptStudent,
   viewingEventRegStudent,
   setViewingEventRegStudent,
   viewingQuestionPaperStudent,
@@ -176,6 +177,15 @@ export default function AdminModals({
         />
       )}
 
+      {viewingStudentDocumentMerge && (
+        <StudentDocumentMergeModal
+          type={viewingStudentDocumentMerge.type}
+          students={viewingStudentDocumentMerge.students}
+          onClose={() => setViewingStudentDocumentMerge(null)}
+          showToast={showToast}
+        />
+      )}
+
       {/* =========================================================================
           MODAL: OFFICIAL EXAMINATION MARKSHEET (SUPER ADMIN & ALL DESKS)
           ========================================================================= */}
@@ -207,16 +217,6 @@ export default function AdminModals({
         <StudentAdmissionFormView
           student={viewingAdmissionStudent}
           onClose={() => setViewingAdmissionStudent(null)}
-        />
-      )}
-
-      {/* =========================================================================
-          MODAL: OFFICIAL STUDENT FEE PAYMENT RECEIPT
-          ========================================================================= */}
-      {viewingReceiptStudent && (
-        <StudentReceiptView
-          student={viewingReceiptStudent}
-          onClose={() => setViewingReceiptStudent(null)}
         />
       )}
 
@@ -463,9 +463,9 @@ export default function AdminModals({
                   <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="text-base font-black flex items-center gap-2">
                       <Edit3 className="w-4.5 h-4.5 text-amber-400" />
-                      <span>Edit Course Master — {editingCourse.name}</span>
+                      <span className="text-white">Edit Course Master — {editingCourse.name}</span>
                     </h3>
-                    <span className="px-2 py-0.5 rounded-md bg-amber-400/20 text-amber-300 font-mono text-[10.5px] font-black border border-amber-400/30 uppercase">
+                    <span className="px-2 py-0.5 rounded-md bg-amber-400/20 text-white font-mono text-[10.5px] font-black border border-amber-400/30 uppercase">
                       {editingCourse.code || 'BSEL'}
                     </span>
                   </div>
@@ -675,7 +675,7 @@ export default function AdminModals({
                 <div className="space-y-3.5 animate-in fade-in duration-150">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                     <div>
-                      <label className="font-bold text-slate-700 block mb-1">Course Tuition Fee *</label>
+                      <label className="font-bold text-slate-700 block mb-1">Course Entry Fee *</label>
                       <input
                         type="text"
                         value={editingCourse.fee || ''}
@@ -936,7 +936,7 @@ export default function AdminModals({
                   <BookOpen className="w-4.5 h-4.5 text-emerald-400" />
                   <span>Add New Course to Master Curriculum</span>
                 </h3>
-                <p className="text-[11.5px] text-slate-300 mt-0.5">Creates new syllabus with cover image, sets duration, outcomes, and tuition fee</p>
+                <p className="text-[11.5px] text-slate-300 mt-0.5">Creates new syllabus with cover image, sets duration, outcomes, and course entry fee</p>
               </div>
               <button 
                 type="button"
@@ -1042,7 +1042,7 @@ export default function AdminModals({
                 </div>
 
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Course Tuition Fee</label>
+                  <label className="font-bold text-slate-700 block mb-1">Course Entry Fee</label>
                   <input
                     type="text"
                     value={newCourse.fee}
@@ -1463,7 +1463,7 @@ export default function AdminModals({
                     onChange={(e) => setNewPayment(prev => ({ ...prev, sector: e.target.value }))}
                     className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none bg-white font-bold"
                   >
-                    <option value="Course Tuition">Course Tuition</option>
+                    <option value="Course Tuition">Course Entry Fee</option>
                     <option value="Competition & Events">Competition & Events</option>
                     <option value="Toolkits & Courseware">Toolkits & Courseware</option>
                     <option value="Franchise Affiliation">Franchise Affiliation</option>
@@ -1770,23 +1770,40 @@ export default function AdminModals({
 
             <form onSubmit={(e) => {
               e.preventDefault();
-              if (!newSchool.name.trim()) return;
+              if (!newSchool.name.trim() || !newSchool.userId.trim() || !newSchool.password.trim()) return;
               const nextCode = `BSEL-CTR-${100 + schoolsList.length + 1}`;
+              const { userId, password, ...schoolDetails } = newSchool;
               const created = {
-                ...newSchool,
+                ...schoolDetails,
                 code: nextCode,
                 branchName: newSchool.branchName || newSchool.name,
                 status: 'Active Partner'
               };
+              const credentialsResult = createBranchCredentials(created, userId, password);
+              if (!credentialsResult.success) {
+                alert(credentialsResult.message || 'Unable to create branch credentials.');
+                return;
+              }
               const updated = [...schoolsList, created];
               setSchoolsList(updated);
               saveStoredSchools(updated);
+              setNewSchool({
+                name: '',
+                branchName: '',
+                city: '',
+                principal: '',
+                coordinator: '',
+                phone: '',
+                studentsCount: 100,
+                userId: '',
+                password: ''
+              });
               setShowAddSchoolModal(false);
-              showToast(`Affiliated "${created.name}" with Centre Code ${nextCode}!`);
+              showToast(`Added "${created.name}" with branch login credentials.`);
             }} className="p-5 space-y-3.5 text-xs">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="sm:col-span-2">
-                  <label className="font-bold text-slate-700 block mb-1">Institution / Branch Name *</label>
+                  <label className="font-bold text-slate-700 block mb-1">Branch / Institute Name *</label>
                   <input
                     type="text"
                     required
@@ -1798,49 +1815,31 @@ export default function AdminModals({
                 </div>
 
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">City & District *</label>
+                  <label className="font-bold text-slate-700 block mb-1">User ID *</label>
                   <input
                     type="text"
                     required
-                    value={newSchool.city}
-                    onChange={(e) => setNewSchool(prev => ({ ...prev, city: e.target.value }))}
-                    placeholder="e.g. Madurai, Tamil Nadu"
+                    autoComplete="username"
+                    value={newSchool.userId}
+                    onChange={(e) => setNewSchool(prev => ({ ...prev, userId: e.target.value }))}
+                    placeholder="Branch admin login ID"
                     className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Phone Helpline</label>
+                  <label className="font-bold text-slate-700 block mb-1">Password *</label>
                   <input
-                    type="tel"
-                    value={newSchool.phone}
-                    onChange={(e) => setNewSchool(prev => ({ ...prev, phone: e.target.value }))}
-                    placeholder="e.g. 98401 23456"
+                    type="password"
+                    required
+                    autoComplete="new-password"
+                    value={newSchool.password}
+                    onChange={(e) => setNewSchool(prev => ({ ...prev, password: e.target.value }))}
+                    placeholder="Set branch login password"
                     className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
                   />
                 </div>
 
-                <div>
-                  <label className="font-bold text-slate-700 block mb-1">Centre Director / Principal</label>
-                  <input
-                    type="text"
-                    value={newSchool.principal}
-                    onChange={(e) => setNewSchool(prev => ({ ...prev, principal: e.target.value }))}
-                    placeholder="e.g. Dr. S. Ranganathan"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="font-bold text-slate-700 block mb-1">Branch Coordinator</label>
-                  <input
-                    type="text"
-                    value={newSchool.coordinator}
-                    onChange={(e) => setNewSchool(prev => ({ ...prev, coordinator: e.target.value }))}
-                    placeholder="e.g. Mrs. K. Malathi"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
-                  />
-                </div>
               </div>
 
               <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">

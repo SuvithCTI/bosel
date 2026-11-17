@@ -173,13 +173,14 @@ export const getStoredBranchCredentials = () => {
 export const saveBranchCredentials = (slugOrDistrict, newEmail, newPassword) => {
   if (typeof window === 'undefined') return false;
   try {
-    const slug = getDistrictSlug(slugOrDistrict);
     const all = getStoredBranchCredentials();
+    const slug = all[slugOrDistrict] ? slugOrDistrict : getDistrictSlug(slugOrDistrict);
     const existing = all[slug] || getDefaultCredentialsForDistrict(slugOrDistrict);
 
     const updated = {
       ...existing,
       email: (newEmail || existing.email).trim().toLowerCase(),
+      ...(existing.isCustomBranch ? { userId: (newEmail || existing.userId || existing.email).trim() } : {}),
       password: (newPassword || existing.password).trim(),
       updatedAt: new Date().toISOString()
     };
@@ -193,11 +194,13 @@ export const saveBranchCredentials = (slugOrDistrict, newEmail, newPassword) => 
       let users = rawUsers ? JSON.parse(rawUsers) : [];
       const userIndex = users.findIndex(
         (u) => (u.role === 'Branch Head' || u.role === 'Branch Admin') &&
-               (getDistrictSlug(u.branch) === slug || getDistrictSlug(u.district) === slug)
+               (existing.isCustomBranch
+                 ? String(u.userId || u.email || '').toLowerCase() === String(existing.userId || existing.email || '').toLowerCase()
+                 : getDistrictSlug(u.branch) === slug || getDistrictSlug(u.district) === slug)
       );
 
       const branchUserData = {
-        userId: updated.email,
+        userId: updated.userId || updated.email,
         email: updated.email,
         password: updated.password,
         name: `${updated.branchName} Administrator`,
@@ -205,7 +208,7 @@ export const saveBranchCredentials = (slugOrDistrict, newEmail, newPassword) => 
         role: 'Branch Head',
         branch: updated.branchName,
         district: updated.district,
-        branchCode: `${slug.toUpperCase().slice(0, 3)}-01`,
+        branchCode: updated.branchCode || `${slug.toUpperCase().slice(0, 3)}-01`,
         institution: `B★SEL ${updated.branchName}`,
         address: `${updated.district}, Tamil Nadu`,
         phone: '9865219131',
@@ -232,6 +235,89 @@ export const saveBranchCredentials = (slugOrDistrict, newEmail, newPassword) => 
   }
 };
 
+export const createBranchCredentials = (branch, userId, password) => {
+  if (typeof window === 'undefined') {
+    return { success: false, message: 'Branch credentials can only be saved in the browser.' };
+  }
+
+  const cleanUserId = String(userId || '').trim();
+  const cleanPassword = String(password || '').trim();
+  if (!cleanUserId || !cleanPassword) {
+    return { success: false, message: 'Enter both a User ID and password.' };
+  }
+
+  try {
+    const all = getStoredBranchCredentials();
+    const duplicate = Object.values(all).some(
+      (credentials) => String(credentials.userId || credentials.email || '').trim().toLowerCase() === cleanUserId.toLowerCase()
+    );
+    if (duplicate) {
+      return { success: false, message: 'This User ID is already assigned to a branch.' };
+    }
+    if (verifyBranchLogin(cleanUserId, '__new_branch_validation__')) {
+      return { success: false, message: 'This User ID conflicts with an existing branch login.' };
+    }
+
+    const userIdSlug = cleanUserId.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'branch';
+    const keyBase = `custom-${userIdSlug}`;
+    let slug = keyBase;
+    let suffix = 2;
+    while (all[slug]) {
+      slug = `${keyBase}-${suffix}`;
+      suffix += 1;
+    }
+
+    const branchName = branch.branchName || branch.name;
+    const credentials = {
+      slug,
+      district: branch.city || branchName,
+      branchName,
+      email: cleanUserId.toLowerCase(),
+      userId: cleanUserId,
+      password: cleanPassword,
+      code: branch.code,
+      branchCode: branch.code,
+      isCustomBranch: true,
+      updatedAt: new Date().toISOString()
+    };
+
+    const usersRaw = localStorage.getItem('bsel_registered_users');
+    const users = usersRaw ? JSON.parse(usersRaw) : [];
+    if (!Array.isArray(users)) {
+      return { success: false, message: 'Unable to save branch credentials because the registered-user data is invalid.' };
+    }
+    if (users.some((user) =>
+      String(user.userId || user.email || '').trim().toLowerCase() === cleanUserId.toLowerCase()
+    )) {
+      return { success: false, message: 'This User ID is already assigned to an account.' };
+    }
+
+    all[slug] = credentials;
+    localStorage.setItem('bsel_branch_credentials', JSON.stringify(all));
+    users.push({
+      userId: cleanUserId,
+      email: cleanUserId.toLowerCase(),
+      password: cleanPassword,
+      name: `${branchName} Administrator`,
+      studentName: `${branchName} Administrator`,
+      role: 'Branch Head',
+      branch: branchName,
+      district: branch.city || branchName,
+      branchCode: branch.code,
+      institution: branch.name,
+      address: branch.city || ''
+    });
+    localStorage.setItem('bsel_registered_users', JSON.stringify(users));
+
+    window.dispatchEvent(new Event('bsel_branch_credentials_updated'));
+    window.dispatchEvent(new Event('bsel_users_updated'));
+    return { success: true };
+  } catch (err) {
+    console.error('Error creating branch credentials:', err);
+    return { success: false, message: 'Unable to save branch credentials. Please try again.' };
+  }
+};
+
 export const resetBranchCredentialsToDefault = (slugOrDistrict) => {
   const slug = getDistrictSlug(slugOrDistrict);
   const def = getDefaultCredentialsForDistrict(slugOrDistrict);
@@ -241,7 +327,17 @@ export const resetBranchCredentialsToDefault = (slugOrDistrict) => {
 export const getCredentialsForBranchOrSchool = (item = '') => {
   const all = getStoredBranchCredentials();
   if (item && typeof item === 'object') {
-    if (item.code && all[item.code]) return all[item.code];
+    if (item.slug && all[item.slug]) return all[item.slug];
+    if (item.code) {
+      const byCode = Object.values(all).find((credentials) => credentials.code === item.code);
+      if (byCode) return byCode;
+    }
+    const name = item.branchName || item.name || '';
+    const byName = Object.values(all).find(
+      (credentials) => credentials.isCustomBranch &&
+        String(credentials.branchName || '').toLowerCase() === String(name).toLowerCase()
+    );
+    if (byName) return byName;
     const slug = getDistrictSlug(item.city || item.branchName || item.name || '');
     if (all[slug]) return all[slug];
     return getDefaultCredentialsForDistrict(item.city || item.branchName || item.name || 'Tenkasi');
@@ -263,8 +359,36 @@ export const verifyBranchLogin = (inputIdentifier, inputPassword) => {
   for (const slug of Object.keys(all)) {
     const creds = all[slug];
     const emailLower = (creds.email || '').toLowerCase();
+    const storedUserId = String(creds.userId || creds.email || '').trim().toLowerCase();
     const slugKey = slug.toLowerCase();
     const districtLower = (creds.district || '').toLowerCase();
+
+    if (creds.isCustomBranch) {
+      if (cleanId !== storedUserId) continue;
+      if (cleanPass !== creds.password) {
+        return {
+          success: false,
+          isBranch: true,
+          message: `Incorrect password for ${creds.branchName}.`
+        };
+      }
+
+      return {
+        success: true,
+        user: {
+          userId: creds.userId || creds.email,
+          email: creds.email,
+          name: `${creds.branchName} Administrator`,
+          studentName: `${creds.branchName} Administrator`,
+          role: 'Branch Head',
+          branch: creds.branchName,
+          district: creds.district,
+          institution: creds.branchName,
+          branchCode: creds.branchCode || creds.code,
+          address: creds.district
+        }
+      };
+    }
 
     // Check identifier matches:
     // 1. Exact stored email: bsel+tenkasi@bsel.org

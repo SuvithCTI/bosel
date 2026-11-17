@@ -3,6 +3,7 @@ import { CheckCircle2, Clock3, Printer, Receipt, RefreshCw } from 'lucide-react'
 import api from '../../services/api';
 import { getStoredPayments } from '../../data/paymentsData';
 import StudentReceiptView from '../StudentReceiptView';
+import BselReceipt from '../admin/BselReceipt';
 
 const getStudentId = (student) =>
   String(
@@ -108,6 +109,26 @@ const getReceiptData = (payment, student) => {
 
   return {
     ...student,
+    receiptNo:
+      payment.receiptNo ||
+      payment.receipt_no ||
+      payment.id ||
+      '',
+    parentName:
+      student?.parentName ||
+      student?.fatherName ||
+      student?.guardianName ||
+      '',
+    school:
+      student?.branch ||
+      student?.institution ||
+      student?.school ||
+      '',
+    standard:
+      student?.studentClass ||
+      student?.grade ||
+      student?.classGrade ||
+      '',
     feeType:
       payment.sector ||
       payment.feeType ||
@@ -130,8 +151,15 @@ const getReceiptData = (payment, student) => {
       payment.receiptNo || payment.receipt_no || payment.id || '',
     date: payment.date || payment.createdAt || payment.created_at || '',
     enrolmentDate: payment.date || payment.createdAt || payment.created_at || '',
+    amount:
+      payment.amount ||
+      `₹${payment.amountNum || payment.amount_num || 0}`,
     feeAmount:
       payment.amount || payment.amountNum || payment.amount_num || '',
+    paymentMode: payment.paymentMode || payment.payment_mode || '',
+    refNo: payment.refNo || payment.ref_no || '',
+    verifiedBy: payment.verifiedBy || payment.verified_by || '',
+    contactNumber: student?.phone || student?.contactNumber || '',
     selectedCourses: [],
     courses: [],
   };
@@ -334,12 +362,24 @@ export default function StudentReceiptsBills({ student }) {
       </section>
 
       {selectedReceipt && (
-        <StudentReceiptView
-          student={selectedReceipt}
-          acknowledgement={Boolean(selectedReceipt.paymentAcknowledgement)}
-          onClose={() => setSelectedReceipt(null)}
-          backLabel="Back to Receipts / Bills"
-        />
+        selectedReceipt.paymentAcknowledgement ? (
+          <StudentReceiptView
+            student={selectedReceipt}
+            acknowledgement
+            onClose={() => setSelectedReceipt(null)}
+            backLabel="Back to Receipts / Bills"
+          />
+        ) : (
+          <div className="fixed inset-0 z-[10000] overflow-y-auto bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6">
+            <div className="w-full max-w-5xl rounded-2xl bg-white p-4 shadow-2xl sm:p-6">
+              <BselReceipt
+                receipt={selectedReceipt}
+                onClose={() => setSelectedReceipt(null)}
+                width={1120}
+              />
+            </div>
+          </div>
+        )
       )}
     </>
   );

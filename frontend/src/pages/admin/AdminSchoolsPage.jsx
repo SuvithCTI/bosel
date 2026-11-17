@@ -131,6 +131,21 @@ export default function AdminSchoolsPage({
     });
   }, [credentialsMap]);
 
+  const customBranches = useMemo(() => (
+    Object.values(credentialsMap)
+      .filter((credentials) => credentials.isCustomBranch)
+      .map((credentials) => ({
+        code: credentials.code || credentials.branchCode || credentials.slug,
+        name: credentials.branchName,
+        branchName: credentials.branchName,
+        city: credentials.district,
+        slug: credentials.slug,
+        creds: credentials
+      }))
+  ), [credentialsMap]);
+
+  const allBranches = [...all38DistrictBranches, ...customBranches];
+
   return (
     <div className="space-y-4 animate-in fade-in duration-200">
       {/* Header Banner */}
@@ -158,9 +173,9 @@ export default function AdminSchoolsPage({
         </div>
       </div>
 
-      {/* Network Branch Cards Grid (PURE DISTRICT BRANCHES ONLY) */}
+      {/* Network Branch Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {all38DistrictBranches.map((branch) => {
+        {allBranches.map((branch) => {
           const creds = getCredentialsForBranchOrSchool(branch);
           const emailKey = `email_${branch.code}_${creds.slug}`;
           const passKey = `pass_${branch.code}_${creds.slug}`;
@@ -304,13 +319,13 @@ export default function AdminSchoolsPage({
               {/* Login Email */}
               <div className="space-y-1">
                 <label className="text-xs font-black text-slate-800 flex items-center justify-between">
-                  <span>Branch Login Email</span>
+                  <span>Branch Login User ID</span>
                   <span className="text-[10px] text-slate-400 font-normal">Standard: bseldistrict@bsel.org</span>
                 </label>
                 <div className="relative">
                   <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
-                    type="email"
+                    type="text"
                     required
                     value={editEmail}
                     onChange={(e) => setEditEmail(e.target.value)}

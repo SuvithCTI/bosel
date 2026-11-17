@@ -14,9 +14,7 @@ import {
   GraduationCap,
   FileText,
   Award,
-  Receipt,
-  Ticket,
-  FileSpreadsheet
+  Receipt
 } from 'lucide-react';
 import StudentAvatar from '../../components/StudentAvatar';
 import { updateUserProfile } from '../../utils/authStorage';
@@ -34,7 +32,7 @@ export default function AdminStudentsPage({
   handleToggleMergeMode,
   handleToggleSelectAll,
   handleToggleSelectStudent,
-  handleStartMergeSelected,
+  handleStartDocumentMerge,
   handleOpenMarksheet,
   handleOpenCertForStudent,
   handleOpenReceiptForStudent,
@@ -100,7 +98,7 @@ export default function AdminStudentsPage({
                     Monitoring all student enrollments across regional branches, fee status, and official B★SEL register numbers.
                   </p>
                 </div>
-                <div className="w-full sm:w-auto">
+                <div className="w-full sm:w-auto flex flex-col sm:flex-row gap-2">
                   <button
                     type="button"
                     onClick={() => setShowAddStudentModal(true)}
@@ -109,6 +107,16 @@ export default function AdminStudentsPage({
                     <Plus className="w-4 h-4" />
                     <span>Register New Student</span>
                   </button>
+                  {!isMergeMode && (
+                    <button
+                      type="button"
+                      onClick={handleToggleMergeMode}
+                      className="w-full sm:w-auto px-4 py-2 bg-[#081d3d] hover:bg-[#123068] text-white rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer active:scale-95"
+                    >
+                      <FileDown className="w-4 h-4" />
+                      <span>Merge PDFs</span>
+                    </button>
+                  )}
                 </div>
               </div>
               {/* Filters Row */}
@@ -169,7 +177,7 @@ export default function AdminStudentsPage({
                     <span className="font-black text-amber-400">{selectedStudentIds.length}</span> of {filteredStudentsSuperAdmin.length} candidate(s) selected
                   </div>
                 </div>
-                <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                <div className="flex items-center gap-2 w-full sm:w-auto justify-end flex-wrap">
                   <button
                     type="button"
                     onClick={() => {
@@ -181,13 +189,22 @@ export default function AdminStudentsPage({
                     Cancel
                   </button>
                   <button
-                    type="button"
-                    disabled={selectedStudentIds.length === 0}
-                    onClick={handleStartMergeSelected}
-                    className="px-4 py-1.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black rounded-xl text-xs transition flex items-center gap-1.5 shadow-md disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                  type="button"
+                  disabled={selectedStudentIds.length === 0}
+                  onClick={() => handleStartDocumentMerge?.('admission')}
+                  className="px-4 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl text-xs transition flex items-center gap-1.5 shadow-md disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                   >
-                    <FileDown className="w-3.5 h-3.5" />
-                    <span>Download Merged PDF ({selectedStudentIds.length})</span>
+                  <GraduationCap className="w-3.5 h-3.5" />
+                  <span>Admission Form PDF</span>
+                  </button>
+                  <button
+                  type="button"
+                  disabled={selectedStudentIds.length === 0}
+                  onClick={() => handleStartDocumentMerge?.('receipt')}
+                  className="px-4 py-1.5 bg-sky-500 hover:bg-sky-400 text-slate-950 font-black rounded-xl text-xs transition flex items-center gap-1.5 shadow-md disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                  >
+                  <Receipt className="w-3.5 h-3.5" />
+                  <span>Receipt PDF</span>
                   </button>
                 </div>
               </div>
@@ -359,9 +376,9 @@ export default function AdminStudentsPage({
                             })()}
                           </td>
 
-                          {/* Documents Actions (2 Columns, Increased Button Size) */}
+                          {/* Documents */}
                           <td className="py-3 px-3 text-center" onClick={(e) => e.stopPropagation()}>
-                            <div className="grid grid-cols-2 gap-1.5 w-[210px] mx-auto">
+                            <div className="flex justify-center">
                               <button
                                 type="button"
                                 onClick={() => setViewingAdmissionStudent(student)}
@@ -370,47 +387,6 @@ export default function AdminStudentsPage({
                               >
                                 <GraduationCap className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                                 <span>Admission</span>
-                              </button>
-
-                              {(() => {
-                                const isPaid = student.feePaymentType === 'Paid' || student.feePaymentType === 'Pay Now' || student.feePaymentType === 'Approved';
-                                return isPaid ? (
-                                  <button
-                                    type="button"
-                                    onClick={() => handleOpenReceiptForStudent?.(student)}
-                                    className="px-2.5 py-1.5 bg-sky-50 hover:bg-sky-100 text-sky-800 border border-sky-200 hover:border-sky-300 font-bold rounded-lg text-xs transition cursor-pointer flex items-center justify-center gap-1.5 shadow-xs whitespace-nowrap"
-                                    title="View Fee Receipt"
-                                  >
-                                    <Receipt className="w-3.5 h-3.5 text-sky-600 shrink-0" />
-                                    <span>Receipt</span>
-                                  </button>
-                                ) : (
-                                  <span
-                                    className="px-2.5 py-1.5 bg-slate-100 text-slate-400 border border-dashed border-slate-300 font-bold rounded-lg text-xs flex items-center justify-center gap-1.5 shadow-2xs whitespace-nowrap cursor-not-allowed select-none"
-                                    title="Fee receipt available only after fee is Approved"
-                                  >
-                                    <Receipt className="w-3.5 h-3.5 text-slate-400 shrink-0 opacity-40" />
-                                    <span className="opacity-60">Receipt</span>
-                                  </span>
-                                );
-                              })()}
-                              <button
-                                type="button"
-                                onClick={() => handleOpenEventRegForStudent?.(student)}
-                                className="px-2.5 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-800 border border-purple-200 hover:border-purple-300 font-bold rounded-lg text-xs transition cursor-pointer flex items-center justify-center gap-1.5 shadow-xs whitespace-nowrap"
-                                title="View Event Registration"
-                              >
-                                <Ticket className="w-3.5 h-3.5 text-purple-600 shrink-0" />
-                                <span>Event</span>
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleOpenQuestionPaperForStudent?.(student)}
-                                className="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 hover:border-amber-300 font-bold rounded-lg text-xs transition cursor-pointer flex items-center justify-center gap-1.5 shadow-xs whitespace-nowrap"
-                                title="View Question Paper"
-                              >
-                                <FileSpreadsheet className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                                <span>Qn Paper</span>
                               </button>
                             </div>
                           </td>

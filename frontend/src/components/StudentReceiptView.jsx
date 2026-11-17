@@ -34,6 +34,7 @@ export default function StudentReceiptView({
   onClose,
   backLabel = 'Back to student list',
   acknowledgement = false,
+  batchMode = false,
 }) {
   const receiptRef = useRef(null);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
@@ -108,13 +109,15 @@ export default function StudentReceiptView({
 
   return (
     <div
-      className="
-        fixed inset-0 z-[9999]
-        overflow-y-auto overflow-x-hidden
-        bg-slate-950/85 backdrop-blur-sm
-        flex flex-col items-center
-        px-2 py-3 sm:px-4 sm:py-4
-      "
+      className={batchMode
+        ? 'w-full overflow-x-hidden bg-white flex flex-col items-center px-2 py-2'
+        : `
+          fixed inset-0 z-[9999]
+          overflow-y-auto overflow-x-hidden
+          bg-slate-950/85 backdrop-blur-sm
+          flex flex-col items-center
+          px-2 py-3 sm:px-4 sm:py-4
+        `}
     >
 
       {/* PRINT STYLES */}
@@ -193,7 +196,7 @@ export default function StudentReceiptView({
 
 
       {/* TOP TOOLBAR */}
-      <div
+      {!batchMode && <div
         className="
           no-print
           w-full max-w-[1024px]
@@ -288,7 +291,7 @@ export default function StudentReceiptView({
           </button>
 
         </div>
-      </div>
+      </div>}
 
 
       {/* RECEIPT PREVIEW CONTAINER */}
@@ -542,7 +545,7 @@ export default function StudentReceiptView({
 
 
       {/* MOBILE PREVIEW INFORMATION */}
-      <div
+      {!batchMode && <div
         className="
           no-print
           text-center text-slate-300
@@ -551,7 +554,7 @@ export default function StudentReceiptView({
         "
       >
         B★SEL Course Fee Receipt • Preview
-      </div>
+      </div>}
 
     </div>
   );

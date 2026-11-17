@@ -14,7 +14,7 @@ import {
   getStudentRegisterNumber
 } from '../utils/studentDataHelpers';
 
-export default function StudentAdmissionFormView({ student, onClose }) {
+export default function StudentAdmissionFormView({ student, onClose, batchMode = false }) {
   const formRef = useRef(null);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
@@ -68,17 +68,19 @@ export default function StudentAdmissionFormView({ student, onClose }) {
   return (
     <div
       id="admission-form-overlay"
-      className="
-        fixed inset-0 z-[99999]
-        h-[100dvh] w-full
-        overflow-y-auto overflow-x-hidden
-        overscroll-contain
-        bg-slate-950/85
-        backdrop-blur-sm
-        flex flex-col items-center
-        px-2 sm:px-4
-        py-2 sm:py-4
-      "
+      className={batchMode
+        ? 'w-full overflow-x-hidden bg-white flex flex-col items-center px-2 py-2'
+        : `
+          fixed inset-0 z-[99999]
+          h-[100dvh] w-full
+          overflow-y-auto overflow-x-hidden
+          overscroll-contain
+          bg-slate-950/85
+          backdrop-blur-sm
+          flex flex-col items-center
+          px-2 sm:px-4
+          py-2 sm:py-4
+        `}
       style={{
         WebkitOverflowScrolling: 'touch'
       }}
@@ -342,7 +344,7 @@ export default function StudentAdmissionFormView({ student, onClose }) {
           STICKY TOP TOOLBAR
       ========================================== */}
 
-      <div
+      {!batchMode && <div
         className="
           no-print
           sticky top-0
@@ -472,7 +474,7 @@ export default function StudentAdmissionFormView({ student, onClose }) {
 
         </div>
 
-      </div>
+      </div>}
 
 
       {/* ==========================================

@@ -12,6 +12,8 @@ import {
 
 const RECEIPTS_PER_SHEET = 3;
 
+const getPaymentSelectionKey = (payment) => JSON.stringify(payment);
+
 export default function AdminPaymentsPage({
   filteredPayments,
   paymentSectorFilter,
@@ -33,7 +35,9 @@ export default function AdminPaymentsPage({
 
   // only payments that are currently visible can be printed (keeps table order)
   const selectedPayments = useMemo(
-    () => filteredPayments.filter((p) => selectedIds.includes(p.id)),
+    () => filteredPayments.filter((payment) =>
+      selectedIds.includes(getPaymentSelectionKey(payment))
+    ),
     [filteredPayments, selectedIds]
   );
 
@@ -53,7 +57,11 @@ export default function AdminPaymentsPage({
     );
 
   const toggleAll = () =>
-    setSelectedIds(allSelected ? [] : filteredPayments.map((p) => p.id));
+    setSelectedIds(
+      allSelected
+        ? []
+        : filteredPayments.map(getPaymentSelectionKey)
+    );
 
   const exitSelection = () => {
     setIsSelectionMode(false);
@@ -81,7 +89,7 @@ export default function AdminPaymentsPage({
             <span>Central Payment Sectors & Financial Management</span>
           </h2>
           <p className="text-xs text-slate-500 mt-0.5">
-            Complete ledger tracking Course Tuition, Event Competitions, Kit Dispatches, and Franchise Affiliation payments.
+            Complete ledger tracking course entry fees, Event Competitions, Kit Dispatches, and Franchise Affiliation payments.
           </p>
         </div>
 
@@ -112,7 +120,7 @@ export default function AdminPaymentsPage({
       <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
           <div className="text-[10px] font-bold text-slate-400 uppercase">Sector 1</div>
-          <div className="text-xs font-black text-sky-900 mt-0.5">Course Tuition & Admissions</div>
+          <div className="text-xs font-black text-sky-900 mt-0.5">Course Entry Fees & Admissions</div>
           <div className="text-xl font-black text-slate-950 mt-1">₹48,500</div>
           <span className="text-[10px] text-slate-500">Student level admissions</span>
         </div>
@@ -149,7 +157,7 @@ export default function AdminPaymentsPage({
             className="px-2.5 py-1 text-xs border border-slate-300 rounded-lg outline-none font-bold bg-white"
           >
             <option value="All">All Sectors</option>
-            <option value="Course Tuition">Course Tuition</option>
+            <option value="Course Tuition">Course Entry Fee</option>
             <option value="Competition & Events">Competition & Events</option>
             <option value="Toolkits & Courseware">Toolkits & Courseware</option>
             <option value="Franchise Affiliation">Franchise Affiliation</option>
@@ -254,11 +262,12 @@ export default function AdminPaymentsPage({
 
             <tbody className="divide-y divide-slate-100 font-medium">
               {filteredPayments.map((payment) => {
-                const isSelected = selectedIds.includes(payment.id);
+                const paymentKey = getPaymentSelectionKey(payment);
+                const isSelected = selectedIds.includes(paymentKey);
 
                 return (
                   <tr
-                    key={payment.id}
+                    key={paymentKey}
                     className={`transition ${isSelected ? 'bg-emerald-50/60' : 'hover:bg-slate-50'}`}
                   >
                     {isSelectionMode && (
@@ -266,9 +275,9 @@ export default function AdminPaymentsPage({
                         <input
                           type="checkbox"
                           checked={isSelected}
-                          onChange={() => toggleOne(payment.id)}
+                          onChange={() => toggleOne(paymentKey)}
                           className="w-4 h-4 accent-emerald-600 cursor-pointer"
-                          aria-label={`Select ${payment.payerName}`}
+                          aria-label={`Select ${payment.payerName || payment.payer_name || payment.receiptNo || payment.receipt_no || 'payment'}`}
                         />
                       </td>
                     )}
@@ -295,7 +304,7 @@ export default function AdminPaymentsPage({
 
                     <td className="py-3 px-3">
                       <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-800">
-                        {payment.sector}
+                        {payment.sector === 'Course Tuition' ? 'Course Entry Fee' : payment.sector}
                       </span>
                     </td>
 

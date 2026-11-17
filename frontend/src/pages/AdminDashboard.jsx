@@ -40,7 +40,6 @@ import {
 } from 'lucide-react';
 
 import AdminAchievementsModule from '../components/admin/AdminAchievementsModule';
-import BselReceipt from "../components/admin/BselReceipt";
 import AdminOverviewPage from './admin/AdminOverviewPage';
 import AdminStudentsPage from './admin/AdminStudentsPage';
 import AdminCoursesPage from './admin/AdminCoursesPage';
@@ -81,16 +80,14 @@ import {
   getStoredEvents, 
   addStoredEvent, 
   updateStoredEvent, 
-  deleteStoredEvent, 
-  resetStoredEvents 
+  deleteStoredEvent
 } from '../data/eventsData';
 
 import {
   getStoredCourses,
   addStoredCourse,
   updateStoredCourse,
-  deleteStoredCourse,
-  resetStoredCourses
+  deleteStoredCourse
 } from '../data/coursesData';
 
 import {
@@ -429,14 +426,13 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
   // -------------------------------------------------------------
   const [showAddStudentModal, setShowAddStudentModal] = useState(false);
   const [editingStudent, setEditingStudent] = useState(null);
-  const [viewingStudentReceipt, setViewingStudentReceipt] = useState(null);
   const [showMarksheetModal, setShowMarksheetModal] = useState(false);
   const [selectedMarksheetStudent, setSelectedMarksheetStudent] = useState(null);
   const [viewingMergedPdfStudent, setViewingMergedPdfStudent] = useState(null);
+  const [viewingStudentDocumentMerge, setViewingStudentDocumentMerge] = useState(null);
   const [isMergeMode, setIsMergeMode] = useState(false);
   const [selectedStudentIds, setSelectedStudentIds] = useState([]);
   const [viewingAdmissionStudent, setViewingAdmissionStudent] = useState(null);
-  const [viewingReceiptStudent, setViewingReceiptStudent] = useState(null);
   const [viewingEventRegStudent, setViewingEventRegStudent] = useState(null);
   const [viewingQuestionPaperStudent, setViewingQuestionPaperStudent] = useState(null);
   const [previewCertModalData, setPreviewCertModalData] = useState(null);
@@ -457,12 +453,11 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
     showAddStudentModal || 
     showMarksheetModal ||
     viewingAdmissionStudent ||
-    viewingReceiptStudent ||
+    viewingStudentDocumentMerge ||
     viewingEventRegStudent ||
     viewingQuestionPaperStudent ||
     previewCertModalData ||
     editingStudent || 
-    viewingStudentReceipt || 
     showAddCourseModal || 
     editingCourse || 
     showAddEventModal || 
@@ -571,7 +566,9 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
     principal: '',
     coordinator: '',
     phone: '',
-    studentsCount: 100
+    studentsCount: 100,
+    userId: '',
+    password: ''
   });
 
   // -------------------------------------------------------------
@@ -963,7 +960,20 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
       alert(`Fee Receipt is available only after fee payment is Approved. Please approve the pending fee payment first.`);
       return;
     }
-    setViewingReceiptStudent(student);
+    setSelectedReceiptForPrint({
+      receiptNo: student.receiptRefNo || student.receiptNo || student.userId || '',
+      date: student.enrolmentDate || student.date || '',
+      studentName: student.studentName || student.name || '',
+      parentName: student.parentName || student.fatherName || student.guardianName || '',
+      school: student.branch || student.institution || student.school || '',
+      standard: student.studentClass || student.grade || student.classGrade || '',
+      program: student.program || student.courseName || student.course || '',
+      amount: student.feeAmount || '₹450',
+      paymentMode: student.paymentMode || '',
+      refNo: student.paymentRefNo || student.receiptRefNo || '',
+      verifiedBy: student.verifiedBy || (currentAdminRole === 'Branch Head' ? `${activeBranch} Head` : 'Super Admin'),
+      contactNumber: student.phone || student.contactNumber || ''
+    });
     showToast(`Loaded Official Fee Receipt for ${student.studentName || 'Student'}!`);
   };
 
@@ -1119,6 +1129,41 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
 
     setViewingMergedPdfStudent({
       students: studentPackages
+    });
+  };
+
+  const handleStartDocumentMerge = (documentType) => {
+    if (selectedStudentIds.length === 0) {
+      showToast('Please select at least one student row to merge.');
+      return;
+    }
+
+    const selectedStudents = usersList.filter(student =>
+      selectedStudentIds.includes(student.userId)
+    );
+    if (selectedStudents.length === 0) {
+      showToast('No selected student records were found.');
+      return;
+    }
+
+    const studentsToMerge = documentType === 'receipt'
+      ? selectedStudents.filter(student =>
+          ['Paid', 'Pay Now', 'Approved'].includes(student.feePaymentType)
+        )
+      : selectedStudents;
+
+    if (documentType === 'receipt' && studentsToMerge.length === 0) {
+      showToast('No approved fee receipts are available for the selected students.');
+      return;
+    }
+
+    if (documentType === 'receipt' && studentsToMerge.length < selectedStudents.length) {
+      showToast(`${studentsToMerge.length} approved receipt(s) selected; pending receipts were excluded.`);
+    }
+
+    setViewingStudentDocumentMerge({
+      type: documentType,
+      students: studentsToMerge
     });
   };
 
@@ -1722,7 +1767,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
               handleToggleMergeMode={handleToggleMergeMode}
               handleToggleSelectAll={handleToggleSelectAll}
               handleToggleSelectStudent={handleToggleSelectStudent}
-              handleStartMergeSelected={handleStartMergeSelected}
+              handleStartDocumentMerge={handleStartDocumentMerge}
               handleOpenMarksheet={handleOpenMarksheet}
               handleOpenCertForStudent={handleOpenCertForStudent}
               handleOpenReceiptForStudent={handleOpenReceiptForStudent}
@@ -1755,8 +1800,6 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
   setShowAddCourseModal={setShowAddCourseModal}
   handleStartEditCourse={handleStartEditCourse}
   handleDeleteCourse={handleDeleteCourse}
-  setCoursesList={setCoursesList}
-  showToast={showToast}
 />
           )}
 
@@ -1765,11 +1808,9 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
             <AdminEventsPage
               filteredEvents={filteredEvents}
               eventsList={eventsList}
-              setEventsList={setEventsList}
               setEditingEvent={setEditingEvent}
               setShowAddEventModal={setShowAddEventModal}
               handleDeleteEvent={handleDeleteEvent}
-              showToast={showToast}
               eventSearch={eventSearch}
               setEventSearch={setEventSearch}
             />
@@ -2066,10 +2107,10 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
         setSelectedMarksheetStudent={setSelectedMarksheetStudent}
         viewingMergedPdfStudent={viewingMergedPdfStudent}
         setViewingMergedPdfStudent={setViewingMergedPdfStudent}
+        viewingStudentDocumentMerge={viewingStudentDocumentMerge}
+        setViewingStudentDocumentMerge={setViewingStudentDocumentMerge}
         viewingAdmissionStudent={viewingAdmissionStudent}
         setViewingAdmissionStudent={setViewingAdmissionStudent}
-        viewingReceiptStudent={viewingReceiptStudent}
-        setViewingReceiptStudent={setViewingReceiptStudent}
         viewingEventRegStudent={viewingEventRegStudent}
         setViewingEventRegStudent={setViewingEventRegStudent}
         viewingQuestionPaperStudent={viewingQuestionPaperStudent}

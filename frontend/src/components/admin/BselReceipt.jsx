@@ -154,19 +154,51 @@ const Field = ({ label, labelX, y, valueX, endX, value }) => (
 /*  Data mapping (same field fallbacks as before)                       */
 /* ------------------------------------------------------------------ */
 const buildData = (receipt = {}) => ({
-  receiptNo: receipt.receiptNo || receipt.id || "",
-  date: receipt.date || "",
-  studentName: receipt.studentName || receipt.payerName || receipt.name || "",
+  receiptNo: receipt.receiptNo || receipt.receipt_no || receipt.id || "",
+  date: receipt.date || receipt.createdAt || receipt.created_at || "",
+  studentName:
+    receipt.studentName ||
+    receipt.student_name ||
+    receipt.payerName ||
+    receipt.payer_name ||
+    receipt.name ||
+    "",
   parentName:
-    receipt.parentGuardianName || receipt.parentName || receipt.guardianName || "",
-  school: receipt.school || receipt.studyCenter || receipt.branch || "",
-  standard: receipt.standard || receipt.class || "",
-  program: receipt.program || receipt.course || "",
-  amount: receipt.amount || "",
-  paymentMode: receipt.paymentMode || "",
-  refNo: receipt.refNo || "",
-  verifiedBy: receipt.verifiedBy || "B★SEL Desk",
-  contactNumber: receipt.contactNumber || "",
+    receipt.parentGuardianName ||
+    receipt.parent_guardian_name ||
+    receipt.parentName ||
+    receipt.parent_name ||
+    receipt.guardianName ||
+    receipt.guardian_name ||
+    "",
+  school:
+    receipt.school ||
+    receipt.studyCenter ||
+    receipt.study_center ||
+    receipt.branch ||
+    "",
+  standard:
+    receipt.standard ||
+    receipt.class ||
+    receipt.studentClass ||
+    receipt.student_class ||
+    receipt.grade ||
+    "",
+  program:
+    receipt.program ||
+    receipt.course ||
+    receipt.courseName ||
+    receipt.course_name ||
+    "",
+  amount:
+    receipt.amount ||
+    (receipt.amountNum || receipt.amount_num
+      ? `₹${receipt.amountNum || receipt.amount_num}`
+      : ""),
+  paymentMode: receipt.paymentMode || receipt.payment_mode || "",
+  refNo: receipt.refNo || receipt.ref_no || "",
+  verifiedBy: receipt.verifiedBy || receipt.verified_by || "B★SEL Desk",
+  contactNumber: receipt.contactNumber || receipt.contact_number || receipt.phone || "",
 });
 
 /* ------------------------------------------------------------------ */
@@ -446,6 +478,11 @@ const BselReceipt = ({
   const items = hasList ? receipts : [receipt, receipt, receipt];
   const sheetCount = Math.ceil(items.length / PER_SHEET);
   const first = buildData(items[0]);
+  const receiptSheets = hasList
+    ? Array.from({ length: sheetCount }, (_, index) =>
+        items.slice(index * PER_SHEET, (index + 1) * PER_SHEET)
+      )
+    : [];
 
   const logoHref =
     typeof window !== "undefined"
@@ -490,10 +527,44 @@ const BselReceipt = ({
         </div>
       )}
 
-      {/* On-screen preview (first receipt) */}
-      <div className="mx-auto w-full bg-white" style={{ maxWidth: width }}>
-        <ReceiptSVG receipt={items[0]} logoHref={logoHref} />
-      </div>
+      {hasList ? (
+        <div className="w-full space-y-5">
+          {receiptSheets.map((sheet, sheetIndex) => (
+            <div
+              key={`receipt-sheet-${sheetIndex}`}
+              className="mx-auto w-full overflow-hidden border border-slate-200 bg-white shadow-sm"
+              style={{ maxWidth: width, aspectRatio: "210 / 297" }}
+            >
+              <div className="flex h-full flex-col items-center justify-between p-[4%]">
+                {sheet.map((item, receiptIndex) => (
+                  <div
+                    key={`${item.receiptNo || item.receipt_no || item.id || 'receipt'}-${sheetIndex}-${receiptIndex}`}
+                    className="flex w-full min-h-0 flex-1 items-center justify-center"
+                  >
+                    <div
+                      className="w-full"
+                      style={{ aspectRatio: `${W} / ${H}` }}
+                      data-official-fee-receipt
+                    >
+                      <ReceiptSVG receipt={item} logoHref={logoHref} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="mx-auto w-full bg-white" style={{ maxWidth: width }}>
+          <div
+            className="w-full"
+            style={{ aspectRatio: `${W} / ${H}` }}
+            data-official-fee-receipt
+          >
+            <ReceiptSVG receipt={items[0]} logoHref={logoHref} />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
