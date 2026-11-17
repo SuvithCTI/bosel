@@ -87,6 +87,53 @@ const formatAddress = (addr) => {
 
 };
 
+const formatSingleLineAddress = (addr) => {
+  if (!addr) return 'Tenkasi, Tamil Nadu';
+  const cleaned = addr.replace(/,([^\s])/g, ', $1').trim();
+  return cleaned
+    .split(' ')
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(' ');
+};
+
+const splitCourseName = (course) => {
+  if (!course) return [''];
+  const trimmed = course.trim();
+  if (trimmed.length <= 22) {
+    return [trimmed];
+  }
+
+  // If there's an '&', try splitting around '&'
+  if (trimmed.includes('&')) {
+    const parts = trimmed.split('&');
+    if (parts.length === 2) {
+      const part1 = parts[0].trim() + ' &';
+      const part2 = parts[1].trim();
+      if (part1.length <= 26 && part2.length <= 26) {
+        return [part1, part2];
+      }
+    }
+  }
+
+  // Word-based split
+  const words = trimmed.split(/\s+/);
+  if (words.length === 1) return [trimmed];
+
+  let line1 = '';
+  let line2 = '';
+  for (let i = 0; i < words.length; i++) {
+    const candidate = line1 ? `${line1} ${words[i]}` : words[i];
+    if (candidate.length <= 22 || !line1) {
+      line1 = candidate;
+    } else {
+      line2 = words.slice(i).join(' ');
+      break;
+    }
+  }
+
+  return line2 ? [line1, line2] : [line1];
+};
+
 const readFileAsDataUrl = (file, cb) => {
 
   const reader = new FileReader();
@@ -231,6 +278,32 @@ export default function Certificate({
 
   const { line1: addr1, line2: addr2 } = formatAddress(centreAddress);
 
+  const displayAddress = formatSingleLineAddress(centreAddress);
+
+  const courseLines = splitCourseName(courseUpper);
+
+  const leftRows = [
+    { label: 'Registration No', value: registrationNo },
+    { label: 'Certificate No', value: displayCertNo },
+    { label: 'Course', value: courseLines[0] },
+    ...(courseLines.length > 1
+      ? [
+          { label: null, value: courseLines[1] },
+          { label: 'Level', value: cleanLevel },
+        ]
+      : [
+          { label: 'Level', value: cleanLevel },
+        ]),
+  ];
+
+  const rightRows = [
+    { label: 'School / Examination Centre', value: centreName },
+    { label: 'Code', value: centreCode },
+    { label: 'Address', value: displayAddress },
+    { label: 'Duration', value: duration },
+    { label: 'Date of Issue', value: issueDate },
+  ];
+
   const formatCertificateTitle = (type) => {
     if (!type) return 'Certificate of Completion';
     const trimmed = String(type).trim();
@@ -254,6 +327,10 @@ export default function Certificate({
     headerSubtitle.length <= 12 ? 20 :
     headerSubtitle.length <= 17 ? 18 :
     headerSubtitle.length <= 22 ? 16.5 : 15;
+
+  const courseFontSize =
+    courseUpper.length > 25 ? 16 :
+    courseUpper.length > 18 ? 18 : 20.5;
 
   const mottoFontSize =
     headerMotto.length <= 18 ? 15 :
@@ -666,12 +743,8 @@ export default function Certificate({
               <text x="4" y="18" fontFamily="Georgia, serif" fontSize="12" fontWeight="700" fill={NAVY} fillOpacity="0.07">B★SEL</text>
             </pattern>
 
-            <pattern id="bsel-strip" x="24" y="137" width="46" height="12" patternUnits="userSpaceOnUse">
-              <text x="23" y="9" textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="7.5" fontWeight="800" fill="#ffffff" letterSpacing="0.5">B★SEL</text>
-            </pattern>
-
-            <pattern id="bsel-strip" x="24" y="137" width="46" height="12" patternUnits="userSpaceOnUse">
-              <text x="23" y="9" textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="7.5" fontWeight="800" fill="#ffffff" letterSpacing="0.5">B★SEL</text>
+            <pattern id="bsel-strip" x="24" y="137" width="31.5" height="12" patternUnits="userSpaceOnUse">
+              <text x="15.75" y="9" textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="7.2" fontWeight="800" fill="#e6c25a" letterSpacing="0.3">B★SEL</text>
             </pattern>
 
           </defs>
@@ -930,29 +1003,43 @@ export default function Certificate({
 
           {/* Candidate name */}
 
-          <text x="512" y="288" textAnchor="middle" fontFamily="Georgia, serif" fontStyle="italic" fontWeight="700" fontSize="30" fill={NAVY}>
+          <text x="512" y="287" textAnchor="middle" fontFamily="Georgia, serif" fontStyle="italic" fontWeight="700" fontSize="30" fill={NAVY}>
 
             {studentName || 'Candidate Name'}
 
           </text>
 
-          <line x1="261" y1="295" x2="763" y2="295" stroke={NAVY} strokeWidth="2" />
+          <line x1="261" y1="294" x2="763" y2="294" stroke={NAVY} strokeWidth="2" />
 
-          <text x="512" y="317" textAnchor="middle" fontFamily="Georgia, serif" fontWeight="700" fontSize="19" fill={NAVY}>
+          <text x="512" y="314" textAnchor="middle" fontFamily="Georgia, serif" fontWeight="700" fontSize="17.5" fill={NAVY}>
 
             has successfully completed
 
           </text>
 
-          {/* Level hexagon badge */}
+          {/* Enrolled Subject / Course Name */}
+          <text
+            x="512"
+            y="339"
+            textAnchor="middle"
+            fontFamily="'Cinzel', 'Outfit', Georgia, serif"
+            fontWeight="900"
+            fontSize={courseFontSize}
+            letterSpacing="2.5"
+            fill={NAVY}
+          >
+            {courseUpper}
+          </text>
 
-          <polygon points="313,372 382,368 382,376" fill={GOLD} />
+          {/* Level hexagon badge (reduced border) */}
 
-          <polygon points="642,368 710,372 642,376" fill={GOLD} />
+          <polygon points="313,372 382,369 382,375" fill={GOLD} />
 
-          <polygon points="394,372 414,350 612,350 632,372 612,394 414,394" fill="#fff" stroke={GOLD} strokeWidth="4" />
+          <polygon points="642,369 711,372 642,375" fill={GOLD} />
 
-          <text x="513" y="378" textAnchor="middle" fontFamily="Georgia, serif" fontWeight="700" fontSize="14" letterSpacing="2" fill={NAVY}>
+          <polygon points="394,372 414,352 612,352 632,372 612,392 414,392" fill="#fff" stroke={GOLD} strokeWidth="1.8" />
+
+          <text x="512" y="377" textAnchor="middle" fontFamily="'Cinzel', Georgia, serif" fontWeight="800" fontSize="13.5" letterSpacing="2" fill={NAVY}>
 
             {cleanLevel.toUpperCase()}
 
@@ -974,68 +1061,51 @@ export default function Certificate({
 
           <g fontFamily="'Times New Roman', Times, serif" fontWeight="700" fontSize="15" fill={NAVY}>
 
-            {[
-
-              ['Registration No', registrationNo],
-
-              ['Certificate No', displayCertNo],
-
-              ['Course', courseUpper],
-
-              ['Level', cleanLevel],
-
-              ['Duration', duration],
-
-            ].map(([label, value], i) => {
-
+            {leftRows.map((row, i) => {
               const y = [464, 485, 507, 528, 550][i];
-
               return (
-
-                <g key={label}>
-
-                  <text x="82" y={y}>{label}</text>
-
-                  <text x="213" y={y} textAnchor="middle">:</text>
-
-                  <text x="232" y={y}>{value}</text>
-
+                <g key={i}>
+                  {row.label && <text x="82" y={y}>{row.label}</text>}
+                  {row.label && <text x="213" y={y} textAnchor="middle">:</text>}
+                  <text
+                    x="232"
+                    y={y}
+                    {...(row.value && row.value.length > 24
+                      ? {
+                          fontSize: row.value.length > 27 ? '13' : '14',
+                          textLength: row.value.length > 26 ? '265' : undefined,
+                          lengthAdjust: row.value.length > 26 ? 'spacingAndGlyphs' : undefined,
+                        }
+                      : {})}
+                  >
+                    {row.value}
+                  </text>
                 </g>
-
               );
-
             })}
 
-            {[
-
-              ['School / Examination Centre', centreName],
-
-              ['Code', centreCode],
-
-              ['Address', addr1],
-
-              [null, addr2],
-
-              ['Date of Issue', issueDate],
-
-            ].map(([label, value], i) => {
-
+            {rightRows.map((row, i) => {
               const y = [464, 485, 507, 528, 550][i];
-
+              const isAddress = row.label === 'Address';
               return (
-
                 <g key={i}>
-
-                  {label && <text x="533" y={y}>{label}</text>}
-
-                  {label && <text x="763" y={y} textAnchor="middle">:</text>}
-
-                  <text x="783" y={y}>{value}</text>
-
+                  {row.label && <text x="533" y={y}>{row.label}</text>}
+                  {row.label && <text x="763" y={y} textAnchor="middle">:</text>}
+                  <text
+                    x="783"
+                    y={y}
+                    {...(isAddress && row.value && row.value.length > 20
+                      ? {
+                          fontSize: row.value.length > 26 ? '11.5' : '13',
+                          textLength: row.value.length > 24 ? '160' : undefined,
+                          lengthAdjust: row.value.length > 24 ? 'spacingAndGlyphs' : undefined,
+                        }
+                      : {})}
+                  >
+                    {row.value}
+                  </text>
                 </g>
-
               );
-
             })}
 
           </g>
