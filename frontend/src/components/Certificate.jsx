@@ -790,16 +790,16 @@ export default function Certificate({
             Presents through its educational initiative
           </text>
           <g>
-            <text x="231" y="101.5" textAnchor="end" fontFamily="Georgia, 'Times New Roman', serif" fontWeight="900" fontSize="42" fill={NAVY}>
+            <text x="222.4" y="104.1" textAnchor="end" fontFamily="Georgia, 'Times New Roman', serif" fontWeight="900" fontSize="50" fill={NAVY}>
               B
             </text>
             <polygon
-              points="250.9,74.5 254.1,83.9 264.1,84.1 256.1,90.1 259.1,99.6 250.9,93.9 242.7,99.6 245.6,90.1 237.7,84.1 247.6,83.9"
+              points="246.1,71.9 249.9,83.1 261.8,83.4 252.3,90.5 255.8,101.8 246.1,95.1 236.4,101.8 239.8,90.5 230.4,83.4 242.2,83.1"
               fill="url(#bsel-gold)"
               stroke={GOLD}
               strokeWidth="0.5"
             />
-            <text x="270.8" y="101.5" textAnchor="start" fontFamily="Georgia, 'Times New Roman', serif" fontWeight="900" fontSize="42" fill={NAVY} letterSpacing="1">
+            <text x="269.8" y="104.1" textAnchor="start" fontFamily="Georgia, 'Times New Roman', serif" fontWeight="900" fontSize="50" fill={NAVY} letterSpacing="1">
               SEL
             </text>
           </g>
