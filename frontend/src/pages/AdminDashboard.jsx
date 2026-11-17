@@ -938,6 +938,8 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
       : `BSEL/${coursePrefix}/L${cleanLevel}/${seqDigits}`;
 
     const studentCertData = {
+      studentId: student.id || student._id || student.admissionNo || regNo,
+      admissionNo: student.admissionNo || regNo,
       studentName: student.studentName || 'Candidate Name',
       courseName: courseName,
       programPrefix: 'MINDSPARC',
@@ -951,7 +953,8 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
       centreAddress: student.address || 'second street, surandai,keelasurandai,tenkasi',
       issueDate: student.enrolmentDate || '05-10-2026',
       certificateType: 'COMPLETION',
-      studentPhoto: getStudentPhotoUrl(student) || student.studentPhoto || null
+      studentPhoto: getStudentPhotoUrl(student) || student.studentPhoto || null,
+      student: student
     };
 
     setCertData(studentCertData);
@@ -1000,6 +1003,8 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
 
     setSelectedMarksheetStudent({
       ...student,
+      studentId: student.id || student._id || student.admissionNo || regNo,
+      admissionNo: student.admissionNo || regNo,
       photoUrl: photo,
       studentPhoto: photo,
       registerNumber: regNo,
@@ -1086,6 +1091,8 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
         : `BSEL/${coursePrefix}/L${cleanLevel}/${seqDigits}`;
 
       const certData = {
+        studentId: student.id || student._id || student.admissionNo || regNo,
+        admissionNo: student.admissionNo || regNo,
         studentName: student.studentName || 'Candidate Name',
         courseName: courseName,
         programPrefix: 'MINDSPARC',
@@ -1099,7 +1106,8 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
         centreAddress: student.address || 'second street, surandai,keelasurandai,tenkasi',
         issueDate: student.enrolmentDate || '05-10-2026',
         certificateType: 'COMPLETION',
-        studentPhoto: photo
+        studentPhoto: photo,
+        student: student
       };
 
       const subjects = getMarksheetSubjects(student);
@@ -1109,6 +1117,8 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
 
       const marksheetData = {
         ...student,
+        studentId: student.id || student._id || student.admissionNo || regNo,
+        admissionNo: student.admissionNo || regNo,
         photoUrl: photo,
         studentPhoto: photo,
         registerNumber: regNo,

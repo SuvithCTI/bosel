@@ -17,7 +17,7 @@ const PAGE_CENTER_X = 362;
 // Watermark strip colours
 const STRIP_BG = NAVY;        // strip background
 const STRIP_BORDER = GOLD;    // strip border colour (change this to adjust)
-const STRIP_TEXT = '#ffffff'; // strip text colour
+const STRIP_TEXT = '#fde68a'; // strip text colour
 
 const LABELS = [
   'Registration No.',
@@ -32,9 +32,15 @@ const LABELS = [
   'Address',
 ];
 
-const TABLE_COLS = [37, 88, 282, 391, 500, 608, 687];
-const TABLE_HEADERS = ['S.No.', 'Subject / Module', 'Max Marks', 'Assessment', 'Marks Obtained', 'Percentage'];
-const ROW_LINES = [541, 577, 613, 650, 686, 722];
+const TABLE_COLS = [37, 88, 443, 504, 565, 626, 687];
+const TABLE_HEADERS = [
+  ['S.No.'],
+  ['Subject / Module'],
+  ['Max', 'Marks'],
+  ['Assessment'],
+  ['Marks', 'Obtained'],
+  ['Percentage'],
+];const ROW_LINES = [541, 577, 613, 650, 686, 722];
 
 // Remarks box geometry (on the 724 x 1024 grid)
 const REMARK_BOX = { x: 57, y: 852, w: 456, h: 48 };
@@ -158,8 +164,8 @@ export default function MarksheetTemplate({ remark = null }) {
         href={centerSeal}
         x={PAGE_CENTER_X - 30}
         y="34"
-        width="60"
-        height="60"
+        width="90"
+        height="90"
         preserveAspectRatio="xMidYMid meet"
       />
 
@@ -183,6 +189,7 @@ export default function MarksheetTemplate({ remark = null }) {
         fontSize="9"
         fill={STRIP_TEXT}
         opacity="0.85"
+        text="blue"
       >
         B★SEL B★SEL B★SEL B★SEL B★SEL B★SEL B★SEL B★SEL B★SEL B★SEL B★SEL B★SEL
       </text>
@@ -193,7 +200,7 @@ export default function MarksheetTemplate({ remark = null }) {
       {LABELS.map((label, i) => {
         const cy = 181.4 + i * 26.2;
         return (
-          <g key={label} fontFamily={SERIF} fontWeight="bold" fontSize="13" fill={NAVY}>
+          <g key={label} fontFamily={SERIF} fontWeight="bold" fontSize="15" fill={NAVY}>
             <text x="57" y={cy + 5}>{label}</text>
             <text x="200" y={cy + 5}>:</text>
           </g>
@@ -217,20 +224,30 @@ export default function MarksheetTemplate({ remark = null }) {
 
       {/* Column header row */}
       <rect x="40" y="504" width="644" height="37" fill="none" stroke={NAVY} strokeWidth="1.5" />
-      {TABLE_HEADERS.map((h, i) => (
-        <text
-          key={h}
-          x={colCenters[i]}
-          y="527"
-          textAnchor="middle"
-          fontFamily="Arial, sans-serif"
-          fontWeight="bold"
-          fontSize="10.5"
-          fill={NAVY}
-        >
-          {h}
-        </text>
+      {/* Column header row */}
+{TABLE_HEADERS.map((lines, i) => {
+  const cx = colCenters[i];
+  const startY = lines.length === 1 ? 527 : 519;
+
+  return (
+    <text
+      key={lines.join(' ')}
+      x={cx}
+      y={startY}
+      textAnchor="middle"
+      fontFamily="Arial, sans-serif"
+      fontWeight="bold"
+      fontSize="9.5"
+      fill={NAVY}
+    >
+      {lines.map((line, j) => (
+        <tspan key={j} x={cx} dy={j === 0 ? 0 : 12}>
+          {line}
+        </tspan>
       ))}
+    </text>
+  );
+})}
 
       {/* Vertical column dividers */}
       {TABLE_COLS.slice(1, -1).map((x) => (

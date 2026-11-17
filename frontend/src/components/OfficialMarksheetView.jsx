@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import {
   ArrowLeft,
   Download,
@@ -15,6 +15,11 @@ import { exportPdfFromElement } from '../utils/pdfExport';
 import {
   getStudentPhotoUrl,
   getStudentRegisterNumber,
+  getStudentScopeKey,
+  readStudentCustomHeader,
+  saveStudentCustomHeader,
+  readStudentCustomSignature,
+  saveStudentCustomSignature,
 } from '../utils/studentDataHelpers';
 import { getCoursePrefix } from '../utils/authStorage';
 import { getSavedMarksheet, getGrade } from '../utils/marksheetStorage';
@@ -27,10 +32,10 @@ import MarksheetTemplate from './MarksheetTemplate';
 const WATERMARK_TEXT = 'B★SEL';
 const WATERMARK_LOGO_SRC = '/bsel_logo.png';
 
-const TILE_COLS = 9;
-const TILE_ROWS = 34;
-const TILE_FONT_SIZE = 12;
-const TILE_OPACITY = 0.1;
+const TILE_COLS = 8;
+const TILE_ROWS = 28;
+const TILE_FONT_SIZE = 20;
+const TILE_OPACITY = 0.06;
 
 const CENTER_LOGO_WIDTH = '45%';
 const CENTER_OPACITY = 0.08;
@@ -40,15 +45,14 @@ const CENTER_OPACITY = 0.08;
 // ============================================================
 
 const REMARK_RULES = [
-  { min: 90, text: 'Exceptional Performance. Keep shining!' },
-  { min: 80, text: 'Brilliant effort! Aiming for A+ next time.' },
-  { min: 70, text: 'Great job! A little more focus and you will reach the top.' },
-  { min: 60, text: "Fair Performance. Don't give up, you can do better." },
-  { min: 50, text: 'Keep trying! Regular practice is the key to success.' },
+  { min: 90, text: 'Exceptional Performance. Keep shining!' },             // A+ (90-100%)
+  { min: 75, text: 'Brilliant effort! Aiming for A+ next time.' },        // A (75-89%)
+  { min: 60, text: 'Great job! A little more focus and you will reach the top.' }, // B (60-74%)
+  { min: 40, text: "Don't give up, regular practice is the key to success." }, // C (40-59%)
 ];
 
-// Used for anything below 50% (not specified earlier, edit as needed)
-const REMARK_FALLBACK = "'Don't worry, every expert was once a beginner. Keep trying!";
+// Used for anything below 40% (Grade D)
+const REMARK_FALLBACK = "Don't worry, every expert was once a beginner.";
 
 const getRemark = (pct) => {
   const n = Number(pct);
@@ -208,12 +212,18 @@ function BselWatermark() {
 
   const tiles = [];
   for (let r = 0; r < TILE_ROWS; r++) {
-    for (let c = 0; c < TILE_COLS; c++) {
-      tiles.push({
-        key: `${r}-${c}`,
-        x: c * cellW + cellW / 2,
-        y: r * cellH + cellH / 2,
-      });
+    const isOddRow = r % 2 === 1;
+    const y = r * cellH + cellH / 2;
+
+    if (isOddRow) {
+      // Offset row: tiles sit on the cell edges so they interlock with the row above
+      for (let c = 0; c <= TILE_COLS; c++) {
+        tiles.push({ key: `${r}-${c}`, x: c * cellW, y });
+      }
+    } else {
+      for (let c = 0; c < TILE_COLS; c++) {
+        tiles.push({ key: `${r}-${c}`, x: c * cellW + cellW / 2, y });
+      }
     }
   }
 
@@ -300,65 +310,80 @@ export default function OfficialMarksheetView({
   const directorSignInputRef = useRef(null);
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
 
+  // Derive unique student scope key to isolate customizations to this student & their documents
+  const scopeKey = getStudentScopeKey(student);
+
+  const defaultBranch =
+    student?.branch ||
+    student?.school ||
+    student?.centreName ||
+    student?.institution ||
+    'RISING STARS';
+
+  const defaultBranchName = String(defaultBranch).toUpperCase();
+
   const [customDirectorSign, setCustomDirectorSign] = useState(() => {
-    try {
-      const saved = localStorage.getItem('bsel_certificate_director_signature');
-      if (saved) return saved;
-    } catch (_) {}
-    return null;
+    return readStudentCustomSignature(scopeKey) || null;
   });
 
   const [customSchoolName, setCustomSchoolName] = useState(() => {
-    try {
-      const saved = localStorage.getItem('bsel_certificate_school_header');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed.name) return parsed.name;
-      }
-    } catch (_) {}
-    return 'RISING STARS';
+    const saved = readStudentCustomHeader(scopeKey);
+    return saved?.name || defaultBranchName;
   });
 
   const [customSchoolSubtitle, setCustomSchoolSubtitle] = useState(() => {
-    try {
-      const saved = localStorage.getItem('bsel_certificate_school_header');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed.subtitle) return parsed.subtitle;
-      }
-    } catch (_) {}
-    return 'VISION FOUNDATION';
+    const saved = readStudentCustomHeader(scopeKey);
+    return saved?.subtitle || 'VISION FOUNDATION';
   });
 
   const [customSchoolMotto, setCustomSchoolMotto] = useState(() => {
-    try {
-      const saved = localStorage.getItem('bsel_certificate_school_header');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed.motto) return parsed.motto;
-      }
-    } catch (_) {}
-    return 'EDUCATION • EMPOWERMENT • EXCELLENCE';
+    const saved = readStudentCustomHeader(scopeKey);
+    return saved?.motto || 'EDUCATION • EMPOWERMENT • EXCELLENCE';
   });
 
   const [customSchoolLogo, setCustomSchoolLogo] = useState(() => {
-    try {
-      const saved = localStorage.getItem('bsel_certificate_school_header');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed.logo) return parsed.logo;
-      }
-    } catch (_) {}
-    return null;
+    const saved = readStudentCustomHeader(scopeKey);
+    return saved?.logo || null;
   });
 
+  // Re-sync whenever student / scopeKey changes (prevent cross-student leakage)
+  useEffect(() => {
+    const customH = readStudentCustomHeader(scopeKey);
+    const customSign = readStudentCustomSignature(scopeKey);
+
+    setCustomSchoolName(customH?.name !== undefined ? customH.name : defaultBranchName);
+    setCustomSchoolSubtitle(customH?.subtitle !== undefined ? customH.subtitle : 'VISION FOUNDATION');
+    setCustomSchoolMotto(customH?.motto !== undefined ? customH.motto : 'EDUCATION • EMPOWERMENT • EXCELLENCE');
+    setCustomSchoolLogo(customH?.logo !== undefined ? customH.logo : null);
+    setCustomDirectorSign(customSign !== null ? customSign : null);
+  }, [scopeKey, defaultBranchName]);
+
+  // Real-time synchronization across Certificate and Marksheet for the same student
+  useEffect(() => {
+    const handleHeaderUpdate = (e) => {
+      if (e.detail?.scopeKey === scopeKey) {
+        const d = e.detail.data;
+        if (d?.name !== undefined) setCustomSchoolName(d.name);
+        if (d?.subtitle !== undefined) setCustomSchoolSubtitle(d.subtitle);
+        if (d?.motto !== undefined) setCustomSchoolMotto(d.motto);
+        if (d?.logo !== undefined) setCustomSchoolLogo(d.logo);
+      }
+    };
+    const handleSignUpdate = (e) => {
+      if (e.detail?.scopeKey === scopeKey) {
+        setCustomDirectorSign(e.detail.signature || null);
+      }
+    };
+    window.addEventListener('bsel_student_custom_header_updated', handleHeaderUpdate);
+    window.addEventListener('bsel_student_custom_signature_updated', handleSignUpdate);
+    return () => {
+      window.removeEventListener('bsel_student_custom_header_updated', handleHeaderUpdate);
+      window.removeEventListener('bsel_student_custom_signature_updated', handleSignUpdate);
+    };
+  }, [scopeKey]);
+
   const handleSaveSchoolDetails = (name, subtitle, motto, logo) => {
-    try {
-      localStorage.setItem(
-        'bsel_certificate_school_header',
-        JSON.stringify({ name, subtitle, motto, logo })
-      );
-    } catch (_) {}
+    saveStudentCustomHeader(scopeKey, { name, subtitle, motto, logo });
   };
 
   const handleSchoolLogoChange = (e) => {
@@ -381,9 +406,7 @@ export default function OfficialMarksheetView({
       reader.onload = (event) => {
         const dataUrl = event.target.result;
         setCustomDirectorSign(dataUrl);
-        try {
-          localStorage.setItem('bsel_certificate_director_signature', dataUrl);
-        } catch (_) {}
+        saveStudentCustomSignature(scopeKey, dataUrl);
       };
       reader.readAsDataURL(file);
     }
@@ -391,9 +414,7 @@ export default function OfficialMarksheetView({
 
   const handleRemoveDirectorSign = () => {
     setCustomDirectorSign(null);
-    try {
-      localStorage.removeItem('bsel_certificate_director_signature');
-    } catch (_) {}
+    saveStudentCustomSignature(scopeKey, null);
   };
 
   const getSchoolNameFontSize = (text) => {
@@ -1055,86 +1076,85 @@ export default function OfficialMarksheetView({
       {/* =====================================================
           SUBJECT MARKS TABLE (hidden when hideMarks is set)
       ===================================================== */}
+{showMarks &&
+  subjects.slice(0, 5).map((sub, idx) => {
+    const topY = tableRowPositions[idx];
 
-      {showMarks &&
-        subjects.slice(0, 5).map((sub, idx) => {
-          const topY = tableRowPositions[idx];
+    return (
+      <React.Fragment key={sub.id || idx}>
+        <div
+          className="absolute font-bold text-[#081d3d] text-[9.5px] sm:text-[11.5px] truncate -translate-y-1/2"
+          style={{
+            left: '13.0%',
+            top: topY,
+            maxWidth: '47.5%',
+            fontFamily: "'Times New Roman', Times, serif",
+            lineHeight: 1,
+            zIndex: 1,
+          }}
+        >
+          {sub.name}
+        </div>
 
-          return (
-            <React.Fragment key={sub.id || idx}>
-              <div
-                className="absolute font-bold text-[#081d3d] text-[9.5px] sm:text-[11.5px] truncate -translate-y-1/2"
-                style={{
-                  left: '13.0%',
-                  top: topY,
-                  maxWidth: '27.5%',
-                  fontFamily: "'Times New Roman', Times, serif",
-                  lineHeight: 1,
-                  zIndex: 1,
-                }}
-              >
-                {sub.name}
-              </div>
+        <div
+          className="absolute font-bold text-[#081d3d] text-[10px] sm:text-[12.5px] -translate-x-1/2 -translate-y-1/2 text-center"
+          style={{
+            left: '65.40%',
+            top: topY,
+            fontFamily: "'Times New Roman', Times, serif",
+            lineHeight: 1,
+            zIndex: 1,
+          }}
+        >
+          {sub.max}
+        </div>
 
-              <div
-                className="absolute font-bold text-[#081d3d] text-[10px] sm:text-[12.5px] -translate-x-1/2 -translate-y-1/2 text-center"
-                style={{
-                  left: '46.41%',
-                  top: topY,
-                  fontFamily: "'Times New Roman', Times, serif",
-                  lineHeight: 1,
-                  zIndex: 1,
-                }}
-              >
-                {sub.max}
-              </div>
+        <div
+          className="absolute font-bold text-[#081d3d] text-[10px] sm:text-[12.5px] -translate-x-1/2 -translate-y-1/2 text-center"
+          style={{
+            left: '73.82%',
+            top: topY,
+            fontFamily: "'Times New Roman', Times, serif",
+            lineHeight: 1,
+            zIndex: 1,
+          }}
+        >
+          {sub.assessment || sub.practical}
+        </div>
 
-              <div
-                className="absolute font-bold text-[#081d3d] text-[10px] sm:text-[12.5px] -translate-x-1/2 -translate-y-1/2 text-center"
-                style={{
-                  left: '61.40%',
-                  top: topY,
-                  fontFamily: "'Times New Roman', Times, serif",
-                  lineHeight: 1,
-                  zIndex: 1,
-                }}
-              >
-                {sub.assessment || sub.practical}
-              </div>
+        <div
+          className="absolute font-black text-[#081d3d] text-[10.5px] sm:text-[13px] -translate-x-1/2 -translate-y-1/2 text-center"
+          style={{
+            left: '82.25%',
+            top: topY,
+            fontFamily: "'Times New Roman', Times, serif",
+            lineHeight: 1,
+            zIndex: 1,
+          }}
+        >
+          {sub.marks}
+        </div>
 
-              <div
-                className="absolute font-black text-[#081d3d] text-[10.5px] sm:text-[13px] -translate-x-1/2 -translate-y-1/2 text-center"
-                style={{
-                  left: '76.31%',
-                  top: topY,
-                  fontFamily: "'Times New Roman', Times, serif",
-                  lineHeight: 1,
-                  zIndex: 1,
-                }}
-              >
-                {sub.marks}
-              </div>
-
-              <div
-                className="absolute font-bold text-[#081d3d] text-[10px] sm:text-[12.5px] -translate-x-1/2 -translate-y-1/2 text-center"
-                style={{
-                  left: '89.36%',
-                  top: topY,
-                  fontFamily: "'Times New Roman', Times, serif",
-                  lineHeight: 1,
-                  zIndex: 1,
-                }}
-              >
-                {sub.pct ||
-                  `${Math.round(
-                    ((Number(sub.marks) || 0) /
-                      (Number(sub.max) || 100)) *
-                      100
-                  )}%`}
-              </div>
-            </React.Fragment>
-          );
-        })}
+        <div
+          className="absolute font-bold text-[#081d3d] text-[10px] sm:text-[12.5px] -translate-x-1/2 -translate-y-1/2 text-center"
+          style={{
+            left: '90.68%',
+            top: topY,
+            fontFamily: "'Times New Roman', Times, serif",
+            lineHeight: 1,
+            zIndex: 1,
+          }}
+        >
+          {sub.pct ||
+            `${Math.round(
+              ((Number(sub.marks) || 0) /
+                (Number(sub.max) || 100)) *
+                100
+            )}%`}
+        </div>
+      </React.Fragment>
+    );
+  })}
 
       {/* =====================================================
           SUMMARY SECTION (hidden when hideMarks is set)
@@ -1744,7 +1764,10 @@ export default function OfficialMarksheetView({
             <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
               <button
                 type="button"
-                onClick={() => setIsFormModalOpen(false)}
+                onClick={() => {
+                  handleSaveSchoolDetails(customSchoolName, customSchoolSubtitle, customSchoolMotto, customSchoolLogo);
+                  setIsFormModalOpen(false);
+                }}
                 className="px-5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs sm:text-sm transition cursor-pointer shadow-md"
               >
                 Save & Done

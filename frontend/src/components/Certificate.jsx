@@ -5,6 +5,13 @@ import { Upload, Download, Loader2, Building2, Image as ImageIcon, X, PenTool } 
 import { exportPdfFromElement } from '../utils/pdfExport';
 
 import { getCoursePrefix } from '../utils/authStorage';
+import {
+  getStudentScopeKey,
+  readStudentCustomHeader,
+  saveStudentCustomHeader,
+  readStudentCustomSignature,
+  saveStudentCustomSignature,
+} from '../utils/studentDataHelpers';
 
 import shieldLogo from '../assets/bsel-shield-logo.png';
 
@@ -20,38 +27,6 @@ import authSignSeal from '../assets/authorized-signature-seal.png';
 const NAVY = '#13427a';
 
 const GOLD = '#c9a227';
-
-const KEY_SIGN = 'bsel_certificate_director_signature';
-
-const KEY_HEADER = 'bsel_certificate_school_header';
-
-const readHeader = () => {
-
-  try {
-
-    return JSON.parse(localStorage.getItem(KEY_HEADER) || '{}');
-
-  } catch {
-
-    return {};
-
-  }
-
-};
-
-const readSignature = () => {
-
-  try {
-
-    return localStorage.getItem(KEY_SIGN) || null;
-
-  } catch {
-
-    return null;
-
-  }
-
-};
 
 const formatAddress = (addr) => {
 
@@ -85,6 +60,53 @@ const formatAddress = (addr) => {
 
   return { line1: titleCased, line2: '' };
 
+};
+
+const formatSingleLineAddress = (addr) => {
+  if (!addr) return 'Tenkasi, Tamil Nadu';
+  const cleaned = addr.replace(/,([^\s])/g, ', $1').trim();
+  return cleaned
+    .split(' ')
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(' ');
+};
+
+const splitCourseName = (course) => {
+  if (!course) return [''];
+  const trimmed = course.trim();
+  if (trimmed.length <= 22) {
+    return [trimmed];
+  }
+
+  // If there's an '&', try splitting around '&'
+  if (trimmed.includes('&')) {
+    const parts = trimmed.split('&');
+    if (parts.length === 2) {
+      const part1 = parts[0].trim() + ' &';
+      const part2 = parts[1].trim();
+      if (part1.length <= 26 && part2.length <= 26) {
+        return [part1, part2];
+      }
+    }
+  }
+
+  // Word-based split
+  const words = trimmed.split(/\s+/);
+  if (words.length === 1) return [trimmed];
+
+  let line1 = '';
+  let line2 = '';
+  for (let i = 0; i < words.length; i++) {
+    const candidate = line1 ? `${line1} ${words[i]}` : words[i];
+    if (candidate.length <= 22 || !line1) {
+      line1 = candidate;
+    } else {
+      line2 = words.slice(i).join(' ');
+      break;
+    }
+  }
+
+  return line2 ? [line1, line2] : [line1];
 };
 
 const readFileAsDataUrl = (file, cb) => {
@@ -143,6 +165,12 @@ export default function Certificate({
 
   onDirectorSignatureUpload = null,
 
+  studentId = null,
+
+  admissionNo = null,
+
+  student = null,
+
 }) {
 
   const wrapperRef = useRef(null);
@@ -157,48 +185,81 @@ export default function Certificate({
 
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
 
-  // ----- School header (name / subtitle / motto / logo), persisted -----
+  // ----- Student-scoped key derivation -----
+  const scopeKey = getStudentScopeKey(student || {
+    studentId,
+    admissionNo,
+    registrationNo,
+    studentName,
+  });
 
-  const saved = readHeader();
+  // ----- School header (name / subtitle / motto / logo), student-scoped & persisted -----
+  const savedHeader = readStudentCustomHeader(scopeKey);
+  const savedSign = readStudentCustomSignature(scopeKey);
 
-  const [headerName, setHeaderName] = useState(schoolName || saved.name || centreName?.toUpperCase() || 'RISING STARS');
+  const defaultName = schoolName || savedHeader?.name || (centreName ? centreName.toUpperCase() : 'RISING STARS');
+  const defaultSub = schoolSubtitle || savedHeader?.subtitle || 'VISION FOUNDATION';
+  const defaultMotto = schoolMotto || savedHeader?.motto || 'EDUCATION • EMPOWERMENT • EXCELLENCE';
+  const defaultLogo = schoolLogo || savedHeader?.logo || null;
+  const defaultSign = directorSignature || (savedSign !== null ? savedSign : null);
 
-  const [headerSubtitle, setHeaderSubtitle] = useState(schoolSubtitle || saved.subtitle || 'VISION FOUNDATION');
+  const [headerName, setHeaderName] = useState(defaultName);
+  const [headerSubtitle, setHeaderSubtitle] = useState(defaultSub);
+  const [headerMotto, setHeaderMotto] = useState(defaultMotto);
+  const [headerLogo, setHeaderLogo] = useState(defaultLogo);
+  const [directorSign, setDirectorSign] = useState(defaultSign);
 
-  const [headerMotto, setHeaderMotto] = useState(schoolMotto || saved.motto || 'EDUCATION • EMPOWERMENT • EXCELLENCE');
+  // Sync state whenever the student / scopeKey changes (prevent cross-student leakage)
+  useEffect(() => {
+    const customH = readStudentCustomHeader(scopeKey);
+    const customS = readStudentCustomSignature(scopeKey);
 
-  const [headerLogo, setHeaderLogo] = useState(schoolLogo || saved.logo || null);
+    const baseName = schoolName || (centreName ? centreName.toUpperCase() : 'RISING STARS');
+    const baseSub = schoolSubtitle || 'VISION FOUNDATION';
+    const baseMotto = schoolMotto || 'EDUCATION • EMPOWERMENT • EXCELLENCE';
+    const baseLogo = schoolLogo || null;
+    const baseSign = directorSignature || null;
 
-  // ----- Principal signature, persisted -----
+    setHeaderName(customH?.name !== undefined ? customH.name : baseName);
+    setHeaderSubtitle(customH?.subtitle !== undefined ? customH.subtitle : baseSub);
+    setHeaderMotto(customH?.motto !== undefined ? customH.motto : baseMotto);
+    setHeaderLogo(customH?.logo !== undefined ? customH.logo : baseLogo);
+    setDirectorSign(customS !== null ? customS : baseSign);
+  }, [scopeKey, schoolName, schoolSubtitle, schoolMotto, schoolLogo, centreName, directorSignature]);
 
-  const [directorSign, setDirectorSign] = useState(directorSignature || readSignature());
+  // Real-time synchronization across Certificate and Marksheet for the same student
+  useEffect(() => {
+    const handleHeaderUpdate = (e) => {
+      if (e.detail?.scopeKey === scopeKey) {
+        const d = e.detail.data;
+        if (d?.name !== undefined) setHeaderName(d.name);
+        if (d?.subtitle !== undefined) setHeaderSubtitle(d.subtitle);
+        if (d?.motto !== undefined) setHeaderMotto(d.motto);
+        if (d?.logo !== undefined) setHeaderLogo(d.logo);
+      }
+    };
+    const handleSignUpdate = (e) => {
+      if (e.detail?.scopeKey === scopeKey) {
+        setDirectorSign(e.detail.signature || null);
+      }
+    };
+    window.addEventListener('bsel_student_custom_header_updated', handleHeaderUpdate);
+    window.addEventListener('bsel_student_custom_signature_updated', handleSignUpdate);
+    return () => {
+      window.removeEventListener('bsel_student_custom_header_updated', handleHeaderUpdate);
+      window.removeEventListener('bsel_student_custom_signature_updated', handleSignUpdate);
+    };
+  }, [scopeKey]);
 
-  useEffect(() => { if (schoolName) setHeaderName(schoolName); }, [schoolName]);
-
-  useEffect(() => { if (schoolSubtitle) setHeaderSubtitle(schoolSubtitle); }, [schoolSubtitle]);
-
-  useEffect(() => { if (schoolMotto) setHeaderMotto(schoolMotto); }, [schoolMotto]);
-
-  useEffect(() => { if (schoolLogo) setHeaderLogo(schoolLogo); }, [schoolLogo]);
-
-  useEffect(() => { if (directorSignature) setDirectorSign(directorSignature); }, [directorSignature]);
-
-  const saveHeader = (next) => {
-
-    try {
-
-      localStorage.setItem(KEY_HEADER, JSON.stringify({
-
-        name: headerName, subtitle: headerSubtitle, motto: headerMotto, logo: headerLogo, ...next,
-
-      }));
-
-    } catch (e) {
-
-      console.warn('Could not persist certificate header:', e);
-
-    }
-
+  const saveHeader = (next = {}) => {
+    const payload = {
+      name: headerName,
+      subtitle: headerSubtitle,
+      motto: headerMotto,
+      logo: headerLogo,
+      ...next,
+    };
+    saveStudentCustomHeader(scopeKey, payload);
   };
 
   // ----- Derived certificate values -----
@@ -231,6 +292,32 @@ export default function Certificate({
 
   const { line1: addr1, line2: addr2 } = formatAddress(centreAddress);
 
+  const displayAddress = formatSingleLineAddress(centreAddress);
+
+  const courseLines = splitCourseName(courseUpper);
+
+  const leftRows = [
+    { label: 'Registration No', value: registrationNo },
+    { label: 'Certificate No', value: displayCertNo },
+    { label: 'Course', value: courseLines[0] },
+    ...(courseLines.length > 1
+      ? [
+          { label: null, value: courseLines[1] },
+          { label: 'Level', value: cleanLevel },
+        ]
+      : [
+          { label: 'Level', value: cleanLevel },
+        ]),
+  ];
+
+  const rightRows = [
+    { label: 'School / Examination Centre', value: centreName },
+    { label: 'Code', value: centreCode },
+    { label: 'Address', value: displayAddress },
+    { label: 'Duration', value: duration },
+    { label: 'Date of Issue', value: issueDate },
+  ];
+
   const formatCertificateTitle = (type) => {
     if (!type) return 'Certificate of Completion';
     const trimmed = String(type).trim();
@@ -254,6 +341,10 @@ export default function Certificate({
     headerSubtitle.length <= 12 ? 20 :
     headerSubtitle.length <= 17 ? 18 :
     headerSubtitle.length <= 22 ? 16.5 : 15;
+
+  const courseFontSize =
+    courseUpper.length > 25 ? 16 :
+    courseUpper.length > 18 ? 18 : 20.5;
 
   const mottoFontSize =
     headerMotto.length <= 18 ? 15 :
@@ -328,7 +419,7 @@ export default function Certificate({
 
       setDirectorSign(url);
 
-      try { localStorage.setItem(KEY_SIGN, url); } catch {}
+      saveStudentCustomSignature(scopeKey, url);
 
       onDirectorSignatureUpload?.(url);
 
@@ -340,7 +431,7 @@ export default function Certificate({
 
     setDirectorSign(null);
 
-    try { localStorage.removeItem(KEY_SIGN); } catch {}
+    saveStudentCustomSignature(scopeKey, null);
 
     onDirectorSignatureUpload?.(null);
 
@@ -606,7 +697,14 @@ export default function Certificate({
 
             <div className="flex justify-end pt-3 border-t border-slate-800">
 
-              <button type="button" onClick={() => setIsFormModalOpen(false)} className="px-5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-sm">
+              <button
+                type="button"
+                onClick={() => {
+                  saveHeader({ name: headerName, subtitle: headerSubtitle, motto: headerMotto, logo: headerLogo });
+                  setIsFormModalOpen(false);
+                }}
+                className="px-5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-sm transition cursor-pointer shadow-md"
+              >
 
                 Save & Done
 
@@ -662,16 +760,14 @@ export default function Certificate({
               <feDropShadow dx="0" dy="1.5" stdDeviation="0.8" floodColor="#010710" floodOpacity="0.85" />
             </filter>
 
-            <pattern id="bsel-wm" width="60" height="30" patternUnits="userSpaceOnUse">
-              <text x="4" y="18" fontFamily="Georgia, serif" fontSize="12" fontWeight="700" fill={NAVY} fillOpacity="0.07">B★SEL</text>
+            <pattern id="bsel-wm" width="84" height="68" patternUnits="userSpaceOnUse">
+              <text x="42" y="22" textAnchor="middle" fontFamily="Georgia, serif" fontSize="15" fontWeight="700" fill={NAVY} fillOpacity="0.09">B★SEL</text>
+              <text x="0" y="56" textAnchor="middle" fontFamily="Georgia, serif" fontSize="15" fontWeight="700" fill={NAVY} fillOpacity="0.09">B★SEL</text>
+              <text x="84" y="56" textAnchor="middle" fontFamily="Georgia, serif" fontSize="15" fontWeight="700" fill={NAVY} fillOpacity="0.09">B★SEL</text>
             </pattern>
 
-            <pattern id="bsel-strip" x="24" y="137" width="46" height="12" patternUnits="userSpaceOnUse">
-              <text x="23" y="9" textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="7.5" fontWeight="800" fill="#ffffff" letterSpacing="0.5">B★SEL</text>
-            </pattern>
-
-            <pattern id="bsel-strip" x="24" y="137" width="46" height="12" patternUnits="userSpaceOnUse">
-              <text x="23" y="9" textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="7.5" fontWeight="800" fill="#ffffff" letterSpacing="0.5">B★SEL</text>
+            <pattern id="bsel-strip" x="24" y="134" width="88" height="22" patternUnits="userSpaceOnUse">
+              <text x="44" y="15.5" textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="11" fontWeight="800" fill="#ebd287" letterSpacing="0.8">B ★ S E L</text>
             </pattern>
 
           </defs>
@@ -715,16 +811,16 @@ export default function Certificate({
             Presents through its educational initiative
           </text>
           <g>
-            <text x="216" y="106" textAnchor="end" fontFamily="Georgia, 'Times New Roman', serif" fontWeight="900" fontSize="56" fill={NAVY}>
+            <text x="222.4" y="104.1" textAnchor="end" fontFamily="Georgia, 'Times New Roman', serif" fontWeight="900" fontSize="50" fill={NAVY}>
               B
             </text>
             <polygon
-              points="242.5,70.0 246.8,82.5 260.1,82.8 249.5,90.8 253.4,103.5 242.5,95.9 231.6,103.5 235.5,90.8 224.9,82.8 238.2,82.5"
+              points="246.1,71.9 249.9,83.1 261.8,83.4 252.3,90.5 255.8,101.8 246.1,95.1 236.4,101.8 239.8,90.5 230.4,83.4 242.2,83.1"
               fill="url(#bsel-gold)"
               stroke={GOLD}
               strokeWidth="0.5"
             />
-            <text x="269" y="106" textAnchor="start" fontFamily="Georgia, 'Times New Roman', serif" fontWeight="900" fontSize="56" fill={NAVY} letterSpacing="1">
+            <text x="269.8" y="104.1" textAnchor="start" fontFamily="Georgia, 'Times New Roman', serif" fontWeight="900" fontSize="50" fill={NAVY} letterSpacing="1">
               SEL
             </text>
           </g>
@@ -742,7 +838,7 @@ export default function Certificate({
             {headerName && (
               <text
                 x={headerLogo ? "722" : "740"}
-                y="58"
+                y="66"
                 textAnchor="middle"
                 fontFamily="'Cinzel', 'Outfit', 'Plus Jakarta Sans', Georgia, 'Times New Roman', serif"
                 fontWeight="900"
@@ -758,7 +854,7 @@ export default function Certificate({
             {headerSubtitle && (
               <text
                 x={headerLogo ? "722" : "740"}
-                y="84"
+                y="91"
                 textAnchor="middle"
                 fontFamily="'Outfit', 'Plus Jakarta Sans', Arial, sans-serif"
                 fontWeight="800"
@@ -774,7 +870,7 @@ export default function Certificate({
             {headerMotto && (
               <text
                 x={headerLogo ? "722" : "740"}
-                y="109"
+                y="115"
                 textAnchor="middle"
                 fontFamily="'Outfit', 'Plus Jakarta Sans', Arial, sans-serif"
                 fontWeight="700"
@@ -835,8 +931,8 @@ export default function Certificate({
           </g>
 
           {/* Blue accent stripe */}
-          <rect x="24" y="137" width="976" height="12" fill="#0d2f5c" stroke={GOLD} strokeWidth="0.8" />
-          <rect x="24" y="137" width="976" height="12" fill="url(#bsel-strip)" />
+          <rect x="24" y="134" width="976" height="22" fill="#0b2a55" stroke={GOLD} strokeWidth="1.5" />
+          <rect x="24" y="134" width="976" height="22" fill="url(#bsel-strip)" />
 
           {/* Title ribbon */}
           {/* Left Swallowtail Tail */}
@@ -930,29 +1026,43 @@ export default function Certificate({
 
           {/* Candidate name */}
 
-          <text x="512" y="288" textAnchor="middle" fontFamily="Georgia, serif" fontStyle="italic" fontWeight="700" fontSize="30" fill={NAVY}>
+          <text x="512" y="287" textAnchor="middle" fontFamily="Georgia, serif" fontStyle="italic" fontWeight="700" fontSize="30" fill={NAVY}>
 
             {studentName || 'Candidate Name'}
 
           </text>
 
-          <line x1="261" y1="295" x2="763" y2="295" stroke={NAVY} strokeWidth="2" />
+          <line x1="261" y1="294" x2="763" y2="294" stroke={NAVY} strokeWidth="2" />
 
-          <text x="512" y="317" textAnchor="middle" fontFamily="Georgia, serif" fontWeight="700" fontSize="19" fill={NAVY}>
+          <text x="512" y="314" textAnchor="middle" fontFamily="Georgia, serif" fontWeight="700" fontSize="17.5" fill={NAVY}>
 
             has successfully completed
 
           </text>
 
-          {/* Level hexagon badge */}
+          {/* Enrolled Subject / Course Name */}
+          <text
+            x="512"
+            y="339"
+            textAnchor="middle"
+            fontFamily="'Cinzel', 'Outfit', Georgia, serif"
+            fontWeight="900"
+            fontSize={courseFontSize}
+            letterSpacing="2.5"
+            fill={NAVY}
+          >
+            {courseUpper}
+          </text>
 
-          <polygon points="313,372 382,368 382,376" fill={GOLD} />
+          {/* Level hexagon badge (reduced border) */}
 
-          <polygon points="642,368 710,372 642,376" fill={GOLD} />
+          <polygon points="313,372 382,369 382,375" fill={GOLD} />
 
-          <polygon points="394,372 414,350 612,350 632,372 612,394 414,394" fill="#fff" stroke={GOLD} strokeWidth="4" />
+          <polygon points="642,369 711,372 642,375" fill={GOLD} />
 
-          <text x="513" y="378" textAnchor="middle" fontFamily="Georgia, serif" fontWeight="700" fontSize="14" letterSpacing="2" fill={NAVY}>
+          <polygon points="394,372 414,352 612,352 632,372 612,392 414,392" fill="#fff" stroke={GOLD} strokeWidth="1.8" />
+
+          <text x="512" y="377" textAnchor="middle" fontFamily="'Cinzel', Georgia, serif" fontWeight="800" fontSize="13.5" letterSpacing="2" fill={NAVY}>
 
             {cleanLevel.toUpperCase()}
 
@@ -974,68 +1084,51 @@ export default function Certificate({
 
           <g fontFamily="'Times New Roman', Times, serif" fontWeight="700" fontSize="15" fill={NAVY}>
 
-            {[
-
-              ['Registration No', registrationNo],
-
-              ['Certificate No', displayCertNo],
-
-              ['Course', courseUpper],
-
-              ['Level', cleanLevel],
-
-              ['Duration', duration],
-
-            ].map(([label, value], i) => {
-
+            {leftRows.map((row, i) => {
               const y = [464, 485, 507, 528, 550][i];
-
               return (
-
-                <g key={label}>
-
-                  <text x="82" y={y}>{label}</text>
-
-                  <text x="213" y={y} textAnchor="middle">:</text>
-
-                  <text x="232" y={y}>{value}</text>
-
+                <g key={i}>
+                  {row.label && <text x="82" y={y}>{row.label}</text>}
+                  {row.label && <text x="213" y={y} textAnchor="middle">:</text>}
+                  <text
+                    x="232"
+                    y={y}
+                    {...(row.value && row.value.length > 24
+                      ? {
+                          fontSize: row.value.length > 27 ? '13' : '14',
+                          textLength: row.value.length > 26 ? '265' : undefined,
+                          lengthAdjust: row.value.length > 26 ? 'spacingAndGlyphs' : undefined,
+                        }
+                      : {})}
+                  >
+                    {row.value}
+                  </text>
                 </g>
-
               );
-
             })}
 
-            {[
-
-              ['School / Examination Centre', centreName],
-
-              ['Code', centreCode],
-
-              ['Address', addr1],
-
-              [null, addr2],
-
-              ['Date of Issue', issueDate],
-
-            ].map(([label, value], i) => {
-
+            {rightRows.map((row, i) => {
               const y = [464, 485, 507, 528, 550][i];
-
+              const isAddress = row.label === 'Address';
               return (
-
                 <g key={i}>
-
-                  {label && <text x="533" y={y}>{label}</text>}
-
-                  {label && <text x="763" y={y} textAnchor="middle">:</text>}
-
-                  <text x="783" y={y}>{value}</text>
-
+                  {row.label && <text x="533" y={y}>{row.label}</text>}
+                  {row.label && <text x="763" y={y} textAnchor="middle">:</text>}
+                  <text
+                    x="783"
+                    y={y}
+                    {...(isAddress && row.value && row.value.length > 20
+                      ? {
+                          fontSize: row.value.length > 26 ? '11.5' : '13',
+                          textLength: row.value.length > 24 ? '160' : undefined,
+                          lengthAdjust: row.value.length > 24 ? 'spacingAndGlyphs' : undefined,
+                        }
+                      : {})}
+                  >
+                    {row.value}
+                  </text>
                 </g>
-
               );
-
             })}
 
           </g>
@@ -1050,15 +1143,15 @@ export default function Certificate({
 
           </text>
 
-          <text x="441" y="603" textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="8.5" fill={NAVY}>Registered Under</text>
+          <text x="418" y="603" textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="8.5" fill={NAVY}>Registered Under</text>
 
-          <text x="566" y="603" textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="8.5" fill={NAVY}>Authorized Affiliates</text>
+          <text x="542" y="603" textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="8.5" fill={NAVY}>Authorized Affiliates</text>
 
-          <image href={msmeLogo} x="410" y="606" width="54" height="60" preserveAspectRatio="xMidYMid meet" />
+          <image href={msmeLogo} x="398" y="614" width="40" height="46" preserveAspectRatio="xMidYMid meet" />
 
-          <image href={iafLogo} x="478" y="614" width="70" height="43" preserveAspectRatio="xMidYMid meet" />
+          <image href={iafLogo} x="474" y="615" width="70" height="44" preserveAspectRatio="xMidYMid meet" />
 
-          <image href={isoLogo} x="566" y="608" width="48" height="48" preserveAspectRatio="xMidYMid meet" />
+          <image href={isoLogo} x="564" y="614" width="46" height="46" preserveAspectRatio="xMidYMid meet" />
 
           <text x="512" y="688" textAnchor="middle" fontFamily="Arial, sans-serif" fontWeight="700" fontSize="11" fill={NAVY}>
 
