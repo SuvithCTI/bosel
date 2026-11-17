@@ -89,7 +89,11 @@ export default function AdminPaymentsPage({
             <span>Central Payment Sectors & Financial Management</span>
           </h2>
           <p className="text-xs text-slate-500 mt-0.5">
+<<<<<<< HEAD
             Complete ledger tracking course entry fees, Event Competitions, Kit Dispatches, and Franchise Affiliation payments.
+=======
+            Complete ledger tracking Course Fee, Event Fee, and Franchise Fee payments as offered across the B★SEL website.
+>>>>>>> 84c8d5ee1944be37c4c3585923c61fe3603f2358
           </p>
         </div>
 
@@ -116,55 +120,95 @@ export default function AdminPaymentsPage({
         </div>
       </div>
 
-      {/* 4 Financial Sector Cards */}
+      {/* Financial Sector Overview Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
           <div className="text-[10px] font-bold text-slate-400 uppercase">Sector 1</div>
+<<<<<<< HEAD
           <div className="text-xs font-black text-sky-900 mt-0.5">Course Entry Fees & Admissions</div>
           <div className="text-xl font-black text-slate-950 mt-1">₹48,500</div>
           <span className="text-[10px] text-slate-500">Student level admissions</span>
+=======
+          <div className="text-xs font-black text-sky-900 mt-0.5">Entry & Monthly Fee</div>
+          <div className="text-xl font-black text-slate-950 mt-1">
+            ₹{filteredPayments
+              .filter(p => {
+                const s = (p.sector || '').toLowerCase();
+                return s.includes('entry') || s.includes('monthly') || s.includes('course') || s.includes('tuition');
+              })
+              .reduce((acc, p) => acc + (p.amountNum || parseInt(String(p.amount || 0).replace(/\D/g, ''), 10) || 0), 0)
+              .toLocaleString('en-IN')}
+          </div>
+          <span className="text-[10px] text-slate-500">Admissions & monthly tuition</span>
+>>>>>>> 84c8d5ee1944be37c4c3585923c61fe3603f2358
         </div>
 
         <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
           <div className="text-[10px] font-bold text-slate-400 uppercase">Sector 2</div>
-          <div className="text-xs font-black text-amber-900 mt-0.5">Competition & Events</div>
-          <div className="text-xl font-black text-slate-950 mt-1">₹38,000</div>
-          <span className="text-[10px] text-slate-500">State Championship tickets</span>
+          <div className="text-xs font-black text-amber-900 mt-0.5">Exam & Book Fee</div>
+          <div className="text-xl font-black text-slate-950 mt-1">
+            ₹{filteredPayments
+              .filter(p => {
+                const s = (p.sector || '').toLowerCase();
+                return s.includes('exam') || s.includes('book') || s.includes('toolkit') || s.includes('courseware');
+              })
+              .reduce((acc, p) => acc + (p.amountNum || parseInt(String(p.amount || 0).replace(/\D/g, ''), 10) || 0), 0)
+              .toLocaleString('en-IN')}
+          </div>
+          <span className="text-[10px] text-slate-500">Examinations & workbooks</span>
         </div>
 
         <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
           <div className="text-[10px] font-bold text-slate-400 uppercase">Sector 3</div>
-          <div className="text-xs font-black text-purple-900 mt-0.5">Toolkits & Courseware</div>
-          <div className="text-xl font-black text-slate-950 mt-1">₹23,000</div>
-          <span className="text-[10px] text-slate-500">Workbooks & Abacus frames</span>
+          <div className="text-xs font-black text-purple-900 mt-0.5">Event Fee</div>
+          <div className="text-xl font-black text-slate-950 mt-1">
+            ₹{filteredPayments
+              .filter(p => {
+                const s = (p.sector || '').toLowerCase();
+                return s.includes('event') || s.includes('competition');
+              })
+              .reduce((acc, p) => acc + (p.amountNum || parseInt(String(p.amount || 0).replace(/\D/g, ''), 10) || 0), 0)
+              .toLocaleString('en-IN')}
+          </div>
+          <span className="text-[10px] text-slate-500">State competitions & events</span>
         </div>
 
         <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
           <div className="text-[10px] font-bold text-slate-400 uppercase">Sector 4</div>
-          <div className="text-xs font-black text-emerald-900 mt-0.5">Franchise Affiliation</div>
-          <div className="text-xl font-black text-slate-950 mt-1">₹75,000</div>
-          <span className="text-[10px] text-slate-500">3 Branch Licenses</span>
+          <div className="text-xs font-black text-emerald-900 mt-0.5">Franchise Fee</div>
+          <div className="text-xl font-black text-slate-950 mt-1">
+            ₹{filteredPayments
+              .filter(p => (p.sector || '').toLowerCase().includes('franchise'))
+              .reduce((acc, p) => acc + (p.amountNum || parseInt(String(p.amount || 0).replace(/\D/g, ''), 10) || 0), 0)
+              .toLocaleString('en-IN')}
+          </div>
+          <span className="text-[10px] text-slate-500">Academy affiliations & licenses</span>
         </div>
       </div>
 
       {/* Filter Bar */}
       <div className="bg-white p-3 rounded-xl border border-slate-200 flex flex-wrap items-center justify-between gap-2.5">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs font-bold text-slate-500">Filter Sector:</span>
+          <span className="text-xs font-bold text-slate-500">Fee Sector:</span>
           <select
             value={paymentSectorFilter}
             onChange={(e) => setPaymentSectorFilter(e.target.value)}
             className="px-2.5 py-1 text-xs border border-slate-300 rounded-lg outline-none font-bold bg-white"
           >
             <option value="All">All Sectors</option>
+<<<<<<< HEAD
             <option value="Course Tuition">Course Entry Fee</option>
             <option value="Competition & Events">Competition & Events</option>
             <option value="Toolkits & Courseware">Toolkits & Courseware</option>
             <option value="Franchise Affiliation">Franchise Affiliation</option>
+=======
+>>>>>>> 84c8d5ee1944be37c4c3585923c61fe3603f2358
             <option value="Monthly Fee">Monthly Fee</option>
             <option value="Exam Fee">Exam Fee</option>
             <option value="Event Fee">Event Fee</option>
             <option value="Book Fee">Book Fee</option>
+            <option value="Entry Fee">Entry Fee</option>
+            <option value="Franchise Fee">Franchise Fee</option>
             <option value="Others">Others</option>
           </select>
 

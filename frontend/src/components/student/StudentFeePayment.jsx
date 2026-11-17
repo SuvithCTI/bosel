@@ -28,6 +28,18 @@ const FEE_TYPES = [
     titleClass: 'text-emerald-950',
   },
   {
+    name: 'Entry Fee',
+    cardClass: 'border-indigo-200 bg-gradient-to-br from-indigo-50 via-white to-blue-100 hover:border-indigo-400',
+    iconClass: 'bg-indigo-100 text-indigo-800 group-hover:bg-indigo-700 group-hover:text-white',
+    titleClass: 'text-indigo-950',
+  },
+  {
+    name: 'Franchise Fee',
+    cardClass: 'border-teal-200 bg-gradient-to-br from-teal-50 via-white to-emerald-100 hover:border-teal-400',
+    iconClass: 'bg-teal-100 text-teal-800 group-hover:bg-teal-700 group-hover:text-white',
+    titleClass: 'text-teal-950',
+  },
+  {
     name: 'Others',
     cardClass: 'border-rose-200 bg-gradient-to-br from-rose-50 via-white to-pink-100 hover:border-rose-400',
     iconClass: 'bg-rose-100 text-rose-800 group-hover:bg-rose-700 group-hover:text-white',
@@ -244,7 +256,7 @@ export default function StudentFeePayment({ student }) {
           <h2 className="text-base font-extrabold text-blue-950 sm:text-lg">Fee Payment</h2>
         </div>
 
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7">
           {FEE_TYPES.map(({ name, cardClass, iconClass, titleClass }) => (
             <button
               key={name}

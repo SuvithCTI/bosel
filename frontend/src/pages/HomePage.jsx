@@ -60,9 +60,9 @@ export default function HomePage({ setActivePage, onSelectProgram }) {
             {/* Hero Content (Below Image on Mobile, Left Column on Desktop) */}
             <div className="order-2 lg:order-1 lg:col-span-6 xl:col-span-5 space-y-4 sm:space-y-6 text-center lg:text-left">
               {/* Title */}
-              <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black font-heading text-[#0F2B5C] tracking-tight leading-[1.1]">
-                <span className="italic block font-serif">Learn. Create.</span>
-                <span className="italic block font-serif text-amber-500">Excel.</span>
+              <h1 className="text-2xl min-[380px]:text-[27px] sm:text-5xl md:text-6xl lg:text-7xl font-black font-heading text-[#0F2B5C] tracking-tight leading-tight sm:leading-[1.1] whitespace-nowrap sm:whitespace-normal">
+                <span className="italic inline sm:block font-serif">Learn. Create.</span>{' '}
+                <span className="italic inline sm:block font-serif text-amber-500">Excel.</span>
               </h1>
 
               {/* Subheading */}

@@ -429,7 +429,11 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
   const [showMarksheetModal, setShowMarksheetModal] = useState(false);
   const [selectedMarksheetStudent, setSelectedMarksheetStudent] = useState(null);
   const [viewingMergedPdfStudent, setViewingMergedPdfStudent] = useState(null);
+<<<<<<< HEAD
   const [viewingStudentDocumentMerge, setViewingStudentDocumentMerge] = useState(null);
+=======
+  const [viewingMergedQuestionPapers, setViewingMergedQuestionPapers] = useState(null);
+>>>>>>> 84c8d5ee1944be37c4c3585923c61fe3603f2358
   const [isMergeMode, setIsMergeMode] = useState(false);
   const [selectedStudentIds, setSelectedStudentIds] = useState([]);
   const [viewingAdmissionStudent, setViewingAdmissionStudent] = useState(null);
@@ -452,6 +456,8 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
   const hasOpenModal = Boolean(
     showAddStudentModal || 
     showMarksheetModal ||
+    viewingMergedPdfStudent ||
+    viewingMergedQuestionPapers ||
     viewingAdmissionStudent ||
     viewingStudentDocumentMerge ||
     viewingEventRegStudent ||
@@ -932,6 +938,8 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
       : `BSEL/${coursePrefix}/L${cleanLevel}/${seqDigits}`;
 
     const studentCertData = {
+      studentId: student.id || student._id || student.admissionNo || regNo,
+      admissionNo: student.admissionNo || regNo,
       studentName: student.studentName || 'Candidate Name',
       courseName: courseName,
       programPrefix: 'MINDSPARC',
@@ -945,7 +953,8 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
       centreAddress: student.address || 'second street, surandai,keelasurandai,tenkasi',
       issueDate: student.enrolmentDate || '05-10-2026',
       certificateType: 'COMPLETION',
-      studentPhoto: getStudentPhotoUrl(student) || student.studentPhoto || null
+      studentPhoto: getStudentPhotoUrl(student) || student.studentPhoto || null,
+      student: student
     };
 
     setCertData(studentCertData);
@@ -1007,6 +1016,8 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
 
     setSelectedMarksheetStudent({
       ...student,
+      studentId: student.id || student._id || student.admissionNo || regNo,
+      admissionNo: student.admissionNo || regNo,
       photoUrl: photo,
       studentPhoto: photo,
       registerNumber: regNo,
@@ -1059,8 +1070,20 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
       return;
     }
 
-    const selectedStudents = usersList.filter(u => selectedStudentIds.includes(u.userId));
+    const isBranchSection = currentAdminRole === 'Branch Head' || activeTab === 'branch_students';
+    const sourceList = isBranchSection ? branchStudents : usersList;
+    const selectedStudents = sourceList.filter(u => selectedStudentIds.includes(u.userId));
     if (selectedStudents.length === 0) return;
+
+    if (isBranchSection) {
+      // In this section: ONLY QUESTION PAPER SHOULD MERGE AS PDF!
+      setViewingMergedQuestionPapers({
+        students: selectedStudents,
+        branch: activeBranch || 'Branch'
+      });
+      showToast(`Loaded ${selectedStudents.length} Question Paper(s) for merged PDF export.`);
+      return;
+    }
 
     const studentPackages = selectedStudents.map((student, index) => {
       const photo = getStudentPhotoUrl(student, index) || student.studentPhoto || null;
@@ -1081,6 +1104,8 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
         : `BSEL/${coursePrefix}/L${cleanLevel}/${seqDigits}`;
 
       const certData = {
+        studentId: student.id || student._id || student.admissionNo || regNo,
+        admissionNo: student.admissionNo || regNo,
         studentName: student.studentName || 'Candidate Name',
         courseName: courseName,
         programPrefix: 'MINDSPARC',
@@ -1094,7 +1119,8 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
         centreAddress: student.address || 'second street, surandai,keelasurandai,tenkasi',
         issueDate: student.enrolmentDate || '05-10-2026',
         certificateType: 'COMPLETION',
-        studentPhoto: photo
+        studentPhoto: photo,
+        student: student
       };
 
       const subjects = getMarksheetSubjects(student);
@@ -1104,6 +1130,8 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
 
       const marksheetData = {
         ...student,
+        studentId: student.id || student._id || student.admissionNo || regNo,
+        admissionNo: student.admissionNo || regNo,
         photoUrl: photo,
         studentPhoto: photo,
         registerNumber: regNo,
@@ -1304,7 +1332,18 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
 
   // Filtered Payments for Super Admin
   const filteredPayments = paymentsList.filter(p => {
-    const matchSector = paymentSectorFilter === 'All' || p.sector === paymentSectorFilter;
+    const matchSector = paymentSectorFilter === 'All' || (() => {
+      const s = (p.sector || '').toLowerCase();
+      const f = paymentSectorFilter.toLowerCase();
+      if (f === 'monthly fee') return s.includes('monthly') || s.includes('tuition');
+      if (f === 'exam fee') return s.includes('exam');
+      if (f === 'event fee') return s.includes('event') || s.includes('competition');
+      if (f === 'book fee') return s.includes('book') || s.includes('toolkit') || s.includes('courseware');
+      if (f === 'entry fee') return s.includes('entry') || s.includes('course') || s.includes('admission');
+      if (f === 'franchise fee') return s.includes('franchise');
+      if (f === 'others') return s.includes('other');
+      return s === f || s.includes(f) || f.includes(s);
+    })();
     const matchBranch = paymentBranchFilter === 'All' || (() => {
       const b = (p.branch || '').toLowerCase();
       const target = paymentBranchFilter.toLowerCase();
@@ -2107,8 +2146,13 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
         setSelectedMarksheetStudent={setSelectedMarksheetStudent}
         viewingMergedPdfStudent={viewingMergedPdfStudent}
         setViewingMergedPdfStudent={setViewingMergedPdfStudent}
+<<<<<<< HEAD
         viewingStudentDocumentMerge={viewingStudentDocumentMerge}
         setViewingStudentDocumentMerge={setViewingStudentDocumentMerge}
+=======
+        viewingMergedQuestionPapers={viewingMergedQuestionPapers}
+        setViewingMergedQuestionPapers={setViewingMergedQuestionPapers}
+>>>>>>> 84c8d5ee1944be37c4c3585923c61fe3603f2358
         viewingAdmissionStudent={viewingAdmissionStudent}
         setViewingAdmissionStudent={setViewingAdmissionStudent}
         viewingEventRegStudent={viewingEventRegStudent}

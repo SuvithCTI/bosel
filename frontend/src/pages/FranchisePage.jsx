@@ -464,7 +464,7 @@ export default function FranchisePage({ setActivePage }) {
       name: 'Certification', 
       tag: 'Official Credentials',
       icon: Award,
-      description: 'Awarding tamper-evident, QR-coded B⭐SEL certificates with 24/7 digital verification backing.',
+      description: 'Awarding tamper-evident, QR-coded B★SEL certificates with 24/7 digital verification backing.',
       highlights: ['QR-Coded Certificates', 'Digital Verification URL', 'Student Convocation'],
       theme: {
         cardBg: 'bg-gradient-to-b from-rose-100/75 via-rose-50/40 to-white',
@@ -545,7 +545,7 @@ export default function FranchisePage({ setActivePage }) {
         <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
           <img 
             src={franchiseHeroBg} 
-            alt="B⭐SEL Learning Centre" 
+            alt="B★SEL Learning Centre" 
             className="w-full h-full object-cover object-center filter saturate-[1.2] brightness-[0.98]" 
           />
           {/* Soft white overlay to keep text 100% readable while making the background image richly visible */}
@@ -563,12 +563,12 @@ export default function FranchisePage({ setActivePage }) {
             <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-black font-heading tracking-tight text-slate-900 leading-[1.25] sm:leading-[1.15] max-w-5xl mx-auto">
               Build Your Learning Centre With{' '}
               <span className="text-[#0F2B5C] whitespace-nowrap">
-                B<span className="text-amber-500">⭐</span>SEL
+                B<span className="text-[#0F2B5C] font-bold inline-block text-[1.05em] -translate-y-[2px]">★</span>SEL
               </span>
             </h1>
 
             <p className="text-slate-600 text-sm sm:text-base lg:text-xl font-medium leading-relaxed sm:leading-loose max-w-3xl lg:max-w-4xl mx-auto px-1 sm:px-0">
-              B⭐SEL provides franchise opportunities for individuals and education professionals interested in offering structured skill-development programs in their area.
+              B<span className="text-[#0F2B5C] font-bold">★</span>SEL provides franchise opportunities for individuals and education professionals interested in offering structured skill-development programs in their area.
             </p>
 
             <div className="pt-2 sm:pt-4 flex items-center justify-center w-full">
@@ -589,7 +589,7 @@ export default function FranchisePage({ setActivePage }) {
 
 
       {/* =========================================================================
-          2. WHAT B⭐SEL PROVIDES (3D AUTOMATIC 7-CARD STAGE: 1 CENTER, 3 LEFT, 3 RIGHT)
+          2. WHAT B★SEL PROVIDES (3D AUTOMATIC 7-CARD STAGE: 1 CENTER, 3 LEFT, 3 RIGHT)
          ========================================================================= */}
       <section 
         className="py-10 sm:py-14 lg:py-18 bg-gradient-to-b from-slate-100/90 via-white to-slate-100/70 border-b border-slate-200 relative overflow-hidden select-none"
@@ -604,7 +604,7 @@ export default function FranchisePage({ setActivePage }) {
           {/* Header */}
           <div className="text-center max-w-3xl mx-auto mb-6 sm:mb-9 space-y-2">
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black font-heading text-slate-900 tracking-tight">
-              What B<span className="text-amber-500">⭐</span>SEL Provides
+              What B<span className="text-[#0F2B5C] font-bold inline-block text-[1.05em] -translate-y-[2px]">★</span>SEL Provides
             </h2>
             
             <p className="text-slate-600 text-xs sm:text-sm lg:text-base font-medium max-w-2xl mx-auto leading-relaxed px-2">
@@ -839,7 +839,7 @@ export default function FranchisePage({ setActivePage }) {
               Partnership Model
             </h2>
             <p className="text-slate-700 text-xs sm:text-sm lg:text-base font-medium max-w-2xl mx-auto leading-relaxed px-2">
-              B⭐SEL provides the required academic and program support to help partners establish and deliver the programs effectively.
+              B★SEL provides the required academic and program support to help partners establish and deliver the programs effectively.
             </p>
           </div>
 

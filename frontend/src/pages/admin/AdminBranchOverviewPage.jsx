@@ -28,6 +28,22 @@ export default function AdminBranchOverviewPage({
   return (
     <div className="space-y-5 animate-in fade-in duration-200">
 
+      {/* Branch Name Banner */}
+      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+        <div className="w-12 h-12 rounded-xl bg-[#0c234b] text-amber-400 flex items-center justify-center shrink-0">
+          <Building className="w-6 h-6" />
+        </div>
+
+        <div className="min-w-0">
+          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
+            Current Branch
+          </span>
+          <h2 className="text-lg sm:text-xl font-black text-slate-950 truncate">
+            {activeBranch || 'No Branch Selected'}
+          </h2>
+        </div>
+      </div>
+
       {/* Branch Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
 
