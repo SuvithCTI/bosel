@@ -739,8 +739,8 @@ export default function Certificate({
               <feDropShadow dx="0" dy="1.5" stdDeviation="0.8" floodColor="#010710" floodOpacity="0.85" />
             </filter>
 
-            <pattern id="bsel-wm" width="60" height="30" patternUnits="userSpaceOnUse">
-              <text x="4" y="18" fontFamily="Georgia, serif" fontSize="12" fontWeight="700" fill={NAVY} fillOpacity="0.07">B★SEL</text>
+            <pattern id="bsel-wm" width="48" height="20" patternUnits="userSpaceOnUse">
+              <text x="3" y="14.5" fontFamily="Georgia, serif" fontSize="12" fontWeight="700" fill={NAVY} fillOpacity="0.12">B★SEL</text>
             </pattern>
 
             <pattern id="bsel-strip" x="24" y="135" width="56" height="20" patternUnits="userSpaceOnUse">
