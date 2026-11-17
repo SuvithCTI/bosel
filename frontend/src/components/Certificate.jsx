@@ -722,7 +722,7 @@ export default function Certificate({
 
       <div ref={wrapperRef} className="w-full max-w-[1024px]">
 
-        <svg viewBox="0 0 1024 723" xmlns="http://www.w3.org/2000/svg" className="w-full h-auto block bg-white shadow-2xl print:shadow-none">
+        <svg viewBox="-23 -17 1070 757" xmlns="http://www.w3.org/2000/svg" className="w-full h-auto block bg-white shadow-2xl print:shadow-none">
 
           <defs>
 
@@ -772,11 +772,11 @@ export default function Certificate({
 
           </defs>
 
-          {/* Background and borders */}
+          {/* Background and borders with elegant outer white margin */}
 
-          <rect width="1024" height="723" fill="#fff" />
+          <rect x="-23" y="-17" width="1070" height="757" fill="#fff" />
 
-          <rect width="1024" height="723" fill="url(#bsel-wm)" />
+          <rect x="6" y="6" width="1012" height="711" fill="url(#bsel-wm)" />
 
           <rect x="6" y="6" width="1012" height="711" fill="none" stroke={NAVY} strokeWidth="10" />
 
