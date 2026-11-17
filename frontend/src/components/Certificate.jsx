@@ -1054,15 +1054,15 @@ export default function Certificate({
             {courseUpper}
           </text>
 
-          {/* Level hexagon badge (reduced border) */}
+          {/* Level hexagon badge (compact size with gold border) */}
 
-          <polygon points="313,372 382,369 382,375" fill={GOLD} />
+          <polygon points="345,372 420,370 420,374" fill={GOLD} />
 
-          <polygon points="642,369 711,372 642,375" fill={GOLD} />
+          <polygon points="604,370 679,372 604,374" fill={GOLD} />
 
-          <polygon points="394,372 414,352 612,352 632,372 612,392 414,392" fill="#fff" stroke={GOLD} strokeWidth="1.8" />
+          <polygon points="432,372 447,358 577,358 592,372 577,386 447,386" fill="#fff" stroke={GOLD} strokeWidth="1.8" />
 
-          <text x="512" y="377" textAnchor="middle" fontFamily="'Cinzel', Georgia, serif" fontWeight="800" fontSize="13.5" letterSpacing="2" fill={NAVY}>
+          <text x="512" y="376.5" textAnchor="middle" fontFamily="'Cinzel', Georgia, serif" fontWeight="800" fontSize="12" letterSpacing="2" fill={NAVY}>
 
             {cleanLevel.toUpperCase()}
 
