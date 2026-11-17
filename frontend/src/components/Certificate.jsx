@@ -5,6 +5,13 @@ import { Upload, Download, Loader2, Building2, Image as ImageIcon, X, PenTool } 
 import { exportPdfFromElement } from '../utils/pdfExport';
 
 import { getCoursePrefix } from '../utils/authStorage';
+import {
+  getStudentScopeKey,
+  readStudentCustomHeader,
+  saveStudentCustomHeader,
+  readStudentCustomSignature,
+  saveStudentCustomSignature,
+} from '../utils/studentDataHelpers';
 
 import shieldLogo from '../assets/bsel-shield-logo.png';
 
@@ -20,38 +27,6 @@ import authSignSeal from '../assets/authorized-signature-seal.png';
 const NAVY = '#13427a';
 
 const GOLD = '#c9a227';
-
-const KEY_SIGN = 'bsel_certificate_director_signature';
-
-const KEY_HEADER = 'bsel_certificate_school_header';
-
-const readHeader = () => {
-
-  try {
-
-    return JSON.parse(localStorage.getItem(KEY_HEADER) || '{}');
-
-  } catch {
-
-    return {};
-
-  }
-
-};
-
-const readSignature = () => {
-
-  try {
-
-    return localStorage.getItem(KEY_SIGN) || null;
-
-  } catch {
-
-    return null;
-
-  }
-
-};
 
 const formatAddress = (addr) => {
 
@@ -190,6 +165,12 @@ export default function Certificate({
 
   onDirectorSignatureUpload = null,
 
+  studentId = null,
+
+  admissionNo = null,
+
+  student = null,
+
 }) {
 
   const wrapperRef = useRef(null);
@@ -204,48 +185,81 @@ export default function Certificate({
 
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
 
-  // ----- School header (name / subtitle / motto / logo), persisted -----
+  // ----- Student-scoped key derivation -----
+  const scopeKey = getStudentScopeKey(student || {
+    studentId,
+    admissionNo,
+    registrationNo,
+    studentName,
+  });
 
-  const saved = readHeader();
+  // ----- School header (name / subtitle / motto / logo), student-scoped & persisted -----
+  const savedHeader = readStudentCustomHeader(scopeKey);
+  const savedSign = readStudentCustomSignature(scopeKey);
 
-  const [headerName, setHeaderName] = useState(schoolName || saved.name || centreName?.toUpperCase() || 'RISING STARS');
+  const defaultName = schoolName || savedHeader?.name || (centreName ? centreName.toUpperCase() : 'RISING STARS');
+  const defaultSub = schoolSubtitle || savedHeader?.subtitle || 'VISION FOUNDATION';
+  const defaultMotto = schoolMotto || savedHeader?.motto || 'EDUCATION • EMPOWERMENT • EXCELLENCE';
+  const defaultLogo = schoolLogo || savedHeader?.logo || null;
+  const defaultSign = directorSignature || (savedSign !== null ? savedSign : null);
 
-  const [headerSubtitle, setHeaderSubtitle] = useState(schoolSubtitle || saved.subtitle || 'VISION FOUNDATION');
+  const [headerName, setHeaderName] = useState(defaultName);
+  const [headerSubtitle, setHeaderSubtitle] = useState(defaultSub);
+  const [headerMotto, setHeaderMotto] = useState(defaultMotto);
+  const [headerLogo, setHeaderLogo] = useState(defaultLogo);
+  const [directorSign, setDirectorSign] = useState(defaultSign);
 
-  const [headerMotto, setHeaderMotto] = useState(schoolMotto || saved.motto || 'EDUCATION • EMPOWERMENT • EXCELLENCE');
+  // Sync state whenever the student / scopeKey changes (prevent cross-student leakage)
+  useEffect(() => {
+    const customH = readStudentCustomHeader(scopeKey);
+    const customS = readStudentCustomSignature(scopeKey);
 
-  const [headerLogo, setHeaderLogo] = useState(schoolLogo || saved.logo || null);
+    const baseName = schoolName || (centreName ? centreName.toUpperCase() : 'RISING STARS');
+    const baseSub = schoolSubtitle || 'VISION FOUNDATION';
+    const baseMotto = schoolMotto || 'EDUCATION • EMPOWERMENT • EXCELLENCE';
+    const baseLogo = schoolLogo || null;
+    const baseSign = directorSignature || null;
 
-  // ----- Principal signature, persisted -----
+    setHeaderName(customH?.name !== undefined ? customH.name : baseName);
+    setHeaderSubtitle(customH?.subtitle !== undefined ? customH.subtitle : baseSub);
+    setHeaderMotto(customH?.motto !== undefined ? customH.motto : baseMotto);
+    setHeaderLogo(customH?.logo !== undefined ? customH.logo : baseLogo);
+    setDirectorSign(customS !== null ? customS : baseSign);
+  }, [scopeKey, schoolName, schoolSubtitle, schoolMotto, schoolLogo, centreName, directorSignature]);
 
-  const [directorSign, setDirectorSign] = useState(directorSignature || readSignature());
+  // Real-time synchronization across Certificate and Marksheet for the same student
+  useEffect(() => {
+    const handleHeaderUpdate = (e) => {
+      if (e.detail?.scopeKey === scopeKey) {
+        const d = e.detail.data;
+        if (d?.name !== undefined) setHeaderName(d.name);
+        if (d?.subtitle !== undefined) setHeaderSubtitle(d.subtitle);
+        if (d?.motto !== undefined) setHeaderMotto(d.motto);
+        if (d?.logo !== undefined) setHeaderLogo(d.logo);
+      }
+    };
+    const handleSignUpdate = (e) => {
+      if (e.detail?.scopeKey === scopeKey) {
+        setDirectorSign(e.detail.signature || null);
+      }
+    };
+    window.addEventListener('bsel_student_custom_header_updated', handleHeaderUpdate);
+    window.addEventListener('bsel_student_custom_signature_updated', handleSignUpdate);
+    return () => {
+      window.removeEventListener('bsel_student_custom_header_updated', handleHeaderUpdate);
+      window.removeEventListener('bsel_student_custom_signature_updated', handleSignUpdate);
+    };
+  }, [scopeKey]);
 
-  useEffect(() => { if (schoolName) setHeaderName(schoolName); }, [schoolName]);
-
-  useEffect(() => { if (schoolSubtitle) setHeaderSubtitle(schoolSubtitle); }, [schoolSubtitle]);
-
-  useEffect(() => { if (schoolMotto) setHeaderMotto(schoolMotto); }, [schoolMotto]);
-
-  useEffect(() => { if (schoolLogo) setHeaderLogo(schoolLogo); }, [schoolLogo]);
-
-  useEffect(() => { if (directorSignature) setDirectorSign(directorSignature); }, [directorSignature]);
-
-  const saveHeader = (next) => {
-
-    try {
-
-      localStorage.setItem(KEY_HEADER, JSON.stringify({
-
-        name: headerName, subtitle: headerSubtitle, motto: headerMotto, logo: headerLogo, ...next,
-
-      }));
-
-    } catch (e) {
-
-      console.warn('Could not persist certificate header:', e);
-
-    }
-
+  const saveHeader = (next = {}) => {
+    const payload = {
+      name: headerName,
+      subtitle: headerSubtitle,
+      motto: headerMotto,
+      logo: headerLogo,
+      ...next,
+    };
+    saveStudentCustomHeader(scopeKey, payload);
   };
 
   // ----- Derived certificate values -----
@@ -405,7 +419,7 @@ export default function Certificate({
 
       setDirectorSign(url);
 
-      try { localStorage.setItem(KEY_SIGN, url); } catch {}
+      saveStudentCustomSignature(scopeKey, url);
 
       onDirectorSignatureUpload?.(url);
 
@@ -417,7 +431,7 @@ export default function Certificate({
 
     setDirectorSign(null);
 
-    try { localStorage.removeItem(KEY_SIGN); } catch {}
+    saveStudentCustomSignature(scopeKey, null);
 
     onDirectorSignatureUpload?.(null);
 
@@ -683,7 +697,14 @@ export default function Certificate({
 
             <div className="flex justify-end pt-3 border-t border-slate-800">
 
-              <button type="button" onClick={() => setIsFormModalOpen(false)} className="px-5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-sm">
+              <button
+                type="button"
+                onClick={() => {
+                  saveHeader({ name: headerName, subtitle: headerSubtitle, motto: headerMotto, logo: headerLogo });
+                  setIsFormModalOpen(false);
+                }}
+                className="px-5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-sm transition cursor-pointer shadow-md"
+              >
 
                 Save & Done
 

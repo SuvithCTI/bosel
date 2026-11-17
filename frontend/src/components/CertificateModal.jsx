@@ -185,6 +185,9 @@ export default function CertificateModal({
               certificateType={certificateType}
               showControls={true}
               showUploadPhoto={false}
+              studentId={initialData?.studentId || initialData?.admissionNo || initialData?.id || registrationNo}
+              admissionNo={initialData?.admissionNo || initialData?.registerNumber || registrationNo}
+              student={initialData}
             />
           </div>
         </div>

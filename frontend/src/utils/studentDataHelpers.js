@@ -23,6 +23,9 @@ export const getStudentPhotoUrl = (student, index = 0) => {
 
 export const getStudentRegisterNumber = (student) => {
   if (!student) return 'AB26-001';
+  if (student.admissionNo && student.admissionNo !== 'Not provided' && !student.admissionNo.startsWith('BSEL-STU-')) {
+    return student.admissionNo;
+  }
   if (student.registerNumber && student.registerNumber !== 'Not provided' && !student.registerNumber.startsWith('BSEL-STU-')) {
     return student.registerNumber;
   }
@@ -131,4 +134,122 @@ export const getMarksheetSubjects = (student) => {
     { id: 4, name: 'Rapid Multi-Row Calculation Drills', max: 100, assessment: 100, practical: 100, marks: 97, pct: '97%' },
     { id: 5, name: 'Speed Arithmetic Accuracy & Viva', max: 100, assessment: 100, practical: 100, marks: 95, pct: '95%' }
   ];
+};
+
+/**
+ * Uniquely identifies a student for scoping document customizations
+ * (School name, subtitle, motto, logo, principal signature) to prevent cross-student leakage.
+ */
+export const getStudentScopeKey = (studentOrData) => {
+  if (!studentOrData) return 'default';
+  if (typeof studentOrData === 'string') {
+    const s = studentOrData.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '_');
+    return s || 'default';
+  }
+
+  const hasName = Boolean(studentOrData.studentName || studentOrData.name);
+  const hasRealAdmission = Boolean(studentOrData.admissionNo && studentOrData.admissionNo !== 'DR26-001');
+  const hasRealId = Boolean(studentOrData.studentId || studentOrData.id || studentOrData._id || studentOrData.userId);
+
+  if (!hasName && !hasRealAdmission && !hasRealId && (!studentOrData.registrationNo || studentOrData.registrationNo === 'DR26-001' || studentOrData.registrationNo === 'AB27-001')) {
+    return 'default';
+  }
+
+  const raw =
+    studentOrData.admissionNo ||
+    studentOrData.studentId ||
+    studentOrData.registerNumber ||
+    studentOrData.registrationNo ||
+    studentOrData.id ||
+    studentOrData._id ||
+    studentOrData.userId ||
+    studentOrData.studentName ||
+    studentOrData.name ||
+    '';
+
+  const clean = String(raw).trim().toLowerCase().replace(/[^a-z0-9_-]/g, '_');
+  return clean || 'default';
+};
+
+export const readStudentCustomHeader = (scopeKey) => {
+  if (!scopeKey) return null;
+  try {
+    const key = `bsel_cert_school_header_${scopeKey}`;
+    const saved = localStorage.getItem(key);
+    if (saved) {
+      return JSON.parse(saved);
+    }
+    // Backward compatibility: If Sethu ('bn26-001') was customized before scoping, seed from legacy global header
+    if (scopeKey === 'bn26-001') {
+      const legacy = localStorage.getItem('bsel_certificate_school_header');
+      if (legacy) {
+        try {
+          const parsed = JSON.parse(legacy);
+          if (parsed && (parsed.name || parsed.subtitle || parsed.motto || parsed.logo)) {
+            localStorage.setItem(key, legacy);
+            return parsed;
+          }
+        } catch (_) {}
+      }
+    }
+  } catch (e) {
+    console.warn('Failed to read student custom header:', e);
+  }
+  return null;
+};
+
+export const saveStudentCustomHeader = (scopeKey, data) => {
+  if (!scopeKey) return;
+  try {
+    const key = `bsel_cert_school_header_${scopeKey}`;
+    localStorage.setItem(key, JSON.stringify(data));
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('bsel_student_custom_header_updated', {
+        detail: { scopeKey, data }
+      }));
+    }
+  } catch (e) {
+    console.warn('Failed to save student custom header:', e);
+  }
+};
+
+export const readStudentCustomSignature = (scopeKey) => {
+  if (!scopeKey) return null;
+  try {
+    const key = `bsel_cert_principal_signature_${scopeKey}`;
+    const saved = localStorage.getItem(key);
+    if (saved) {
+      return saved;
+    }
+    // Backward compatibility: If Sethu ('bn26-001') was customized before scoping, seed from legacy global signature
+    if (scopeKey === 'bn26-001') {
+      const legacySign = localStorage.getItem('bsel_certificate_director_signature');
+      if (legacySign) {
+        localStorage.setItem(key, legacySign);
+        return legacySign;
+      }
+    }
+  } catch (e) {
+    console.warn('Failed to read student custom signature:', e);
+  }
+  return null;
+};
+
+export const saveStudentCustomSignature = (scopeKey, dataUrl) => {
+  if (!scopeKey) return;
+  try {
+    const key = `bsel_cert_principal_signature_${scopeKey}`;
+    if (dataUrl) {
+      localStorage.setItem(key, dataUrl);
+    } else {
+      localStorage.removeItem(key);
+    }
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('bsel_student_custom_signature_updated', {
+        detail: { scopeKey, signature: dataUrl }
+      }));
+    }
+  } catch (e) {
+    console.warn('Failed to save student custom signature:', e);
+  }
 };

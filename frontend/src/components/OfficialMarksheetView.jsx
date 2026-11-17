@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import {
   ArrowLeft,
   Download,
@@ -15,6 +15,11 @@ import { exportPdfFromElement } from '../utils/pdfExport';
 import {
   getStudentPhotoUrl,
   getStudentRegisterNumber,
+  getStudentScopeKey,
+  readStudentCustomHeader,
+  saveStudentCustomHeader,
+  readStudentCustomSignature,
+  saveStudentCustomSignature,
 } from '../utils/studentDataHelpers';
 import { getCoursePrefix } from '../utils/authStorage';
 import { getSavedMarksheet, getGrade } from '../utils/marksheetStorage';
@@ -305,65 +310,80 @@ export default function OfficialMarksheetView({
   const directorSignInputRef = useRef(null);
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
 
+  // Derive unique student scope key to isolate customizations to this student & their documents
+  const scopeKey = getStudentScopeKey(student);
+
+  const defaultBranch =
+    student?.branch ||
+    student?.school ||
+    student?.centreName ||
+    student?.institution ||
+    'RISING STARS';
+
+  const defaultBranchName = String(defaultBranch).toUpperCase();
+
   const [customDirectorSign, setCustomDirectorSign] = useState(() => {
-    try {
-      const saved = localStorage.getItem('bsel_certificate_director_signature');
-      if (saved) return saved;
-    } catch (_) {}
-    return null;
+    return readStudentCustomSignature(scopeKey) || null;
   });
 
   const [customSchoolName, setCustomSchoolName] = useState(() => {
-    try {
-      const saved = localStorage.getItem('bsel_certificate_school_header');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed.name) return parsed.name;
-      }
-    } catch (_) {}
-    return 'RISING STARS';
+    const saved = readStudentCustomHeader(scopeKey);
+    return saved?.name || defaultBranchName;
   });
 
   const [customSchoolSubtitle, setCustomSchoolSubtitle] = useState(() => {
-    try {
-      const saved = localStorage.getItem('bsel_certificate_school_header');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed.subtitle) return parsed.subtitle;
-      }
-    } catch (_) {}
-    return 'VISION FOUNDATION';
+    const saved = readStudentCustomHeader(scopeKey);
+    return saved?.subtitle || 'VISION FOUNDATION';
   });
 
   const [customSchoolMotto, setCustomSchoolMotto] = useState(() => {
-    try {
-      const saved = localStorage.getItem('bsel_certificate_school_header');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed.motto) return parsed.motto;
-      }
-    } catch (_) {}
-    return 'EDUCATION • EMPOWERMENT • EXCELLENCE';
+    const saved = readStudentCustomHeader(scopeKey);
+    return saved?.motto || 'EDUCATION • EMPOWERMENT • EXCELLENCE';
   });
 
   const [customSchoolLogo, setCustomSchoolLogo] = useState(() => {
-    try {
-      const saved = localStorage.getItem('bsel_certificate_school_header');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed.logo) return parsed.logo;
-      }
-    } catch (_) {}
-    return null;
+    const saved = readStudentCustomHeader(scopeKey);
+    return saved?.logo || null;
   });
 
+  // Re-sync whenever student / scopeKey changes (prevent cross-student leakage)
+  useEffect(() => {
+    const customH = readStudentCustomHeader(scopeKey);
+    const customSign = readStudentCustomSignature(scopeKey);
+
+    setCustomSchoolName(customH?.name !== undefined ? customH.name : defaultBranchName);
+    setCustomSchoolSubtitle(customH?.subtitle !== undefined ? customH.subtitle : 'VISION FOUNDATION');
+    setCustomSchoolMotto(customH?.motto !== undefined ? customH.motto : 'EDUCATION • EMPOWERMENT • EXCELLENCE');
+    setCustomSchoolLogo(customH?.logo !== undefined ? customH.logo : null);
+    setCustomDirectorSign(customSign !== null ? customSign : null);
+  }, [scopeKey, defaultBranchName]);
+
+  // Real-time synchronization across Certificate and Marksheet for the same student
+  useEffect(() => {
+    const handleHeaderUpdate = (e) => {
+      if (e.detail?.scopeKey === scopeKey) {
+        const d = e.detail.data;
+        if (d?.name !== undefined) setCustomSchoolName(d.name);
+        if (d?.subtitle !== undefined) setCustomSchoolSubtitle(d.subtitle);
+        if (d?.motto !== undefined) setCustomSchoolMotto(d.motto);
+        if (d?.logo !== undefined) setCustomSchoolLogo(d.logo);
+      }
+    };
+    const handleSignUpdate = (e) => {
+      if (e.detail?.scopeKey === scopeKey) {
+        setCustomDirectorSign(e.detail.signature || null);
+      }
+    };
+    window.addEventListener('bsel_student_custom_header_updated', handleHeaderUpdate);
+    window.addEventListener('bsel_student_custom_signature_updated', handleSignUpdate);
+    return () => {
+      window.removeEventListener('bsel_student_custom_header_updated', handleHeaderUpdate);
+      window.removeEventListener('bsel_student_custom_signature_updated', handleSignUpdate);
+    };
+  }, [scopeKey]);
+
   const handleSaveSchoolDetails = (name, subtitle, motto, logo) => {
-    try {
-      localStorage.setItem(
-        'bsel_certificate_school_header',
-        JSON.stringify({ name, subtitle, motto, logo })
-      );
-    } catch (_) {}
+    saveStudentCustomHeader(scopeKey, { name, subtitle, motto, logo });
   };
 
   const handleSchoolLogoChange = (e) => {
@@ -386,9 +406,7 @@ export default function OfficialMarksheetView({
       reader.onload = (event) => {
         const dataUrl = event.target.result;
         setCustomDirectorSign(dataUrl);
-        try {
-          localStorage.setItem('bsel_certificate_director_signature', dataUrl);
-        } catch (_) {}
+        saveStudentCustomSignature(scopeKey, dataUrl);
       };
       reader.readAsDataURL(file);
     }
@@ -396,9 +414,7 @@ export default function OfficialMarksheetView({
 
   const handleRemoveDirectorSign = () => {
     setCustomDirectorSign(null);
-    try {
-      localStorage.removeItem('bsel_certificate_director_signature');
-    } catch (_) {}
+    saveStudentCustomSignature(scopeKey, null);
   };
 
   const getSchoolNameFontSize = (text) => {
@@ -1748,7 +1764,10 @@ export default function OfficialMarksheetView({
             <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
               <button
                 type="button"
-                onClick={() => setIsFormModalOpen(false)}
+                onClick={() => {
+                  handleSaveSchoolDetails(customSchoolName, customSchoolSubtitle, customSchoolMotto, customSchoolLogo);
+                  setIsFormModalOpen(false);
+                }}
                 className="px-5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs sm:text-sm transition cursor-pointer shadow-md"
               >
                 Save & Done
