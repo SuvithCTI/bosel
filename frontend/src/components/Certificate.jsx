@@ -817,7 +817,7 @@ export default function Certificate({
             {headerName && (
               <text
                 x={headerLogo ? "722" : "740"}
-                y="58"
+                y="66"
                 textAnchor="middle"
                 fontFamily="'Cinzel', 'Outfit', 'Plus Jakarta Sans', Georgia, 'Times New Roman', serif"
                 fontWeight="900"
@@ -833,7 +833,7 @@ export default function Certificate({
             {headerSubtitle && (
               <text
                 x={headerLogo ? "722" : "740"}
-                y="84"
+                y="91"
                 textAnchor="middle"
                 fontFamily="'Outfit', 'Plus Jakarta Sans', Arial, sans-serif"
                 fontWeight="800"
@@ -849,7 +849,7 @@ export default function Certificate({
             {headerMotto && (
               <text
                 x={headerLogo ? "722" : "740"}
-                y="109"
+                y="115"
                 textAnchor="middle"
                 fontFamily="'Outfit', 'Plus Jakarta Sans', Arial, sans-serif"
                 fontWeight="700"
