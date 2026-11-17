@@ -164,8 +164,8 @@ export default function MarksheetTemplate({ remark = null }) {
         href={centerSeal}
         x={PAGE_CENTER_X - 30}
         y="34"
-        width="60"
-        height="60"
+        width="90"
+        height="90"
         preserveAspectRatio="xMidYMid meet"
       />
 
