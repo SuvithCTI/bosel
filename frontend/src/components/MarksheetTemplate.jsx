@@ -16,7 +16,7 @@ const PAGE_CENTER_X = 362;
 
 // Watermark strip colours
 const STRIP_BG = NAVY;        // strip background
-const STRIP_BORDER = GOLD;    // strip border colour (change this to adjust)
+const STRIP_BORDER = GOLD;    // strip border colour
 const STRIP_TEXT = '#fde68a'; // strip text colour
 
 const LABELS = [
@@ -40,7 +40,9 @@ const TABLE_HEADERS = [
   ['Assessment'],
   ['Marks', 'Obtained'],
   ['Percentage'],
-];const ROW_LINES = [541, 577, 613, 650, 686, 722];
+];
+
+const ROW_LINES = [541, 577, 613, 650, 686, 722];
 
 // Remarks box geometry (on the 724 x 1024 grid)
 const REMARK_BOX = { x: 57, y: 852, w: 456, h: 48 };
@@ -48,12 +50,34 @@ const REMARK_STAR = { cx: 85, cy: 884, r: 9 };
 const REMARK_TEXT_X = 102;
 const REMARK_TEXT_Y = 889;
 
-const Corner = ({ x, y, sx, sy }) => (
-  <g stroke={GOLD} strokeWidth="1.6" fill="none">
-    <path d={`M${x},${y + 58 * sy} L${x},${y} L${x + 60 * sx},${y}`} />
-    <circle cx={x} cy={y} r="2.5" fill={GOLD} stroke="none" />
-  </g>
-);
+// Border geometry
+// Thick navy outer frame, with the gold rule sitting inside it.
+const FRAME_OUTER = { x: 10, y: 10, w: 704, h: 1007 }; // thick navy outer frame (stroke 8)
+const FRAME_GOLD = { x: 22, y: 22, w: 680, h: 980 };   // gold rule; diamonds sit on this line
+
+// Gold diamond on the gold rule at a corner (no outline)
+const CornerDiamond = ({ x, y }) => {
+  const d = 7;
+  return (
+    <polygon
+      points={`${x},${y - d} ${x + d},${y} ${x},${y + d} ${x - d},${y}`}
+      fill={GOLD}
+      stroke="none"
+    />
+  );
+};
+
+// Smaller gold diamond at the middle of the left and right gold rule (no outline)
+const EdgeDiamond = ({ x, y }) => {
+  const d = 0;
+  return (
+    <polygon
+      points={`${x},${y - d} ${x + d},${y} ${x},${y + d} ${x - d},${y}`}
+      fill={GOLD}
+      stroke="none"
+    />
+  );
+};
 
 const SectionTitle = ({ x, y, w, h, fill, text }) => (
   <g>
@@ -93,6 +117,12 @@ const Star = ({ cx, cy, r }) => {
 export default function MarksheetTemplate({ remark = null }) {
   const colCenters = TABLE_COLS.slice(0, -1).map((x, i) => (x + TABLE_COLS[i + 1]) / 2);
 
+  const goldLeft = FRAME_GOLD.x;
+  const goldRight = FRAME_GOLD.x + FRAME_GOLD.w;
+  const goldTop = FRAME_GOLD.y;
+  const goldBottom = FRAME_GOLD.y + FRAME_GOLD.h;
+  const goldMidY = FRAME_GOLD.y + FRAME_GOLD.h / 2;
+
   return (
     <svg
       viewBox="0 0 724 1024"
@@ -103,14 +133,35 @@ export default function MarksheetTemplate({ remark = null }) {
       {/* ---------- Page background ---------- */}
       <rect x="0" y="0" width="724" height="1024" fill="#ffffff" />
 
-      {/* ---------- Outer border (double frame) ---------- */}
-      <rect x="18" y="18" width="688" height="988" fill="none" stroke={NAVY} strokeWidth="4" />
-      <rect x="24" y="24" width="676" height="976" fill="none" stroke={NAVY} strokeWidth="1" />
+      {/* ---------- Border: thick navy outer frame and gold rule ---------- */}
+      <rect
+        x={FRAME_OUTER.x}
+        y={FRAME_OUTER.y}
+        width={FRAME_OUTER.w}
+        height={FRAME_OUTER.h}
+        fill="none"
+        stroke={NAVY}
+        strokeWidth="8"
+      />
+      <rect
+        x={FRAME_GOLD.x}
+        y={FRAME_GOLD.y}
+        width={FRAME_GOLD.w}
+        height={FRAME_GOLD.h}
+        fill="none"
+        stroke={GOLD}
+        strokeWidth="2"
+      />
 
-      <Corner x={35} y={30} sx={1} sy={1} />
-      <Corner x={689} y={30} sx={-1} sy={1} />
-      <Corner x={35} y={994} sx={1} sy={-1} />
-      <Corner x={689} y={994} sx={-1} sy={-1} />
+      {/* Corner diamonds on the gold rule */}
+      <CornerDiamond x={goldLeft} y={goldTop} />
+      <CornerDiamond x={goldRight} y={goldTop} />
+      <CornerDiamond x={goldLeft} y={goldBottom} />
+      <CornerDiamond x={goldRight} y={goldBottom} />
+
+      {/* Edge diamonds at the middle of the left and right gold rule */}
+      <EdgeDiamond x={goldLeft} y={goldMidY} />
+      <EdgeDiamond x={goldRight} y={goldMidY} />
 
       {/* ---------- Header ---------- */}
       {/* Left: B★SEL crest (same file used by Logo.jsx) */}
@@ -123,7 +174,7 @@ export default function MarksheetTemplate({ remark = null }) {
         preserveAspectRatio="xMidYMid meet"
       />
 
-      {/* Middle-left: wordmark block, left-aligned, kept clear of the logo and the centre seal */}
+      {/* Middle-left: wordmark block, kept clear of the logo and the centre seal */}
       <text
         x="130"
         y="50"
@@ -169,7 +220,7 @@ export default function MarksheetTemplate({ remark = null }) {
         preserveAspectRatio="xMidYMid meet"
       />
 
-      {/* Thin repeating watermark strip (navy background, gold border, white text) */}
+      {/* Thin repeating watermark strip (navy background, gold border) */}
       <rect
         x="24"
         y="120"
@@ -189,7 +240,6 @@ export default function MarksheetTemplate({ remark = null }) {
         fontSize="9"
         fill={STRIP_TEXT}
         opacity="0.85"
-        text="blue"
       >
         B★SEL B★SEL B★SEL B★SEL B★SEL B★SEL B★SEL B★SEL B★SEL B★SEL B★SEL B★SEL
       </text>
@@ -199,9 +249,17 @@ export default function MarksheetTemplate({ remark = null }) {
 
       {LABELS.map((label, i) => {
         const cy = 181.4 + i * 26.2;
+        const longLabel = label.length >= 19; // e.g. "School / Exam Centre"
         return (
           <g key={label} fontFamily={SERIF} fontWeight="bold" fontSize="15" fill={NAVY}>
-            <text x="57" y={cy + 5}>{label}</text>
+            <text
+              x="57"
+              y={cy + 5}
+              textLength={longLabel ? 136 : undefined}
+              lengthAdjust="spacingAndGlyphs"
+            >
+              {label}
+            </text>
             <text x="200" y={cy + 5}>:</text>
           </g>
         );
@@ -224,30 +282,29 @@ export default function MarksheetTemplate({ remark = null }) {
 
       {/* Column header row */}
       <rect x="40" y="504" width="644" height="37" fill="none" stroke={NAVY} strokeWidth="1.5" />
-      {/* Column header row */}
-{TABLE_HEADERS.map((lines, i) => {
-  const cx = colCenters[i];
-  const startY = lines.length === 1 ? 527 : 519;
+      {TABLE_HEADERS.map((lines, i) => {
+        const cx = colCenters[i];
+        const startY = lines.length === 1 ? 527 : 519;
 
-  return (
-    <text
-      key={lines.join(' ')}
-      x={cx}
-      y={startY}
-      textAnchor="middle"
-      fontFamily="Arial, sans-serif"
-      fontWeight="bold"
-      fontSize="9.5"
-      fill={NAVY}
-    >
-      {lines.map((line, j) => (
-        <tspan key={j} x={cx} dy={j === 0 ? 0 : 12}>
-          {line}
-        </tspan>
-      ))}
-    </text>
-  );
-})}
+        return (
+          <text
+            key={lines.join(' ')}
+            x={cx}
+            y={startY}
+            textAnchor="middle"
+            fontFamily="Arial, sans-serif"
+            fontWeight="bold"
+            fontSize="9.5"
+            fill={NAVY}
+          >
+            {lines.map((line, j) => (
+              <tspan key={j} x={cx} dy={j === 0 ? 0 : 12}>
+                {line}
+              </tspan>
+            ))}
+          </text>
+        );
+      })}
 
       {/* Vertical column dividers */}
       {TABLE_COLS.slice(1, -1).map((x) => (
@@ -305,7 +362,7 @@ export default function MarksheetTemplate({ remark = null }) {
       <Star cx={REMARK_STAR.cx} cy={REMARK_STAR.cy} r={REMARK_STAR.r} />
 
       {/* Remark text (drawn only when a remark is provided) */}
-            {remark && (
+      {remark && (
         <text
           x={REMARK_TEXT_X}
           y={REMARK_TEXT_Y + 1}

@@ -1,9 +1,7 @@
-import { resetStoredEvents } from '../../data/eventsData';
 import React from 'react';
 import {
   Calendar,
   Plus,
-  RefreshCw,
   Edit3,
   Trash2,
   Search
@@ -12,11 +10,9 @@ import {
 export default function AdminEventsPage({
   filteredEvents,
   eventsList = [],
-  setEventsList,
   setEditingEvent,
   setShowAddEventModal,
   handleDeleteEvent,
-  showToast,
   eventSearch = '',
   setEventSearch
 }) {
@@ -58,19 +54,6 @@ export default function AdminEventsPage({
             <span>Publish New Event</span>
           </button>
 
-          <button
-            type="button"
-            onClick={() => {
-              if (window.confirm('Reset events schedule to official default calendar?')) {
-                setEventsList(resetStoredEvents());
-                showToast?.('Events reset to official default schedule.');
-              }
-            }}
-            className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition flex items-center gap-1 cursor-pointer"
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
-            <span>Reset Default</span>
-          </button>
         </div>
       </div>
 

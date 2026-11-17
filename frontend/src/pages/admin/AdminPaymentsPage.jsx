@@ -12,6 +12,8 @@ import {
 
 const RECEIPTS_PER_SHEET = 3;
 
+const getPaymentSelectionKey = (payment) => JSON.stringify(payment);
+
 export default function AdminPaymentsPage({
   filteredPayments,
   paymentSectorFilter,
@@ -33,7 +35,9 @@ export default function AdminPaymentsPage({
 
   // only payments that are currently visible can be printed (keeps table order)
   const selectedPayments = useMemo(
-    () => filteredPayments.filter((p) => selectedIds.includes(p.id)),
+    () => filteredPayments.filter((payment) =>
+      selectedIds.includes(getPaymentSelectionKey(payment))
+    ),
     [filteredPayments, selectedIds]
   );
 
@@ -53,7 +57,11 @@ export default function AdminPaymentsPage({
     );
 
   const toggleAll = () =>
-    setSelectedIds(allSelected ? [] : filteredPayments.map((p) => p.id));
+    setSelectedIds(
+      allSelected
+        ? []
+        : filteredPayments.map(getPaymentSelectionKey)
+    );
 
   const exitSelection = () => {
     setIsSelectionMode(false);
@@ -178,6 +186,10 @@ export default function AdminPaymentsPage({
             className="px-2.5 py-1 text-xs border border-slate-300 rounded-lg outline-none font-bold bg-white"
           >
             <option value="All">All Sectors</option>
+            <option value="Course Tuition">Course Entry Fee</option>
+            <option value="Competition & Events">Competition & Events</option>
+            <option value="Toolkits & Courseware">Toolkits & Courseware</option>
+            <option value="Franchise Affiliation">Franchise Affiliation</option>
             <option value="Monthly Fee">Monthly Fee</option>
             <option value="Exam Fee">Exam Fee</option>
             <option value="Event Fee">Event Fee</option>
@@ -281,11 +293,12 @@ export default function AdminPaymentsPage({
 
             <tbody className="divide-y divide-slate-100 font-medium">
               {filteredPayments.map((payment) => {
-                const isSelected = selectedIds.includes(payment.id);
+                const paymentKey = getPaymentSelectionKey(payment);
+                const isSelected = selectedIds.includes(paymentKey);
 
                 return (
                   <tr
-                    key={payment.id}
+                    key={paymentKey}
                     className={`transition ${isSelected ? 'bg-emerald-50/60' : 'hover:bg-slate-50'}`}
                   >
                     {isSelectionMode && (
@@ -293,9 +306,9 @@ export default function AdminPaymentsPage({
                         <input
                           type="checkbox"
                           checked={isSelected}
-                          onChange={() => toggleOne(payment.id)}
+                          onChange={() => toggleOne(paymentKey)}
                           className="w-4 h-4 accent-emerald-600 cursor-pointer"
-                          aria-label={`Select ${payment.payerName}`}
+                          aria-label={`Select ${payment.payerName || payment.payer_name || payment.receiptNo || payment.receipt_no || 'payment'}`}
                         />
                       </td>
                     )}
@@ -322,7 +335,7 @@ export default function AdminPaymentsPage({
 
                     <td className="py-3 px-3">
                       <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-800">
-                        {payment.sector}
+                        {payment.sector === 'Course Tuition' ? 'Course Entry Fee' : payment.sector}
                       </span>
                     </td>
 

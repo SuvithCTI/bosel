@@ -722,7 +722,7 @@ export default function Certificate({
 
       <div ref={wrapperRef} className="w-full max-w-[1024px]">
 
-        <svg viewBox="0 0 1024 723" xmlns="http://www.w3.org/2000/svg" className="w-full h-auto block bg-white shadow-2xl print:shadow-none">
+        <svg viewBox="-23 -17 1070 757" xmlns="http://www.w3.org/2000/svg" className="w-full h-auto block bg-white shadow-2xl print:shadow-none">
 
           <defs>
 
@@ -772,11 +772,11 @@ export default function Certificate({
 
           </defs>
 
-          {/* Background and borders */}
+          {/* Background and borders with elegant outer white margin */}
 
-          <rect width="1024" height="723" fill="#fff" />
+          <rect x="-23" y="-17" width="1070" height="757" fill="#fff" />
 
-          <rect width="1024" height="723" fill="url(#bsel-wm)" />
+          <rect x="6" y="6" width="1012" height="711" fill="url(#bsel-wm)" />
 
           <rect x="6" y="6" width="1012" height="711" fill="none" stroke={NAVY} strokeWidth="10" />
 
@@ -1054,15 +1054,15 @@ export default function Certificate({
             {courseUpper}
           </text>
 
-          {/* Level hexagon badge (reduced border) */}
+          {/* Level hexagon badge (compact size with gold border) */}
 
-          <polygon points="313,372 382,369 382,375" fill={GOLD} />
+          <polygon points="345,372 420,370 420,374" fill={GOLD} />
 
-          <polygon points="642,369 711,372 642,375" fill={GOLD} />
+          <polygon points="604,370 679,372 604,374" fill={GOLD} />
 
-          <polygon points="394,372 414,352 612,352 632,372 612,392 414,392" fill="#fff" stroke={GOLD} strokeWidth="1.8" />
+          <polygon points="432,372 447,358 577,358 592,372 577,386 447,386" fill="#fff" stroke={GOLD} strokeWidth="1.8" />
 
-          <text x="512" y="377" textAnchor="middle" fontFamily="'Cinzel', Georgia, serif" fontWeight="800" fontSize="13.5" letterSpacing="2" fill={NAVY}>
+          <text x="512" y="376.5" textAnchor="middle" fontFamily="'Cinzel', Georgia, serif" fontWeight="800" fontSize="12" letterSpacing="2" fill={NAVY}>
 
             {cleanLevel.toUpperCase()}
 
