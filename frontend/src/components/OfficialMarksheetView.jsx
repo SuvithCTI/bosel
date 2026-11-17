@@ -27,10 +27,10 @@ import MarksheetTemplate from './MarksheetTemplate';
 const WATERMARK_TEXT = 'B★SEL';
 const WATERMARK_LOGO_SRC = '/bsel_logo.png';
 
-const TILE_COLS = 9;
-const TILE_ROWS = 34;
-const TILE_FONT_SIZE = 12;
-const TILE_OPACITY = 0.1;
+const TILE_COLS = 8;
+const TILE_ROWS = 28;
+const TILE_FONT_SIZE = 20;
+const TILE_OPACITY = 0.06;
 
 const CENTER_LOGO_WIDTH = '45%';
 const CENTER_OPACITY = 0.08;
@@ -40,15 +40,14 @@ const CENTER_OPACITY = 0.08;
 // ============================================================
 
 const REMARK_RULES = [
-  { min: 90, text: 'Exceptional Performance. Keep shining!' },
-  { min: 80, text: 'Brilliant effort! Aiming for A+ next time.' },
-  { min: 70, text: 'Great job! A little more focus and you will reach the top.' },
-  { min: 60, text: "Fair Performance. Don't give up, you can do better." },
-  { min: 50, text: 'Keep trying! Regular practice is the key to success.' },
+  { min: 90, text: 'Exceptional Performance. Keep shining!' },             // A+ (90-100%)
+  { min: 75, text: 'Brilliant effort! Aiming for A+ next time.' },        // A (75-89%)
+  { min: 60, text: 'Great job! A little more focus and you will reach the top.' }, // B (60-74%)
+  { min: 40, text: "Fair Performance. Don't give up, regular practice is the key to success." }, // C (40-59%)
 ];
 
-// Used for anything below 50% (not specified earlier, edit as needed)
-const REMARK_FALLBACK = "'Don't worry, every expert was once a beginner. Keep trying!";
+// Used for anything below 40% (Grade D)
+const REMARK_FALLBACK = "Don't worry, every expert was once a beginner. Needs more practice.";
 
 const getRemark = (pct) => {
   const n = Number(pct);
@@ -208,12 +207,18 @@ function BselWatermark() {
 
   const tiles = [];
   for (let r = 0; r < TILE_ROWS; r++) {
-    for (let c = 0; c < TILE_COLS; c++) {
-      tiles.push({
-        key: `${r}-${c}`,
-        x: c * cellW + cellW / 2,
-        y: r * cellH + cellH / 2,
-      });
+    const isOddRow = r % 2 === 1;
+    const y = r * cellH + cellH / 2;
+
+    if (isOddRow) {
+      // Offset row: tiles sit on the cell edges so they interlock with the row above
+      for (let c = 0; c <= TILE_COLS; c++) {
+        tiles.push({ key: `${r}-${c}`, x: c * cellW, y });
+      }
+    } else {
+      for (let c = 0; c < TILE_COLS; c++) {
+        tiles.push({ key: `${r}-${c}`, x: c * cellW + cellW / 2, y });
+      }
     }
   }
 

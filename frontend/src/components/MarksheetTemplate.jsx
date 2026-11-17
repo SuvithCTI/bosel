@@ -17,7 +17,7 @@ const PAGE_CENTER_X = 362;
 // Watermark strip colours
 const STRIP_BG = NAVY;        // strip background
 const STRIP_BORDER = GOLD;    // strip border colour (change this to adjust)
-const STRIP_TEXT = '#ffffff'; // strip text colour
+const STRIP_TEXT = '#fde68a'; // strip text colour
 
 const LABELS = [
   'Registration No.',
@@ -183,6 +183,7 @@ export default function MarksheetTemplate({ remark = null }) {
         fontSize="9"
         fill={STRIP_TEXT}
         opacity="0.85"
+        text="blue"
       >
         B★SEL B★SEL B★SEL B★SEL B★SEL B★SEL B★SEL B★SEL B★SEL B★SEL B★SEL B★SEL
       </text>
@@ -193,7 +194,7 @@ export default function MarksheetTemplate({ remark = null }) {
       {LABELS.map((label, i) => {
         const cy = 181.4 + i * 26.2;
         return (
-          <g key={label} fontFamily={SERIF} fontWeight="bold" fontSize="13" fill={NAVY}>
+          <g key={label} fontFamily={SERIF} fontWeight="bold" fontSize="15" fill={NAVY}>
             <text x="57" y={cy + 5}>{label}</text>
             <text x="200" y={cy + 5}>:</text>
           </g>
