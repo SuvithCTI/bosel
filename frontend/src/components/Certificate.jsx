@@ -745,8 +745,8 @@ export default function Certificate({
               <text x="84" y="56" textAnchor="middle" fontFamily="Georgia, serif" fontSize="15" fontWeight="700" fill={NAVY} fillOpacity="0.09">B★SEL</text>
             </pattern>
 
-            <pattern id="bsel-strip" x="24" y="134" width="85" height="22" patternUnits="userSpaceOnUse">
-              <text x="42.5" y="15.5" textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="11" fontWeight="800" fill="#ebd287" letterSpacing="2.5">B ★ S E L</text>
+            <pattern id="bsel-strip" x="24" y="134" width="88" height="22" patternUnits="userSpaceOnUse">
+              <text x="44" y="15.5" textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="11" fontWeight="800" fill="#ebd287" letterSpacing="0.8">B ★ S E L</text>
             </pattern>
 
           </defs>
