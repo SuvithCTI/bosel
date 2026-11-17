@@ -69,7 +69,7 @@ const CornerDiamond = ({ x, y }) => {
 
 // Smaller gold diamond at the middle of the left and right gold rule (no outline)
 const EdgeDiamond = ({ x, y }) => {
-  const d = 5;
+  const d = 0;
   return (
     <polygon
       points={`${x},${y - d} ${x + d},${y} ${x},${y + d} ${x - d},${y}`}
