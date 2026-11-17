@@ -36,7 +36,8 @@ import {
   GraduationCap,
   Trophy,
   FileDown,
-  ClipboardList
+  ClipboardList,
+  Globe
 } from 'lucide-react';
 
 import AdminAchievementsModule from '../components/admin/AdminAchievementsModule';
@@ -57,6 +58,7 @@ import AdminBranchStudentDetailsPage from './admin/AdminBranchStudentDetailsPage
 import AdminModals from './admin/AdminModals';
 
 import BranchStudentMarksheetPage from './admin/BranchStudentMarksheetPage';
+import { TAMIL_NADU_DISTRICTS } from '../data/districtsData';
 
 import StudentAdmissionFormView from '../components/StudentAdmissionFormView';
 import OfficialMarksheetView from '../components/OfficialMarksheetView';
@@ -201,14 +203,26 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
   const sessionUser = getActiveSession();
 
   const [currentAdminRole, setCurrentAdminRole] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const savedRole = sessionStorage.getItem('bsel_active_admin_role');
+      if (savedRole) return savedRole;
+    }
     return sessionUser?.role === 'Branch Head' ? 'Branch Head' : 'Super Admin';
   });
 
   const [activeBranch, setActiveBranch] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const savedBranch = sessionStorage.getItem('bsel_active_branch');
+      if (savedBranch) return savedBranch;
+    }
     return sessionUser?.branch || 'Tenkasi Regional Branch';
   });
 
   const [activeTab, setActiveTab] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const savedRole = sessionStorage.getItem('bsel_active_admin_role');
+      if (savedRole === 'Branch Head') return 'branch_overview';
+    }
     return (sessionUser?.role === 'Branch Head' || currentAdminRole === 'Branch Head')
       ? 'branch_overview' 
       : 'overview';
@@ -260,7 +274,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
     updateHeaderHeight();
     window.addEventListener('resize', updateHeaderHeight);
     return () => window.removeEventListener('resize', updateHeaderHeight);
-  }, []);
+  }, [currentAdminRole, activeBranch]);
 
   const handleTabSelect = (tabKey) => {
     setActiveTab(tabKey);
@@ -390,17 +404,40 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
   }, []);
 
   // Update tabs when switching role
-  const handleRoleSwitch = (newRole) => {
+  const handleRoleSwitch = (newRole, targetBranch = null) => {
+    if (targetBranch) {
+      setActiveBranch(targetBranch);
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('bsel_active_branch', targetBranch);
+      }
+    }
     setCurrentAdminRole(newRole);
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('bsel_active_admin_role', newRole);
+    }
     if (newRole === 'Branch Head') {
+      const branchToShow = targetBranch || activeBranch;
       setActiveTab('branch_overview');
       window.scrollTo(0, 0);
-      showToast(`Switched to Branch Head Portal (${activeBranch})`);
+      showToast(`Switched to Branch Head Portal (${branchToShow})`);
     } else {
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('bsel_active_admin_role');
+      }
       setActiveTab('overview');
       window.scrollTo(0, 0);
       showToast('Switched to Super Administrator Portal');
     }
+  };
+
+  const handleLogout = () => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('bsel_active_admin_role');
+      sessionStorage.removeItem('bsel_active_branch');
+    }
+    clearActiveSession();
+    if (onLogout) onLogout();
+    else setActivePage('login');
   };
 
   // -------------------------------------------------------------
@@ -1252,12 +1289,14 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
     .filter(u => u.role !== 'Super Admin' && u.role !== 'Branch Head')
     .filter(u => {
       const studentBranch = (u.branch || u.institution || '').toLowerCase();
-      const targetBranch = activeBranch.toLowerCase();
-      // Match keywords e.g. 'tenkasi', 'chennai', 'coimbatore'
-      const keyBranch = targetBranch.includes('tenkasi') ? 'tenkasi' : 
-                        targetBranch.includes('chennai') ? 'chennai' : 
-                        targetBranch.includes('coimbatore') ? 'coimbatore' : targetBranch;
-      return studentBranch.includes(keyBranch);
+      const targetBranch = (activeBranch || '').toLowerCase();
+      const cleanKey = targetBranch.replace(/b★sel|regional|central|branch|academy/gi, '').trim();
+      const matchKey = cleanKey || targetBranch;
+      return (
+        studentBranch.includes(matchKey) ||
+        targetBranch.includes(studentBranch) ||
+        studentBranch.includes(targetBranch)
+      );
     })
     .filter(u => {
       if (!branchStudentSearch.trim()) return true;
@@ -1274,12 +1313,11 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
   const branchBatches = batchesList.filter(b => {
     if (!b.branch) return true;
     const bBranch = (b.branch || '').toLowerCase();
-    const targetBranch = (activeBranch || '').toLowerCase();
-    if (!targetBranch || targetBranch.includes('headquarters') || targetBranch.includes('all')) return true;
-    const keyBranch = targetBranch.includes('tenkasi') ? 'tenkasi' : 
-                      targetBranch.includes('chennai') ? 'chennai' : 
-                      targetBranch.includes('coimbatore') ? 'coimbatore' : targetBranch;
-    return bBranch.includes(keyBranch) || keyBranch.includes(bBranch);
+    const target = (activeBranch || '').toLowerCase();
+    if (!target || target.includes('headquarters') || target.includes('all')) return true;
+    const cleanKey = target.replace(/b★sel|regional|central|branch|academy/gi, '').trim();
+    const matchKey = cleanKey || target;
+    return bBranch.includes(matchKey) || target.includes(bBranch) || bBranch.includes(target);
   });
 
   // Filtered Payments for Super Admin
@@ -1306,10 +1344,11 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
 
   // Filtered Payments for Branch Head
   const branchPayments = paymentsList.filter(p => {
-    const keyBranch = activeBranch.includes('Tenkasi') ? 'tenkasi' : 
-                       activeBranch.includes('Chennai') ? 'chennai' : 
-                       activeBranch.includes('Coimbatore') ? 'coimbatore' : activeBranch.toLowerCase();
-    return p.branch.toLowerCase().includes(keyBranch);
+    const pBranch = (p.branch || '').toLowerCase();
+    const target = (activeBranch || '').toLowerCase();
+    const cleanKey = target.replace(/b★sel|regional|central|branch|academy/gi, '').trim();
+    const matchKey = cleanKey || target;
+    return pBranch.includes(matchKey) || target.includes(pBranch) || pBranch.includes(target);
   });
 
   // Filtered Franchise Leads for Super Admin
@@ -1426,15 +1465,15 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
         ref={headerRef}
         className="fixed top-0 left-0 right-0 z-[60] w-full bg-gradient-to-r from-[#081d3d] via-[#0c234b] to-[#123068] text-white border-b-4 border-amber-400 shadow-lg"
       >
-        <div className="w-full px-3 sm:px-5 lg:px-6 py-2.5 sm:py-3 flex items-center justify-between gap-2">
+        <div className="w-full px-2.5 sm:px-5 lg:px-6 py-2 sm:py-2.5 flex items-center justify-between gap-2">
           
           {/* Brand & Portal Type with Mobile Toggle */}
-          <div className="flex items-center gap-2 sm:gap-3.5 min-w-0">
+          <div className="flex items-center gap-1.5 sm:gap-3 min-w-0">
             {/* Mobile Drawer Toggle Button */}
             <button
               type="button"
               onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
-              className="lg:hidden p-2 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 text-white flex items-center gap-1.5 text-xs font-bold transition cursor-pointer shrink-0"
+              className="lg:hidden p-1.5 sm:p-2 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 text-white flex items-center gap-1 text-xs font-bold transition cursor-pointer shrink-0"
               title="Toggle Navigation Menu"
               aria-label="Toggle Navigation Menu"
             >
@@ -1443,37 +1482,95 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
             </button>
 
             {/* Desktop Brand Logo */}
-            <div className="hidden sm:block">
+            <div className="hidden sm:block shrink-0">
               <Logo lightText={true} />
             </div>
 
-            {/* Mobile Compact Brand Logo (prevents header wrapping on small mobile screens) */}
-            <div className="sm:hidden">
+            {/* Mobile Compact Brand Logo */}
+            <div className="sm:hidden shrink-0">
               <Logo lightText={true} showTagline={false} size="small" />
+            </div>
+
+            {/* Desktop Divider */}
+            <div className="hidden lg:block h-8 w-px bg-white/20 shrink-0"></div>
+
+            {/* Desktop-Only Logged-In Branch Indicator Badge */}
+            <div className="hidden lg:flex items-center gap-2 bg-white/10 hover:bg-white/15 px-3 py-1.5 rounded-xl border border-white/20 backdrop-blur-xs transition min-w-0 shadow-xs">
+              <div className="w-6 h-6 rounded-lg bg-amber-400/20 border border-amber-400/40 flex items-center justify-center shrink-0">
+                <Building className="w-3.5 h-3.5 text-amber-300" />
+              </div>
+              <div className="flex flex-col min-w-0 leading-tight">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
+                  <span className="text-[9px] font-black uppercase tracking-wider text-amber-300 truncate">
+                    {currentAdminRole === 'Branch Head' ? 'Logged In Branch' : 'Administrator'}
+                  </span>
+                </div>
+                <span className="text-xs sm:text-sm font-black text-white truncate max-w-[180px] xl:max-w-xs">
+                  {currentAdminRole === 'Branch Head' ? activeBranch : 'Central Super Admin'}
+                </span>
+              </div>
             </div>
           </div>
 
           {/* Controls */}
-          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
-            {/* View Live Website Button */}
+          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+            {/* Quick Switch / Return to Super Admin Button when inside Branch Head mode */}
+            {currentAdminRole === 'Branch Head' && (
+              <button
+                type="button"
+                onClick={() => handleRoleSwitch('Super Admin')}
+                className="text-[11px] sm:text-xs font-black bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-[#0c234b] px-2 sm:px-3 py-1.5 rounded-xl transition shadow-md hover:shadow-lg cursor-pointer flex items-center gap-1 sm:gap-1.5 active:scale-95 whitespace-nowrap shrink-0 border border-amber-500/40"
+                title="Return to Super Admin Central Portal"
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-[#0c234b] shrink-0" />
+                <span className="hidden sm:inline">Return to </span>
+                <span>Super Admin</span>
+              </button>
+            )}
+
+            {/* View Live Website Button (Icon on mobile, text on sm+) */}
             <button
               onClick={() => setActivePage('home')}
-              className="text-xs font-black bg-white hover:bg-slate-100 text-[#0c234b] px-2.5 sm:px-3 py-1.5 rounded-xl transition shadow-sm cursor-pointer flex items-center gap-1 sm:gap-1.5 active:scale-95 whitespace-nowrap"
+              className="text-xs font-black bg-white hover:bg-slate-100 text-[#0c234b] p-1.5 sm:px-3 sm:py-1.5 rounded-xl transition shadow-sm cursor-pointer flex items-center gap-1 sm:gap-1.5 active:scale-95 whitespace-nowrap shrink-0"
+              title="Visit Live Website"
             >
-              <span className="hidden xs:inline">Live </span><span>Website</span>
-              <ArrowRight className="w-3.5 h-3.5 shrink-0" />
+              <Globe className="w-3.5 h-3.5 shrink-0 text-[#0c234b] sm:hidden" />
+              <span className="hidden sm:inline">Website</span>
+              <ArrowRight className="hidden sm:inline w-3.5 h-3.5 shrink-0" />
             </button>
 
-            {/* Sign Out */}
+            {/* Sign Out (Icon on mobile, text on sm+) */}
             <button
-              onClick={onLogout ? onLogout : () => setActivePage('login')}
-              className="text-xs font-black bg-rose-600/90 hover:bg-rose-700 text-white px-2.5 sm:px-3 py-1.5 rounded-xl transition shadow-sm cursor-pointer flex items-center gap-1 sm:gap-1.5 active:scale-95 whitespace-nowrap"
+              onClick={handleLogout}
+              className="text-xs font-black bg-rose-600/90 hover:bg-rose-700 text-white p-1.5 sm:px-3 sm:py-1.5 rounded-xl transition shadow-sm cursor-pointer flex items-center gap-1 sm:gap-1.5 active:scale-95 whitespace-nowrap shrink-0"
+              title="Sign Out"
             >
               <LogOut className="w-3.5 h-3.5 shrink-0" />
               <span className="hidden sm:inline">Sign Out</span>
             </button>
           </div>
 
+        </div>
+
+        {/* Mobile-Dedicated Active Branch Status Sub-Bar */}
+        <div className="lg:hidden bg-gradient-to-r from-[#051329] via-[#091e3d] to-[#0c2650] px-3 py-1.5 border-t border-amber-400/20 flex items-center justify-between gap-2 shadow-inner">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-5 h-5 rounded-md bg-amber-400/20 border border-amber-400/40 flex items-center justify-center shrink-0">
+              <Building className="w-3 h-3 text-amber-300" />
+            </div>
+            <span className="text-[10px] font-black uppercase tracking-wider text-amber-300/90 shrink-0">
+              {currentAdminRole === 'Branch Head' ? 'Logged In:' : 'Admin Desk:'}
+            </span>
+            <span className="text-xs font-black text-white truncate">
+              {currentAdminRole === 'Branch Head' ? activeBranch : 'B★SEL Central Super Admin'}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-[10px] font-bold shrink-0">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>Active</span>
+          </div>
         </div>
       </header>
 

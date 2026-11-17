@@ -15,7 +15,9 @@ import {
   X,
   Lock,
   Mail,
-  Building
+  Building,
+  LogIn,
+  ArrowRight
 } from 'lucide-react';
 import {
   TAMIL_NADU_DISTRICTS,
@@ -39,6 +41,7 @@ export default function AdminSchoolsPage({
   const [editPassword, setEditPassword] = useState('');
   const [copiedKey, setCopiedKey] = useState(null);
   const [visiblePasswords, setVisiblePasswords] = useState({});
+  const [branchSearch, setBranchSearch] = useState('');
 
   // Sync credentials on storage update events
   useEffect(() => {
@@ -119,6 +122,7 @@ export default function AdminSchoolsPage({
         code,
         name: `B★SEL ${district} Branch`,
         branchName: `${district} Branch`,
+        district,
         city: `${district}, Tamil Nadu`,
         principal: district === 'Tenkasi' ? 'Mrs. Thangam Sivaji' : `${district} Branch Director`,
         coordinator: district === 'Tenkasi' ? 'Mr. S. Sivakumar' : `${district} Branch Coordinator`,
@@ -131,9 +135,33 @@ export default function AdminSchoolsPage({
     });
   }, [credentialsMap]);
 
+  const filteredBranches = useMemo(() => {
+    if (!branchSearch.trim()) return all38DistrictBranches;
+    const term = branchSearch.toLowerCase().trim();
+    return all38DistrictBranches.filter(
+      (b) =>
+        b.name.toLowerCase().includes(term) ||
+        b.branchName.toLowerCase().includes(term) ||
+        (b.district && b.district.toLowerCase().includes(term)) ||
+        b.code.toLowerCase().includes(term) ||
+        (b.creds?.email && b.creds.email.toLowerCase().includes(term))
+    );
+  }, [all38DistrictBranches, branchSearch]);
+
+  const handleEnterBranchAdmin = (branch) => {
+    const branchName = branch.branchName || `${branch.district} Branch`;
+    if (setActiveBranch) {
+      setActiveBranch(branchName);
+    }
+    if (handleRoleSwitch) {
+      handleRoleSwitch('Branch Head', branchName);
+    }
+    showToast(`Directly accessed ${branch.name} Admin Portal`);
+  };
+
   return (
     <div className="space-y-4 animate-in fade-in duration-200">
-      {/* Header Banner */}
+      {/* Header Banner with Real-Time Search & Quick Branch Jump */}
       <div className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-sm flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
         <div>
           <h2 className="text-base font-black text-slate-950 flex items-center gap-2">
@@ -141,16 +169,60 @@ export default function AdminSchoolsPage({
             <span>Authorized District Branches Network</span>
           </h2>
           <p className="text-xs text-slate-500 mt-0.5">
-            Super Admin sets official Branch Login credentials.
+            Super Admin sets official Branch Login credentials and can directly jump to any Branch Admin portal.
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5 w-full lg:w-auto">
+        <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
+          {/* Real-time Branch Search */}
+          <div className="relative flex-1 sm:w-56 lg:w-64 min-w-[180px]">
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={branchSearch}
+              onChange={(e) => setBranchSearch(e.target.value)}
+              placeholder="Search branch (e.g. Tenkasi, Chennai)..."
+              className="w-full text-xs font-semibold pl-8 pr-7 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0c234b]/20 focus:border-[#0c234b]"
+            />
+            {branchSearch && (
+              <button
+                type="button"
+                onClick={() => setBranchSearch('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
+                title="Clear search"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            )}
+          </div>
+
+          {/* Quick Jump Dropdown */}
+          <div className="relative flex-1 sm:w-52 min-w-[180px]">
+            <select
+              value=""
+              onChange={(e) => {
+                if (!e.target.value) return;
+                const found = all38DistrictBranches.find(
+                  (b) => b.district === e.target.value || b.branchName === e.target.value
+                );
+                if (found) handleEnterBranchAdmin(found);
+              }}
+              className="w-full text-xs font-black text-[#0c234b] bg-amber-50/90 border border-amber-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400 cursor-pointer shadow-xs"
+            >
+              <option value="">⚡ Direct Jump to Branch...</option>
+              {all38DistrictBranches.map((b) => (
+                <option key={b.code} value={b.district}>
+                  {b.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
           {/* Add New Branch */}
           <button
             type="button"
             onClick={() => setShowAddSchoolModal(true)}
-            className="flex-1 lg:flex-none px-4 py-2 bg-[#0c234b] hover:bg-[#163e7c] text-white rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
+            className="px-4 py-2 bg-[#0c234b] hover:bg-[#163e7c] text-white rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer whitespace-nowrap"
           >
             <Plus className="w-4 h-4 text-amber-400" />
             <span>Add New Branch</span>
@@ -160,7 +232,7 @@ export default function AdminSchoolsPage({
 
       {/* Network Branch Cards Grid (PURE DISTRICT BRANCHES ONLY) */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {all38DistrictBranches.map((branch) => {
+        {filteredBranches.map((branch) => {
           const creds = getCredentialsForBranchOrSchool(branch);
           const emailKey = `email_${branch.code}_${creds.slug}`;
           const passKey = `pass_${branch.code}_${creds.slug}`;
@@ -258,9 +330,35 @@ export default function AdminSchoolsPage({
                   </div>
                 </div>
               </div>
+
+              {/* DIRECT BRANCH ACCESS BUTTON */}
+              <button
+                type="button"
+                onClick={() => handleEnterBranchAdmin(branch)}
+                className="w-full mt-1 py-2.5 px-3 rounded-xl bg-gradient-to-r from-[#0c234b] via-[#123068] to-[#1a448d] hover:from-[#123068] hover:to-[#2256ad] active:scale-[0.98] text-white text-xs font-black flex items-center justify-center gap-2 shadow-sm hover:shadow-md transition-all cursor-pointer group"
+                title={`Directly login and open ${branch.name} Admin Portal`}
+              >
+                <LogIn className="w-3.5 h-3.5 text-amber-400 group-hover:scale-110 transition-transform" />
+                <span>Go to Branch Admin</span>
+                <ArrowRight className="w-3.5 h-3.5 text-amber-400 group-hover:translate-x-0.5 transition-transform" />
+              </button>
             </div>
           );
         })}
+
+        {filteredBranches.length === 0 && (
+          <div className="col-span-full bg-white p-8 rounded-2xl border border-slate-200 text-center space-y-2">
+            <Building className="w-8 h-8 text-slate-400 mx-auto" />
+            <p className="text-sm font-black text-slate-800">No branches found matching "{branchSearch}"</p>
+            <button
+              type="button"
+              onClick={() => setBranchSearch('')}
+              className="text-xs font-bold text-blue-600 hover:underline cursor-pointer"
+            >
+              Clear search filter
+            </button>
+          </div>
+        )}
       </div>
 
       {/* =========================================================================
