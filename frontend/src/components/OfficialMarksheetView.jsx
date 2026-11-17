@@ -43,11 +43,11 @@ const REMARK_RULES = [
   { min: 90, text: 'Exceptional Performance. Keep shining!' },             // A+ (90-100%)
   { min: 75, text: 'Brilliant effort! Aiming for A+ next time.' },        // A (75-89%)
   { min: 60, text: 'Great job! A little more focus and you will reach the top.' }, // B (60-74%)
-  { min: 40, text: "Fair Performance. Don't give up, regular practice is the key to success." }, // C (40-59%)
+  { min: 40, text: "Don't give up, regular practice is the key to success." }, // C (40-59%)
 ];
 
 // Used for anything below 40% (Grade D)
-const REMARK_FALLBACK = "Don't worry, every expert was once a beginner. Needs more practice.";
+const REMARK_FALLBACK = "Don't worry, every expert was once a beginner.";
 
 const getRemark = (pct) => {
   const n = Number(pct);
@@ -1060,86 +1060,85 @@ export default function OfficialMarksheetView({
       {/* =====================================================
           SUBJECT MARKS TABLE (hidden when hideMarks is set)
       ===================================================== */}
+{showMarks &&
+  subjects.slice(0, 5).map((sub, idx) => {
+    const topY = tableRowPositions[idx];
 
-      {showMarks &&
-        subjects.slice(0, 5).map((sub, idx) => {
-          const topY = tableRowPositions[idx];
+    return (
+      <React.Fragment key={sub.id || idx}>
+        <div
+          className="absolute font-bold text-[#081d3d] text-[9.5px] sm:text-[11.5px] truncate -translate-y-1/2"
+          style={{
+            left: '13.0%',
+            top: topY,
+            maxWidth: '47.5%',
+            fontFamily: "'Times New Roman', Times, serif",
+            lineHeight: 1,
+            zIndex: 1,
+          }}
+        >
+          {sub.name}
+        </div>
 
-          return (
-            <React.Fragment key={sub.id || idx}>
-              <div
-                className="absolute font-bold text-[#081d3d] text-[9.5px] sm:text-[11.5px] truncate -translate-y-1/2"
-                style={{
-                  left: '13.0%',
-                  top: topY,
-                  maxWidth: '27.5%',
-                  fontFamily: "'Times New Roman', Times, serif",
-                  lineHeight: 1,
-                  zIndex: 1,
-                }}
-              >
-                {sub.name}
-              </div>
+        <div
+          className="absolute font-bold text-[#081d3d] text-[10px] sm:text-[12.5px] -translate-x-1/2 -translate-y-1/2 text-center"
+          style={{
+            left: '65.40%',
+            top: topY,
+            fontFamily: "'Times New Roman', Times, serif",
+            lineHeight: 1,
+            zIndex: 1,
+          }}
+        >
+          {sub.max}
+        </div>
 
-              <div
-                className="absolute font-bold text-[#081d3d] text-[10px] sm:text-[12.5px] -translate-x-1/2 -translate-y-1/2 text-center"
-                style={{
-                  left: '46.41%',
-                  top: topY,
-                  fontFamily: "'Times New Roman', Times, serif",
-                  lineHeight: 1,
-                  zIndex: 1,
-                }}
-              >
-                {sub.max}
-              </div>
+        <div
+          className="absolute font-bold text-[#081d3d] text-[10px] sm:text-[12.5px] -translate-x-1/2 -translate-y-1/2 text-center"
+          style={{
+            left: '73.82%',
+            top: topY,
+            fontFamily: "'Times New Roman', Times, serif",
+            lineHeight: 1,
+            zIndex: 1,
+          }}
+        >
+          {sub.assessment || sub.practical}
+        </div>
 
-              <div
-                className="absolute font-bold text-[#081d3d] text-[10px] sm:text-[12.5px] -translate-x-1/2 -translate-y-1/2 text-center"
-                style={{
-                  left: '61.40%',
-                  top: topY,
-                  fontFamily: "'Times New Roman', Times, serif",
-                  lineHeight: 1,
-                  zIndex: 1,
-                }}
-              >
-                {sub.assessment || sub.practical}
-              </div>
+        <div
+          className="absolute font-black text-[#081d3d] text-[10.5px] sm:text-[13px] -translate-x-1/2 -translate-y-1/2 text-center"
+          style={{
+            left: '82.25%',
+            top: topY,
+            fontFamily: "'Times New Roman', Times, serif",
+            lineHeight: 1,
+            zIndex: 1,
+          }}
+        >
+          {sub.marks}
+        </div>
 
-              <div
-                className="absolute font-black text-[#081d3d] text-[10.5px] sm:text-[13px] -translate-x-1/2 -translate-y-1/2 text-center"
-                style={{
-                  left: '76.31%',
-                  top: topY,
-                  fontFamily: "'Times New Roman', Times, serif",
-                  lineHeight: 1,
-                  zIndex: 1,
-                }}
-              >
-                {sub.marks}
-              </div>
-
-              <div
-                className="absolute font-bold text-[#081d3d] text-[10px] sm:text-[12.5px] -translate-x-1/2 -translate-y-1/2 text-center"
-                style={{
-                  left: '89.36%',
-                  top: topY,
-                  fontFamily: "'Times New Roman', Times, serif",
-                  lineHeight: 1,
-                  zIndex: 1,
-                }}
-              >
-                {sub.pct ||
-                  `${Math.round(
-                    ((Number(sub.marks) || 0) /
-                      (Number(sub.max) || 100)) *
-                      100
-                  )}%`}
-              </div>
-            </React.Fragment>
-          );
-        })}
+        <div
+          className="absolute font-bold text-[#081d3d] text-[10px] sm:text-[12.5px] -translate-x-1/2 -translate-y-1/2 text-center"
+          style={{
+            left: '90.68%',
+            top: topY,
+            fontFamily: "'Times New Roman', Times, serif",
+            lineHeight: 1,
+            zIndex: 1,
+          }}
+        >
+          {sub.pct ||
+            `${Math.round(
+              ((Number(sub.marks) || 0) /
+                (Number(sub.max) || 100)) *
+                100
+            )}%`}
+        </div>
+      </React.Fragment>
+    );
+  })}
 
       {/* =====================================================
           SUMMARY SECTION (hidden when hideMarks is set)

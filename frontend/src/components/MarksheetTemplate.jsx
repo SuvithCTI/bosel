@@ -32,9 +32,15 @@ const LABELS = [
   'Address',
 ];
 
-const TABLE_COLS = [37, 88, 282, 391, 500, 608, 687];
-const TABLE_HEADERS = ['S.No.', 'Subject / Module', 'Max Marks', 'Assessment', 'Marks Obtained', 'Percentage'];
-const ROW_LINES = [541, 577, 613, 650, 686, 722];
+const TABLE_COLS = [37, 88, 443, 504, 565, 626, 687];
+const TABLE_HEADERS = [
+  ['S.No.'],
+  ['Subject / Module'],
+  ['Max', 'Marks'],
+  ['Assessment'],
+  ['Marks', 'Obtained'],
+  ['Percentage'],
+];const ROW_LINES = [541, 577, 613, 650, 686, 722];
 
 // Remarks box geometry (on the 724 x 1024 grid)
 const REMARK_BOX = { x: 57, y: 852, w: 456, h: 48 };
@@ -218,20 +224,30 @@ export default function MarksheetTemplate({ remark = null }) {
 
       {/* Column header row */}
       <rect x="40" y="504" width="644" height="37" fill="none" stroke={NAVY} strokeWidth="1.5" />
-      {TABLE_HEADERS.map((h, i) => (
-        <text
-          key={h}
-          x={colCenters[i]}
-          y="527"
-          textAnchor="middle"
-          fontFamily="Arial, sans-serif"
-          fontWeight="bold"
-          fontSize="10.5"
-          fill={NAVY}
-        >
-          {h}
-        </text>
+      {/* Column header row */}
+{TABLE_HEADERS.map((lines, i) => {
+  const cx = colCenters[i];
+  const startY = lines.length === 1 ? 527 : 519;
+
+  return (
+    <text
+      key={lines.join(' ')}
+      x={cx}
+      y={startY}
+      textAnchor="middle"
+      fontFamily="Arial, sans-serif"
+      fontWeight="bold"
+      fontSize="9.5"
+      fill={NAVY}
+    >
+      {lines.map((line, j) => (
+        <tspan key={j} x={cx} dy={j === 0 ? 0 : 12}>
+          {line}
+        </tspan>
       ))}
+    </text>
+  );
+})}
 
       {/* Vertical column dividers */}
       {TABLE_COLS.slice(1, -1).map((x) => (
