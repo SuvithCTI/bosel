@@ -107,7 +107,7 @@ export default function AboutPage({ setActivePage }) {
     <div className="min-h-screen bg-slate-50 text-slate-900">
 
       {/* =========================================================
-          1. ABOUT B⭐SEL - HERO SECTION
+          1. ABOUT B★SEL - HERO SECTION
       ========================================================= */}
 
       <section className="relative bg-white border-b border-slate-200 overflow-hidden py-8 sm:py-12 lg:py-0 lg:min-h-[calc(100vh-80px)] flex flex-col justify-center">
@@ -140,11 +140,11 @@ export default function AboutPage({ setActivePage }) {
             <div className="space-y-4 sm:space-y-5 max-w-3xl lg:max-w-4xl mx-auto">
 
               <p className="text-sm xs:text-base sm:text-lg lg:text-xl text-slate-800 font-semibold leading-relaxed sm:leading-[1.9] lg:leading-[2]">
-                B⭐SEL – Board of Skills and Educational Learning is an education-focused organization dedicated to developing essential academic, creative, and digital skills among learners.
+                B★SEL – Board of Skills and Educational Learning is an education-focused organization dedicated to developing essential academic, creative, and digital skills among learners.
               </p>
 
               <p className="text-sm xs:text-base sm:text-lg lg:text-xl text-slate-800 font-semibold leading-relaxed sm:leading-[1.9] lg:leading-[2]">
-                Through structured programs, practical activities, trained instruction and progressive learning, B⭐SEL aims to create meaningful skill-development opportunities for students.
+                Through structured programs, practical activities, trained instruction and progressive learning, B★SEL aims to create meaningful skill-development opportunities for students.
               </p>
 
             </div>
@@ -205,7 +205,7 @@ export default function AboutPage({ setActivePage }) {
             </h2>
 
             <p className="text-slate-200 text-sm sm:text-base font-semibold">
-              The foundational pillars steering B⭐SEL's commitment to student excellence.
+              The foundational pillars steering B★SEL's commitment to student excellence.
             </p>
 
           </div>
@@ -371,7 +371,7 @@ export default function AboutPage({ setActivePage }) {
       </h2>
 
       <p className="text-slate-700 text-sm sm:text-base font-semibold">
-        The educator, visionary, and guiding force behind B⭐SEL's learning ecosystem.
+        The educator, visionary, and guiding force behind B★SEL's learning ecosystem.
       </p>
     </div>
 
@@ -430,7 +430,7 @@ export default function AboutPage({ setActivePage }) {
             </div>
 
             <div className="text-xs font-bold text-slate-600 uppercase tracking-wider mt-1">
-              Founder & Director, B⭐SEL
+              Founder & Director, B★SEL
             </div>
           </div>
         </div>
@@ -455,7 +455,7 @@ export default function AboutPage({ setActivePage }) {
             </div>
 
             <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mt-1">
-              Founder & Director, B⭐SEL
+              Founder & Director, B★SEL
             </div>
           </div>
 
@@ -487,7 +487,7 @@ export default function AboutPage({ setActivePage }) {
             </div>
 
             <div className="px-3 py-1 bg-slate-100 rounded-lg text-slate-700 text-xs font-mono font-bold border border-slate-200">
-              B⭐SEL Directorate
+              B★SEL Directorate
             </div>
           </div>
         </div>

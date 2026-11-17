@@ -1274,7 +1274,18 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
 
   // Filtered Payments for Super Admin
   const filteredPayments = paymentsList.filter(p => {
-    const matchSector = paymentSectorFilter === 'All' || p.sector === paymentSectorFilter;
+    const matchSector = paymentSectorFilter === 'All' || (() => {
+      const s = (p.sector || '').toLowerCase();
+      const f = paymentSectorFilter.toLowerCase();
+      if (f === 'monthly fee') return s.includes('monthly') || s.includes('tuition');
+      if (f === 'exam fee') return s.includes('exam');
+      if (f === 'event fee') return s.includes('event') || s.includes('competition');
+      if (f === 'book fee') return s.includes('book') || s.includes('toolkit') || s.includes('courseware');
+      if (f === 'entry fee') return s.includes('entry') || s.includes('course') || s.includes('admission');
+      if (f === 'franchise fee') return s.includes('franchise');
+      if (f === 'others') return s.includes('other');
+      return s === f || s.includes(f) || f.includes(s);
+    })();
     const matchBranch = paymentBranchFilter === 'All' || (() => {
       const b = (p.branch || '').toLowerCase();
       const target = paymentBranchFilter.toLowerCase();

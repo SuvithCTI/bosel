@@ -177,10 +177,10 @@ export default function Footer({ setActivePage, handleNav, onOpenLegal }) {
             </ul>
           </div>
 
-          {/* Secretariat Contact Details */}
+          {/* Secretariat & Head Office Contact Details */}
           <div>
             <h4 className="mb-2 border-l-2 border-amber-400 pl-2 text-xs font-bold uppercase tracking-wider text-white sm:text-sm">
-              Secretariat
+              Secretariat & Head Office
             </h4>
 
             <ul className="space-y-2 text-[11px] font-medium text-slate-200 sm:text-xs">

@@ -108,7 +108,7 @@ export default function ContactPage({ setActivePage }) {
           <div className="lg:col-span-5 space-y-5">
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-5">
               <h2 className="text-lg font-extrabold text-slate-900 font-heading border-b border-slate-100 pb-3">
-                National Secretariat
+                Secretariat & Head Office
               </h2>
 
               <div className="space-y-4 text-xs md:text-sm text-slate-900 font-medium">

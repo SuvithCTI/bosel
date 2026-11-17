@@ -63,7 +63,7 @@ export default function LegalModal({ isOpen, onClose, initialTab = 'privacy' }) 
               </span>
             </div>
             <h2 className="text-lg sm:text-2xl font-black font-heading text-white">
-              B⭐SEL Legal Documentation
+              B★SEL Legal Documentation
             </h2>
           </div>
 
@@ -123,7 +123,7 @@ export default function LegalModal({ isOpen, onClose, initialTab = 'privacy' }) 
                     Privacy Policy & Student Data Integrity
                   </h3>
                   <p className="text-slate-100 text-xs sm:text-sm leading-relaxed">
-                    Board of Skills and Educational Learning (B⭐SEL) is committed to protecting the privacy, personal records, and examination integrity of all enrolled students, partner schools, parents, and examination candidates.
+                    Board of Skills and Educational Learning (B★SEL) is committed to protecting the privacy, personal records, and examination integrity of all enrolled students, partner schools, parents, and examination candidates.
                   </p>
                   <div className="pt-2 text-[11px] text-sky-200 font-semibold flex items-center gap-2">
                     <span>Last Updated: October 2026</span>
@@ -145,7 +145,7 @@ export default function LegalModal({ isOpen, onClose, initialTab = 'privacy' }) 
                   </div>
                 </div>
                 <p className="text-slate-700 text-xs sm:text-sm font-medium leading-relaxed">
-                  This Privacy Policy applies to all services provided by the <strong>Board of Skills and Educational Learning (B⭐SEL)</strong>, including offline school examinations, skill talent hunts (Abacus, Drawing, Handwriting, Bharatanatyam, Spoken English, Athletics), student admission enquiry forms, digital portal logins, and verified online certificate issuances.
+                  This Privacy Policy applies to all services provided by the <strong>Board of Skills and Educational Learning (B★SEL)</strong>, including offline school examinations, skill talent hunts (Abacus, Drawing, Handwriting, Bharatanatyam, Spoken English, Athletics), student admission enquiry forms, digital portal logins, and verified online certificate issuances.
                 </p>
               </section>
 
@@ -161,7 +161,7 @@ export default function LegalModal({ isOpen, onClose, initialTab = 'privacy' }) 
                   </div>
                 </div>
                 <p className="text-slate-700 text-xs sm:text-sm font-medium leading-relaxed">
-                  When students or institutional coordinators register for courses or competitive events, B⭐SEL collects the following necessary student identification details:
+                  When students or institutional coordinators register for courses or competitive events, B★SEL collects the following necessary student identification details:
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs sm:text-sm font-semibold text-slate-800">
                   <div className="p-2.5 bg-white rounded-xl border border-slate-200 flex items-start gap-2">
@@ -198,7 +198,7 @@ export default function LegalModal({ isOpen, onClose, initialTab = 'privacy' }) 
                   The collected information is used solely for academic, administrative, and certification operations:
                 </p>
                 <ul className="list-disc pl-5 space-y-1.5 text-xs sm:text-sm font-medium text-slate-700">
-                  <li>Generating genuine tamper-evident B⭐SEL certificates with unique registration serial numbers.</li>
+                  <li>Generating genuine tamper-evident B★SEL certificates with unique registration serial numbers.</li>
                   <li>Compiling merit rankings, score sheets, and distributing medals and awards to qualified candidates.</li>
                   <li>Sending registration receipts, exam venue instructions, and schedules via SMS, WhatsApp, and official email.</li>
                   <li>Verification of student credentials by schools, colleges, and authorized inspection authorities.</li>
@@ -217,7 +217,7 @@ export default function LegalModal({ isOpen, onClose, initialTab = 'privacy' }) 
                   </div>
                 </div>
                 <div className="p-3 sm:p-4 bg-emerald-50 rounded-xl border border-emerald-300 text-emerald-950 font-bold text-xs sm:text-sm">
-                  <strong>Strict Guarantee:</strong> B⭐SEL strictly forbids the sale, lease, or commercial sharing of any student, school, or parent contact details to telemarketers, commercial advertisers, or third-party coaching vendors.
+                  <strong>Strict Guarantee:</strong> B★SEL strictly forbids the sale, lease, or commercial sharing of any student, school, or parent contact details to telemarketers, commercial advertisers, or third-party coaching vendors.
                 </div>
               </section>
 
@@ -284,7 +284,7 @@ export default function LegalModal({ isOpen, onClose, initialTab = 'privacy' }) 
                     Terms & Conditions of Service & Examination
                   </h3>
                   <p className="text-slate-100 text-xs sm:text-sm leading-relaxed">
-                    Please read these terms and conditions carefully before registering for examinations, skill programs, championships, or affiliate partnerships with the Board of Skills and Educational Learning (B⭐SEL).
+                    Please read these terms and conditions carefully before registering for examinations, skill programs, championships, or affiliate partnerships with the Board of Skills and Educational Learning (B★SEL).
                   </p>
                   <div className="pt-2 text-[11px] text-sky-200 font-semibold flex items-center gap-2">
                     <span>Effective Date: 1st January 2026</span>
@@ -306,7 +306,7 @@ export default function LegalModal({ isOpen, onClose, initialTab = 'privacy' }) 
                   </div>
                 </div>
                 <p className="text-slate-700 text-xs sm:text-sm font-medium leading-relaxed">
-                  By submitting an online application, registering a candidate through an affiliated school or study centre, or paying exam fees, the candidate and their legal guardian agree to be bound by the bye-laws, evaluation standards, and code of conduct formulated by the <strong>Board of Skills and Educational Learning (B⭐SEL)</strong>.
+                  By submitting an online application, registering a candidate through an affiliated school or study centre, or paying exam fees, the candidate and their legal guardian agree to be bound by the bye-laws, evaluation standards, and code of conduct formulated by the <strong>Board of Skills and Educational Learning (B★SEL)</strong>.
                 </p>
               </section>
 
@@ -335,7 +335,7 @@ export default function LegalModal({ isOpen, onClose, initialTab = 'privacy' }) 
                   </div>
                   <div className="p-2.5 bg-white rounded-xl border border-slate-200 flex items-start gap-2">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600 mt-0.5 shrink-0" />
-                    <span><strong>Handwriting:</strong> Standardized ruled assessment sheets provided by B⭐SEL must be utilized.</span>
+                    <span><strong>Handwriting:</strong> Standardized ruled assessment sheets provided by B★SEL must be utilized.</span>
                   </div>
                   <div className="p-2.5 bg-white rounded-xl border border-slate-200 flex items-start gap-2">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600 mt-0.5 shrink-0" />
@@ -356,7 +356,7 @@ export default function LegalModal({ isOpen, onClose, initialTab = 'privacy' }) 
                   </div>
                 </div>
                 <ul className="list-disc pl-5 space-y-1.5 text-xs sm:text-sm font-medium text-slate-700">
-                  <li>Candidates must report to designated examination halls at least 30 minutes prior to test commencement with a valid B⭐SEL Hall Ticket.</li>
+                  <li>Candidates must report to designated examination halls at least 30 minutes prior to test commencement with a valid B★SEL Hall Ticket.</li>
                   <li>Calculators, unauthorized electronic gadgets, or smart devices are strictly prohibited in Abacus venues.</li>
                   <li>Any form of impersonation, copying, or plagiarism will lead to immediate candidate disqualification.</li>
                   <li>The decisions of appointed Chief Examiners, Jurors, and Evaluation Panels are final and non-negotiable.</li>
@@ -391,7 +391,7 @@ export default function LegalModal({ isOpen, onClose, initialTab = 'privacy' }) 
                   </div>
                 </div>
                 <p className="text-slate-700 text-xs sm:text-sm font-medium leading-relaxed">
-                  Official B⭐SEL certificates are issued with unique alphanumeric serial numbers, embossed emblems, and verification hashes. Re-issuance of lost certificates requires written submission by the centre coordinator along with duplicate processing verification.
+                  Official B★SEL certificates are issued with unique alphanumeric serial numbers, embossed emblems, and verification hashes. Re-issuance of lost certificates requires written submission by the centre coordinator along with duplicate processing verification.
                 </p>
               </section>
 
@@ -433,7 +433,7 @@ export default function LegalModal({ isOpen, onClose, initialTab = 'privacy' }) 
         <div className="bg-slate-50 px-5 sm:px-8 py-3 sm:py-4 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0 text-xs text-slate-500 font-medium">
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-            <span>Official B⭐SEL Governance & Examination Policy</span>
+            <span>Official B★SEL Governance & Examination Policy</span>
           </div>
 
           <div className="flex items-center gap-2 w-full sm:w-auto">
