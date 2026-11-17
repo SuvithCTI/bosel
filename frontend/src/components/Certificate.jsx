@@ -1120,15 +1120,15 @@ export default function Certificate({
 
           </text>
 
-          <text x="441" y="603" textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="8.5" fill={NAVY}>Registered Under</text>
+          <text x="418" y="603" textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="8.5" fill={NAVY}>Registered Under</text>
 
-          <text x="566" y="603" textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="8.5" fill={NAVY}>Authorized Affiliates</text>
+          <text x="542" y="603" textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="8.5" fill={NAVY}>Authorized Affiliates</text>
 
-          <image href={msmeLogo} x="410" y="606" width="54" height="60" preserveAspectRatio="xMidYMid meet" />
+          <image href={msmeLogo} x="398" y="614" width="40" height="46" preserveAspectRatio="xMidYMid meet" />
 
-          <image href={iafLogo} x="478" y="614" width="70" height="43" preserveAspectRatio="xMidYMid meet" />
+          <image href={iafLogo} x="474" y="615" width="70" height="44" preserveAspectRatio="xMidYMid meet" />
 
-          <image href={isoLogo} x="566" y="608" width="48" height="48" preserveAspectRatio="xMidYMid meet" />
+          <image href={isoLogo} x="564" y="614" width="46" height="46" preserveAspectRatio="xMidYMid meet" />
 
           <text x="512" y="688" textAnchor="middle" fontFamily="Arial, sans-serif" fontWeight="700" fontSize="11" fill={NAVY}>
 
