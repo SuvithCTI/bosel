@@ -98,23 +98,31 @@ export default function AdminStudentsPage({
                     Monitoring all student enrollments across regional branches, fee status, and official B★SEL register numbers.
                   </p>
                 </div>
-                <div className="w-full sm:w-auto flex flex-col sm:flex-row gap-2">
+                <div className="grid grid-cols-2 gap-2 w-full sm:flex sm:w-auto">
                   <button
                     type="button"
                     onClick={() => setShowAddStudentModal(true)}
-                    className="w-full sm:w-auto px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer active:scale-95"
+                    className="w-full sm:w-auto px-3 sm:px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer active:scale-95"
                   >
-                    <Plus className="w-4 h-4" />
-                    <span>Register New Student</span>
+                    <Plus className="w-4 h-4 shrink-0" />
+                    <span className="truncate">Register Student</span>
                   </button>
-                  {!isMergeMode && (
+                  {!isMergeMode ? (
                     <button
                       type="button"
                       onClick={handleToggleMergeMode}
-                      className="w-full sm:w-auto px-4 py-2 bg-[#081d3d] hover:bg-[#123068] text-white rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer active:scale-95"
+                      className="w-full sm:w-auto px-3 sm:px-4 py-2 bg-[#081d3d] hover:bg-[#123068] text-white rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer active:scale-95"
                     >
-                      <FileDown className="w-4 h-4" />
-                      <span>Merge PDFs</span>
+                      <FileDown className="w-4 h-4 text-amber-400 shrink-0" />
+                      <span className="truncate">Merge PDFs</span>
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleToggleMergeMode}
+                      className="w-full sm:w-auto px-3 sm:px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black rounded-xl text-xs transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer active:scale-95"
+                    >
+                      <span className="truncate">Close Merge</span>
                     </button>
                   )}
                 </div>
@@ -209,24 +217,154 @@ export default function AdminStudentsPage({
                 </div>
               </div>
             )}
-            {/* Students Roster Table */}
+            {/* Students Roster (Simple Mobile Cards on Mobile, Full Table on Desktop) */}
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-              {/* Mobile Horizontal Scroll Cue */}
-              <div className="lg:hidden flex items-center justify-between px-3.5 py-2 bg-gradient-to-r from-sky-50 to-indigo-50/50 border-b border-sky-100 text-[11px] text-sky-900 font-medium">
-                <span className="flex items-center gap-1.5">
-                  <span className="text-sky-600 font-bold">⇄</span> Swipe to view Parent, Course, Fee & Documents
-                </span>
-                <span className="text-[10px] font-bold bg-white text-sky-700 px-2 py-0.5 rounded-full border border-sky-200 shrink-0">
-                  {filteredStudentsSuperAdmin.length} Students
-                </span>
+              
+              {/* MOBILE VIEW (lg:hidden): Clean, Simple Vertical Card List (No horizontal swipe) */}
+              <div className="lg:hidden divide-y divide-slate-100">
+                <div className="flex items-center justify-between px-3.5 py-2.5 bg-gradient-to-r from-sky-50 to-indigo-50/50 border-b border-sky-100 text-xs font-bold text-slate-800">
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-sky-500 animate-pulse"></span>
+                    Student Candidates
+                  </span>
+                  <span className="text-[10px] font-black bg-white text-sky-800 px-2.5 py-0.5 rounded-full border border-sky-200 shadow-2xs">
+                    {filteredStudentsSuperAdmin.length} Enrolled
+                  </span>
+                </div>
+
+                {filteredStudentsSuperAdmin.length === 0 ? (
+                  <div className="py-8 text-center text-xs text-slate-500">
+                    No students matching your filter criteria.
+                  </div>
+                ) : (
+                  filteredStudentsSuperAdmin.map((student, idx) => {
+                    const isSelected = selectedStudentIds.includes(student.userId);
+                    const isPaid = student.feePaymentType === 'Paid' || student.feePaymentType === 'Pay Now' || student.feePaymentType === 'Approved';
+                    const formattedFee = student.feeAmount 
+                      ? (String(student.feeAmount).trim().startsWith('₹') ? String(student.feeAmount).trim() : `₹${String(student.feeAmount).trim()}`)
+                      : '₹450';
+
+                    return (
+                      <div
+                        key={student.userId || idx}
+                        onClick={() => {
+                          if (isMergeMode) {
+                            handleToggleSelectStudent(student.userId);
+                          }
+                        }}
+                        className={`p-3 transition border-b border-slate-100 last:border-b-0 ${
+                          isMergeMode ? 'cursor-pointer' : ''
+                        } ${
+                          isSelected ? 'bg-amber-50/90 border-l-4 border-l-amber-500' : 'hover:bg-slate-50/80'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-2.5">
+                          {/* Left: Avatar + Details */}
+                          <div className="flex items-start gap-2.5 min-w-0 flex-1">
+                            {isMergeMode && (
+                              <div onClick={(e) => e.stopPropagation()} className="shrink-0 mt-1">
+                                <input
+                                  type="checkbox"
+                                  checked={isSelected}
+                                  onChange={() => handleToggleSelectStudent(student.userId)}
+                                  className="w-4 h-4 rounded cursor-pointer accent-amber-500"
+                                />
+                              </div>
+                            )}
+
+                            <StudentAvatar
+                              student={student}
+                              index={idx}
+                              className="w-10 h-10 shrink-0 mt-0.5"
+                              onClick={() => setViewingAdmissionStudent(student)}
+                              title={`View Admission Form for ${student.studentName || 'Student'}`}
+                            />
+
+                            <div className="min-w-0 flex-1 space-y-0.5">
+                              {/* Row 1: Student Name + Reg Badge + Branch */}
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="font-bold text-slate-950 text-xs capitalize">
+                                  {student.studentName || 'Student Name'}
+                                </span>
+                                <span className="font-mono text-[9.5px] font-black text-sky-800 bg-sky-50 px-1.5 py-0.5 rounded border border-sky-200 shrink-0">
+                                  {student.registerNumber || student.userId}
+                                </span>
+                                <span className="text-[10px] font-semibold text-slate-500 shrink-0">
+                                  • {student.branch || student.institution || 'Tamil Nadu'}
+                                </span>
+                              </div>
+
+                              {/* Row 2: Course Name (Full course name, no cutoff) */}
+                              <div className="text-[11px] font-semibold text-slate-800 leading-snug break-words">
+                                {student.program || student.courseName || 'Abacus'}
+                              </div>
+
+                              {/* Row 3: Phone Number (Fully Visible) */}
+                              {student.phone && (
+                                <div className="text-[10.5px] text-slate-600 flex items-center gap-1 pt-0.5">
+                                  <Phone className="w-3 h-3 text-emerald-600 shrink-0" />
+                                  <span className="font-medium text-slate-800 tracking-wide select-all">{student.phone}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Right: Stacked Matching Action Buttons */}
+                          <div className="flex flex-col gap-1.5 shrink-0 w-24 pt-0.5" onClick={(e) => e.stopPropagation()}>
+                            {/* Admission Form Button */}
+                            <button
+                              type="button"
+                              onClick={() => setViewingAdmissionStudent(student)}
+                              className="w-full py-1.5 px-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-black rounded-lg text-[10.5px] transition cursor-pointer flex items-center justify-center gap-1 shadow-2xs active:scale-95"
+                              title="View Admission Form"
+                            >
+                              <GraduationCap className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                              <span>Admission</span>
+                            </button>
+
+                            {/* Fee Receipt / Pay Button */}
+                            {isPaid ? (
+                              <button
+                                type="button"
+                                onClick={() => handleOpenReceiptForStudent?.(student)}
+                                className="w-full py-1.5 px-2 bg-sky-50 hover:bg-sky-100 text-sky-800 border border-sky-200 font-black rounded-lg text-[10.5px] transition cursor-pointer flex items-center justify-center gap-1 shadow-2xs active:scale-95"
+                                title="View Official Fee Receipt"
+                              >
+                                <Receipt className="w-3.5 h-3.5 text-sky-600 shrink-0" />
+                                <span>Receipt</span>
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newReceipt = `RCP-DESK-${Math.floor(100000 + Math.random() * 900000)}`;
+                                  updateUserProfile(student.userId, { 
+                                    feePaymentType: 'Approved',
+                                    receiptRefNo: (student.receiptRefNo && !student.receiptRefNo.includes('PAY-LATER')) ? student.receiptRefNo : newReceipt
+                                  });
+                                }}
+                                className="w-full py-1.5 px-2 bg-amber-50 hover:bg-emerald-100 text-amber-800 hover:text-emerald-900 border border-amber-300 hover:border-emerald-300 font-black rounded-lg text-[10.5px] transition cursor-pointer flex items-center justify-center gap-1 shadow-2xs active:scale-95"
+                                title="Approve Fee Payment"
+                              >
+                                <Clock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                                <span>Pay Later</span>
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
               </div>
 
-              <div className="w-full overflow-x-auto admin-table-container">
+              {/* DESKTOP VIEW (hidden lg:block): Full Wide Roster Table */}
+              <div className="hidden lg:block w-full overflow-x-auto admin-table-container">
                 <table className="w-full text-left text-xs min-w-[760px]">
                   <thead className="bg-[#081d3d] text-white uppercase text-[10px] tracking-wider font-black">
                     <tr>
                       {isMergeMode && (
-                        <th className="py-3 px-3 w-12 text-center">
+                        <th className="py-3 px-3 w-12 text-center sticky left-0 bg-[#081d3d] z-30 shadow-[2px_0_5px_rgba(0,0,0,0.15)]">
                           <div className="flex items-center justify-center">
                             <input
                               type="checkbox"
@@ -238,7 +376,7 @@ export default function AdminStudentsPage({
                           </div>
                         </th>
                       )}
-                      <th className="py-3 px-4 sticky left-0 bg-[#081d3d] z-20 shadow-[2px_0_5px_rgba(0,0,0,0.15)]">Student Details</th>
+                      <th className={`py-3 px-4 sticky ${isMergeMode ? 'left-12' : 'left-0'} bg-[#081d3d] z-20 shadow-[2px_0_5px_rgba(0,0,0,0.15)]`}>Student Details</th>
                       <th className="py-3 px-3">Parent & Contact</th>
                       <th className="py-3 px-3">Branch</th>
                       <th className="py-3 px-3">Course & Level</th>
@@ -269,7 +407,12 @@ export default function AdminStudentsPage({
                           }`}
                         >
                           {isMergeMode && (
-                            <td className="py-3 px-3 text-center" onClick={(e) => e.stopPropagation()}>
+                            <td
+                              className={`py-3 px-3 text-center sticky left-0 z-20 transition ${
+                                isSelected ? 'bg-amber-50/90' : 'bg-white'
+                              } group-hover:bg-slate-50`}
+                              onClick={(e) => e.stopPropagation()}
+                            >
                               <input
                                 type="checkbox"
                                 checked={isSelected}
@@ -280,8 +423,14 @@ export default function AdminStudentsPage({
                             </td>
                           )}
 
-                          {/* Student Details (Sticky on Mobile) */}
-                          <td className="py-3 px-4 sticky left-0 bg-white z-10 shadow-[2px_0_6px_-2px_rgba(0,0,0,0.06)] group-hover:bg-slate-50 transition">
+                          {/* Student Details (Sticky) */}
+                          <td
+                            className={`py-3 px-4 sticky ${
+                              isMergeMode ? 'left-12' : 'left-0'
+                            } z-10 shadow-[2px_0_6px_-2px_rgba(0,0,0,0.06)] transition ${
+                              isSelected ? 'bg-amber-50/90' : 'bg-white'
+                            } group-hover:bg-slate-50`}
+                          >
                             <div className="flex items-center gap-3">
                               <StudentAvatar
                                 student={student}

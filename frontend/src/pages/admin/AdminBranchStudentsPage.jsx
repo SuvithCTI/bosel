@@ -326,34 +326,34 @@ export default function AdminBranchStudentsPage({
               Monitoring all student enrollments under <span className="font-bold text-sky-700">{activeBranch}</span> and official B★SEL register numbers.
             </p>
           </div>
-          <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap sm:flex-nowrap">
+          <div className="grid grid-cols-2 gap-2 w-full sm:flex sm:w-auto items-center">
             <button
               type="button"
               onClick={handleToggleMergeMode}
-              className={`w-full sm:w-auto px-3.5 py-2 rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer active:scale-95 ${
+              className={`w-full sm:w-auto px-3 py-2 rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer active:scale-95 ${
                 isMergeMode
                   ? 'bg-amber-500 hover:bg-amber-600 text-slate-950 ring-2 ring-amber-300 font-black'
                   : 'bg-[#0c234b] hover:bg-[#153a77] text-white border border-slate-700'
               }`}
             >
-              <FileDown className="w-3.5 h-3.5 text-amber-400" />
-              <span>{isMergeMode ? 'Close Merge' : 'Merge Qn Papers as PDF'}</span>
+              <FileDown className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+              <span className="truncate">{isMergeMode ? 'Close Merge' : 'Merge Qn Papers'}</span>
             </button>
             <button
               type="button"
               onClick={() => setShowAddStudentModal(true)}
-              className="w-full sm:w-auto px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer active:scale-95"
+              className="w-full sm:w-auto px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer active:scale-95"
             >
-              <Plus className="w-4 h-4" />
-              <span>Register New Student</span>
+              <Plus className="w-4 h-4 shrink-0" />
+              <span className="truncate">Register Student</span>
             </button>
           </div>
         </div>
 
-        {/* Filters Row: Search, Category, Class, Level, Course */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-2 pt-1 items-center">
-          {/* Search */}
-          <div className="relative">
+        {/* Filters Row: Search (full width on mobile) + 2x2 grid of selects */}
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-2 pt-1 items-center">
+          {/* Search: Full width on mobile */}
+          <div className="col-span-2 md:col-span-1 xl:col-span-1 relative">
             <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
@@ -364,41 +364,49 @@ export default function AdminBranchStudentsPage({
             />
           </div>
 
-          {/* Category Filter: Individual, Academy, School */}
-          <CompactSelect
-            value={branchCategoryFilter}
-            onChange={setBranchCategoryFilter}
-            options={categoryOptions}
-            placeholder="All Categories"
-            maxHeight="max-h-56"
-          />
+          {/* Category Filter */}
+          <div className="col-span-1">
+            <CompactSelect
+              value={branchCategoryFilter}
+              onChange={setBranchCategoryFilter}
+              options={categoryOptions}
+              placeholder="All Categories"
+              maxHeight="max-h-56"
+            />
+          </div>
 
           {/* Class Filter */}
-          <CompactSelect
-            value={branchClassFilter}
-            onChange={setBranchClassFilter}
-            options={classOptions}
-            placeholder="All Classes"
-            maxHeight="max-h-56"
-          />
+          <div className="col-span-1">
+            <CompactSelect
+              value={branchClassFilter}
+              onChange={setBranchClassFilter}
+              options={classOptions}
+              placeholder="All Classes"
+              maxHeight="max-h-56"
+            />
+          </div>
 
           {/* Level Filter */}
-          <CompactSelect
-            value={branchLevelFilter}
-            onChange={setBranchLevelFilter}
-            options={levelOptions}
-            placeholder="All Levels"
-            maxHeight="max-h-56"
-          />
+          <div className="col-span-1">
+            <CompactSelect
+              value={branchLevelFilter}
+              onChange={setBranchLevelFilter}
+              options={levelOptions}
+              placeholder="All Levels"
+              maxHeight="max-h-56"
+            />
+          </div>
 
           {/* Course Filter */}
-          <CompactSelect
-            value={branchCourseFilter}
-            onChange={setBranchCourseFilter}
-            options={allCourses}
-            placeholder="All Courses"
-            maxHeight="max-h-56"
-          />
+          <div className="col-span-1 md:col-span-2 xl:col-span-1">
+            <CompactSelect
+              value={branchCourseFilter}
+              onChange={setBranchCourseFilter}
+              options={allCourses}
+              placeholder="All Courses"
+              maxHeight="max-h-56"
+            />
+          </div>
         </div>
       </div>
 
@@ -427,7 +435,7 @@ export default function AdminBranchStudentsPage({
               onClick={() => {
                 setIsMergeMode(false);
               }}
-              className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition cursor-pointer"
+              className="px-3 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition cursor-pointer"
             >
               Cancel
             </button>
@@ -435,10 +443,13 @@ export default function AdminBranchStudentsPage({
               type="button"
               disabled={selectedStudentIds.length === 0}
               onClick={handleStartMergeSelected}
-              className="px-4 py-1.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black rounded-xl text-xs transition flex items-center gap-1.5 shadow-md disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer active:scale-95"
+              className="flex-1 sm:flex-none justify-center px-4 py-2 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black rounded-xl text-xs transition flex items-center gap-1.5 shadow-md disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer active:scale-95"
             >
-              <FileDown className="w-3.5 h-3.5" />
-              <span>Download Merged Question Papers ({selectedStudentIds.length})</span>
+              <FileDown className="w-3.5 h-3.5 shrink-0" />
+              <span>
+                <span className="hidden sm:inline">Download Merged Question Papers</span>
+                <span className="sm:hidden">Download Merged</span> ({selectedStudentIds.length})
+              </span>
             </button>
           </div>
         </div>
@@ -457,11 +468,11 @@ export default function AdminBranchStudentsPage({
         </div>
 
         <div className="w-full overflow-x-auto admin-table-container">
-          <table className="w-full text-left text-xs min-w-[760px]">
+          <table className="w-full text-left text-xs min-w-[860px]">
             <thead className="bg-[#081d3d] text-white uppercase text-[10px] tracking-wider font-black">
               <tr>
                 {isMergeMode && (
-                  <th className="py-3 px-3 w-12 text-center">
+                  <th className="py-3 px-3 w-12 text-center sticky left-0 bg-[#081d3d] z-30 shadow-[2px_0_5px_rgba(0,0,0,0.15)]">
                     <div className="flex items-center justify-center">
                       <input
                         type="checkbox"
@@ -473,7 +484,7 @@ export default function AdminBranchStudentsPage({
                     </div>
                   </th>
                 )}
-                <th className="py-3 px-4 sticky left-0 bg-[#081d3d] z-20 shadow-[2px_0_5px_rgba(0,0,0,0.15)]">Student Details</th>
+                <th className={`py-3 px-4 sticky ${isMergeMode ? 'left-12' : 'left-0'} bg-[#081d3d] z-20 shadow-[2px_0_5px_rgba(0,0,0,0.15)]`}>Student Details</th>
                 <th className="py-3 px-3">Parent & Contact</th>
                 <th className="py-3 px-3">Category</th>
                 <th className="py-3 px-3">Class</th>
@@ -505,7 +516,12 @@ export default function AdminBranchStudentsPage({
                       }`}
                     >
                       {isMergeMode && (
-                        <td className="py-3 px-3 text-center" onClick={(e) => e.stopPropagation()}>
+                        <td
+                          className={`py-3 px-3 text-center sticky left-0 z-20 transition ${
+                            isSelected ? 'bg-amber-50/90' : 'bg-white'
+                          } group-hover:bg-slate-50`}
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <input
                             type="checkbox"
                             checked={isSelected}
@@ -516,7 +532,13 @@ export default function AdminBranchStudentsPage({
                       )}
 
                       {/* Student Details (Sticky column for optimal mobile orientation) */}
-                      <td className="py-3 px-4 sticky left-0 bg-white z-10 shadow-[2px_0_6px_-2px_rgba(0,0,0,0.06)] group-hover:bg-slate-50 transition">
+                      <td
+                        className={`py-3 px-4 sticky ${
+                          isMergeMode ? 'left-12' : 'left-0'
+                        } z-10 shadow-[2px_0_6px_-2px_rgba(0,0,0,0.06)] transition ${
+                          isSelected ? 'bg-amber-50/90' : 'bg-white'
+                        } group-hover:bg-slate-50`}
+                      >
                         <div className="flex items-center gap-3">
                           <StudentAvatar
                             student={student}

@@ -163,8 +163,8 @@ export default function AdminOverviewPage({
         </div>
       </div>
 
-      {/* Two-Column Live Activity Operations */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+      {/* Two-Column Live Activity Operations (Hidden on mobile view alone, active on desktop) */}
+      <div className="hidden lg:grid grid-cols-2 gap-5">
         {/* Recent Student Admissions */}
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs flex flex-col justify-between">
           <div>
