@@ -108,50 +108,36 @@ export const getDefaultCredentialsForDistrict = (districtName) => {
 };
 
 export const getStoredBranchCredentials = () => {
-  if (typeof window === 'undefined') {
-    const initial = {};
-    TAMIL_NADU_DISTRICTS.forEach((d) => {
-      const creds = getDefaultCredentialsForDistrict(d);
-      initial[creds.slug] = creds;
-    });
-    return initial;
-  }
+  if (typeof window === 'undefined') return {};
 
   try {
+    const branchDataClearedKey = 'bsel_branch_credentials_cleared_v1';
+    if (!localStorage.getItem(branchDataClearedKey)) {
+      localStorage.setItem('bsel_branch_credentials', JSON.stringify({}));
+      const usersRaw = localStorage.getItem('bsel_registered_users');
+      if (usersRaw) {
+        const users = JSON.parse(usersRaw);
+        if (Array.isArray(users)) {
+          localStorage.setItem('bsel_registered_users', JSON.stringify(
+            users.filter((user) => user.role !== 'Branch Head' && user.role !== 'Branch Admin')
+          ));
+        }
+      }
+      localStorage.setItem(branchDataClearedKey, 'true');
+      return {};
+    }
+
     const raw = localStorage.getItem('bsel_branch_credentials');
     const existing = raw ? JSON.parse(raw) : {};
 
-    // Ensure all 38 districts exist with defaults (without '+')
+    // Drop legacy seeded district accounts while retaining explicitly created branches.
     let modified = false;
     const combined = { ...existing };
-
-    TAMIL_NADU_DISTRICTS.forEach((d) => {
-      const defaultCreds = getDefaultCredentialsForDistrict(d);
-      const curr = combined[defaultCreds.slug];
-      if (!curr) {
-        combined[defaultCreds.slug] = defaultCreds;
+    TAMIL_NADU_DISTRICTS.forEach((district) => {
+      const slug = getDistrictSlug(district);
+      if (combined[slug] && !combined[slug].isCustomBranch) {
+        delete combined[slug];
         modified = true;
-      } else {
-        // Automatically sanitize and remove any '+' from email or password
-        let changed = false;
-        let newEmail = curr.email || defaultCreds.email;
-        let newPass = curr.password || defaultCreds.password;
-        if (newEmail.includes('+')) {
-          newEmail = newEmail.replace(/\+/g, '');
-          changed = true;
-        }
-        if (newPass.includes('+')) {
-          newPass = newPass.replace(/\+/g, '');
-          changed = true;
-        }
-        if (changed) {
-          combined[defaultCreds.slug] = {
-            ...curr,
-            email: newEmail,
-            password: newPass
-          };
-          modified = true;
-        }
       }
     });
 
@@ -161,12 +147,7 @@ export const getStoredBranchCredentials = () => {
     return combined;
   } catch (err) {
     console.error('Error reading branch credentials:', err);
-    const initial = {};
-    TAMIL_NADU_DISTRICTS.forEach((d) => {
-      const creds = getDefaultCredentialsForDistrict(d);
-      initial[creds.slug] = creds;
-    });
-    return initial;
+    return {};
   }
 };
 
@@ -315,6 +296,56 @@ export const createBranchCredentials = (branch, userId, password) => {
   } catch (err) {
     console.error('Error creating branch credentials:', err);
     return { success: false, message: 'Unable to save branch credentials. Please try again.' };
+  }
+};
+
+export const deleteCustomBranch = (branch) => {
+  if (typeof window === 'undefined') {
+    return { success: false, message: 'Branches can only be deleted in the browser.' };
+  }
+
+  try {
+    const credentials = getStoredBranchCredentials();
+    const slug = branch.slug || Object.keys(credentials).find((key) =>
+      credentials[key].code === branch.code || credentials[key].branchCode === branch.code
+    );
+    const branchCredentials = slug ? credentials[slug] : null;
+    if (!branchCredentials?.isCustomBranch) {
+      return { success: false, message: 'The selected custom branch could not be found.' };
+    }
+
+    const usersRaw = localStorage.getItem('bsel_registered_users');
+    const users = usersRaw ? JSON.parse(usersRaw) : [];
+    const schoolsRaw = localStorage.getItem('bsel_partner_schools');
+    const schools = schoolsRaw ? JSON.parse(schoolsRaw) : [];
+    if (!Array.isArray(users) || !Array.isArray(schools)) {
+      return { success: false, message: 'Branch data is invalid and could not be safely deleted.' };
+    }
+
+    const branchUserId = String(branchCredentials.userId || branchCredentials.email || '').toLowerCase();
+    const updatedUsers = users.filter((user) => {
+      const isBranchUser = user.role === 'Branch Head' || user.role === 'Branch Admin';
+      const matchesBranchCode = user.branchCode === branch.code;
+      const matchesBranchLogin = String(user.userId || user.email || '').toLowerCase() === branchUserId;
+      return !(isBranchUser && (matchesBranchCode || matchesBranchLogin));
+    });
+    const updatedSchools = schools.filter((school) =>
+      school.code !== branch.code && school.branchName !== branch.branchName
+    );
+    const updatedCredentials = { ...credentials };
+    delete updatedCredentials[slug];
+
+    localStorage.setItem('bsel_branch_credentials', JSON.stringify(updatedCredentials));
+    localStorage.setItem('bsel_registered_users', JSON.stringify(updatedUsers));
+    localStorage.setItem('bsel_partner_schools', JSON.stringify(updatedSchools));
+    window.dispatchEvent(new Event('bsel_branch_credentials_updated'));
+    window.dispatchEvent(new Event('bsel_users_updated'));
+    window.dispatchEvent(new Event('bsel_schools_updated'));
+    window.dispatchEvent(new StorageEvent('storage', { key: 'bsel_partner_schools' }));
+    return { success: true };
+  } catch (err) {
+    console.error('Error deleting custom branch:', err);
+    return { success: false, message: 'Unable to delete the branch. Please try again.' };
   }
 };
 

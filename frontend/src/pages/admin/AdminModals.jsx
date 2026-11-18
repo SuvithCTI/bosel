@@ -108,6 +108,8 @@ export default function AdminModals({
   const [courseModalTab, setCourseModalTab] = useState('identity');
   const courseImageInputRef = useRef(null);
   const newCourseImageInputRef = useRef(null);
+  const branchLogoInputRef = useRef(null);
+  const branchSignatureInputRef = useRef(null);
 
   const handleCourseImageUpload = (e, isNew = false) => {
     const file = e.target.files?.[0];
@@ -126,6 +128,36 @@ export default function AdminModals({
       }
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleBranchImageUpload = (e, field) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('Please choose an image file.');
+      e.target.value = '';
+      return;
+    }
+    if (file.size > 500 * 1024) {
+      alert('Branch logo and signature images must be under 500 KB.');
+      e.target.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result !== 'string') {
+        alert('Unable to read the selected image. Please try another file.');
+        return;
+      }
+      setNewSchool((prev) => ({ ...prev, [field]: reader.result }));
+    };
+    reader.onerror = () => {
+      alert('Unable to read the selected image. Please try another file.');
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
   };
 
   const handleAddCurriculumLevel = () => {
@@ -1809,9 +1841,12 @@ export default function AdminModals({
               setNewSchool({
                 name: '',
                 branchName: '',
+                tagline: '',
+                logo: '',
                 city: '',
                 principal: '',
                 coordinator: '',
+                signature: '',
                 phone: '',
                 studentsCount: 100,
                 userId: '',
@@ -1831,6 +1866,96 @@ export default function AdminModals({
                     placeholder="e.g. B★SEL Madurai Regional Academy"
                     className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none font-bold"
                   />
+                </div>
+
+                <div className="sm:col-span-2 rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-3">
+                  <h4 className="font-black text-slate-800">Branch Branding</h4>
+
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-1">Tagline</label>
+                    <input
+                      type="text"
+                      value={newSchool.tagline || ''}
+                      onChange={(e) => setNewSchool((prev) => ({ ...prev, tagline: e.target.value }))}
+                      placeholder="Branch tagline"
+                      className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <label className="font-bold text-slate-700 block">Branch Logo</label>
+                      <input
+                        ref={branchLogoInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleBranchImageUpload(e, 'logo')}
+                        className="hidden"
+                      />
+                      <div className="flex items-center gap-3">
+                        <div className="h-14 w-14 rounded-lg border border-slate-300 bg-white flex items-center justify-center overflow-hidden shrink-0">
+                          {newSchool.logo ? (
+                            <img src={newSchool.logo} alt="Branch logo preview" className="h-full w-full object-contain" />
+                          ) : (
+                            <ImageIcon className="w-5 h-5 text-slate-300" />
+                          )}
+                        </div>
+                        <div>
+                          <button
+                            type="button"
+                            onClick={() => branchLogoInputRef.current?.click()}
+                            className="px-3 py-1.5 bg-[#081d3d] text-white rounded-lg font-bold flex items-center gap-1.5 text-xs cursor-pointer"
+                          >
+                            <Upload className="w-3.5 h-3.5 text-amber-400" />
+                            Upload logo
+                          </button>
+                          <p className="mt-1 text-[10px] text-slate-500">Image file, under 500 KB</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="font-bold text-slate-700 block">Branch Coordinator Signature</label>
+                      <input
+                        ref={branchSignatureInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleBranchImageUpload(e, 'signature')}
+                        className="hidden"
+                      />
+                      <div className="flex items-center gap-3">
+                        <div className="h-14 w-24 rounded-lg border border-slate-300 bg-white flex items-center justify-center overflow-hidden shrink-0">
+                          {newSchool.signature ? (
+                            <img src={newSchool.signature} alt="Coordinator signature preview" className="h-full w-full object-contain" />
+                          ) : (
+                            <ImageIcon className="w-5 h-5 text-slate-300" />
+                          )}
+                        </div>
+                        <div>
+                          <button
+                            type="button"
+                            onClick={() => branchSignatureInputRef.current?.click()}
+                            className="px-3 py-1.5 bg-[#081d3d] text-white rounded-lg font-bold flex items-center gap-1.5 text-xs cursor-pointer"
+                          >
+                            <Upload className="w-3.5 h-3.5 text-amber-400" />
+                            Upload signature
+                          </button>
+                          <p className="mt-1 text-[10px] text-slate-500">Image file, under 500 KB</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-1">Branch Coordinator Name</label>
+                    <input
+                      type="text"
+                      value={newSchool.coordinator || ''}
+                      onChange={(e) => setNewSchool((prev) => ({ ...prev, coordinator: e.target.value }))}
+                      placeholder="Coordinator name"
+                      className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
+                    />
+                  </div>
                 </div>
 
                 <div>
