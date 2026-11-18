@@ -11,6 +11,7 @@ import isoLogo from '../assets/iso-9001-logo.png';
 const NAVY = '#0b2a55';
 const GOLD = '#b8892f';
 const SERIF = "'Times New Roman', Times, serif";
+const TABLE_HEADER_BLUE = '#d4eefa'; // light blue column header row and grade value box
 
 const PAGE_CENTER_X = 362;
 
@@ -37,12 +38,20 @@ const TABLE_HEADERS = [
   ['S.No.'],
   ['Subject / Module'],
   ['Max', 'Marks'],
-  ['Assessment'],
+  ['Practical'],
   ['Marks', 'Obtained'],
   ['Percentage'],
 ];
 
 const ROW_LINES = [541, 577, 613, 650, 686, 722];
+
+// Thickness for the table grid (thick lines like the reference sheet)
+const TABLE_OUTER_STROKE = 4;
+const TABLE_INNER_STROKE = 2.5;
+
+// Navy band styling (matches the reference sheet's header bars)
+const BAND_INSET = 4;          // distance of the white inner line from the band edge
+const BAND_INNER_STROKE = 1.2; // weight of the white inner line
 
 // Remarks box geometry (on the 724 x 1024 grid)
 const REMARK_BOX = { x: 57, y: 852, w: 456, h: 48 };
@@ -54,6 +63,12 @@ const REMARK_TEXT_Y = 889;
 // Thick navy outer frame, with the gold rule sitting inside it.
 const FRAME_OUTER = { x: 10, y: 10, w: 704, h: 1007 }; // thick navy outer frame (stroke 8)
 const FRAME_GOLD = { x: 22, y: 22, w: 680, h: 980 };   // gold rule; diamonds sit on this line
+
+// Title bar spans from the table's top border down to the column header row,
+// so there is no gap above or below it.
+const SUBJECT_BAND = { x: 37, y: 467, w: 650, h: 37 };
+const TOTALS_BAND = { x: 58, y: 766, w: 455, h: 30 };
+const GRADE_BAND = { x: 541, y: 763, w: 124, h: 35 };
 
 // Gold diamond on the gold rule at a corner (no outline)
 const CornerDiamond = ({ x, y }) => {
@@ -78,6 +93,22 @@ const EdgeDiamond = ({ x, y }) => {
     />
   );
 };
+
+// Navy header band with a thin white inset outline (as in the reference sheet)
+const NavyBand = ({ x, y, w, h, inset = BAND_INSET }) => (
+  <g>
+    <rect x={x} y={y} width={w} height={h} fill={NAVY} stroke={NAVY} strokeWidth="2" />
+    <rect
+      x={x + inset}
+      y={y + inset}
+      width={w - inset * 2}
+      height={h - inset * 2}
+      fill="none"
+      stroke="#ffffff"
+      strokeWidth={BAND_INNER_STROKE}
+    />
+  </g>
+);
 
 const SectionTitle = ({ x, y, w, h, fill, text }) => (
   <g>
@@ -251,7 +282,7 @@ export default function MarksheetTemplate({ remark = null }) {
         const cy = 181.4 + i * 26.2;
         const longLabel = label.length >= 19; // e.g. "School / Exam Centre"
         return (
-          <g key={label} fontFamily={SERIF} fontWeight="bold" fontSize="15" fill={NAVY}>
+          <g key={label} fontFamily={SERIF} fontWeight="bold" fontSize="16" fill={NAVY}>
             <text
               x="57"
               y={cy + 5}
@@ -270,18 +301,45 @@ export default function MarksheetTemplate({ remark = null }) {
       <rect x="556" y="233" width="103" height="120" fill="none" stroke={NAVY} strokeWidth="2" />
 
       {/* ---------- Section: Grade Card / Result Sheet ---------- */}
-      <SectionTitle x={197} y={440} w={331} h={22} fill={NAVY} text="GRADE CARD / RESULT SHEET" />
+     
 
       {/* ---------- Subjects & Marks table ---------- */}
-      <rect x="37" y="467" width="650" height="283" fill="none" stroke={NAVY} strokeWidth="2" />
+      {/* Outer thick navy border */}
+      <rect
+        x="37"
+        y="467"
+        width="650"
+        height="283"
+        fill="none"
+        stroke={NAVY}
+        strokeWidth={TABLE_OUTER_STROKE}
+      />
 
-      <rect x="40" y="471" width="644" height="28" fill="none" stroke={NAVY} strokeWidth="1.5" />
-      <text x="362" y="491" textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="17" fill={NAVY}>
+      {/* Title bar: fills the space from the top border to the column header row */}
+      <NavyBand {...SUBJECT_BAND} />
+      <text
+        x={SUBJECT_BAND.x + SUBJECT_BAND.w / 2}
+        y={SUBJECT_BAND.y + SUBJECT_BAND.h / 2}
+        dominantBaseline="central"
+        textAnchor="middle"
+        fontFamily="Arial, sans-serif"
+        fontSize="16"
+        letterSpacing="0.8"
+        fill="#ffffff"
+      >
         SUBJECTS &amp; MARKS OBTAINED
       </text>
 
-      {/* Column header row */}
-      <rect x="40" y="504" width="644" height="37" fill="none" stroke={NAVY} strokeWidth="1.5" />
+      {/* Column header row (light blue background) */}
+      <rect
+        x="40"
+        y="504"
+        width="644"
+        height="37"
+        fill={TABLE_HEADER_BLUE}
+        stroke={NAVY}
+        strokeWidth={TABLE_INNER_STROKE}
+      />
       {TABLE_HEADERS.map((lines, i) => {
         const cx = colCenters[i];
         const startY = lines.length === 1 ? 527 : 519;
@@ -306,14 +364,30 @@ export default function MarksheetTemplate({ remark = null }) {
         );
       })}
 
-      {/* Vertical column dividers */}
+      {/* Vertical column dividers (thick) */}
       {TABLE_COLS.slice(1, -1).map((x) => (
-        <line key={`v${x}`} x1={x} y1="504" x2={x} y2="722" stroke={NAVY} strokeWidth="1.2" />
+        <line
+          key={`v${x}`}
+          x1={x}
+          y1="504"
+          x2={x}
+          y2="722"
+          stroke={NAVY}
+          strokeWidth={TABLE_INNER_STROKE}
+        />
       ))}
 
-      {/* Horizontal row lines */}
+      {/* Horizontal row lines (thick) */}
       {ROW_LINES.map((y) => (
-        <line key={`h${y}`} x1="40" y1={y} x2="684" y2={y} stroke={NAVY} strokeWidth="1.2" />
+        <line
+          key={`h${y}`}
+          x1="40"
+          y1={y}
+          x2="684"
+          y2={y}
+          stroke={NAVY}
+          strokeWidth={TABLE_INNER_STROKE}
+        />
       ))}
 
       {/* Row numbers 1–5 */}
@@ -323,25 +397,40 @@ export default function MarksheetTemplate({ remark = null }) {
         </text>
       ))}
 
-      <line x1="37" y1="722" x2="687" y2="722" stroke={NAVY} strokeWidth="1.5" />
+      <line x1="37" y1="722" x2="687" y2="722" stroke={NAVY} strokeWidth={TABLE_OUTER_STROKE} />
       <text x="45" y="740" fontFamily="Arial, sans-serif" fontWeight="bold" fontSize="10.5" fill={NAVY}>
         Grade Details:
       </text>
 
       {/* ---------- Totals / Grade ---------- */}
       <rect x="58" y="766" width="455" height="72" fill="none" stroke={NAVY} strokeWidth="2" />
+      {/* Totals header band: navy with white inset outline */}
+      <NavyBand {...TOTALS_BAND} />
       <line x1="58" y1="796" x2="513" y2="796" stroke={NAVY} strokeWidth="1.5" />
       <line x1="210" y1="796" x2="210" y2="838" stroke={NAVY} strokeWidth="1.2" />
       <line x1="362" y1="796" x2="362" y2="838" stroke={NAVY} strokeWidth="1.2" />
-      <g fontFamily="Arial, sans-serif" fontWeight="bold" fontSize="16" fill={NAVY} textAnchor="middle">
-        <text x="134" y="789">Total Marks</text>
-        <text x="286" y="789">Marks Obtained</text>
-        <text x="437" y="789">Percentage</text>
+      <g fontFamily="Arial, sans-serif" fontSize="15" letterSpacing="0.5" fill="#ffffff" textAnchor="middle" dominantBaseline="central">
+        <text x="134" y={TOTALS_BAND.y + TOTALS_BAND.h / 2}>Total Marks</text>
+        <text x="286" y={TOTALS_BAND.y + TOTALS_BAND.h / 2}>Marks Obtained</text>
+        <text x="437" y={TOTALS_BAND.y + TOTALS_BAND.h / 2}>Percentage</text>
       </g>
 
       <rect x="541" y="763" width="124" height="75" fill="none" stroke={NAVY} strokeWidth="2" />
+      {/* Grade header band: navy with white inset outline */}
+      <NavyBand {...GRADE_BAND} />
+      {/* Grade value box: light blue fill */}
+      <rect x="543" y="798" width="120" height="38" fill={TABLE_HEADER_BLUE} />
       <line x1="541" y1="798" x2="665" y2="798" stroke={NAVY} strokeWidth="1.5" />
-      <text x="603" y="787" textAnchor="middle" fontFamily="Arial, sans-serif" fontWeight="bold" fontSize="17" fill={NAVY}>
+      <text
+        x={GRADE_BAND.x + GRADE_BAND.w / 2}
+        y={GRADE_BAND.y + GRADE_BAND.h / 2}
+        dominantBaseline="central"
+        textAnchor="middle"
+        fontFamily="Arial, sans-serif"
+        fontSize="16"
+        letterSpacing="0.5"
+        fill="#ffffff"
+      >
         Grade
       </text>
 
