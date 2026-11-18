@@ -12,11 +12,13 @@ import {
   FileSpreadsheet,
   Edit3,
   Trash2,
-  FileDown
+  FileDown,
+  School
 } from 'lucide-react';
 import CompactSelect from '../../components/CompactSelect';
 import StudentAvatar from '../../components/StudentAvatar';
 import { updateUserProfile } from '../../utils/authStorage';
+import { ACADEMIC_STAGES, getAcademicStageFromAge } from '../../utils/academicStages';
 
 export default function AdminBranchStudentsPage({
   activeBranch = 'Concern Branch',
@@ -46,81 +48,250 @@ export default function AdminBranchStudentsPage({
   // Course filter state
   const [branchCourseFilter, setBranchCourseFilter] = useState('All');
 
-  // Category filter state (Individual, Academy, Franchise)
+  // Category filter state (Individual, Academy, School)
   const [branchCategoryFilter, setBranchCategoryFilter] = useState('All');
 
-  // List of courses for filtering
-  const allCourses = useMemo(() => [
-    { value: 'All', label: 'All Courses' },
-    { value: 'Abacus', label: 'Abacus Speed Arithmetic' },
-    { value: 'Handwriting', label: 'Handwriting & Calligraphy' },
-    { value: 'Phonics', label: 'Phonics & Language Syntax' },
-    { value: 'Drawing', label: 'Drawing & Art' },
-    { value: 'Memory', label: 'Memory Challenge & Brain Training' },
-    { value: 'Bharatanatyam', label: 'Classical Dance (Bharatanatyam)' },
-    { value: 'MS Office', label: 'MS Office (Word, Excel, PowerPoint)' },
-    { value: 'HTML', label: 'HTML5 Web Architecture' },
-    { value: 'CSS', label: 'CSS3 Interactive Design' },
-    { value: 'Python', label: 'Python for Young Coders' },
-    { value: 'Computer', label: 'Computer Fundamentals & OS' },
-    { value: 'Photoshop', label: 'Photoshop & Creative Suite' },
-    { value: 'AI', label: 'AI & Prompt Engineering' },
-    { value: 'Canva', label: 'Canva Graphic Design' },
-    { value: 'Spoken English', label: 'Language & Public Speaking' },
-    { value: 'Athletics', label: 'Athletics & Physical Conditioning' }
-  ], []);
+  // Class filter state
+  const [branchClassFilter, setBranchClassFilter] = useState('All');
 
-  // Category options: Individual, Academy, Franchise
+  // Level filter state
+  const [branchLevelFilter, setBranchLevelFilter] = useState('All');
+
+  // Category options: Individual, Academy, School
   const categoryOptions = useMemo(() => [
     { value: 'All', label: 'All Categories' },
     { value: 'Individual', label: 'Individual' },
     { value: 'Academy', label: 'Academy' },
-    { value: 'Franchise', label: 'Franchise' }
+    { value: 'School', label: 'School' }
   ], []);
+
+  // Official 14 courses for filtering
+  const allCourses = useMemo(() => [
+    { value: 'All', label: 'All Courses' },
+    { value: 'ABACUS SPEED ARITHMETIC', label: 'ABACUS SPEED ARITHMETIC', keywords: ['abacus'] },
+    { value: 'CALLIGRAPHY & HANDWRITING MASTERY', label: 'CALLIGRAPHY & HANDWRITING MASTERY', keywords: ['handwriting', 'calligraphy'] },
+    { value: 'EARLY PHONICS & READING MASTERY', label: 'EARLY PHONICS & READING MASTERY', keywords: ['phonics', 'reading'] },
+    { value: 'CREATIVE DRAWING & VISUAL ARTS', label: 'CREATIVE DRAWING & VISUAL ARTS', keywords: ['drawing', 'visual arts', 'art'] },
+    { value: 'COGNITIVE MEMORY & RECALL MASTERY', label: 'COGNITIVE MEMORY & RECALL MASTERY', keywords: ['memory', 'cognitive'] },
+    { value: 'CLASSICAL BHARATANATYAM DANCE', label: 'CLASSICAL BHARATANATYAM DANCE', keywords: ['bharatanatyam', 'dance'] },
+    { value: 'MICROSOFT OFFICE PRODUCTIVITY SUITE', label: 'MICROSOFT OFFICE PRODUCTIVITY SUITE', keywords: ['office', 'ms office', 'word', 'excel'] },
+    { value: 'HTML5 WEBPAGE ARCHITECTURE', label: 'HTML5 WEBPAGE ARCHITECTURE', keywords: ['html'] },
+    { value: 'CSS3 STYLING, FLEXBOX, GRID & ANIMATIONS', label: 'CSS3 STYLING, FLEXBOX, GRID & ANIMATIONS', keywords: ['css'] },
+    { value: 'PYTHON PROGRAMMING & LOGICAL THINKING', label: 'PYTHON PROGRAMMING & LOGICAL THINKING', keywords: ['python'] },
+    { value: 'COMPUTER HARDWARE & DIGITAL LITERACY', label: 'COMPUTER HARDWARE & DIGITAL LITERACY', keywords: ['computer', 'hardware'] },
+    { value: 'ADOBE PHOTOSHOP & DIGITAL IMAGING', label: 'ADOBE PHOTOSHOP & DIGITAL IMAGING', keywords: ['photoshop'] },
+    { value: 'ARTIFICIAL INTELLIGENCE & PRODUCTIVITY', label: 'ARTIFICIAL INTELLIGENCE & PRODUCTIVITY', keywords: ['artificial intelligence', 'ai'] },
+    { value: 'CANVA VISUAL DESIGN & BRANDING', label: 'CANVA VISUAL DESIGN & BRANDING', keywords: ['canva'] }
+  ], []);
+
+  // Class options: Clean class names only
+  const classOptions = useMemo(() => [
+    { value: 'All', label: 'All Classes' },
+    ...ACADEMIC_STAGES.map((s) => ({
+      value: s.className,
+      label: s.className,
+      stage: s.stage
+    }))
+  ], []);
+
+  // Level options: Level 1 to Level 9
+  const levelOptions = useMemo(() => [
+    { value: 'All', label: 'All Levels' },
+    { value: 'level_1', label: 'Level 1' },
+    { value: 'level_2', label: 'Level 2' },
+    { value: 'level_3', label: 'Level 3' },
+    { value: 'level_4', label: 'Level 4' },
+    { value: 'level_5', label: 'Level 5' },
+    { value: 'level_6', label: 'Level 6' },
+    { value: 'level_7', label: 'Level 7' },
+    { value: 'level_8', label: 'Level 8' },
+    { value: 'level_9', label: 'Level 9' }
+  ], []);
+
+  // Determine Class and Level Academic Category for any student
+  const getStudentAcademicCategory = (student) => {
+    if (!student) {
+      return {
+        className: 'Class 1',
+        stage: 'SUB-JUNIOR (Class 1)',
+        level: 'Level 1',
+        levelNum: 1,
+        classBadgeClass: 'bg-amber-50 text-amber-900 border-amber-300',
+        levelBadgeClass: 'bg-emerald-50 text-emerald-800 border-emerald-300'
+      };
+    }
+
+    const gradeStr = String(student.grade || student.level || '').trim();
+
+    // 1. Detect Level from grade, level, or selectedCourses
+    let level = '';
+    let levelNum = null;
+    const levelMatch = gradeStr.match(/Level\s*(\d+)/i) || String(student.level || '').match(/Level\s*(\d+)/i);
+    if (levelMatch) {
+      levelNum = parseInt(levelMatch[1], 10);
+      level = `Level ${levelNum}`;
+    } else {
+      level = 'Level 1';
+      levelNum = 1;
+    }
+
+    // 2. Match exact Academic Stage from ACADEMIC_STAGES
+    let matchedStage = null;
+
+    if (student.studentStage) {
+      matchedStage = ACADEMIC_STAGES.find(s => s.stage === student.studentStage || s.label.toLowerCase() === student.studentStage.toLowerCase());
+    }
+
+    if (!matchedStage && student.studentClass) {
+      matchedStage = ACADEMIC_STAGES.find(s => s.className.toLowerCase() === student.studentClass.toLowerCase());
+    }
+
+    if (!matchedStage && gradeStr) {
+      const gLower = gradeStr.toLowerCase();
+      if (gLower.includes('11') || gLower.includes('12')) {
+        matchedStage = ACADEMIC_STAGES.find(s => s.stage.includes('Class 11 & 12'));
+      } else if (gLower.includes('8') || gLower.includes('9') || gLower.includes('10')) {
+        matchedStage = ACADEMIC_STAGES.find(s => s.stage.includes('Class 8 to 10'));
+      } else if (gLower.includes('6') || gLower.includes('7')) {
+        matchedStage = ACADEMIC_STAGES.find(s => s.stage.includes('Class 6 & 7'));
+      } else if (gLower.includes('4') || gLower.includes('5')) {
+        matchedStage = ACADEMIC_STAGES.find(s => s.stage.includes('Class 4 & 5'));
+      } else if (gLower.includes('class 3') || gLower.includes('3rd')) {
+        matchedStage = ACADEMIC_STAGES.find(s => s.stage.includes('Class 3'));
+      } else if (gLower.includes('class 2') || gLower.includes('2nd')) {
+        matchedStage = ACADEMIC_STAGES.find(s => s.stage.includes('Class 2'));
+      } else if (gLower.includes('class 1') || gLower.includes('1st')) {
+        matchedStage = ACADEMIC_STAGES.find(s => s.stage.includes('Class 1'));
+      }
+    }
+
+    if (!matchedStage && student.age) {
+      const ageStage = getAcademicStageFromAge(student.age);
+      if (ageStage.stage) {
+        matchedStage = ACADEMIC_STAGES.find(s => s.stage === ageStage.stage);
+      }
+    }
+
+    if (!matchedStage) {
+      matchedStage = ACADEMIC_STAGES[0]; // Fallback to SUB-JUNIOR (Class 1)
+    }
+
+    const className = matchedStage.className;
+    const stage = matchedStage.stage;
+
+    // 3. Class Badge Color Style
+    let classBadgeClass = 'bg-blue-50 text-blue-900 border-blue-200';
+    if (stage.includes('MASTER')) {
+      classBadgeClass = 'bg-purple-100 text-purple-900 border-purple-300';
+    } else if (stage.includes('SUPER SENIOR')) {
+      classBadgeClass = 'bg-rose-50 text-rose-800 border-rose-300';
+    } else if (stage.includes('SENIOR')) {
+      classBadgeClass = 'bg-teal-50 text-teal-800 border-teal-300';
+    } else if (stage.includes('JUNIOR') && !stage.includes('SUB')) {
+      classBadgeClass = 'bg-blue-50 text-blue-800 border-blue-300';
+    } else {
+      classBadgeClass = 'bg-amber-50 text-amber-900 border-amber-300';
+    }
+
+    // 4. Level Badge Color Style
+    let levelBadgeClass = 'bg-emerald-50 text-emerald-800 border-emerald-300';
+    if (levelNum === 1) levelBadgeClass = 'bg-emerald-50 text-emerald-800 border-emerald-300';
+    else if (levelNum === 2) levelBadgeClass = 'bg-sky-50 text-sky-800 border-sky-300';
+    else if (levelNum === 3) levelBadgeClass = 'bg-indigo-50 text-indigo-800 border-indigo-300';
+    else if (levelNum === 4) levelBadgeClass = 'bg-purple-50 text-purple-800 border-purple-300';
+    else levelBadgeClass = 'bg-amber-50 text-amber-900 border-amber-300';
+
+    return {
+      className,
+      stage,
+      level,
+      levelNum,
+      classBadgeClass,
+      levelBadgeClass
+    };
+  };
 
   const getStudentCategory = (student) => {
     const cat = (student.admissionCategory || student.category || student.channel || '').toLowerCase();
-    const inst = (student.institution || '').toLowerCase();
-    const branch = (student.branch || '').toLowerCase();
+    const inst = (student.institution || student.schoolName || '').toLowerCase();
 
-    if (cat.includes('academy') || inst.includes('academy') || inst.includes('tuition')) {
-      return 'Academy';
+    if (cat.includes('school') || inst.includes('school') || inst.includes('matric') || inst.includes('vidyalaya') || inst.includes('cbse')) {
+      return 'School';
     }
-    if (cat.includes('franchise') || cat.includes('branch') || branch.includes('regional branch') || branch.includes('franchise') || inst.includes('regional branch')) {
-      return 'Franchise';
+    if (cat.includes('academy') || inst.includes('academy') || inst.includes('tuition') || inst.includes('institute')) {
+      return 'Academy';
     }
     return 'Individual';
   };
 
   const getCategoryBadge = (student) => {
     const category = getStudentCategory(student);
+    if (category === 'School') {
+      return { label: 'School', bg: 'bg-emerald-50 text-emerald-700 border-emerald-200' };
+    }
     if (category === 'Academy') {
       return { label: 'Academy', bg: 'bg-amber-50 text-amber-700 border-amber-200' };
-    }
-    if (category === 'Franchise') {
-      return { label: 'Franchise', bg: 'bg-purple-50 text-purple-700 border-purple-200' };
     }
     return { label: 'Individual', bg: 'bg-sky-50 text-sky-700 border-sky-200' };
   };
 
-  // Filter students based on course & category (search is handled upstream or fallback here)
+  // Filter students based on course, category, class, and level
   const filteredStudents = useMemo(() => {
     return (branchStudents || []).filter(student => {
-      // Course filter
+      // Course filter (matches 14 official programs)
       if (branchCourseFilter && branchCourseFilter !== 'All') {
         const prog = (student.program || student.courseName || '').toLowerCase();
-        if (!prog.includes(branchCourseFilter.toLowerCase())) return false;
+        const selectedCourse = allCourses.find(c => c.value === branchCourseFilter);
+        const targetVal = branchCourseFilter.toLowerCase();
+        const keywords = selectedCourse?.keywords || [];
+        const matchesCourse =
+          prog.includes(targetVal) ||
+          keywords.some(kw => prog.includes(kw));
+
+        if (!matchesCourse) return false;
       }
 
-      // Category filter (Individual, Academy, Franchise)
+      // Category filter (Individual, Academy, School)
       if (branchCategoryFilter && branchCategoryFilter !== 'All') {
-        const studentCat = getStudentCategory(student);
-        if (studentCat !== branchCategoryFilter) return false;
+        const studentCat = getStudentCategory(student).toLowerCase();
+        const targetCat = branchCategoryFilter.toLowerCase();
+        if (targetCat === 'individual') {
+          if (studentCat !== 'individual' && studentCat !== 'franchise') return false;
+        } else if (studentCat !== targetCat) {
+          return false;
+        }
+      }
+
+      const acadCat = getStudentAcademicCategory(student);
+
+      // Class filter (matches class alone)
+      if (branchClassFilter && branchClassFilter !== 'All') {
+        if (acadCat.className !== branchClassFilter) {
+          const target = branchClassFilter.toLowerCase();
+          const cur = (acadCat.className || '').toLowerCase();
+          const matchesFallback =
+            (target.includes('4') && cur.includes('4')) ||
+            (target.includes('6') && cur.includes('6')) ||
+            (target.includes('8') && (cur.includes('8') || cur.includes('9') || cur.includes('10'))) ||
+            (target.includes('11') && (cur.includes('11') || cur.includes('12')));
+          if (!matchesFallback) {
+            return false;
+          }
+        }
+      }
+
+      // Level filter (Level 1 to Level 9)
+      if (branchLevelFilter && branchLevelFilter !== 'All') {
+        const lf = branchLevelFilter.toLowerCase();
+        const targetNum = lf.replace('level_', '').replace('level ', '').trim();
+        const targetStr = `level ${targetNum}`;
+        const sLevelStr = String(acadCat.level || student.grade || student.level || '').toLowerCase();
+        if (!sLevelStr.includes(targetStr)) return false;
       }
 
       return true;
     });
-  }, [branchStudents, branchCourseFilter, branchCategoryFilter]);
+  }, [branchStudents, branchCourseFilter, branchCategoryFilter, branchClassFilter, branchLevelFilter]);
 
   // Handle select all for current view
   const onToggleSelectAll = () => {
@@ -179,8 +350,8 @@ export default function AdminBranchStudentsPage({
           </div>
         </div>
 
-        {/* Filters Row */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 pt-1 items-center">
+        {/* Filters Row: Search, Category, Class, Level, Course */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-2 pt-1 items-center">
           {/* Search */}
           <div className="relative">
             <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -193,13 +364,31 @@ export default function AdminBranchStudentsPage({
             />
           </div>
 
-          {/* Category Filter: Individual, Academy, Franchise */}
+          {/* Category Filter: Individual, Academy, School */}
           <CompactSelect
             value={branchCategoryFilter}
             onChange={setBranchCategoryFilter}
             options={categoryOptions}
             placeholder="All Categories"
-            maxHeight="max-h-48"
+            maxHeight="max-h-56"
+          />
+
+          {/* Class Filter */}
+          <CompactSelect
+            value={branchClassFilter}
+            onChange={setBranchClassFilter}
+            options={classOptions}
+            placeholder="All Classes"
+            maxHeight="max-h-56"
+          />
+
+          {/* Level Filter */}
+          <CompactSelect
+            value={branchLevelFilter}
+            onChange={setBranchLevelFilter}
+            options={levelOptions}
+            placeholder="All Levels"
+            maxHeight="max-h-56"
           />
 
           {/* Course Filter */}
@@ -208,7 +397,7 @@ export default function AdminBranchStudentsPage({
             onChange={setBranchCourseFilter}
             options={allCourses}
             placeholder="All Courses"
-            maxHeight="max-h-48"
+            maxHeight="max-h-56"
           />
         </div>
       </div>
@@ -287,6 +476,7 @@ export default function AdminBranchStudentsPage({
                 <th className="py-3 px-4 sticky left-0 bg-[#081d3d] z-20 shadow-[2px_0_5px_rgba(0,0,0,0.15)]">Student Details</th>
                 <th className="py-3 px-3">Parent & Contact</th>
                 <th className="py-3 px-3">Category</th>
+                <th className="py-3 px-3">Class</th>
                 <th className="py-3 px-3">Course & Level</th>
                 <th className="py-3 px-3 text-center">Event Registration</th>
                 <th className="py-3 px-3 text-center">Question Paper</th>
@@ -295,7 +485,7 @@ export default function AdminBranchStudentsPage({
             <tbody className="divide-y divide-slate-100 font-medium">
               {filteredStudents.length === 0 ? (
                 <tr>
-                  <td colSpan={isMergeMode ? 7 : 6} className="py-8 text-center text-slate-500">
+                  <td colSpan={isMergeMode ? 8 : 7} className="py-8 text-center text-slate-500">
                     No students currently enrolled matching your criteria under {activeBranch}.
                   </td>
                 </tr>
@@ -379,17 +569,54 @@ export default function AdminBranchStudentsPage({
 
                       {/* Category */}
                       <td className="py-3 px-3 whitespace-nowrap">
-                        <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase border shadow-2xs ${getCategoryBadge(student).bg}`}>
-                          {getCategoryBadge(student).label}
-                        </span>
+                        {(() => {
+                          const badge = getCategoryBadge(student);
+                          const school = (student.schoolName || student.institution || '').trim();
+                          const hasSchoolName = school &&
+                            !school.toLowerCase().includes('regional branch') &&
+                            !school.toLowerCase().endsWith(' branch') &&
+                            school.toLowerCase() !== (student.branch || '').toLowerCase();
+                          return (
+                            <div className="flex flex-col gap-1 items-start">
+                              <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase border shadow-2xs ${badge.bg}`}>
+                                {badge.label}
+                              </span>
+                              {hasSchoolName && (
+                                <div className="text-[10px] font-bold text-slate-600 truncate max-w-[150px] flex items-center gap-1 mt-0.5" title={school}>
+                                  <School className="w-3 h-3 text-sky-600 shrink-0" />
+                                  <span className="truncate">{school}</span>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
+                      </td>
+
+                      {/* Class */}
+                      <td className="py-3 px-3 whitespace-nowrap">
+                        {(() => {
+                          const acad = getStudentAcademicCategory(student);
+                          return (
+                            <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase border shadow-2xs ${acad.classBadgeClass}`}>
+                              {acad.className}
+                            </span>
+                          );
+                        })()}
                       </td>
 
                       {/* Course & Level */}
                       <td className="py-3 px-3 whitespace-nowrap">
-                        <div className="font-bold text-slate-900">{student.program || student.courseName || 'Course'}</div>
-                        <div className="text-[10px] font-black text-amber-700 mt-0.5 uppercase tracking-wide">
-                          {student.grade || student.studentClass || 'Level 1'}
-                        </div>
+                        {(() => {
+                          const acad = getStudentAcademicCategory(student);
+                          return (
+                            <div>
+                              <div className="font-bold text-slate-900">{student.program || student.courseName || 'Course'}</div>
+                              <div className="text-[10px] font-black text-amber-700 mt-0.5 uppercase tracking-wide">
+                                {acad.level}
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </td>
 
                       {/* Event Registration Column */}

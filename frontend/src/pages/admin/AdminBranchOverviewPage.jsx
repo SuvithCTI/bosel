@@ -177,7 +177,7 @@ export default function AdminBranchOverviewPage({
             className="w-full sm:w-auto shrink-0 flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-[#0c234b] text-xs font-black shadow-lg shadow-black/10 transition-all duration-200 hover:-translate-y-0.5"
           >
             <ClipboardList className="w-4 h-4" />
-            Manage Marksheets
+            Quick Mark
             <ArrowRight className="w-4 h-4" />
           </button>
 
