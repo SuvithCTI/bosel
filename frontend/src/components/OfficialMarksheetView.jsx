@@ -646,6 +646,7 @@ export default function OfficialMarksheetView({
         boxSizing: 'border-box',
         backgroundColor: '#ffffff',
         fontFamily: "'Times New Roman', Times, serif",
+        containerType: 'inline-size',
       }}
     >
 
@@ -785,148 +786,40 @@ export default function OfficialMarksheetView({
       </div>
 
       {/* =====================================================
-          1. STUDENT & COURSE DETAILS
+          1. STUDENT & COURSE DETAILS (values match label size, pure black)
       ===================================================== */}
 
-      <div
-        className="absolute font-bold text-[#081d3d] text-[10px] sm:text-[12.5px] -translate-y-1/2 truncate"
-        style={{
-          left: '29.8%',
-          top: '17.72%',
-          maxWidth: '32.5%',
-          fontFamily: "'Times New Roman', Times, serif",
-          lineHeight: 1,
-          zIndex: 1,
-        }}
-      >
-        {regNo}
-      </div>
-
-      <div
-        className="absolute font-bold text-[#081d3d] text-[10px] sm:text-[12.5px] -translate-y-1/2 truncate"
-        style={{
-          left: '29.8%',
-          top: '20.31%',
-          maxWidth: '32.5%',
-          fontFamily: "'Times New Roman', Times, serif",
-          lineHeight: 1,
-          zIndex: 1,
-        }}
-      >
-        {certNo}
-      </div>
-
-      <div
-        className="absolute font-bold text-[#081d3d] uppercase text-[10.5px] sm:text-[13px] -translate-y-1/2 truncate"
-        style={{
-          left: '29.8%',
-          top: '22.90%',
-          maxWidth: '32.5%',
-          fontFamily: "'Times New Roman', Times, serif",
-          lineHeight: 1,
-          zIndex: 1,
-        }}
-      >
-        {studentName}
-      </div>
-
-      <div
-        className="absolute font-bold text-[#081d3d] capitalize text-[10px] sm:text-[12.5px] -translate-y-1/2 truncate"
-        style={{
-          left: '29.8%',
-          top: '25.49%',
-          maxWidth: '32.5%',
-          fontFamily: "'Times New Roman', Times, serif",
-          lineHeight: 1,
-          zIndex: 1,
-        }}
-      >
-        {parentName}
-      </div>
-
-      <div
-        className="absolute font-bold text-[#081d3d] text-[10px] sm:text-[12.5px] -translate-y-1/2 truncate"
-        style={{
-          left: '29.8%',
-          top: '28.08%',
-          maxWidth: '32.5%',
-          fontFamily: "'Times New Roman', Times, serif",
-          lineHeight: 1,
-          zIndex: 1,
-        }}
-      >
-        {dob}
-      </div>
-
-      <div
-        className="absolute font-bold text-[#081d3d] capitalize text-[10px] sm:text-[12.5px] -translate-y-1/2 truncate"
-        style={{
-          left: '29.8%',
-          top: '30.66%',
-          maxWidth: '32.5%',
-          fontFamily: "'Times New Roman', Times, serif",
-          lineHeight: 1,
-          zIndex: 1,
-        }}
-      >
-        {courseName}
-      </div>
-
-      <div
-        className="absolute font-bold text-[#081d3d] capitalize text-[10px] sm:text-[12.5px] -translate-y-1/2 truncate"
-        style={{
-          left: '29.8%',
-          top: '33.25%',
-          maxWidth: '32.5%',
-          fontFamily: "'Times New Roman', Times, serif",
-          lineHeight: 1,
-          zIndex: 1,
-        }}
-      >
-        {level}
-      </div>
-
-      <div
-        className="absolute font-bold text-[#081d3d] capitalize text-[10px] sm:text-[12.5px] -translate-y-1/2 truncate"
-        style={{
-          left: '29.8%',
-          top: '35.84%',
-          maxWidth: '32.5%',
-          fontFamily: "'Times New Roman', Times, serif",
-          lineHeight: 1,
-          zIndex: 1,
-        }}
-      >
-        {duration}
-      </div>
-
-      <div
-        className="absolute font-bold text-[#081d3d] capitalize text-[10px] sm:text-[12px] -translate-y-1/2 truncate"
-        style={{
-          left: '29.8%',
-          top: '38.43%',
-          maxWidth: '32.5%',
-          fontFamily: "'Times New Roman', Times, serif",
-          lineHeight: 1,
-          zIndex: 1,
-        }}
-      >
-        {school}
-      </div>
-
-      <div
-        className="absolute font-bold text-[#081d3d] capitalize text-[9.5px] sm:text-[11.5px] -translate-y-1/2 truncate"
-        style={{
-          left: '29.8%',
-          top: '41.02%',
-          maxWidth: '32.5%',
-          fontFamily: "'Times New Roman', Times, serif",
-          lineHeight: 1,
-          zIndex: 1,
-        }}
-      >
-        {address}
-      </div>
+      {[
+        { value: regNo, top: 17.72, cls: '' },
+        { value: certNo, top: 20.31, cls: '' },
+        { value: studentName, top: 22.9, cls: 'uppercase' },
+        { value: parentName, top: 25.49, cls: 'capitalize' },
+        { value: dob, top: 28.08, cls: '' },
+        { value: courseName, top: 30.66, cls: 'capitalize' },
+        { value: level, top: 33.25, cls: 'capitalize' },
+        { value: duration, top: 35.84, cls: 'capitalize' },
+        { value: school, top: 38.43, cls: 'capitalize' },
+        { value: address, top: 41.02, cls: 'capitalize' },
+      ].map((row, i) => (
+        <div
+          key={i}
+          className={`absolute font-bold text-black -translate-y-1/2 truncate ${row.cls}`}
+          style={{
+            left: '29.8%',
+            top: `${row.top}%`,
+            maxWidth: '32.5%',
+            fontFamily: "'Times New Roman', Times, serif",
+            // 15 units on the 724-wide sheet, the same size as the SVG labels
+            fontSize: '2.07cqw',
+            lineHeight: 1,
+            color: '#000000',
+            textRendering: 'geometricPrecision',
+            zIndex: 1,
+          }}
+        >
+          {row.value}
+        </div>
+      ))}
 
       {/* =====================================================
           STUDENT PHOTO
