@@ -136,65 +136,6 @@ export {
   getMarksheetSubjects
 };
 
-// Default Authorized District Branches
-const DEFAULT_PARTNER_SCHOOLS = [
-  {
-    code: 'BSEL-BR-101',
-    name: 'B★SEL Tenkasi Branch',
-    branchName: 'Tenkasi Branch',
-    city: 'Surandai, Tenkasi, Tamil Nadu',
-    principal: 'Mrs. Thangam Sivaji',
-    coordinator: 'Mr. S. Sivakumar',
-    phone: '+91 98652 19131',
-    studentsCount: 110,
-    status: 'Authorized Franchise Branch'
-  },
-  {
-    code: 'BSEL-BR-102',
-    name: 'B★SEL Tirunelveli Branch',
-    branchName: 'Tirunelveli Branch',
-    city: 'Tirunelveli, Tamil Nadu',
-    principal: 'Dr. P. Muthukumar',
-    coordinator: 'Mrs. S. Gandhimathi',
-    phone: '+91 98652 19131',
-    studentsCount: 140,
-    status: 'Authorized Franchise Branch'
-  },
-  {
-    code: 'BSEL-BR-103',
-    name: 'B★SEL Chennai Branch',
-    branchName: 'Chennai Branch',
-    city: 'Chennai, Tamil Nadu',
-    principal: 'Dr. S. Ranganathan',
-    coordinator: 'Mrs. K. Malathi',
-    phone: '+91 98400 12345',
-    studentsCount: 240,
-    status: 'Authorized Branch'
-  },
-  {
-    code: 'BSEL-BR-104',
-    name: 'B★SEL Coimbatore Branch',
-    branchName: 'Coimbatore Branch',
-    city: 'RS Puram, Coimbatore, Tamil Nadu',
-    principal: 'Dr. M. Gurumurthy',
-    coordinator: 'Mrs. Lakshmi Priya',
-    phone: '+91 94433 22110',
-    studentsCount: 190,
-    status: 'Authorized Branch'
-  },
-  {
-    code: 'BSEL-BR-105',
-    name: 'B★SEL Madurai Branch',
-    branchName: 'Madurai Branch',
-    city: 'Madurai, Tamil Nadu',
-    principal: 'Mr. K. Siraj',
-    coordinator: 'Mrs. P. Shanthi',
-    phone: '+91 98801 55443',
-    studentsCount: 160,
-    status: 'Authorized Branch'
-  }
-];
-
 export default function AdminDashboard({ setActivePage, onLogout, onOpenCertificate: _onOpenCertificate }) {
   // Session determination
   const sessionUser = getActiveSession();
@@ -602,9 +543,12 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
   const [newSchool, setNewSchool] = useState({
     name: '',
     branchName: '',
+    tagline: '',
+    logo: '',
     city: '',
     principal: '',
     coordinator: '',
+    signature: '',
     phone: '',
     studentsCount: 100,
     userId: '',

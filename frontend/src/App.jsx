@@ -13,6 +13,7 @@ import ContactPage from './pages/ContactPage';
 import LoginPage from './pages/LoginPage';
 import CertificatePage from './pages/CertificatePage';
 import AdminDashboard from './pages/AdminDashboard';
+import StaffDashboard from './pages/staff/StaffDashboard';
 
 import ProgramModal from './components/ProgramModal';
 import EventRegisterModal from './components/EventRegisterModal';
@@ -28,9 +29,9 @@ import {
 // Helper to determine if an active session belongs to a student
 const isStudentUser = (user) => {
   if (!user) return false;
-  if (user.role === 'Super Admin' || user.role === 'Branch Head') return false;
+  if (user.role === 'Super Admin' || user.role === 'Branch Head' || user.role === 'Staff') return false;
   const uid = String(user.userId || user.id || '').toLowerCase();
-  if (uid === 'admin' || uid.startsWith('branch.') || uid.startsWith('sch-')) return false;
+  if (uid === 'admin' || uid === 'staff' || uid.startsWith('branch.') || uid.startsWith('sch-')) return false;
   return true;
 };
 
@@ -54,6 +55,10 @@ export default function App() {
         return 'login';
       }
 
+      if (session?.role === 'Staff') {
+        return 'staff';
+      }
+
       const params = new URLSearchParams(window.location.search);
 
       if (params.get('page')) {
@@ -64,9 +69,14 @@ export default function App() {
         return 'admin';
       }
 
+      if (window.location.pathname.startsWith('/staff')) {
+        return 'staff';
+      }
+
       if (window.location.hash) {
         const cleanHash = window.location.hash.replace(/^#\/?/, '');
         if (cleanHash.startsWith('admin')) return 'admin';
+        if (cleanHash.startsWith('staff')) return 'staff';
         return cleanHash;
       }
     }
@@ -109,10 +119,11 @@ export default function App() {
       return isStudentUser(session);
     });
 
-  // Hide the global website layout on the admin dashboard
-  // or on the login page (including student dashboard).
+  // Hide the global website layout on the admin dashboard,
+  // staff dashboard, or on the login page (including student dashboard).
   const hideGlobalLayout =
     activePage === 'admin' ||
+    activePage === 'staff' ||
     activePage === 'login';
 
   // -------------------------------------------------------
@@ -315,6 +326,27 @@ export default function App() {
         {activePage === 'admin' && (
           <AdminDashboard
             setActivePage={setActivePage}
+            onLogout={() => {
+              clearActiveSession();
+
+              setSessionUser(null);
+              setIsStudentDashboardOpen(false);
+              setActivePage('login');
+
+              window.scrollTo({
+                top: 0,
+                behavior: 'smooth',
+              });
+            }}
+            onOpenCertificate={handleOpenCertificate}
+          />
+        )}
+
+        {/* Staff Dashboard */}
+        {activePage === 'staff' && (
+          <StaffDashboard
+            setActivePage={setActivePage}
+            sessionUser={sessionUser}
             onLogout={() => {
               clearActiveSession();
 

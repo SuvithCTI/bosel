@@ -19,7 +19,7 @@ export const getStudentCourse = (student) =>
 
 // One marksheet per student + enrolled course
 export const getStudentKey = (student) =>
-  `${normalize(student?.userId)}__${normalize(getStudentCourse(student))}`;
+  `${normalize(student?.userId || student?.admissionNo || student?.registerNumber)}__${normalize(getStudentCourse(student))}`;
 
 // Every identifier a student object might carry
 const getStudentIds = (student) =>
@@ -29,6 +29,9 @@ const getStudentIds = (student) =>
     student?.studentId,
     student?.registerNumber,
     student?.registrationNo,
+    student?.admissionNo,
+    student?.phone,
+    student?.mobile,
   ]
     .map(normalize)
     .filter(Boolean);
@@ -52,22 +55,66 @@ export const getSavedMarksheet = (student) => {
   const direct = all[getStudentKey(student)];
   if (direct && Array.isArray(direct.subjects)) return direct;
 
-  // 2. fallback: match by any id (userId / register number) + course
+  // 2. fallback: match by any id (userId / register number / admission number / phone) + course
   const ids = getStudentIds(student);
   const course = normalize(getStudentCourse(student));
+  const studentName = normalize(student?.studentName || student?.name);
 
   const found = Object.values(all).find((entry) => {
     if (!entry || !Array.isArray(entry.subjects)) return false;
 
-    const entryIds = [entry.studentId, entry.registerNumber]
+    const entryIds = [
+      entry.studentId,
+      entry.registerNumber,
+      entry.registrationNo,
+      entry.admissionNo,
+      entry.userId,
+      entry.id,
+      entry.phone,
+      entry.mobile
+    ]
       .map(normalize)
       .filter(Boolean);
 
-    const idMatch = entryIds.some((id) => ids.includes(id));
-    const courseMatch = !course || normalize(entry.course) === course;
+    const idMatch = ids.some((id) => entryIds.includes(id));
+    const entryCourse = normalize(entry.course || entry.program || entry.courseName);
+    const courseMatch = !course || !entryCourse || entryCourse === course || entryCourse.includes(course) || course.includes(entryCourse);
 
-    return idMatch && courseMatch;
+    const nameMatch = studentName && (
+      studentName === normalize(entry.studentName) ||
+      studentName === normalize(entry.name)
+    );
+
+    return (idMatch || nameMatch) && courseMatch;
   });
 
   return found || null;
+};
+
+// Save helper that stores marksheet and dispatches global update events
+export const saveStudentMarksheet = (student, marksheet) => {
+  try {
+    const all = readMarksheets();
+    const primaryKey = getStudentKey(student);
+    all[primaryKey] = marksheet;
+
+    // Also store secondary keys for faster direct lookup
+    if (student?.admissionNo) {
+      all[`${normalize(student.admissionNo)}__${normalize(getStudentCourse(student))}`] = marksheet;
+    }
+    if (student?.registerNumber) {
+      all[`${normalize(student.registerNumber)}__${normalize(getStudentCourse(student))}`] = marksheet;
+    }
+
+    writeMarksheets(all);
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('bsel_marksheets_updated'));
+      window.dispatchEvent(new Event('bsel_users_updated'));
+    }
+    return true;
+  } catch (err) {
+    console.error('saveStudentMarksheet error:', err);
+    return false;
+  }
 };

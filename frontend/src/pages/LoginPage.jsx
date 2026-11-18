@@ -275,7 +275,7 @@ export default function LoginPage({
   const [currentUser, setCurrentUser] = useState(() => {
     const session = getActiveSession();
 
-    if (!session || session.role === 'Super Admin' || session.role === 'Branch Head') {
+    if (!session || session.role === 'Super Admin' || session.role === 'Branch Head' || session.role === 'Staff') {
       return null;
     }
 
@@ -335,7 +335,7 @@ export default function LoginPage({
     const syncSession = () => {
       const session = getActiveSession();
 
-      if (session && session.role !== 'Super Admin' && session.role !== 'Branch Head') {
+      if (session && session.role !== 'Super Admin' && session.role !== 'Branch Head' && session.role !== 'Staff') {
         setCurrentUser(normalizeStudent(session));
       } else {
         setCurrentUser(null);
@@ -418,7 +418,7 @@ export default function LoginPage({
 
     if (!authUser) {
       const cleanDigits = userId.replace(/\D/g, '');
-      if (cleanDigits.length === 10 && !isPhoneNumberRegistered(cleanDigits) && !userId.toLowerCase().startsWith('admin') && !userId.toLowerCase().startsWith('branch')) {
+      if (cleanDigits.length === 10 && !isPhoneNumberRegistered(cleanDigits) && !userId.toLowerCase().startsWith('admin') && !userId.toLowerCase().startsWith('branch') && !userId.toLowerCase().startsWith('staff')) {
         setErrorMessage(`Mobile number "${cleanDigits}" is not registered. Only candidates who have filled the admission form and received credentials can log in. Please click 'Fill Admission Form to Enroll' below.`);
         return;
       }
@@ -442,6 +442,12 @@ export default function LoginPage({
     if (authUser.role === 'Super Admin' || authUser.role === 'Branch Head') {
       setActiveSession(authUser);
       setActivePage('admin');
+      return;
+    }
+
+    if (authUser.role === 'Staff') {
+      setActiveSession(authUser);
+      setActivePage('staff');
       return;
     }
 
@@ -824,7 +830,7 @@ export default function LoginPage({
                       Select Role
                     </span>
                   </div>
-                  <div className="grid grid-cols-3 gap-1.5">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
                     <button
                       type="button"
                       onClick={() => {
@@ -846,6 +852,17 @@ export default function LoginPage({
                       className="w-full py-1 px-1 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/50 text-amber-300 font-semibold rounded-md text-[10px] sm:text-[11px] transition active:scale-95 cursor-pointer text-center flex items-center justify-center min-h-[28px] sm:min-h-[30px]"
                     >
                       Branch Admin
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setUserId('staff');
+                        setPassword('staff123');
+                        setErrorMessage('');
+                      }}
+                      className="w-full py-1 px-1 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-400/50 text-purple-200 font-semibold rounded-md text-[10px] sm:text-[11px] transition active:scale-95 cursor-pointer text-center flex items-center justify-center min-h-[28px] sm:min-h-[30px]"
+                    >
+                      Staff
                     </button>
                     {lastCreds?.userId ? (
                       <button
