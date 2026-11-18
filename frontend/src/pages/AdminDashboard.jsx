@@ -1560,20 +1560,6 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
 
           {/* Controls */}
           <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
-            {/* Quick Switch / Return to Super Admin Button when inside Branch Head mode */}
-            {currentAdminRole === 'Branch Head' && (
-              <button
-                type="button"
-                onClick={() => handleRoleSwitch('Super Admin')}
-                className="text-[11px] sm:text-xs font-black bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-[#0c234b] px-2 sm:px-3 py-1.5 rounded-xl transition shadow-md hover:shadow-lg cursor-pointer flex items-center gap-1 sm:gap-1.5 active:scale-95 whitespace-nowrap shrink-0 border border-amber-500/40"
-                title="Return to Super Admin Central Portal"
-              >
-                <ShieldCheck className="w-3.5 h-3.5 text-[#0c234b] shrink-0" />
-                <span className="hidden sm:inline">Return to </span>
-                <span>Super Admin</span>
-              </button>
-            )}
-
             {/* View Live Website Button (Icon on mobile, text on sm+) */}
             <button
               onClick={() => setActivePage('home')}
