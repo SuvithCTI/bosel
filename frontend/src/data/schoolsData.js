@@ -6,96 +6,9 @@ export const DEFAULT_SCHOOLS_SECTION_HEADER = {
   description: 'Official B★SEL District Branches, accredited franchise academies, and district examination centres across Tamil Nadu.'
 };
 
-export const DEFAULT_PARTNER_SCHOOLS = [
-  {
-    code: 'BSEL-BR-101',
-    name: 'B★SEL Tenkasi Branch',
-    branchName: 'Tenkasi Branch',
-    city: 'Surandai, Tenkasi, Tamil Nadu',
-    principal: 'Mrs. Thangam Sivaji',
-    coordinator: 'Mr. S. Sivakumar',
-    phone: '+91 98652 19131',
-    studentsCount: 110,
-    status: 'Authorized Franchise Branch'
-  },
-  {
-    code: 'BSEL-BR-102',
-    name: 'B★SEL Tirunelveli Branch',
-    branchName: 'Tirunelveli Branch',
-    city: 'Tirunelveli, Tamil Nadu',
-    principal: 'Dr. P. Muthukumar',
-    coordinator: 'Mrs. S. Gandhimathi',
-    phone: '+91 98652 19131',
-    studentsCount: 140,
-    status: 'Authorized Franchise Branch'
-  },
-  {
-    code: 'BSEL-BR-103',
-    name: 'B★SEL Chennai Branch',
-    branchName: 'Chennai Branch',
-    city: 'Chennai, Tamil Nadu',
-    principal: 'Dr. S. Ranganathan',
-    coordinator: 'Mrs. K. Malathi',
-    phone: '+91 98400 12345',
-    studentsCount: 240,
-    status: 'Authorized Branch'
-  },
-  {
-    code: 'BSEL-BR-104',
-    name: 'B★SEL Coimbatore Branch',
-    branchName: 'Coimbatore Branch',
-    city: 'RS Puram, Coimbatore, Tamil Nadu',
-    principal: 'Dr. M. Gurumurthy',
-    coordinator: 'Mrs. Lakshmi Priya',
-    phone: '+91 94433 22110',
-    studentsCount: 190,
-    status: 'Authorized Branch'
-  },
-  {
-    code: 'BSEL-BR-105',
-    name: 'B★SEL Madurai Branch',
-    branchName: 'Madurai Branch',
-    city: 'Madurai, Tamil Nadu',
-    principal: 'Mr. K. Siraj',
-    coordinator: 'Mrs. P. Shanthi',
-    phone: '+91 98801 55443',
-    studentsCount: 160,
-    status: 'Authorized Branch'
-  },
-  {
-    code: 'BSEL-BR-106',
-    name: 'B★SEL Salem Branch',
-    branchName: 'Salem Branch',
-    city: 'Salem, Tamil Nadu',
-    principal: 'Mrs. D. Maria',
-    coordinator: 'Mr. P. Paul',
-    phone: '+91 98412 87654',
-    studentsCount: 150,
-    status: 'Authorized Branch'
-  },
-  {
-    code: 'BSEL-BR-107',
-    name: 'B★SEL Erode Branch',
-    branchName: 'Erode Branch',
-    city: 'Erode, Tamil Nadu',
-    principal: 'Mr. V. Sakthivel',
-    coordinator: 'Mrs. M. Kavitha',
-    phone: '+91 98427 65432',
-    studentsCount: 125,
-    status: 'Authorized Franchise Branch'
-  },
-  {
-    code: 'BSEL-BR-108',
-    name: 'B★SEL Trichy Branch',
-    branchName: 'Trichy Branch',
-    city: 'Tiruchirappalli, Tamil Nadu',
-    principal: 'Rev. Fr. Principal',
-    coordinator: 'Mr. S. Albert',
-    phone: '+91 98652 19131',
-    studentsCount: 180,
-    status: 'Authorized Branch'
-  }
-];
+export const DEFAULT_PARTNER_SCHOOLS = [];
+
+const BRANCH_DATA_CLEARED_KEY = 'bsel_branch_data_cleared_v1';
 
 export const getStoredSchoolsSectionHeader = () => {
   if (typeof window === 'undefined') return DEFAULT_SCHOOLS_SECTION_HEADER;
@@ -124,26 +37,18 @@ export const saveStoredSchoolsSectionHeader = (headerInfo) => {
 export const getStoredSchools = () => {
   if (typeof window === 'undefined') return DEFAULT_PARTNER_SCHOOLS;
   try {
+    if (!localStorage.getItem(BRANCH_DATA_CLEARED_KEY)) {
+      localStorage.setItem('bsel_partner_schools', JSON.stringify(DEFAULT_PARTNER_SCHOOLS));
+      localStorage.setItem(BRANCH_DATA_CLEARED_KEY, 'true');
+      return DEFAULT_PARTNER_SCHOOLS;
+    }
+
     const raw = localStorage.getItem('bsel_partner_schools');
     if (!raw) {
-      localStorage.setItem('bsel_partner_schools', JSON.stringify(DEFAULT_PARTNER_SCHOOLS));
       return DEFAULT_PARTNER_SCHOOLS;
     }
     const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed) && parsed.length > 0) {
-      // Purge any non-branch school entries (e.g. RC Middle School, Muslims Committee School)
-      const pureBranches = parsed.filter(s => {
-        const name = (s.name || '').toLowerCase();
-        return !name.includes('school') && !name.includes('nursery') && !name.includes('matriculation') && !name.includes('middle');
-      });
-
-      // If schools were purged or branches are missing, restore pure default branches
-      if (pureBranches.length < DEFAULT_PARTNER_SCHOOLS.length) {
-        localStorage.setItem('bsel_partner_schools', JSON.stringify(DEFAULT_PARTNER_SCHOOLS));
-        return DEFAULT_PARTNER_SCHOOLS;
-      }
-      return pureBranches;
-    }
+    if (Array.isArray(parsed)) return parsed;
     return DEFAULT_PARTNER_SCHOOLS;
   } catch {
     return DEFAULT_PARTNER_SCHOOLS;

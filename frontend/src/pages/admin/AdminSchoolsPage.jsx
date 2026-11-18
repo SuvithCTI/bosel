@@ -9,7 +9,6 @@ import {
   Eye,
   EyeOff,
   Edit3,
-  RotateCcw,
   ShieldCheck,
   Search,
   X,
@@ -17,19 +16,18 @@ import {
   Mail,
   Building,
   LogIn,
-  ArrowRight
+  ArrowRight,
+  Trash2
 } from 'lucide-react';
 import {
-  TAMIL_NADU_DISTRICTS,
   getStoredBranchCredentials,
   saveBranchCredentials,
-  getDistrictSlug,
-  getDefaultCredentialsForDistrict,
-  getCredentialsForBranchOrSchool
+  getCredentialsForBranchOrSchool,
+  deleteCustomBranch
 } from '../../utils/branchAuthStorage';
 
 export default function AdminSchoolsPage({
-  schoolsList: _schoolsList,
+  schoolsList,
   setShowAddSchoolModal,
   setActiveBranch,
   handleRoleSwitch,
@@ -105,51 +103,42 @@ export default function AdminSchoolsPage({
     }
   };
 
-  const handleResetToFormula = () => {
-    if (!editingBranch) return;
-    const def = getDefaultCredentialsForDistrict(editingBranch.district || editingBranch.slug);
-    setEditEmail(def.email);
-    setEditPassword(def.password);
-  };
+  const handleDeleteBranch = (branch) => {
+    if (!window.confirm(`Delete "${branch.name}"? Its login credentials and branch admin account will also be removed.`)) {
+      return;
+    }
 
-  // Official 38 Tamil Nadu District Branches directly displayed on the page
-  const all38DistrictBranches = useMemo(() => {
-    return TAMIL_NADU_DISTRICTS.map((district, idx) => {
-      const slug = getDistrictSlug(district);
-      const creds = credentialsMap[slug] || getDefaultCredentialsForDistrict(district);
-      const code = `BSEL-${slug.toUpperCase().slice(0, 3)}-${String(idx + 1).padStart(2, '0')}`;
-      return {
-        code,
-        name: `B★SEL ${district} Branch`,
-        branchName: `${district} Branch`,
-        district,
-        city: `${district}, Tamil Nadu`,
-        principal: district === 'Tenkasi' ? 'Mrs. Thangam Sivaji' : `${district} Branch Director`,
-        coordinator: district === 'Tenkasi' ? 'Mr. S. Sivakumar' : `${district} Branch Coordinator`,
-        phone: district === 'Tenkasi' ? '+91 98652 19131' : '+91 98400 12345',
-        studentsCount: district === 'Tenkasi' ? 110 : district === 'Chennai' ? 240 : district === 'Coimbatore' ? 190 : 120,
-        status: district === 'Tenkasi' ? 'Authorized Franchise Branch' : 'Authorized Branch',
-        slug,
-        creds
-      };
-    });
-  }, [credentialsMap]);
+    const result = deleteCustomBranch(branch);
+    if (!result.success) {
+      alert(result.message || 'Unable to delete the branch.');
+      return;
+    }
+    setCredentialsMap(getStoredBranchCredentials());
+    showToast(`${branch.name} deleted.`);
+  };
 
   const customBranches = useMemo(() => (
     Object.values(credentialsMap)
       .filter((credentials) => credentials.isCustomBranch)
-      .map((credentials) => ({
-        code: credentials.code || credentials.branchCode || credentials.slug,
-        name: credentials.branchName,
-        branchName: credentials.branchName,
-        city: credentials.district,
-        district: credentials.district,
-        slug: credentials.slug,
-        creds: credentials
-      }))
-  ), [credentialsMap]);
+      .map((credentials) => {
+        const school = schoolsList?.find((item) =>
+          item.code === (credentials.code || credentials.branchCode) ||
+          item.branchName === credentials.branchName
+        );
+        return {
+          ...school,
+          code: credentials.code || credentials.branchCode || credentials.slug,
+          name: school?.name || credentials.branchName,
+          branchName: credentials.branchName,
+          city: school?.city || credentials.district,
+          district: credentials.district,
+          slug: credentials.slug,
+          creds: credentials
+        };
+      })
+  ), [credentialsMap, schoolsList]);
 
-  const allBranches = useMemo(() => [...all38DistrictBranches, ...customBranches], [all38DistrictBranches, customBranches]);
+  const allBranches = customBranches;
 
   const filteredBranches = useMemo(() => {
     if (!branchSearch.trim()) return allBranches;
@@ -197,7 +186,7 @@ export default function AdminSchoolsPage({
               type="text"
               value={branchSearch}
               onChange={(e) => setBranchSearch(e.target.value)}
-              placeholder="Search branch (e.g. Tenkasi, Chennai)..."
+              placeholder="Search branch name or code..."
               className="w-full text-xs font-semibold pl-8 pr-7 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0c234b]/20 focus:border-[#0c234b]"
             />
             {branchSearch && (
@@ -260,15 +249,70 @@ export default function AdminSchoolsPage({
               className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col justify-between gap-3"
             >
               {/* Branch Name */}
-              <div className="flex items-center justify-between gap-2">
+              <div className="flex items-start justify-between gap-2">
                 <div className="flex items-center gap-2">
                   <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span>
-                  <h3 className="text-sm font-black text-slate-950 leading-snug">{branch.name}</h3>
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-black text-slate-950 leading-snug">{branch.name}</h3>
+                    <p className="mt-1 text-[11px] text-slate-500">{branch.city}</p>
+                  </div>
                 </div>
-                <span className="font-mono text-[10px] font-black text-slate-500 bg-slate-100 px-2 py-0.5 rounded shrink-0">
-                  {branch.code}
-                </span>
+                <div className="flex shrink-0 flex-col items-end gap-1">
+                  <span className="font-mono text-[10px] font-black text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
+                    {branch.code}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteBranch(branch)}
+                    className="inline-flex items-center gap-1 rounded-lg border border-rose-200 px-2 py-1 text-[10px] font-bold text-rose-700 transition hover:bg-rose-50"
+                    title={`Delete ${branch.name}`}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                    Delete
+                  </button>
+                </div>
               </div>
+
+              {(branch.logo || branch.tagline || branch.coordinator || branch.signature) && (
+                <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-3">
+                  {branch.tagline && (
+                    <p className="mb-3 text-xs font-semibold italic leading-relaxed text-slate-700">
+                      “{branch.tagline}”
+                    </p>
+                  )}
+                  <div className="flex flex-wrap items-start gap-4">
+                    {branch.logo && (
+                      <div className="flex min-w-[88px] flex-col items-center gap-1.5">
+                        <span className="text-[9px] font-black uppercase tracking-wider text-slate-500">Branch Logo</span>
+                        <img
+                          src={branch.logo}
+                          alt={`${branch.branchName} logo`}
+                          title="Branch Logo"
+                          className="h-14 w-14 rounded-lg border border-slate-200 bg-white p-1 object-contain"
+                        />
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      {branch.coordinator && (
+                        <p className="text-[11px] text-slate-600">
+                          Branch Coordinator: <span className="font-bold text-slate-800">{branch.coordinator}</span>
+                        </p>
+                      )}
+                      {branch.signature && (
+                        <div className="mt-3 flex flex-col items-start gap-1.5">
+                          <span className="text-[9px] font-black uppercase tracking-wider text-slate-500">Coordinator Signature</span>
+                          <img
+                            src={branch.signature}
+                            alt={`${branch.branchName} coordinator signature`}
+                            title="Coordinator Signature"
+                            className="h-10 max-w-40 rounded-md border border-slate-200 bg-white px-2 py-1 object-contain object-left"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* OFFICIAL BRANCH LOGIN CREDENTIALS BOX */}
               <div className="rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50/80 via-sky-50/40 to-white p-3 space-y-2">
@@ -365,14 +409,18 @@ export default function AdminSchoolsPage({
         {filteredBranches.length === 0 && (
           <div className="col-span-full bg-white p-8 rounded-2xl border border-slate-200 text-center space-y-2">
             <Building className="w-8 h-8 text-slate-400 mx-auto" />
-            <p className="text-sm font-black text-slate-800">No branches found matching "{branchSearch}"</p>
-            <button
-              type="button"
-              onClick={() => setBranchSearch('')}
-              className="text-xs font-bold text-blue-600 hover:underline cursor-pointer"
-            >
-              Clear search filter
-            </button>
+            <p className="text-sm font-black text-slate-800">
+              {branchSearch ? `No branches found matching "${branchSearch}"` : 'No branches have been added yet.'}
+            </p>
+            {branchSearch && (
+              <button
+                type="button"
+                onClick={() => setBranchSearch('')}
+                className="text-xs font-bold text-blue-600 hover:underline cursor-pointer"
+              >
+                Clear search filter
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -419,7 +467,7 @@ export default function AdminSchoolsPage({
               <div className="space-y-1">
                 <label className="text-xs font-black text-slate-800 flex items-center justify-between">
                   <span>Branch Login User ID</span>
-                  <span className="text-[10px] text-slate-400 font-normal">Standard: bseldistrict@bsel.org</span>
+                  <span className="text-[10px] text-slate-400 font-normal">Set by Super Admin</span>
                 </label>
                 <div className="relative">
                   <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -438,7 +486,7 @@ export default function AdminSchoolsPage({
               <div className="space-y-1">
                 <label className="text-xs font-black text-slate-800 flex items-center justify-between">
                   <span>Branch Login Password</span>
-                  <span className="text-[10px] text-slate-400 font-normal">Standard: districtbsel</span>
+                  <span className="text-[10px] text-slate-400 font-normal">Set by Super Admin</span>
                 </label>
                 <div className="relative">
                   <KeyRound className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -452,16 +500,6 @@ export default function AdminSchoolsPage({
                   />
                 </div>
               </div>
-
-              {/* Reset to Formula Button */}
-              <button
-                type="button"
-                onClick={handleResetToFormula}
-                className="text-[11px] font-bold text-amber-700 hover:text-amber-800 flex items-center gap-1 cursor-pointer transition"
-              >
-                <RotateCcw className="w-3 h-3" />
-                <span>Reset to formula default (bsel{editingBranch.slug}@bsel.org / {editingBranch.slug}bsel)</span>
-              </button>
 
               {/* Modal Actions */}
               <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200">

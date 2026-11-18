@@ -13,8 +13,8 @@ const H = 288;
 
 const GOLD = "#b99a56";
 const GOLD_DARK = "#8a6d2f";
-const GOLD_SOFT = "#d9c791";
 const NAVY = "#081d3d";
+const NAVY_SOFT = "#50627a";
 const SERIF = "Georgia, 'Times New Roman', serif";
 const SANS = "Arial, Helvetica, sans-serif";
 
@@ -29,14 +29,14 @@ const Diamond = ({ x, y, r = 6 }) => (
   <path
     d={`M${x} ${y - r}L${x + r} ${y}L${x} ${y + r}L${x - r} ${y}Z`}
     fill="#fff"
-    stroke={GOLD}
+    stroke={NAVY}
     strokeWidth="1.4"
   />
 );
 
 /* ---------- Corner fan ornament (mirrored into 4 corners) ---------- */
 const CornerOrnament = ({ transform }) => (
-  <g transform={transform} stroke={GOLD} fill="none" strokeWidth="1">
+  <g transform={transform} stroke={NAVY} fill="none" strokeWidth="1">
     <path d="M20 42L42 20" />
     <path d="M25 49L49 25" strokeWidth="0.7" />
     <path d="M30 56L56 30" strokeWidth="0.5" />
@@ -51,7 +51,7 @@ const Frame = () => (
     <path
       d="M26 6H602L622 26V262L602 282H26L6 262V26Z"
       fill="none"
-      stroke={GOLD}
+      stroke={NAVY}
       strokeWidth="2"
     />
 
@@ -59,12 +59,12 @@ const Frame = () => (
     <path
       d="M30 13H270L278 20H350L358 13H598L615 30V100L608 108V180L615 188V258L598 275H358L350 268H278L270 275H30L13 258V188L20 180V108L13 100V30Z"
       fill="none"
-      stroke={GOLD}
+      stroke={NAVY}
       strokeWidth="1"
     />
 
     {/* extra deco lines */}
-    <g stroke={GOLD_SOFT} strokeWidth="0.8" fill="none">
+    <g stroke={NAVY_SOFT} strokeWidth="0.8" fill="none">
       <path d="M27 56V122M27 166V232" />
       <path d="M601 56V122M601 166V232" />
       <path d="M120 20H254M374 20H508" />
@@ -131,7 +131,7 @@ const Field = ({ label, labelX, y, valueX, endX, value }) => (
       x2={endX}
       y1={y + 2}
       y2={y + 2}
-      stroke={GOLD}
+      stroke={NAVY}
       strokeWidth="0.6"
     />
     {value ? (
@@ -305,7 +305,7 @@ const ReceiptSVG = ({ receipt, logoHref }) => {
       </text>
 
       {/* Receipt no + date */}
-      <rect x="138" y="146" width="224" height="18" fill="none" stroke={GOLD} strokeWidth="1" />
+      <rect x="138" y="146" width="224" height="18" fill="none" stroke={NAVY} strokeWidth="1" />
       <text x="144" y="158" fontSize="9" fontFamily={SANS} fill={NAVY}>
         Receipt No:
       </text>
@@ -321,7 +321,7 @@ const ReceiptSVG = ({ receipt, logoHref }) => {
         {data.receiptNo || "BSEL/____/____/"}
       </text>
 
-      <rect x="372" y="146" width="116" height="18" fill="none" stroke={GOLD} strokeWidth="1" />
+      <rect x="372" y="146" width="116" height="18" fill="none" stroke={NAVY} strokeWidth="1" />
       <text x="378" y="158" fontSize="9" fontFamily={SANS} fill={NAVY}>
         Date:
       </text>
@@ -338,8 +338,8 @@ const ReceiptSVG = ({ receipt, logoHref }) => {
       </text>
 
       {/* Student details box */}
-      <rect x="64" y="172" width="499" height="59" fill="none" stroke={GOLD} strokeWidth="1" />
-      <g stroke={GOLD_SOFT} strokeWidth="0.8">
+      <rect x="64" y="172" width="499" height="59" fill="none" stroke={NAVY} strokeWidth="1" />
+      <g stroke={NAVY_SOFT} strokeWidth="0.8">
         <line x1="64" x2="563" y1="186" y2="186" />
         <line x1="64" x2="563" y1="201" y2="201" />
         <line x1="64" x2="563" y1="216" y2="216" />
