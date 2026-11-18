@@ -2,13 +2,17 @@
 import React, { useState, useEffect } from 'react';
 import { X, Award } from 'lucide-react';
 import Certificate from './Certificate';
-import { getCoursePrefix } from '../utils/authStorage';
+import { getCoursePrefix, getActiveSession } from '../utils/authStorage';
 
 export default function CertificateModal({
   isOpen = true,
   onClose,
   initialData = {},
+  showControls = true,
 }) {
+  const sessionUser = getActiveSession();
+  const isStaff = sessionUser?.role === 'Staff';
+  const effectiveShowControls = !isStaff && showControls;
   const [studentName, setStudentName] = useState(() => {
     if (initialData.studentName) return initialData.studentName;
 
@@ -183,7 +187,7 @@ export default function CertificateModal({
               issueDate={issueDate}
               studentPhoto={studentPhoto}
               certificateType={certificateType}
-              showControls={true}
+              showControls={effectiveShowControls}
               showUploadPhoto={false}
               studentId={initialData?.studentId || initialData?.admissionNo || initialData?.id || registrationNo}
               admissionNo={initialData?.admissionNo || initialData?.registerNumber || registrationNo}

@@ -4,6 +4,7 @@ import student3Img from '../assets/programs/student3.jpg';
 import student4Img from '../assets/programs/student4.jpg';
 import student5Img from '../assets/programs/student5.jpg';
 import student6Img from '../assets/programs/student6.jpg';
+import { getSavedMarksheet } from './marksheetStorage';
 
 export const SAMPLE_STUDENT_PHOTOS = [
   student1Img,
@@ -54,6 +55,19 @@ export const getStudentRegisterNumber = (student) => {
 };
 
 export const getMarksheetSubjects = (student) => {
+  const saved = getSavedMarksheet(student);
+  if (saved && Array.isArray(saved.subjects) && saved.subjects.length > 0) {
+    return saved.subjects.map((s, index) => ({
+      ...s,
+      id: s.id || index + 1,
+      max: Number(s.max) || 100,
+      assessment: Number(s.assessment ?? s.max) || 100,
+      practical: Number(s.practical ?? s.max) || 100,
+      marks: Number(s.marks) || 0,
+      pct: `${Math.round(((Number(s.marks) || 0) / (Number(s.max) || 100)) * 100)}%`
+    }));
+  }
+
   const course = (student?.program || student?.courseName || '').toLowerCase();
   
   if (course.includes('html')) {

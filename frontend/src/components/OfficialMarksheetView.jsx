@@ -21,7 +21,7 @@ import {
   readStudentCustomSignature,
   saveStudentCustomSignature,
 } from '../utils/studentDataHelpers';
-import { getCoursePrefix } from '../utils/authStorage';
+import { getCoursePrefix, getActiveSession } from '../utils/authStorage';
 import { getSavedMarksheet, getGrade } from '../utils/marksheetStorage';
 import MarksheetTemplate from './MarksheetTemplate';
 
@@ -298,7 +298,10 @@ export default function OfficialMarksheetView({
   defaultShowMarks = false,
   hideMarks = false,
   paperType = null,
+  hideDownloadAndPrint = false,
 }) {
+  const sessionUser = getActiveSession();
+  const isStaff = sessionUser?.role === 'Staff' || hideDownloadAndPrint;
   const sheetRef = useRef(null);
   const fileInputRef = useRef(null);
 
@@ -562,6 +565,7 @@ export default function OfficialMarksheetView({
   // ----------------------------------------------------------
 
   const handlePrint = () => {
+    if (isStaff) return;
     window.print();
   };
 
@@ -587,6 +591,7 @@ export default function OfficialMarksheetView({
   };
 
   const handleDownloadPdf = async () => {
+    if (isStaff) return;
     if (!sheetRef.current || isGeneratingPdf) return;
 
     setIsGeneratingPdf(true);
@@ -1338,10 +1343,18 @@ export default function OfficialMarksheetView({
             visibility: hidden !important;
           }
 
+          ${isStaff ? `
+          #printable-marksheet-sheet,
+          #printable-marksheet-sheet * {
+            visibility: hidden !important;
+            display: none !important;
+          }
+          ` : `
           #printable-marksheet-sheet,
           #printable-marksheet-sheet * {
             visibility: visible !important;
           }
+          `}
 
           #printable-marksheet-sheet {
             position: absolute !important;
@@ -1472,109 +1485,117 @@ export default function OfficialMarksheetView({
           w-full
           sm:w-auto
         ">
-          <button
-            type="button"
-            onClick={() => setIsFormModalOpen(true)}
-            className="
-              flex-1
-              sm:flex-none
-              px-2
-              sm:px-3
-              py-2
-              bg-amber-500/20
-              hover:bg-amber-500/30
-              text-amber-300
-              rounded-lg
-              text-[10px]
-              sm:text-xs
-              font-bold
-              transition
-              flex
-              items-center
-              justify-center
-              gap-1
-              border
-              border-amber-400/40
-              cursor-pointer
-            "
-            title="Customize School Name, Logo & Principal Signature"
-          >
-            <PenTool className="w-3.5 h-3.5 shrink-0" />
-            <span>Customize</span>
-          </button>
+          {!isStaff ? (
+            <>
+              <button
+                type="button"
+                onClick={() => setIsFormModalOpen(true)}
+                className="
+                  flex-1
+                  sm:flex-none
+                  px-2
+                  sm:px-3
+                  py-2
+                  bg-amber-500/20
+                  hover:bg-amber-500/30
+                  text-amber-300
+                  rounded-lg
+                  text-[10px]
+                  sm:text-xs
+                  font-bold
+                  transition
+                  flex
+                  items-center
+                  justify-center
+                  gap-1
+                  border
+                  border-amber-400/40
+                  cursor-pointer
+                "
+                title="Customize School Name, Logo & Principal Signature"
+              >
+                <PenTool className="w-3.5 h-3.5 shrink-0" />
+                <span>Customize</span>
+              </button>
 
-          <button
-            type="button"
-            onClick={handleDownloadPdf}
-            disabled={isGeneratingPdf}
-            className="
-              flex-1
-              sm:flex-none
-              px-2
-              sm:px-3.5
-              py-2
-              bg-amber-500
-              hover:bg-amber-400
-              text-slate-950
-              rounded-lg
-              text-[10px]
-              sm:text-xs
-              font-black
-              transition
-              flex
-              items-center
-              justify-center
-              gap-1
-              shadow-sm
-              cursor-pointer
-              disabled:opacity-50
-              disabled:cursor-not-allowed
-            "
-          >
-            {isGeneratingPdf ? (
-              <Loader2 className="w-3.5 h-3.5 shrink-0 animate-spin" />
-            ) : (
-              <Download className="w-3.5 h-3.5 shrink-0" />
-            )}
+              <button
+                type="button"
+                onClick={handleDownloadPdf}
+                disabled={isGeneratingPdf}
+                className="
+                  flex-1
+                  sm:flex-none
+                  px-2
+                  sm:px-3.5
+                  py-2
+                  bg-amber-500
+                  hover:bg-amber-400
+                  text-slate-950
+                  rounded-lg
+                  text-[10px]
+                  sm:text-xs
+                  font-black
+                  transition
+                  flex
+                  items-center
+                  justify-center
+                  gap-1
+                  shadow-sm
+                  cursor-pointer
+                  disabled:opacity-50
+                  disabled:cursor-not-allowed
+                "
+              >
+                {isGeneratingPdf ? (
+                  <Loader2 className="w-3.5 h-3.5 shrink-0 animate-spin" />
+                ) : (
+                  <Download className="w-3.5 h-3.5 shrink-0" />
+                )}
 
-            <span className="sm:hidden">
-              {isGeneratingPdf ? 'Saving' : 'PDF'}
-            </span>
+                <span className="sm:hidden">
+                  {isGeneratingPdf ? 'Saving' : 'PDF'}
+                </span>
 
-            <span className="hidden sm:inline">
-              {isGeneratingPdf ? 'Downloading...' : 'Download PDF'}
-            </span>
-          </button>
+                <span className="hidden sm:inline">
+                  {isGeneratingPdf ? 'Downloading...' : 'Download PDF'}
+                </span>
+              </button>
 
-          <button
-            type="button"
-            onClick={handlePrint}
-            className="
-              flex-1
-              sm:flex-none
-              px-2
-              sm:px-3.5
-              py-2
-              bg-[#163e7c]
-              hover:bg-[#1f54a6]
-              text-white
-              rounded-lg
-              text-[10px]
-              sm:text-xs
-              font-black
-              transition
-              flex
-              items-center
-              justify-center
-              gap-1
-              border
-              border-white/20
-              cursor-pointer
-            "
-          >
-            <Printer className="w-3.5 h-3.5 shrink-0" />
-            <span>Print</span>
-          </button>
+              <button
+                type="button"
+                onClick={handlePrint}
+                className="
+                  flex-1
+                  sm:flex-none
+                  px-2
+                  sm:px-3.5
+                  py-2
+                  bg-[#163e7c]
+                  hover:bg-[#1f54a6]
+                  text-white
+                  rounded-lg
+                  text-[10px]
+                  sm:text-xs
+                  font-black
+                  transition
+                  flex
+                  items-center
+                  justify-center
+                  gap-1
+                  border
+                  border-white/20
+                  cursor-pointer
+                "
+              >
+                <Printer className="w-3.5 h-3.5 shrink-0" />
+                <span>Print</span>
+              </button>
+            </>
+          ) : (
+            <div className="px-3 py-1.5 bg-amber-400/15 border border-amber-400/30 rounded-lg text-[10px] sm:text-xs font-bold text-amber-200">
+              Staff Evaluation View
+            </div>
+          )}
         </div>
       </div>
 

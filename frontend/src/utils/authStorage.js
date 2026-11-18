@@ -76,6 +76,25 @@ const DEFAULT_USERS = [
     enrolmentDate: '01 Feb 2026',
     events: [],
     results: []
+  },
+  {
+    userId: 'staff',
+    password: 'staff123',
+    studentName: 'B★SEL Staff Member',
+    name: 'B★SEL Staff Member',
+    parentName: 'Academic Operations',
+    email: 'staff@bsel.org',
+    phone: '98401 23456',
+    grade: 'Academic Staff',
+    program: 'Student Operations & Evaluation',
+    institution: 'B★SEL Learning Center',
+    branch: 'Tenkasi Regional Branch',
+    branchCode: 'TSI-01',
+    address: 'B★SEL Staff Division, Tamil Nadu',
+    role: 'Staff',
+    enrolmentDate: '01 Jan 2026',
+    events: [],
+    results: []
   }
 ];
 
@@ -135,7 +154,7 @@ export const getRegisteredUsers = () => {
 
     // Ensure all students have a valid official Register Number (e.g. AB27-001) and strictly BSEL-<MobileNumber> User ID (no district)
     users.forEach((u, i) => {
-      const isStudent = u.role === 'Student' || (!u.role && u.userId !== 'admin' && !u.userId.startsWith('branch.') && !u.userId.startsWith('SCH-'));
+      const isStudent = u.role === 'Student' || (!u.role && u.userId !== 'admin' && u.userId !== 'staff' && !u.userId.startsWith('branch.') && !u.userId.startsWith('SCH-'));
       if (isStudent) {
         // Enforce BSEL-<cleanMobile> format for student User ID
         const phoneDigits = (u.phone || '').replace(/\D/g, '');
@@ -360,7 +379,7 @@ export const isPhoneNumberRegistered = (phoneNumber) => {
   const users = getRegisteredUsers();
   return users.some((u) => {
     // Only check against student accounts
-    const isStudent = u.role === 'Student' || (!u.role && u.userId !== 'admin' && !String(u.userId || '').startsWith('branch.'));
+    const isStudent = u.role === 'Student' || (!u.role && u.userId !== 'admin' && u.userId !== 'staff' && !String(u.userId || '').startsWith('branch.'));
     if (!isStudent) return false;
 
     const uPhone = (u.phone || '').replace(/\D/g, '');
@@ -383,7 +402,7 @@ export const getStudentByPhone = (phoneNumber) => {
 
   const users = getRegisteredUsers();
   return users.find((u) => {
-    const isStudent = u.role === 'Student' || (!u.role && u.userId !== 'admin' && !String(u.userId || '').startsWith('branch.'));
+    const isStudent = u.role === 'Student' || (!u.role && u.userId !== 'admin' && u.userId !== 'staff' && !String(u.userId || '').startsWith('branch.'));
     if (!isStudent) return false;
 
     const uPhone = (u.phone || '').replace(/\D/g, '');
@@ -728,6 +747,46 @@ export const validateLogin = (enteredUserId, enteredPassword) => {
       return {
         success: false,
         message: 'Incorrect Password for Administrator. Please use "admin123".'
+      };
+    }
+  }
+
+  // 1B. Staff Login Check (Accepts 'staff', 'staff@bsel.org', 'staff@besellearning.org' with password 'staff123')
+  const isStaffLogin = 
+    cleanId === 'staff' || 
+    cleanId === 'staff@bsel.org' || 
+    cleanId === 'staff@besellearning.org';
+
+  if (isStaffLogin) {
+    if (cleanPassword === 'staff123') {
+      const staffUser = {
+        userId: 'staff',
+        password: cleanPassword,
+        studentName: 'B★SEL Staff Member',
+        name: 'B★SEL Staff Member',
+        parentName: 'Academic Operations',
+        email: 'staff@bsel.org',
+        phone: '98401 23456',
+        grade: 'Academic Staff',
+        program: 'Student Operations & Evaluation',
+        institution: 'B★SEL Learning Center',
+        address: 'B★SEL Staff Division, Tamil Nadu',
+        role: 'Staff',
+        branch: 'Tenkasi Regional Branch',
+        branchCode: 'TSI-01',
+        enrolmentDate: '01 Jan 2026',
+        events: [],
+        results: []
+      };
+
+      return {
+        success: true,
+        user: staffUser
+      };
+    } else {
+      return {
+        success: false,
+        message: 'Incorrect Password for Staff. Please use "staff123".'
       };
     }
   }
