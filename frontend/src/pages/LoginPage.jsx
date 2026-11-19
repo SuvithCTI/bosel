@@ -22,6 +22,8 @@ import {
   isPhoneNumberRegistered,
   getLastRegisteredCreds,
 } from '../utils/authStorage';
+import { getFranchiseBranding } from '../utils/franchiseStorage';
+import { getSchoolBranding } from '../utils/schoolStorage';
 
 // -------------------------------------------------------
 // Student profile storage
@@ -451,6 +453,28 @@ export default function LoginPage({
       return;
     }
 
+    if (authUser.role === 'Franchise' || authUser.role === 'School') {
+      const isSchoolUser = authUser.role === 'School' || Boolean(authUser.schoolId);
+      const fb = getFranchiseBranding(authUser.franchiseId || authUser.id || authUser.name);
+      const sb = getSchoolBranding(authUser.schoolId || authUser.id || authUser.name);
+      const b = isSchoolUser ? (sb || fb) : (fb || sb);
+      const mergedFranchiseUser = {
+        ...authUser,
+        role: authUser.role || (isSchoolUser ? 'School' : 'Franchise'),
+        schoolId: authUser.schoolId || (isSchoolUser ? (authUser.id || authUser.userId) : null),
+        franchiseId: authUser.franchiseId || (!isSchoolUser ? (authUser.id || authUser.userId) : null),
+        schoolName: b?.schoolName || authUser.schoolName || authUser.name,
+        subtitle: b?.subtitle || authUser.subtitle || (isSchoolUser ? 'TENKASI DISTRICT' : 'VISION FOUNDATION'),
+        motto: b?.motto || authUser.motto || (isSchoolUser ? 'KNOWLEDGE • CHARACTER • SERVICE' : 'EDUCATION • EMPOWERMENT • EXCELLENCE'),
+        logo: b?.logo !== undefined ? b.logo : (authUser.logo || null),
+        signature: b?.signature !== undefined ? b.signature : (authUser.signature || null),
+        directorSignature: b?.signature !== undefined ? b.signature : (authUser.signature || null)
+      };
+      setActiveSession(mergedFranchiseUser);
+      setActivePage('franchise_portal');
+      return;
+    }
+
     // Prepare the student dashboard.
     const student = normalizeStudent(authUser);
 
@@ -830,7 +854,7 @@ export default function LoginPage({
                       Select Role
                     </span>
                   </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
                     <button
                       type="button"
                       onClick={() => {
@@ -863,6 +887,17 @@ export default function LoginPage({
                       className="w-full py-1 px-1 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-400/50 text-purple-200 font-semibold rounded-md text-[10px] sm:text-[11px] transition active:scale-95 cursor-pointer text-center flex items-center justify-center min-h-[28px] sm:min-h-[30px]"
                     >
                       Staff
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setUserId('franchise');
+                        setPassword('franchise123');
+                        setErrorMessage('');
+                      }}
+                      className="w-full py-1 px-1 bg-indigo-500/20 hover:bg-indigo-500/30 border border-indigo-400/50 text-indigo-200 font-semibold rounded-md text-[10px] sm:text-[11px] transition active:scale-95 cursor-pointer text-center flex items-center justify-center min-h-[28px] sm:min-h-[30px]"
+                    >
+                      Franchise
                     </button>
                     {lastCreds?.userId ? (
                       <button

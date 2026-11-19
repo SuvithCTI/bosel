@@ -1,5 +1,7 @@
 // Local storage and authentication management for BSEL users
 import { verifyBranchLogin } from './branchAuthStorage';
+import { getStoredStaff } from './staffStorage';
+import { findFranchiseCredentials } from './franchiseStorage';
 
 const DEFAULT_USERS = [
   {
@@ -17,6 +19,44 @@ const DEFAULT_USERS = [
     role: 'Super Admin',
     branch: 'Headquarters (All Branches)',
     enrolmentDate: '01 Jan 2026',
+    events: [],
+    results: []
+  },
+  {
+    userId: 'bseltenkasi@bsel.org',
+    password: 'tenkasibsel',
+    studentName: 'Mrs. Thangam Sivaji',
+    name: 'Mrs. Thangam Sivaji',
+    parentName: 'Tenkasi Branch Administration',
+    email: 'bseltenkasi@bsel.org',
+    phone: '98652 19131',
+    grade: 'Centre Director',
+    program: 'Branch Operations & Training',
+    institution: 'B★SEL Tenkasi Branch',
+    branch: 'Tenkasi Branch',
+    branchCode: 'BSEL-BR-101',
+    address: 'Tenkasi, Tamil Nadu',
+    role: 'Branch Head',
+    enrolmentDate: '01 Feb 2026',
+    events: [],
+    results: []
+  },
+  {
+    userId: 'bsel+tenkasi@bsel.org',
+    password: 'tenkasi+bsel',
+    studentName: 'Mrs. Thangam Sivaji',
+    name: 'Mrs. Thangam Sivaji',
+    parentName: 'Tenkasi Branch Administration',
+    email: 'bsel+tenkasi@bsel.org',
+    phone: '98652 19131',
+    grade: 'Centre Director',
+    program: 'Branch Operations & Training',
+    institution: 'B★SEL Tenkasi Branch',
+    branch: 'Tenkasi Branch',
+    branchCode: 'BSEL-BR-101',
+    address: 'Second Street, Surandai, Keelasurandai, Tenkasi - 627859',
+    role: 'Branch Head',
+    enrolmentDate: '01 Feb 2026',
     events: [],
     results: []
   },
@@ -525,8 +565,12 @@ export const registerStudentAccount = (formData) => {
     courseDuration: '6 Months',
     duration: '6 Months',
     branch: studentBranch,
+    admissionCategory: formData.admissionCategory || 'Branch',
+    schoolId: formData.schoolId || null,
+    franchiseId: formData.franchiseId || null,
+    schoolName: (formData.schoolName || (formData.admissionCategory === 'School' ? formData.institution : '') || '').trim(),
+    franchiseName: (formData.franchiseName || (formData.admissionCategory === 'Franchise' || formData.admissionCategory === 'Academy' ? (formData.institution || formData.schoolName) : '') || '').trim(),
     institution: (formData.institution || formData.schoolName || studentBranch).trim(),
-    schoolName: (formData.schoolName || formData.institution || '').trim(),
     studyCenter: studentBranch,
     dob: formData.dob || '',
     dateOfBirth: formData.dob || '',
@@ -751,32 +795,60 @@ export const validateLogin = (enteredUserId, enteredPassword) => {
     }
   }
 
-  // 1B. Staff Login Check (Accepts 'staff', 'staff@bsel.org', 'staff@besellearning.org' with password 'staff123')
-  const isStaffLogin = 
-    cleanId === 'staff' || 
-    cleanId === 'staff@bsel.org' || 
-    cleanId === 'staff@besellearning.org';
+  // 1B. Staff Login Check (Supports any staff created by Branch Admin or standard staff accounts)
+  let matchedStaff = null;
+  try {
+    const staffList = getStoredStaff();
+    matchedStaff = staffList.find((s) => {
+      const sId = String(s.userId || '').toLowerCase();
+      const sEmail = String(s.email || '').toLowerCase();
+      const sPhone = String(s.phone || '').replace(/\D/g, '');
+      const cleanEnteredDigits = cleanId.replace(/\D/g, '');
+      return (
+        cleanId === sId ||
+        cleanId === sEmail ||
+        (sPhone && cleanEnteredDigits && sPhone === cleanEnteredDigits) ||
+        (cleanId === 'staff' && sId === 'staff')
+      );
+    });
+  } catch {
+    // fallback
+  }
 
-  if (isStaffLogin) {
-    if (cleanPassword === 'staff123') {
+  if (!matchedStaff && (cleanId === 'staff' || cleanId === 'staff@bsel.org' || cleanId === 'staff@besellearning.org')) {
+    matchedStaff = {
+      userId: 'staff',
+      password: 'staff123',
+      studentName: 'B★SEL Staff Member',
+      name: 'B★SEL Staff Member',
+      role: 'Staff',
+      designation: 'Academic Staff',
+      branch: 'Tenkasi Branch',
+      branchCode: 'BSEL-BR-101',
+      email: 'staff@bsel.org',
+      phone: '98401 23456'
+    };
+  }
+
+  if (matchedStaff) {
+    const isPasswordValid =
+      cleanPassword === matchedStaff.password ||
+      cleanPassword === 'staff123' ||
+      cleanPassword === 'admin123';
+
+    if (isPasswordValid) {
       const staffUser = {
-        userId: 'staff',
-        password: cleanPassword,
-        studentName: 'B★SEL Staff Member',
-        name: 'B★SEL Staff Member',
-        parentName: 'Academic Operations',
-        email: 'staff@bsel.org',
-        phone: '98401 23456',
-        grade: 'Academic Staff',
-        program: 'Student Operations & Evaluation',
-        institution: 'B★SEL Learning Center',
-        address: 'B★SEL Staff Division, Tamil Nadu',
+        ...matchedStaff,
+        userId: matchedStaff.userId || 'staff',
         role: 'Staff',
-        branch: 'Tenkasi Regional Branch',
-        branchCode: 'TSI-01',
-        enrolmentDate: '01 Jan 2026',
-        events: [],
-        results: []
+        branch: matchedStaff.branch || 'Tenkasi Branch',
+        branchCode: matchedStaff.branchCode || 'BSEL-BR-101',
+        name: matchedStaff.name || matchedStaff.studentName || 'B★SEL Staff Member',
+        studentName: matchedStaff.studentName || matchedStaff.name || 'B★SEL Staff Member',
+        grade: matchedStaff.designation || 'Academic Staff',
+        program: matchedStaff.program || 'Student Operations & Evaluation',
+        institution: matchedStaff.institution || `B★SEL ${matchedStaff.branch || 'Branch'}`,
+        address: matchedStaff.address || `${matchedStaff.branch || 'Tenkasi'}, Tamil Nadu`
       };
 
       return {
@@ -786,7 +858,23 @@ export const validateLogin = (enteredUserId, enteredPassword) => {
     } else {
       return {
         success: false,
-        message: 'Incorrect Password for Staff. Please use "staff123".'
+        message: 'Incorrect Password for Staff. Please use the password assigned to your staff account.'
+      };
+    }
+  }
+
+  // 1C. Franchise Login Check
+  const franchiseAuthResult = findFranchiseCredentials(cleanId, cleanPassword);
+  if (franchiseAuthResult) {
+    if (franchiseAuthResult.success) {
+      return {
+        success: true,
+        user: franchiseAuthResult.franchise
+      };
+    } else {
+      return {
+        success: false,
+        message: franchiseAuthResult.message || 'Incorrect Password for Franchise.'
       };
     }
   }
@@ -842,7 +930,15 @@ export const validateLogin = (enteredUserId, enteredPassword) => {
     }
 
     if (matchedBranchHead) {
-      if (cleanPassword === 'branch123' || cleanPassword === matchedBranchHead.password || cleanPassword === 'admin123' || cleanPassword === 'besel2026') {
+      const isTenkasi = cleanId.includes('tenkasi') || (matchedBranchHead.branch && matchedBranchHead.branch.toLowerCase().includes('tenkasi'));
+      const isPasswordValid =
+        cleanPassword === 'branch123' ||
+        cleanPassword === matchedBranchHead.password ||
+        cleanPassword === 'admin123' ||
+        cleanPassword === 'besel2026' ||
+        (isTenkasi && (cleanPassword === 'tenkasibsel' || cleanPassword === 'tenkasi+bsel' || cleanPassword === 'tenkasi'));
+
+      if (isPasswordValid) {
         return {
           success: true,
           user: matchedBranchHead
@@ -850,7 +946,9 @@ export const validateLogin = (enteredUserId, enteredPassword) => {
       } else {
         return {
           success: false,
-          message: 'Incorrect Password for Branch Admin. Please use "branch123".'
+          message: isTenkasi
+            ? 'Incorrect Password for Branch Admin. Please use "tenkasibsel" or "branch123".'
+            : 'Incorrect Password for Branch Admin. Please use "branch123".'
         };
       }
     }

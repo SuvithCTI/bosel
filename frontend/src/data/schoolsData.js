@@ -6,7 +6,19 @@ export const DEFAULT_SCHOOLS_SECTION_HEADER = {
   description: 'Official B★SEL District Branches, accredited franchise academies, and district examination centres across Tamil Nadu.'
 };
 
-export const DEFAULT_PARTNER_SCHOOLS = [];
+export const DEFAULT_PARTNER_SCHOOLS = [
+  {
+    code: 'BSEL-BR-101',
+    name: 'B★SEL Tenkasi Branch',
+    branchName: 'Tenkasi Branch',
+    city: 'Tenkasi, Tamil Nadu',
+    principal: 'Mrs. Thangam Sivaji',
+    coordinator: 'Mr. S. Sivakumar',
+    phone: '+91 98652 19131',
+    studentsCount: 110,
+    status: 'Authorized Franchise Branch'
+  }
+];
 
 const BRANCH_DATA_CLEARED_KEY = 'bsel_branch_data_cleared_v1';
 
@@ -37,18 +49,38 @@ export const saveStoredSchoolsSectionHeader = (headerInfo) => {
 export const getStoredSchools = () => {
   if (typeof window === 'undefined') return DEFAULT_PARTNER_SCHOOLS;
   try {
-    if (!localStorage.getItem(BRANCH_DATA_CLEARED_KEY)) {
-      localStorage.setItem('bsel_partner_schools', JSON.stringify(DEFAULT_PARTNER_SCHOOLS));
-      localStorage.setItem(BRANCH_DATA_CLEARED_KEY, 'true');
-      return DEFAULT_PARTNER_SCHOOLS;
-    }
-
     const raw = localStorage.getItem('bsel_partner_schools');
     if (!raw) {
+      localStorage.setItem('bsel_partner_schools', JSON.stringify(DEFAULT_PARTNER_SCHOOLS));
       return DEFAULT_PARTNER_SCHOOLS;
     }
     const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed)) return parsed;
+    if (Array.isArray(parsed)) {
+      if (parsed.length === 0) {
+        localStorage.setItem('bsel_partner_schools', JSON.stringify(DEFAULT_PARTNER_SCHOOLS));
+        return DEFAULT_PARTNER_SCHOOLS;
+      }
+      const hasTenkasi = parsed.some(s => s.code === 'BSEL-BR-101' || (s.branchName && s.branchName.toLowerCase().includes('tenkasi')));
+      let list = parsed;
+      if (!hasTenkasi) {
+        list = [...DEFAULT_PARTNER_SCHOOLS, ...parsed];
+      }
+      let modified = false;
+      const cleaned = list.map(s => {
+        if (s.city && s.city.toLowerCase().includes('surandai')) {
+          modified = true;
+          return {
+            ...s,
+            city: s.city.replace(/\bSurandai,?\s*/gi, '').trim() || 'Tenkasi, Tamil Nadu'
+          };
+        }
+        return s;
+      });
+      if (modified || !hasTenkasi) {
+        localStorage.setItem('bsel_partner_schools', JSON.stringify(cleaned));
+      }
+      return cleaned;
+    }
     return DEFAULT_PARTNER_SCHOOLS;
   } catch {
     return DEFAULT_PARTNER_SCHOOLS;

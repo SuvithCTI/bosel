@@ -283,11 +283,11 @@ export default function Certificate({
   const savedHeader = readStudentCustomHeader(scopeKey);
   const savedSign = readStudentCustomSignature(scopeKey);
 
-  const defaultName = schoolName || savedHeader?.name || (centreName ? centreName.toUpperCase() : 'RISING STARS');
-  const defaultSub = schoolSubtitle || savedHeader?.subtitle || 'VISION FOUNDATION';
-  const defaultMotto = schoolMotto || savedHeader?.motto || 'EDUCATION • EMPOWERMENT • EXCELLENCE';
-  const defaultLogo = schoolLogo || savedHeader?.logo || null;
-  const defaultSign = directorSignature || (savedSign !== null ? savedSign : null);
+  const defaultName = (schoolName && schoolName.trim()) ? schoolName : (savedHeader?.name || (centreName ? centreName.toUpperCase() : 'RISING STARS'));
+  const defaultSub = (schoolSubtitle && schoolSubtitle.trim()) ? schoolSubtitle : (savedHeader?.subtitle || 'VISION FOUNDATION');
+  const defaultMotto = (schoolMotto && schoolMotto.trim()) ? schoolMotto : (savedHeader?.motto || 'EDUCATION • EMPOWERMENT • EXCELLENCE');
+  const defaultLogo = (schoolLogo !== undefined && schoolLogo !== null) ? schoolLogo : (savedHeader?.logo || null);
+  const defaultSign = (directorSignature !== undefined && directorSignature !== null) ? directorSignature : (savedSign !== null ? savedSign : null);
 
   const [headerName, setHeaderName] = useState(defaultName);
   const [headerSubtitle, setHeaderSubtitle] = useState(defaultSub);
@@ -300,20 +300,39 @@ export default function Certificate({
     const customH = readStudentCustomHeader(scopeKey);
     const customS = readStudentCustomSignature(scopeKey);
 
-    const baseName = schoolName || (centreName ? centreName.toUpperCase() : 'RISING STARS');
-    const baseSub = schoolSubtitle || 'VISION FOUNDATION';
-    const baseMotto = schoolMotto || 'EDUCATION • EMPOWERMENT • EXCELLENCE';
-    const baseLogo = schoolLogo || null;
-    const baseSign = directorSignature || null;
+    const baseName = (schoolName && schoolName.trim()) ? schoolName : (customH?.name !== undefined ? customH.name : (centreName ? centreName.toUpperCase() : 'RISING STARS'));
+    const baseSub = (schoolSubtitle && schoolSubtitle.trim()) ? schoolSubtitle : (customH?.subtitle !== undefined ? customH.subtitle : 'VISION FOUNDATION');
+    const baseMotto = (schoolMotto && schoolMotto.trim()) ? schoolMotto : (customH?.motto !== undefined ? customH.motto : 'EDUCATION • EMPOWERMENT • EXCELLENCE');
+    const baseLogo = (schoolLogo !== undefined && schoolLogo !== null) ? schoolLogo : (customH?.logo !== undefined ? customH.logo : null);
+    const baseSign = (directorSignature !== undefined && directorSignature !== null) ? directorSignature : (customS !== null ? customS : null);
 
-    setHeaderName(customH?.name !== undefined ? customH.name : baseName);
-    setHeaderSubtitle(customH?.subtitle !== undefined ? customH.subtitle : baseSub);
-    setHeaderMotto(customH?.motto !== undefined ? customH.motto : baseMotto);
-    setHeaderLogo(customH?.logo !== undefined ? customH.logo : baseLogo);
-    setDirectorSign(customS !== null ? customS : baseSign);
+    setHeaderName(baseName);
+    setHeaderSubtitle(baseSub);
+    setHeaderMotto(baseMotto);
+    setHeaderLogo(baseLogo);
+    setDirectorSign(baseSign);
   }, [scopeKey, schoolName, schoolSubtitle, schoolMotto, schoolLogo, centreName, directorSignature]);
 
-  // Real-time synchronization across Certificate and Marksheet for the same student
+  // Real-time synchronization across Certificate and Marksheet for the same student or franchise
+  useEffect(() => {
+    const handleFranchiseBrandingUpdate = (e) => {
+      const fb = e.detail?.branding || e.detail?.franchise;
+      if (fb) {
+        if (fb.schoolName) setHeaderName(fb.schoolName);
+        if (fb.subtitle) setHeaderSubtitle(fb.subtitle);
+        if (fb.motto) setHeaderMotto(fb.motto);
+        if (fb.logo !== undefined) setHeaderLogo(fb.logo);
+        if (fb.signature !== undefined) setDirectorSign(fb.signature);
+      }
+    };
+    window.addEventListener('bsel_franchise_branding_updated', handleFranchiseBrandingUpdate);
+    window.addEventListener('bsel_school_branding_updated', handleFranchiseBrandingUpdate);
+    return () => {
+      window.removeEventListener('bsel_franchise_branding_updated', handleFranchiseBrandingUpdate);
+      window.removeEventListener('bsel_school_branding_updated', handleFranchiseBrandingUpdate);
+    };
+  }, []);
+
   useEffect(() => {
     const handleHeaderUpdate = (e) => {
       if (e.detail?.scopeKey === scopeKey) {

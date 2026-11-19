@@ -23,7 +23,9 @@ import {
   getStoredBranchCredentials,
   saveBranchCredentials,
   getCredentialsForBranchOrSchool,
-  deleteCustomBranch
+  deleteCustomBranch,
+  getDistrictSlug,
+  DEFAULT_TENKASI_BRANCH
 } from '../../utils/branchAuthStorage';
 
 export default function AdminSchoolsPage({
@@ -43,11 +45,16 @@ export default function AdminSchoolsPage({
 
   // Sync credentials on storage update events
   useEffect(() => {
+    setCredentialsMap(getStoredBranchCredentials());
     const handleUpdate = () => {
       setCredentialsMap(getStoredBranchCredentials());
     };
     window.addEventListener('bsel_branch_credentials_updated', handleUpdate);
-    return () => window.removeEventListener('bsel_branch_credentials_updated', handleUpdate);
+    window.addEventListener('storage', handleUpdate);
+    return () => {
+      window.removeEventListener('bsel_branch_credentials_updated', handleUpdate);
+      window.removeEventListener('storage', handleUpdate);
+    };
   }, []);
 
   const copyToClipboard = (text, key) => {
@@ -117,28 +124,95 @@ export default function AdminSchoolsPage({
     showToast(`${branch.name} deleted.`);
   };
 
-  const customBranches = useMemo(() => (
-    Object.values(credentialsMap)
-      .filter((credentials) => credentials.isCustomBranch)
-      .map((credentials) => {
+  const cleanCity = (c) => String(c || '').replace(/\bSurandai,?\s*/gi, '').trim() || 'Tenkasi, Tamil Nadu';
+
+  const allBranches = useMemo(() => {
+    const list = [];
+    const seenCodes = new Set();
+    const seenSlugs = new Set();
+
+    // 1. From credentialsMap (explicit custom branches + Tenkasi)
+    Object.values(credentialsMap || {}).forEach((credentials) => {
+      if (credentials.isCustomBranch || credentials.slug === 'tenkasi' || credentials.code === 'BSEL-BR-101') {
         const school = schoolsList?.find((item) =>
           item.code === (credentials.code || credentials.branchCode) ||
-          item.branchName === credentials.branchName
+          item.branchName === credentials.branchName ||
+          item.name === credentials.branchName
         );
-        return {
+        const code = credentials.code || credentials.branchCode || school?.code || 'BSEL-BR-101';
+        const slug = credentials.slug || 'tenkasi';
+        seenCodes.add(code);
+        seenSlugs.add(slug);
+        list.push({
           ...school,
-          code: credentials.code || credentials.branchCode || credentials.slug,
-          name: school?.name || credentials.branchName,
-          branchName: credentials.branchName,
-          city: school?.city || credentials.district,
-          district: credentials.district,
-          slug: credentials.slug,
-          creds: credentials
-        };
-      })
-  ), [credentialsMap, schoolsList]);
+          code,
+          name: school?.name || (credentials.slug === 'tenkasi' ? 'B★SEL Tenkasi Branch' : credentials.branchName),
+          branchName: credentials.branchName || school?.branchName || 'Tenkasi Branch',
+          city: cleanCity(school?.city || credentials.district || 'Tenkasi, Tamil Nadu'),
+          district: credentials.district || school?.city || 'Tenkasi',
+          principal: school?.principal || credentials.principal || 'Mrs. Thangam Sivaji',
+          coordinator: school?.coordinator || credentials.coordinator || 'Mr. S. Sivakumar',
+          phone: school?.phone || credentials.phone || '+91 98652 19131',
+          studentsCount: school?.studentsCount || 110,
+          status: school?.status || 'Authorized Franchise Branch',
+          slug,
+          creds: {
+            ...credentials,
+            isCustomBranch: true
+          }
+        });
+      }
+    });
 
-  const allBranches = customBranches;
+    // 2. From schoolsList (e.g. Tenkasi Branch BSEL-BR-101 or any affiliated center)
+    (schoolsList || []).forEach((school) => {
+      const code = school.code || school.branchCode || 'BSEL-BR-101';
+      const slug = getDistrictSlug(school.city || school.branchName || school.name);
+      if (!seenCodes.has(code) && !seenSlugs.has(slug)) {
+        seenCodes.add(code);
+        seenSlugs.add(slug);
+        const creds = credentialsMap[slug] || getCredentialsForBranchOrSchool(school);
+        list.push({
+          ...school,
+          code,
+          name: school.name || `${school.branchName || 'Tenkasi'} Branch`,
+          branchName: school.branchName || school.name || 'Tenkasi Branch',
+          city: cleanCity(school.city || school.district || 'Tenkasi, Tamil Nadu'),
+          district: school.district || 'Tenkasi',
+          principal: school.principal || 'Mrs. Thangam Sivaji',
+          coordinator: school.coordinator || 'Mr. S. Sivakumar',
+          phone: school.phone || '+91 98652 19131',
+          studentsCount: school.studentsCount || 110,
+          status: school.status || 'Authorized Franchise Branch',
+          slug,
+          creds: {
+            ...creds,
+            isCustomBranch: true
+          }
+        });
+      }
+    });
+
+    // 3. Fallback: If still empty, ensure Tenkasi Branch is ALWAYS present
+    if (list.length === 0) {
+      list.push({
+        code: DEFAULT_TENKASI_BRANCH.code,
+        name: 'B★SEL Tenkasi Branch',
+        branchName: DEFAULT_TENKASI_BRANCH.branchName,
+        city: 'Tenkasi, Tamil Nadu',
+        district: DEFAULT_TENKASI_BRANCH.district,
+        principal: DEFAULT_TENKASI_BRANCH.principal,
+        coordinator: DEFAULT_TENKASI_BRANCH.coordinator,
+        phone: DEFAULT_TENKASI_BRANCH.phone,
+        studentsCount: 110,
+        status: 'Authorized Franchise Branch',
+        slug: DEFAULT_TENKASI_BRANCH.slug,
+        creds: DEFAULT_TENKASI_BRANCH
+      });
+    }
+
+    return list;
+  }, [credentialsMap, schoolsList]);
 
   const filteredBranches = useMemo(() => {
     if (!branchSearch.trim()) return allBranches;
@@ -254,7 +328,7 @@ export default function AdminSchoolsPage({
                   <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span>
                   <div className="min-w-0">
                     <h3 className="text-sm font-black text-slate-950 leading-snug">{branch.name}</h3>
-                    <p className="mt-1 text-[11px] text-slate-500">{branch.city}</p>
+                    <p className="mt-1 text-[11px] text-slate-500">{cleanCity(branch.city)}</p>
                   </div>
                 </div>
                 <div className="flex shrink-0 flex-col items-end gap-1">
