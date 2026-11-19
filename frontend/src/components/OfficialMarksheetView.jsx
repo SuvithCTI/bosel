@@ -208,6 +208,13 @@ export const getCourseSubjectModules = (courseName = '') => {
 const firstText = (...values) =>
   values.find((v) => typeof v === 'string' && v.trim()) || '';
 
+// Formats any number to exactly 2 decimals; returns '-' for empty values
+const fmt2 = (v) => {
+  if (v === null || v === undefined || v === '') return '-';
+  const n = Number(v);
+  return Number.isFinite(n) ? n.toFixed(2) : String(v);
+};
+
 // ============================================================
 // WATERMARK LAYER
 // ============================================================
@@ -482,10 +489,7 @@ export default function OfficialMarksheetView({
   const showMarks = !hideMarks && (showMarksFlag || Boolean(savedSheet?.complete));
 
   const subjects = savedSheet?.subjects?.length
-    ? savedSheet.subjects.map((s) => ({
-        ...s,
-        pct: s.marks === null || s.marks === undefined ? '-' : `${s.marks}%`,
-      }))
+    ? savedSheet.subjects
     : getCourseSubjectModules(courseName);
 
   const totalMax = subjects.reduce(
@@ -499,8 +503,8 @@ export default function OfficialMarksheetView({
   );
 
   const percentage = totalMax
-    ? ((totalMarks / totalMax) * 100).toFixed(1)
-    : '0.0';
+    ? ((totalMarks / totalMax) * 100).toFixed(2)
+    : '0.00';
 
   const overallGrade = getGrade(Number(percentage));
 
@@ -968,7 +972,7 @@ export default function OfficialMarksheetView({
                   zIndex: 1,
                 }}
               >
-                {sub.max}
+                {fmt2(sub.max)}
               </div>
 
               <div
@@ -981,7 +985,7 @@ export default function OfficialMarksheetView({
                   zIndex: 1,
                 }}
               >
-                {sub.assessment ?? '-'}
+                {fmt2(sub.assessment)}
               </div>
 
               <div
@@ -994,7 +998,7 @@ export default function OfficialMarksheetView({
                   zIndex: 1,
                 }}
               >
-                {sub.exam ?? '-'}
+                {fmt2(sub.exam)}
               </div>
 
               <div
@@ -1007,7 +1011,7 @@ export default function OfficialMarksheetView({
                   zIndex: 1,
                 }}
               >
-                {sub.pct ?? '-'}
+                {sub.marks !== null && sub.marks !== undefined ? `${fmt2(sub.marks)}%` : '-'}
               </div>
             </React.Fragment>
           );
@@ -1026,7 +1030,7 @@ export default function OfficialMarksheetView({
               zIndex: 1,
             }}
           >
-            {totalMax}
+            {fmt2(totalMax)}
           </div>
 
           <div
@@ -1039,7 +1043,7 @@ export default function OfficialMarksheetView({
               zIndex: 1,
             }}
           >
-            {totalMarks}
+            {fmt2(totalMarks)}
           </div>
 
           <div
