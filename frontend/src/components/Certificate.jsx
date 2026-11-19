@@ -28,38 +28,52 @@ const NAVY = '#13427a';
 
 const GOLD = '#c9a227';
 
-const formatAddress = (addr) => {
-
+const formatAddress = (addr, maxLine1 = 35) => {
   if (!addr) return { line1: 'Tenkasi, Tamil Nadu', line2: '' };
-
-  const cleaned = addr.replace(/,([^\s])/g, ', $1').trim();
-
+  const cleaned = addr.replace(/\s+/g, ' ').replace(/,([^\s])/g, ', $1').trim();
   const titleCased = cleaned
-
     .split(' ')
-
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-
     .join(' ');
 
-  const parts = titleCased.split(', ');
-
-  if (parts.length >= 2 && titleCased.length > 20) {
-
-    const mid = Math.ceil(parts.length / 2);
-
-    return {
-
-      line1: parts.slice(0, mid).join(', ') + ',',
-
-      line2: parts.slice(mid).join(', '),
-
-    };
-
+  if (titleCased.length <= maxLine1) {
+    return { line1: titleCased, line2: '' };
   }
 
-  return { line1: titleCased, line2: '' };
+  const parts = titleCased.split(',').map((p) => p.trim()).filter(Boolean);
+  if (parts.length > 1) {
+    let line1 = '';
+    let splitIdx = 0;
+    for (let i = 0; i < parts.length; i++) {
+      const candidate = line1 ? `${line1}, ${parts[i]}` : parts[i];
+      if (candidate.length <= maxLine1 || !line1) {
+        line1 = candidate;
+        splitIdx = i + 1;
+      } else {
+        break;
+      }
+    }
+    let line2 = parts.slice(splitIdx).join(', ');
+    if (line2 && !line1.endsWith(',')) {
+      line1 += ',';
+    }
+    return { line1, line2 };
+  }
 
+  const words = titleCased.split(' ');
+  let line1 = '';
+  let splitIdx = 0;
+  for (let i = 0; i < words.length; i++) {
+    const candidate = line1 ? `${line1} ${words[i]}` : words[i];
+    if (candidate.length <= maxLine1 || !line1) {
+      line1 = candidate;
+      splitIdx = i + 1;
+    } else {
+      break;
+    }
+  }
+  const line2 = words.slice(splitIdx).join(' ');
+  return { line1, line2 };
 };
 
 const formatSingleLineAddress = (addr) => {
@@ -71,42 +85,112 @@ const formatSingleLineAddress = (addr) => {
     .join(' ');
 };
 
-const splitCourseName = (course) => {
-  if (!course) return [''];
-  const trimmed = course.trim();
-  if (trimmed.length <= 22) {
-    return [trimmed];
-  }
+const formatCourseTitle = (course) => {
+  if (!course) return 'Abacus';
+  const clean = course.replace(/^Mindsparc\s*[-–:]*\s*/i, '').trim();
+  return clean
+    .split(/\s+/)
+    .map((word) => {
+      const wLower = word.toLowerCase();
+      if (wLower === '&') return '&';
+      if (/^[0-9]+[a-zA-Z]*$/.test(word)) return word.toUpperCase();
+      if (/^html[0-9]*$/i.test(word)) return word.toUpperCase();
+      if (wLower === 'ai') return 'AI';
+      if (wLower === 'ui' || wLower === 'ux') return word.toUpperCase();
+      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    })
+    .join(' ');
+};
 
-  // If there's an '&', try splitting around '&'
-  if (trimmed.includes('&')) {
-    const parts = trimmed.split('&');
-    if (parts.length === 2) {
-      const part1 = parts[0].trim() + ' &';
-      const part2 = parts[1].trim();
-      if (part1.length <= 26 && part2.length <= 26) {
-        return [part1, part2];
+const buildStudentAddressLines = (student, centreAddress, registrationNo, studentName, studentId) => {
+  let matched = student || null;
+
+  if (!matched?.village && !matched?.district) {
+    try {
+      const rawEnq = localStorage.getItem('bsel_student_enquiries');
+      if (rawEnq) {
+        const enqs = JSON.parse(rawEnq);
+        const found = enqs.find((e) =>
+          (registrationNo && (e.admissionNo === registrationNo || e.registerNumber === registrationNo || e.userId === registrationNo)) ||
+          (studentId && (e.id === studentId || e.userId === studentId || e.admissionNo === studentId)) ||
+          (studentName && e.studentName?.toLowerCase() === studentName.toLowerCase())
+        );
+        if (found) matched = { ...found, ...matched };
       }
+    } catch {}
+  }
+
+  if (!matched?.village && !matched?.district) {
+    try {
+      const rawUsers = localStorage.getItem('bsel_registered_users');
+      if (rawUsers) {
+        const users = JSON.parse(rawUsers);
+        const found = users.find((u) =>
+          (registrationNo && (u.admissionNo === registrationNo || u.registerNumber === registrationNo || u.id === registrationNo)) ||
+          (studentName && (u.studentName?.toLowerCase() === studentName.toLowerCase() || u.name?.toLowerCase() === studentName.toLowerCase()))
+        );
+        if (found) matched = { ...found, ...matched };
+      }
+    } catch {}
+  }
+
+  if (matched) {
+    const addr = (matched.address || '').trim();
+    const locality = (matched.village || matched.city || '').trim();
+    const district = (matched.district || '').trim();
+    const pin = (matched.pincode || matched.pinCode || matched.pin || '').trim();
+
+    const hasStructured = locality || district || pin;
+    if (hasStructured && addr && addr !== 'Not provided') {
+      const allTokens = [];
+      addr.split(',').forEach((p) => {
+        const t = p.trim();
+        if (t && t !== 'Not provided') allTokens.push(t);
+      });
+
+      if (locality && locality !== 'Not provided' && !allTokens.some((t) => t.toLowerCase().includes(locality.toLowerCase()))) {
+        allTokens.push(locality);
+      }
+
+      const distPin = [];
+      if (district && district !== 'Not provided') distPin.push(district);
+      if (pin && pin !== 'Not provided') distPin.push(pin);
+      if (distPin.length > 0) {
+        allTokens.push(distPin.length === 2 ? `${distPin[0]} / ${distPin[1]}` : distPin.join(' '));
+      }
+
+      let l1 = '';
+      let splitIdx = 0;
+      for (let i = 0; i < allTokens.length; i++) {
+        const candidate = l1 ? `${l1}, ${allTokens[i]}` : allTokens[i];
+        if (candidate.length <= 35 || !l1) {
+          l1 = candidate;
+          splitIdx = i + 1;
+        } else {
+          break;
+        }
+      }
+
+      let l2 = '';
+      for (let i = splitIdx; i < allTokens.length; i++) {
+        const candidate = l2 ? `${l2}, ${allTokens[i]}` : allTokens[i];
+        if (candidate.length <= 35 || !l2) {
+          l2 = candidate;
+        } else {
+          break;
+        }
+      }
+
+      if (l2 && !l1.endsWith(',')) {
+        l1 += ',';
+      }
+
+      return { line1: l1, line2: l2 };
     }
   }
 
-  // Word-based split
-  const words = trimmed.split(/\s+/);
-  if (words.length === 1) return [trimmed];
-
-  let line1 = '';
-  let line2 = '';
-  for (let i = 0; i < words.length; i++) {
-    const candidate = line1 ? `${line1} ${words[i]}` : words[i];
-    if (candidate.length <= 22 || !line1) {
-      line1 = candidate;
-    } else {
-      line2 = words.slice(i).join(' ');
-      break;
-    }
-  }
-
-  return line2 ? [line1, line2] : [line1];
+  const fallback = matched?.address || centreAddress || 'Tenkasi, Tamil Nadu';
+  return formatAddress(fallback);
 };
 
 const readFileAsDataUrl = (file, cb) => {
@@ -126,6 +210,8 @@ export default function Certificate({
   courseName = 'Abacus',
 
   level = 'Level 1',
+
+  grade = '',
 
   duration = '6 Months',
 
@@ -290,31 +376,25 @@ export default function Certificate({
 
   }
 
-  const { line1: addr1, line2: addr2 } = formatAddress(centreAddress);
+  const displayGrade = String(grade || student?.grade || 'A').trim();
 
-  const displayAddress = formatSingleLineAddress(centreAddress);
+  const addrLines = buildStudentAddressLines(student, centreAddress, registrationNo, studentName, studentId);
 
-  const courseLines = splitCourseName(courseUpper);
+  const courseDisplay = formatCourseTitle(courseName || 'Abacus');
 
   const leftRows = [
     { label: 'Registration No', value: registrationNo },
     { label: 'Certificate No', value: displayCertNo },
-    { label: 'Course', value: courseLines[0] },
-    ...(courseLines.length > 1
-      ? [
-          { label: null, value: courseLines[1] },
-          { label: 'Level', value: cleanLevel },
-        ]
-      : [
-          { label: 'Level', value: cleanLevel },
-        ]),
+    { label: 'Course', value: courseDisplay },
+    { label: 'Level', value: cleanLevel },
+    { label: 'Duration', value: duration },
   ];
 
   const rightRows = [
-    { label: 'School / Examination Centre', value: centreName },
+    { label: 'Centre', value: centreName },
     { label: 'Code', value: centreCode },
-    { label: 'Address', value: displayAddress },
-    { label: 'Duration', value: duration },
+    { label: 'Address', value: addrLines.line1 },
+    { label: null, value: addrLines.line2 || '' },
     { label: 'Date of Issue', value: issueDate },
   ];
 
@@ -333,23 +413,9 @@ export default function Certificate({
 
   const displayCertTitle = formatCertificateTitle(certificateType);
 
-  const nameFontSize =
-    headerName.length <= 8 ? 32 :
-    headerName.length <= 12 ? 28 : 24.5;
-
-  const subtitleFontSize =
-    headerSubtitle.length <= 12 ? 20 :
-    headerSubtitle.length <= 17 ? 18 :
-    headerSubtitle.length <= 22 ? 16.5 : 15;
-
   const courseFontSize =
     courseUpper.length > 25 ? 16 :
     courseUpper.length > 18 ? 18 : 20.5;
-
-  const mottoFontSize =
-    headerMotto.length <= 18 ? 15 :
-    headerMotto.length <= 24 ? 13.5 :
-    headerMotto.length <= 30 ? 12 : 11;
 
   // ----- Handlers -----
 
@@ -563,11 +629,11 @@ export default function Certificate({
 
               <label className="flex flex-col gap-1">
 
-                <span className="text-[11px] font-semibold text-slate-300">Line 1: School / Branch Name <span className="text-amber-400 font-bold">(Max 16)</span></span>
+                <span className="text-[11px] font-semibold text-slate-300">Line 1: School / Branch Name <span className="text-amber-400 font-bold">(Max 15)</span></span>
                 <input
                   type="text"
                   value={headerName}
-                  maxLength={16}
+                  maxLength={15}
 
                   onChange={(e) => { setHeaderName(e.target.value); saveHeader({ name: e.target.value }); }}
 
@@ -760,10 +826,8 @@ export default function Certificate({
               <feDropShadow dx="0" dy="1.5" stdDeviation="0.8" floodColor="#010710" floodOpacity="0.85" />
             </filter>
 
-            <pattern id="bsel-wm" width="84" height="68" patternUnits="userSpaceOnUse">
-              <text x="42" y="22" textAnchor="middle" fontFamily="Georgia, serif" fontSize="15" fontWeight="700" fill={NAVY} fillOpacity="0.09">B★SEL</text>
-              <text x="0" y="56" textAnchor="middle" fontFamily="Georgia, serif" fontSize="15" fontWeight="700" fill={NAVY} fillOpacity="0.09">B★SEL</text>
-              <text x="84" y="56" textAnchor="middle" fontFamily="Georgia, serif" fontSize="15" fontWeight="700" fill={NAVY} fillOpacity="0.09">B★SEL</text>
+            <pattern id="bsel-wm" width="62" height="22" patternUnits="userSpaceOnUse">
+              <text x="31" y="16" textAnchor="middle" fontFamily="Georgia, serif" fontSize="12.5" fontWeight="700" fill={NAVY} fillOpacity="0.08">B★SEL</text>
             </pattern>
 
             <pattern id="bsel-strip" x="24" y="134" width="88" height="22" patternUnits="userSpaceOnUse">
@@ -806,25 +870,43 @@ export default function Certificate({
             preserveAspectRatio="xMidYMid meet"
           />
 
-          {/* Header: wordmark */}
-          <text x="274" y="52" textAnchor="middle" fontFamily="Georgia, serif" fontSize="12.5" fill={NAVY}>
-            Presents through its educational initiative
+          {/* Header: Left Side (matching right side format) */}
+          <text
+            x="307"
+            y="76"
+            textAnchor="middle"
+            fontFamily="'Cinzel', 'Outfit', 'Plus Jakarta Sans', Georgia, 'Times New Roman', serif"
+            fontWeight="900"
+            fontSize="35"
+            fill={NAVY}
+            letterSpacing="2"
+          >
+            B <tspan fill={GOLD}>★</tspan> SEL
           </text>
-          <g>
-            <text x="222.4" y="104.1" textAnchor="end" fontFamily="Georgia, 'Times New Roman', serif" fontWeight="900" fontSize="50" fill={NAVY}>
-              B
-            </text>
-            <polygon
-              points="246.1,71.9 249.9,83.1 261.8,83.4 252.3,90.5 255.8,101.8 246.1,95.1 236.4,101.8 239.8,90.5 230.4,83.4 242.2,83.1"
-              fill="url(#bsel-gold)"
-              stroke={GOLD}
-              strokeWidth="0.5"
-            />
-            <text x="269.8" y="104.1" textAnchor="start" fontFamily="Georgia, 'Times New Roman', serif" fontWeight="900" fontSize="50" fill={NAVY} letterSpacing="1">
-              SEL
-            </text>
-          </g>
-          <text x="278" y="125" textAnchor="middle" fontFamily="Arial, sans-serif" fontWeight="700" fontSize="10.5" letterSpacing="0.2" fill={NAVY}>
+
+          <text
+            x="307"
+            y="98"
+            textAnchor="middle"
+            fontFamily="'Cinzel', 'Outfit', 'Plus Jakarta Sans', Georgia, 'Times New Roman', serif"
+            fontWeight="800"
+            fontSize="13.5"
+            fill={NAVY}
+            letterSpacing="3.2"
+          >
+            LEARN • GROW • ACHIEVE
+          </text>
+
+          <text
+            x="307"
+            y="117"
+            textAnchor="middle"
+            fontFamily="'Cinzel', 'Outfit', 'Plus Jakarta Sans', Georgia, 'Times New Roman', serif"
+            fontWeight="700"
+            fontSize="10"
+            letterSpacing="0.8"
+            fill={NAVY}
+          >
             BOARD OF SKILLS AND EDUCATIONAL LEARNING
           </text>
 
@@ -834,49 +916,49 @@ export default function Certificate({
             style={{ cursor: 'pointer' }}
             title="Click to customize School Details & Logo"
           >
-            {/* School / Branch Name (Top at big size for 15 chars) */}
+            {/* School / Branch Name (Line 1: reduced to 28px for comfortable proportion) */}
             {headerName && (
               <text
                 x={headerLogo ? "722" : "740"}
-                y="66"
+                y="76"
                 textAnchor="middle"
                 fontFamily="'Cinzel', 'Outfit', 'Plus Jakarta Sans', Georgia, 'Times New Roman', serif"
                 fontWeight="900"
-                fontSize={nameFontSize}
+                fontSize="28"
                 fill={NAVY}
-                letterSpacing={headerName.length > 12 ? "0" : "0.5"}
+                letterSpacing="2"
               >
-                {headerName.toUpperCase()}
+                {(headerName || '').slice(0, 15).toUpperCase()}
               </text>
             )}
 
-            {/* Subtitle / Division (Fixed for 22 chars) */}
+            {/* Subtitle / Division (Line 2: exactly matching left side size 13.5 and letterSpacing 3.2) */}
             {headerSubtitle && (
               <text
                 x={headerLogo ? "722" : "740"}
-                y="91"
+                y="98"
                 textAnchor="middle"
-                fontFamily="'Outfit', 'Plus Jakarta Sans', Arial, sans-serif"
+                fontFamily="'Cinzel', 'Outfit', 'Plus Jakarta Sans', Georgia, 'Times New Roman', serif"
                 fontWeight="800"
-                fontSize={subtitleFontSize}
+                fontSize="13.5"
                 fill={NAVY}
-                letterSpacing={headerSubtitle.length > 18 ? "0.3" : "0.8"}
+                letterSpacing="3.2"
               >
                 {headerSubtitle.toUpperCase()}
               </text>
             )}
 
-            {/* Motto / Tagline (Fixed for 30 chars) */}
+            {/* Motto / Tagline (Line 3: exactly matching left side size 10 and letterSpacing 0.8) */}
             {headerMotto && (
               <text
                 x={headerLogo ? "722" : "740"}
-                y="115"
+                y="117"
                 textAnchor="middle"
-                fontFamily="'Outfit', 'Plus Jakarta Sans', Arial, sans-serif"
+                fontFamily="'Cinzel', 'Outfit', 'Plus Jakarta Sans', Georgia, 'Times New Roman', serif"
                 fontWeight="700"
-                fontSize={mottoFontSize}
+                fontSize="10"
                 fill={NAVY}
-                letterSpacing={headerMotto.length > 25 ? "0.2" : "0.5"}
+                letterSpacing="0.8"
               >
                 {headerMotto.toUpperCase()}
               </text>
@@ -1005,8 +1087,8 @@ export default function Certificate({
             textAnchor="middle"
             fontFamily="Georgia, 'Times New Roman', serif"
             fontWeight="700"
-            fontSize="17.5"
-            letterSpacing="3.5"
+            fontSize="16"
+            letterSpacing="3"
             fill="#09254c"
           >
             THIS IS TO CERTIFY THAT
@@ -1024,26 +1106,68 @@ export default function Certificate({
 
           </g>
 
+          {/* Grade badge below student photo */}
+          {displayGrade && (
+            <g>
+              <rect
+                x="46"
+                y="382"
+                width="102"
+                height="28"
+                rx="6"
+                fill="#ffffff"
+                stroke={GOLD}
+                strokeWidth="1.8"
+              />
+              <text
+                x="97"
+                y="400.5"
+                textAnchor="middle"
+                fontFamily="'Cinzel', 'Outfit', Georgia, serif"
+                fontWeight="800"
+                fontSize="12.5"
+                letterSpacing="1.5"
+                fill={NAVY}
+              >
+                GRADE : {displayGrade.toUpperCase()}
+              </text>
+            </g>
+          )}
+
           {/* Candidate name */}
 
-          <text x="512" y="287" textAnchor="middle" fontFamily="Georgia, serif" fontStyle="italic" fontWeight="700" fontSize="30" fill={NAVY}>
-
+          <text
+            x="512"
+            y="282"
+            textAnchor="middle"
+            fontFamily="Georgia, serif"
+            fontStyle="italic"
+            fontWeight="700"
+            fontSize={studentName && studentName.length > 22 ? (studentName.length > 30 ? '19' : '21') : '24'}
+            fill={NAVY}
+          >
             {studentName || 'Candidate Name'}
-
           </text>
 
-          <line x1="261" y1="294" x2="763" y2="294" stroke={NAVY} strokeWidth="2" />
+          <line x1="261" y1="295" x2="763" y2="295" stroke={NAVY} strokeWidth="1.8" />
 
-          <text x="512" y="314" textAnchor="middle" fontFamily="Georgia, serif" fontWeight="700" fontSize="17.5" fill={NAVY}>
-
+          <text
+            x="512"
+            y="318"
+            textAnchor="middle"
+            fontFamily="Georgia, serif"
+            fontStyle="italic"
+            fontWeight="600"
+            fontSize="15"
+            fill={NAVY}
+          >
             has successfully completed
-
           </text>
 
           {/* Enrolled Subject / Course Name */}
           <text
             x="512"
-            y="339"
+            y="346"
             textAnchor="middle"
             fontFamily="'Cinzel', 'Outfit', Georgia, serif"
             fontWeight="900"
@@ -1056,19 +1180,19 @@ export default function Certificate({
 
           {/* Level hexagon badge (compact size with gold border) */}
 
-          <polygon points="345,372 420,370 420,374" fill={GOLD} />
+          <polygon points="345,375 420,373 420,377" fill={GOLD} />
 
-          <polygon points="604,370 679,372 604,374" fill={GOLD} />
+          <polygon points="604,373 679,375 604,377" fill={GOLD} />
 
-          <polygon points="432,372 447,358 577,358 592,372 577,386 447,386" fill="#fff" stroke={GOLD} strokeWidth="1.8" />
+          <polygon points="432,375 447,361 577,361 592,375 577,389 447,389" fill="#fff" stroke={GOLD} strokeWidth="1.8" />
 
-          <text x="512" y="376.5" textAnchor="middle" fontFamily="'Cinzel', Georgia, serif" fontWeight="800" fontSize="12" letterSpacing="2" fill={NAVY}>
+          <text x="512" y="379.5" textAnchor="middle" fontFamily="'Cinzel', Georgia, serif" fontWeight="800" fontSize="12" letterSpacing="2" fill={NAVY}>
 
             {cleanLevel.toUpperCase()}
 
           </text>
 
-          <text x="512" y="413" textAnchor="middle" fontFamily="Georgia, serif" fontWeight="700" fontSize="13.5" fill={NAVY}>
+          <text x="512" y="413" textAnchor="middle" fontFamily="Georgia, serif" fontWeight="700" fontSize="13" fill={NAVY}>
 
             and has fulfilled the prescribed requirements for the successful completion of the programme.
 
@@ -1086,6 +1210,8 @@ export default function Certificate({
 
             {leftRows.map((row, i) => {
               const y = [464, 485, 507, 528, 550][i];
+              const isCourse = row.label === 'Course';
+              const valLen = row.value ? String(row.value).length : 0;
               return (
                 <g key={i}>
                   {row.label && <text x="82" y={y}>{row.label}</text>}
@@ -1093,11 +1219,10 @@ export default function Certificate({
                   <text
                     x="232"
                     y={y}
-                    {...(row.value && row.value.length > 24
+                    {...(valLen > 35
                       ? {
-                          fontSize: row.value.length > 27 ? '13' : '14',
-                          textLength: row.value.length > 26 ? '265' : undefined,
-                          lengthAdjust: row.value.length > 26 ? 'spacingAndGlyphs' : undefined,
+                          textLength: '265',
+                          lengthAdjust: 'spacing',
                         }
                       : {})}
                   >
@@ -1109,24 +1234,24 @@ export default function Certificate({
 
             {rightRows.map((row, i) => {
               const y = [464, 485, 507, 528, 550][i];
-              const isAddress = row.label === 'Address';
               return (
                 <g key={i}>
                   {row.label && <text x="533" y={y}>{row.label}</text>}
-                  {row.label && <text x="763" y={y} textAnchor="middle">:</text>}
-                  <text
-                    x="783"
-                    y={y}
-                    {...(isAddress && row.value && row.value.length > 20
-                      ? {
-                          fontSize: row.value.length > 26 ? '11.5' : '13',
-                          textLength: row.value.length > 24 ? '160' : undefined,
-                          lengthAdjust: row.value.length > 24 ? 'spacingAndGlyphs' : undefined,
-                        }
-                      : {})}
-                  >
-                    {row.value}
-                  </text>
+                  {row.label && <text x="664" y={y} textAnchor="middle">:</text>}
+                  {row.value && (
+                    <text
+                      x="683"
+                      y={y}
+                      {...(row.value.length > 35
+                        ? {
+                            textLength: '260',
+                            lengthAdjust: 'spacing',
+                          }
+                        : {})}
+                    >
+                      {row.value}
+                    </text>
+                  )}
                 </g>
               );
             })}
@@ -1137,26 +1262,26 @@ export default function Certificate({
 
           <line x1="41" y1="577" x2="976" y2="577" stroke={GOLD} strokeWidth="1.5" />
 
-          <text x="512" y="592" textAnchor="middle" fontFamily="Arial, sans-serif" fontWeight="700" fontSize="11" fill={NAVY}>
+          <text x="426" y="594" textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="8.5" fill={NAVY}>Registered Under</text>
 
+          <text x="547" y="594" textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="8.5" fill={NAVY}>Authorized Affiliates</text>
+
+          <image href={msmeLogo} x="406" y="605" width="40" height="46" preserveAspectRatio="xMidYMid meet" />
+
+          <image href={iafLogo} x="476" y="606" width="68" height="44" preserveAspectRatio="xMidYMid meet" />
+
+          <image href={isoLogo} x="574" y="605" width="44" height="46" preserveAspectRatio="xMidYMid meet" />
+
+          <text x="512" y="664" textAnchor="middle" fontFamily="Arial, sans-serif" fontWeight="700" fontSize="8.5" letterSpacing="0.2" fill={NAVY}>
             REGISTERED UNDER MINISTRY OF MSME, GOVT. OF INDIA
-
           </text>
 
-          <text x="418" y="603" textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="8.5" fill={NAVY}>Registered Under</text>
+          <text x="512" y="675" textAnchor="middle" fontFamily="Arial, sans-serif" fontWeight="700" fontSize="8" fill={GOLD}>
+            ★
+          </text>
 
-          <text x="542" y="603" textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="8.5" fill={NAVY}>Authorized Affiliates</text>
-
-          <image href={msmeLogo} x="398" y="614" width="40" height="46" preserveAspectRatio="xMidYMid meet" />
-
-          <image href={iafLogo} x="474" y="615" width="70" height="44" preserveAspectRatio="xMidYMid meet" />
-
-          <image href={isoLogo} x="564" y="614" width="46" height="46" preserveAspectRatio="xMidYMid meet" />
-
-          <text x="512" y="688" textAnchor="middle" fontFamily="Arial, sans-serif" fontWeight="700" fontSize="11" fill={NAVY}>
-
+          <text x="512" y="686" textAnchor="middle" fontFamily="Arial, sans-serif" fontWeight="700" fontSize="8.5" letterSpacing="0.2" fill={NAVY}>
             REGISTERED UNDER GOVT. OF TAMIL NADU (REGD. TRUST)
-
           </text>
 
           {/* Signatures */}
@@ -1212,10 +1337,10 @@ export default function Certificate({
           {/* Official Authorized Signature & Watermark Stamp */}
           <image
             href={authSignSeal}
-            x="825"
-            y="598"
-            width="135"
-            height="70"
+            x="785"
+            y="595"
+            width="170"
+            height="75"
             preserveAspectRatio="xMidYMax meet"
           />
 
