@@ -35,7 +35,7 @@ const WATERMARK_LOGO_SRC = '/bsel_logo.png';
 const TILE_COLS = 16;
 const TILE_ROWS = 48;
 const TILE_FONT_SIZE = 11;
-const TILE_OPACITY = 0.11;
+const TILE_OPACITY = 0.08;
 
 const CENTER_LOGO_WIDTH = '45%';
 const CENTER_OPACITY = 0.12;
