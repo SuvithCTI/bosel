@@ -3,6 +3,7 @@ import centerSeal from '../assets/cert_center_gold_emblem.png';
 import msmeLogo from '../assets/msme-logo.png';
 import iafLogo from '../assets/iaf-logo.png';
 import isoLogo from '../assets/iso-9001-logo.png';
+import signImage from '../assets/Sign.png';
 
 // Vector version of the B★SEL marksheet template.
 // Drawn on a 724 x 1024 grid, the same grid the data overlays use,
@@ -514,8 +515,17 @@ export default function MarksheetTemplate({ remark = null }) {
       <text x="60" y="972" fontFamily={SERIF} fontWeight="bold" fontSize="12" fill={NAVY}>
         Center Director / Principal
       </text>
-      <image href="/marksheet/bsel-seal.png" x="562" y="918" width="58" height="58" preserveAspectRatio="xMidYMid meet" />
-      <text x="558" y="972" fontFamily={SERIF} fontStyle="italic" fontWeight="bold" fontSize="12" fill={NAVY}>
+            {/* Authorized signature image: larger, centred above the label */}
+            {/* Authorized signature image: wider, centred over the label */}
+      <image
+        href={signImage}
+        x="523"
+        y="890"
+        width="200"
+        height="100"
+        preserveAspectRatio="xMidYMid meet"
+      />
+      <text x="618" y="972" textAnchor="middle" fontFamily={SERIF} fontStyle="italic" fontWeight="bold" fontSize="12" fill={NAVY}>
         Authorized Signature
       </text>
     </svg>
