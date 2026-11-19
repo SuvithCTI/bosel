@@ -326,27 +326,37 @@ export default function OfficialMarksheetView({
   const defaultBranchName = String(defaultBranch).toUpperCase();
 
   const [customDirectorSign, setCustomDirectorSign] = useState(() => {
-    return readStudentCustomSignature(scopeKey) || null;
+    return (student?.directorSignature !== undefined && student?.directorSignature !== null)
+      ? student.directorSignature
+      : (student?.signature || readStudentCustomSignature(scopeKey) || null);
   });
 
   const [customSchoolName, setCustomSchoolName] = useState(() => {
     const saved = readStudentCustomHeader(scopeKey);
-    return saved?.name || defaultBranchName;
+    return (student?.schoolName && student.schoolName.trim())
+      ? student.schoolName
+      : (saved?.name || defaultBranchName);
   });
 
   const [customSchoolSubtitle, setCustomSchoolSubtitle] = useState(() => {
     const saved = readStudentCustomHeader(scopeKey);
-    return saved?.subtitle || 'VISION FOUNDATION';
+    return (student?.schoolSubtitle && student.schoolSubtitle.trim())
+      ? student.schoolSubtitle
+      : (saved?.subtitle || 'VISION FOUNDATION');
   });
 
   const [customSchoolMotto, setCustomSchoolMotto] = useState(() => {
     const saved = readStudentCustomHeader(scopeKey);
-    return saved?.motto || 'EDUCATION • EMPOWERMENT • EXCELLENCE';
+    return (student?.schoolMotto && student.schoolMotto.trim())
+      ? student.schoolMotto
+      : (saved?.motto || 'EDUCATION • EMPOWERMENT • EXCELLENCE');
   });
 
   const [customSchoolLogo, setCustomSchoolLogo] = useState(() => {
     const saved = readStudentCustomHeader(scopeKey);
-    return saved?.logo || null;
+    return (student?.schoolLogo !== undefined && student?.schoolLogo !== null)
+      ? student.schoolLogo
+      : (saved?.logo || null);
   });
 
   // Re-sync whenever student / scopeKey changes (prevent cross-student leakage)
@@ -354,12 +364,52 @@ export default function OfficialMarksheetView({
     const customH = readStudentCustomHeader(scopeKey);
     const customSign = readStudentCustomSignature(scopeKey);
 
-    setCustomSchoolName(customH?.name !== undefined ? customH.name : defaultBranchName);
-    setCustomSchoolSubtitle(customH?.subtitle !== undefined ? customH.subtitle : 'VISION FOUNDATION');
-    setCustomSchoolMotto(customH?.motto !== undefined ? customH.motto : 'EDUCATION • EMPOWERMENT • EXCELLENCE');
-    setCustomSchoolLogo(customH?.logo !== undefined ? customH.logo : null);
-    setCustomDirectorSign(customSign !== null ? customSign : null);
-  }, [scopeKey, defaultBranchName]);
+    setCustomSchoolName(
+      (student?.schoolName && student.schoolName.trim())
+        ? student.schoolName
+        : (customH?.name !== undefined ? customH.name : defaultBranchName)
+    );
+    setCustomSchoolSubtitle(
+      (student?.schoolSubtitle && student.schoolSubtitle.trim())
+        ? student.schoolSubtitle
+        : (customH?.subtitle !== undefined ? customH.subtitle : 'VISION FOUNDATION')
+    );
+    setCustomSchoolMotto(
+      (student?.schoolMotto && student.schoolMotto.trim())
+        ? student.schoolMotto
+        : (customH?.motto !== undefined ? customH.motto : 'EDUCATION • EMPOWERMENT • EXCELLENCE')
+    );
+    setCustomSchoolLogo(
+      (student?.schoolLogo !== undefined && student?.schoolLogo !== null)
+        ? student.schoolLogo
+        : (customH?.logo !== undefined ? customH.logo : null)
+    );
+    setCustomDirectorSign(
+      (student?.directorSignature !== undefined && student?.directorSignature !== null)
+        ? student.directorSignature
+        : (customSign !== null ? customSign : null)
+    );
+  }, [scopeKey, defaultBranchName, student?.schoolName, student?.schoolSubtitle, student?.schoolMotto, student?.schoolLogo, student?.directorSignature]);
+
+  // Real-time synchronization across Certificate and Marksheet for the same student or franchise
+  useEffect(() => {
+    const handleFranchiseBrandingUpdate = (e) => {
+      const fb = e.detail?.branding || e.detail?.franchise;
+      if (fb) {
+        if (fb.schoolName) setCustomSchoolName(fb.schoolName);
+        if (fb.subtitle) setCustomSchoolSubtitle(fb.subtitle);
+        if (fb.motto) setCustomSchoolMotto(fb.motto);
+        if (fb.logo !== undefined) setCustomSchoolLogo(fb.logo);
+        if (fb.signature !== undefined) setCustomDirectorSign(fb.signature);
+      }
+    };
+    window.addEventListener('bsel_franchise_branding_updated', handleFranchiseBrandingUpdate);
+    window.addEventListener('bsel_school_branding_updated', handleFranchiseBrandingUpdate);
+    return () => {
+      window.removeEventListener('bsel_franchise_branding_updated', handleFranchiseBrandingUpdate);
+      window.removeEventListener('bsel_school_branding_updated', handleFranchiseBrandingUpdate);
+    };
+  }, []);
 
   // Real-time synchronization across Certificate and Marksheet for the same student
   useEffect(() => {

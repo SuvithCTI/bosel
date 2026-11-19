@@ -36,6 +36,8 @@ import { registerStudentAccount, generateRegisterNumber, isPhoneNumberRegistered
 import { getStoredCourses } from '../data/coursesData';
 import { replacePhotoBackground } from '../utils/photoSegmentation';
 import { ACADEMIC_STAGES, getAcademicStageFromAge } from '../utils/academicStages';
+import { getStoredSchools } from '../utils/schoolStorage';
+import { getStoredFranchises } from '../utils/franchiseStorage';
 
 const TAMIL_NADU_DISTRICTS = [
   'Ariyalur',
@@ -305,6 +307,22 @@ export default function AdmissionModal({
     };
   }, []);
 
+  const [schoolsList, setSchoolsList] = useState(() => getStoredSchools());
+  const [franchisesList, setFranchisesList] = useState(() => getStoredFranchises());
+
+  useEffect(() => {
+    const handleListsUpdate = () => {
+      setSchoolsList(getStoredSchools());
+      setFranchisesList(getStoredFranchises());
+    };
+    window.addEventListener('bsel_schools_updated', handleListsUpdate);
+    window.addEventListener('bsel_franchises_updated', handleListsUpdate);
+    return () => {
+      window.removeEventListener('bsel_schools_updated', handleListsUpdate);
+      window.removeEventListener('bsel_franchises_updated', handleListsUpdate);
+    };
+  }, []);
+
   const dynamicProgramNames = coursesList.map(c => c.fullName || c.name);
   const availablePrograms = dynamicProgramNames.length > 0 ? dynamicProgramNames : BSEL_PROGRAMS;
 
@@ -323,8 +341,11 @@ export default function AdmissionModal({
     date: new Date().toISOString().split('T')[0], // 1. Date
     registerNumber: initialRegNumber, // 2. Register number [non-editable]
     branch: defaultBranch, // 3. Branch
-    admissionCategory: 'Branch', // 'Branch' | 'Academy' | 'School'
-    institution: defaultBranch, // School / Academy / Branch Name
+    admissionCategory: 'Branch', // 'Branch' | 'School' | 'Franchise'
+    schoolId: null,
+    franchiseId: null,
+    franchiseName: '',
+    institution: defaultBranch, // School / Franchise / Branch Name
     schoolName: defaultBranch,
     courseName: initialCourse, // 4. Course Name (kept for backward compat)
     selectedCourses: [
@@ -444,8 +465,7 @@ export default function AdmissionModal({
     if (isOpen) {
       setFormData(prev => ({
         ...prev,
-        date: new Date().toISOString().split('T')[0],
-        ...(skipPayment ? { admissionCategory: 'School' } : {})
+        date: new Date().toISOString().split('T')[0]
       }));
     }
   }, [initialProgram, initialFee, initialBranch, isOpen, coursesList, skipPayment]);
@@ -963,16 +983,16 @@ export default function AdmissionModal({
     }
     if (formData.admissionCategory === 'School') {
       if (!formData.institution?.trim()) {
-        alert('Please enter School Name.');
+        alert('Please select or enter School Name.');
         return false;
       }
-    } else if (formData.admissionCategory === 'Academy') {
+    } else if (formData.admissionCategory === 'Academy' || formData.admissionCategory === 'Franchise') {
       if (!formData.institution?.trim()) {
-        alert('Please enter Academy Name.');
+        alert('Please select or enter Franchise Name.');
         return false;
       }
     } else if (!formData.admissionCategory) {
-      alert('Please select Admission Through (Branch, School or Academy).');
+      alert('Please select Admission Through (Branch, School or Franchise).');
       return false;
     }
     if (!formData.parentName.trim()) {
@@ -1070,9 +1090,6 @@ export default function AdmissionModal({
       try {
         const account = registerStudentAccount({
           ...formData,
-          admissionCategory: 'School',
-          institution: (formData.institution || '').trim(),
-          schoolName: (formData.institution || '').trim(),
           feePaymentType: 'Paid at Branch',
           paymentMode: 'Direct Branch Registration',
           receiptRefNo: activeReceiptRef,
@@ -1655,20 +1672,47 @@ export default function AdmissionModal({
                           {[
                             { id: 'Branch', label: 'Branch', icon: Building2 },
                             { id: 'School', label: 'School', icon: School },
-                            { id: 'Academy', label: 'Academy', icon: GraduationCap }
+                            { id: 'Franchise', label: 'Franchise', icon: GraduationCap }
                           ].map(({ id, label, icon: Icon }) => {
-                            const isSelected = formData.admissionCategory === id;
+                            const isSelected = formData.admissionCategory === id || (id === 'Franchise' && formData.admissionCategory === 'Academy');
                             return (
                               <button
                                 key={id}
                                 type="button"
                                 onClick={() => {
-                                  setFormData(prev => ({
-                                    ...prev,
-                                    admissionCategory: id,
-                                    institution: id === 'Branch' ? prev.branch : '',
-                                    schoolName: id === 'Branch' ? prev.branch : ''
-                                  }));
+                                  if (id === 'Branch') {
+                                    setFormData(prev => ({
+                                      ...prev,
+                                      admissionCategory: 'Branch',
+                                      institution: prev.branch,
+                                      schoolName: prev.branch,
+                                      schoolId: null,
+                                      franchiseId: null,
+                                      franchiseName: ''
+                                    }));
+                                  } else if (id === 'School') {
+                                    const defaultSch = schoolsList[0];
+                                    setFormData(prev => ({
+                                      ...prev,
+                                      admissionCategory: 'School',
+                                      schoolId: defaultSch?.id || null,
+                                      schoolName: defaultSch?.name || '',
+                                      institution: defaultSch?.name || '',
+                                      franchiseId: null,
+                                      franchiseName: ''
+                                    }));
+                                  } else if (id === 'Franchise') {
+                                    const defaultFc = franchisesList[0];
+                                    setFormData(prev => ({
+                                      ...prev,
+                                      admissionCategory: 'Franchise',
+                                      franchiseId: defaultFc?.id || null,
+                                      franchiseName: defaultFc?.name || '',
+                                      institution: defaultFc?.name || '',
+                                      schoolName: defaultFc?.schoolName || defaultFc?.name || '',
+                                      schoolId: null
+                                    }));
+                                  }
                                 }}
                                 className={`py-2 px-1.5 sm:px-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                                   isSelected
@@ -1684,55 +1728,136 @@ export default function AdmissionModal({
                         </div>
                       </div>
 
-                      {/* If School is selected: enter School Name */}
+                      {/* If School is selected: choose School or enter custom */}
                       {formData.admissionCategory === 'School' && (
-                        <div className="pt-0.5 animate-in fade-in slide-in-from-top-1 duration-150">
-                          <label className="block text-[11px] sm:text-xs font-black text-slate-800 mb-0.5 sm:mb-1 flex items-center gap-1.5">
-                            <School className="w-3.5 h-3.5 text-sky-700" />
-                            <span>School Name <span className="text-rose-600">*</span></span>
+                        <div className="pt-0.5 animate-in fade-in slide-in-from-top-1 duration-150 space-y-1.5">
+                          <label className="block text-[11px] sm:text-xs font-black text-slate-800 flex items-center justify-between">
+                            <span className="flex items-center gap-1.5">
+                              <School className="w-3.5 h-3.5 text-sky-700" />
+                              <span>Affiliated School <span className="text-rose-600">*</span></span>
+                            </span>
+                            <span className="text-[10px] font-semibold text-slate-400">Select School</span>
                           </label>
-                          <input
-                            type="text"
-                            required
-                            placeholder="Enter affiliated School Name..."
-                            value={formData.institution || ''}
+                          <select
+                            value={formData.schoolId || (schoolsList.some(s => s.name === formData.institution) ? schoolsList.find(s => s.name === formData.institution)?.id : '__custom__')}
                             onChange={(e) => {
                               const val = e.target.value;
-                              setFormData(prev => ({
-                                ...prev,
-                                institution: val,
-                                schoolName: val
-                              }));
+                              if (val === '__custom__') {
+                                setFormData(prev => ({
+                                  ...prev,
+                                  schoolId: null,
+                                  schoolName: '',
+                                  institution: ''
+                                }));
+                              } else {
+                                const sch = schoolsList.find(s => s.id === val);
+                                if (sch) {
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    schoolId: sch.id,
+                                    schoolName: sch.name,
+                                    institution: sch.name
+                                  }));
+                                }
+                              }
                             }}
-                            className="w-full px-2.5 sm:px-3 py-2 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none text-base sm:text-sm shadow-2xs placeholder:text-slate-400 placeholder:font-normal"
-                            autoFocus
-                          />
+                            className="w-full px-2.5 sm:px-3 py-2 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none text-base sm:text-sm shadow-2xs"
+                          >
+                            {schoolsList.map(s => (
+                              <option key={s.id} value={s.id}>
+                                {s.name} ({s.city || s.branch || 'Tamil Nadu'})
+                              </option>
+                            ))}
+                            <option value="__custom__">Other School (Type custom name)...</option>
+                          </select>
+
+                          {(!formData.schoolId || !schoolsList.some(s => s.id === formData.schoolId)) && (
+                            <input
+                              type="text"
+                              required
+                              placeholder="Type affiliated School Name..."
+                              value={formData.institution || ''}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setFormData(prev => ({
+                                  ...prev,
+                                  schoolId: null,
+                                  schoolName: val,
+                                  institution: val
+                                }));
+                              }}
+                              className="w-full px-2.5 sm:px-3 py-2 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none text-base sm:text-sm shadow-2xs placeholder:text-slate-400 placeholder:font-normal"
+                              autoFocus
+                            />
+                          )}
                         </div>
                       )}
 
-                      {/* If Academy is selected: enter Academy Name */}
-                      {formData.admissionCategory === 'Academy' && (
-                        <div className="pt-0.5 animate-in fade-in slide-in-from-top-1 duration-150">
-                          <label className="block text-[11px] sm:text-xs font-black text-slate-800 mb-0.5 sm:mb-1 flex items-center gap-1.5">
-                            <GraduationCap className="w-3.5 h-3.5 text-sky-700" />
-                            <span>Academy Name <span className="text-rose-600">*</span></span>
+                      {/* If Franchise or Academy is selected: choose Franchise or enter custom */}
+                      {(formData.admissionCategory === 'Franchise' || formData.admissionCategory === 'Academy') && (
+                        <div className="pt-0.5 animate-in fade-in slide-in-from-top-1 duration-150 space-y-1.5">
+                          <label className="block text-[11px] sm:text-xs font-black text-slate-800 flex items-center justify-between">
+                            <span className="flex items-center gap-1.5">
+                              <GraduationCap className="w-3.5 h-3.5 text-sky-700" />
+                              <span>Authorized Franchise <span className="text-rose-600">*</span></span>
+                            </span>
+                            <span className="text-[10px] font-semibold text-slate-400">Select Franchise</span>
                           </label>
-                          <input
-                            type="text"
-                            required
-                            placeholder="Enter Academy Name..."
-                            value={formData.institution || ''}
+                          <select
+                            value={formData.franchiseId || (franchisesList.some(f => f.name === formData.institution) ? franchisesList.find(f => f.name === formData.institution)?.id : '__custom__')}
                             onChange={(e) => {
                               const val = e.target.value;
-                              setFormData(prev => ({
-                                ...prev,
-                                institution: val,
-                                schoolName: val
-                              }));
+                              if (val === '__custom__') {
+                                setFormData(prev => ({
+                                  ...prev,
+                                  franchiseId: null,
+                                  franchiseName: '',
+                                  institution: '',
+                                  schoolName: ''
+                                }));
+                              } else {
+                                const fc = franchisesList.find(f => f.id === val);
+                                if (fc) {
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    franchiseId: fc.id,
+                                    franchiseName: fc.name,
+                                    institution: fc.name,
+                                    schoolName: fc.schoolName || fc.name
+                                  }));
+                                }
+                              }
                             }}
-                            className="w-full px-2.5 sm:px-3 py-2 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none text-base sm:text-sm shadow-2xs placeholder:text-slate-400 placeholder:font-normal"
-                            autoFocus
-                          />
+                            className="w-full px-2.5 sm:px-3 py-2 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none text-base sm:text-sm shadow-2xs"
+                          >
+                            {franchisesList.map(f => (
+                              <option key={f.id} value={f.id}>
+                                {f.name} ({f.city || f.branch || 'Tamil Nadu'})
+                              </option>
+                            ))}
+                            <option value="__custom__">Other Franchise Academy (Type custom name)...</option>
+                          </select>
+
+                          {(!formData.franchiseId || !franchisesList.some(f => f.id === formData.franchiseId)) && (
+                            <input
+                              type="text"
+                              required
+                              placeholder="Type Franchise / Academy Name..."
+                              value={formData.institution || ''}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setFormData(prev => ({
+                                  ...prev,
+                                  franchiseId: null,
+                                  franchiseName: val,
+                                  institution: val,
+                                  schoolName: val
+                                }));
+                              }}
+                              className="w-full px-2.5 sm:px-3 py-2 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none text-base sm:text-sm shadow-2xs placeholder:text-slate-400 placeholder:font-normal"
+                              autoFocus
+                            />
+                          )}
                         </div>
                       )}
                     </div>

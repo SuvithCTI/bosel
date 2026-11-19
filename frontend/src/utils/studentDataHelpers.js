@@ -188,6 +188,51 @@ export const getStudentScopeKey = (studentOrData) => {
 export const readStudentCustomHeader = (scopeKey) => {
   if (!scopeKey) return null;
   try {
+    // 1. If currently in a Franchise session, that Franchise's custom branding applies to all certificates and marksheets
+    if (typeof window !== 'undefined') {
+      try {
+        const sessionRaw = sessionStorage.getItem('bsel_active_session') || localStorage.getItem('bsel_active_session');
+        if (sessionRaw) {
+          const session = JSON.parse(sessionRaw);
+          if (session && (session.role === 'Franchise' || session.role === 'School' || session.schoolRole === 'School')) {
+            const fcId = session.franchiseId || session.schoolId || session.id || session.name;
+            const fcBranding = localStorage.getItem(`bsel_franchise_branding_${fcId}`) || 
+                               sessionStorage.getItem(`bsel_franchise_branding_${fcId}`) || 
+                               localStorage.getItem(`bsel_school_branding_${fcId}`) || 
+                               sessionStorage.getItem(`bsel_school_branding_${fcId}`) || 
+                               localStorage.getItem(`bsel_franchise_branding_${session.id}`) || 
+                               sessionStorage.getItem(`bsel_franchise_branding_${session.id}`) || 
+                               localStorage.getItem(`bsel_school_branding_${session.id}`) || 
+                               sessionStorage.getItem(`bsel_school_branding_${session.id}`) || 
+                               localStorage.getItem(`bsel_franchise_branding_${session.name}`) ||
+                               sessionStorage.getItem(`bsel_franchise_branding_${session.name}`) ||
+                               localStorage.getItem(`bsel_school_branding_${session.name}`) ||
+                               sessionStorage.getItem(`bsel_school_branding_${session.name}`);
+            if (fcBranding) {
+              const parsed = JSON.parse(fcBranding);
+              if (parsed && (parsed.name || parsed.schoolName || parsed.logo !== undefined)) {
+                return {
+                  name: parsed.schoolName || parsed.name || session.schoolName || session.name,
+                  subtitle: parsed.subtitle || session.subtitle || 'VISION FOUNDATION',
+                  motto: parsed.motto || session.motto || 'EDUCATION • EMPOWERMENT • EXCELLENCE',
+                  logo: parsed.logo !== undefined ? parsed.logo : (session.logo || null)
+                };
+              }
+            }
+            if (session.schoolName || session.logo !== undefined) {
+              return {
+                name: session.schoolName || session.name,
+                subtitle: session.subtitle || 'VISION FOUNDATION',
+                motto: session.motto || 'EDUCATION • EMPOWERMENT • EXCELLENCE',
+                logo: session.logo || null
+              };
+            }
+          }
+        }
+      } catch (_) {}
+    }
+
+    // 2. Otherwise check student-scoped override
     const key = `bsel_cert_school_header_${scopeKey}`;
     const saved = localStorage.getItem(key);
     if (saved) {
@@ -206,6 +251,14 @@ export const readStudentCustomHeader = (scopeKey) => {
         } catch (_) {}
       }
     }
+
+    // Fallback to global branch customization
+    const globalHeader = localStorage.getItem('bsel_certificate_school_header');
+    if (globalHeader) {
+      try {
+        return JSON.parse(globalHeader);
+      } catch (_) {}
+    }
   } catch (e) {
     console.warn('Failed to read student custom header:', e);
   }
@@ -217,6 +270,36 @@ export const saveStudentCustomHeader = (scopeKey, data) => {
   try {
     const key = `bsel_cert_school_header_${scopeKey}`;
     localStorage.setItem(key, JSON.stringify(data));
+
+    // If active session is Franchise, keep franchise branding synchronized
+    if (typeof window !== 'undefined') {
+      try {
+        const sessionRaw = sessionStorage.getItem('bsel_active_session') || localStorage.getItem('bsel_active_session');
+        if (sessionRaw) {
+          const session = JSON.parse(sessionRaw);
+          if (session && session.role === 'Franchise') {
+            const fcId = session.franchiseId || session.id || session.name;
+            const fcBrandingRaw = localStorage.getItem(`bsel_franchise_branding_${fcId}`);
+            const currentFc = fcBrandingRaw ? JSON.parse(fcBrandingRaw) : {};
+            const updatedFc = {
+              ...currentFc,
+              schoolName: data.name || data.schoolName || currentFc.schoolName,
+              name: data.name || currentFc.name,
+              subtitle: data.subtitle !== undefined ? data.subtitle : currentFc.subtitle,
+              motto: data.motto !== undefined ? data.motto : currentFc.motto,
+              logo: data.logo !== undefined ? data.logo : currentFc.logo
+            };
+            localStorage.setItem(`bsel_franchise_branding_${fcId}`, JSON.stringify(updatedFc));
+            localStorage.setItem(`bsel_franchise_branding_${session.name}`, JSON.stringify(updatedFc));
+            sessionStorage.setItem('bsel_active_session', JSON.stringify({ ...session, ...updatedFc }));
+            window.dispatchEvent(new CustomEvent('bsel_franchise_branding_updated', {
+              detail: { franchiseId: fcId, branding: updatedFc }
+            }));
+          }
+        }
+      } catch (_) {}
+    }
+
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('bsel_student_custom_header_updated', {
         detail: { scopeKey, data }
@@ -230,6 +313,41 @@ export const saveStudentCustomHeader = (scopeKey, data) => {
 export const readStudentCustomSignature = (scopeKey) => {
   if (!scopeKey) return null;
   try {
+    // 1. If currently in a Franchise session, that Franchise's custom signature applies
+    if (typeof window !== 'undefined') {
+      try {
+        const sessionRaw = sessionStorage.getItem('bsel_active_session') || localStorage.getItem('bsel_active_session');
+        if (sessionRaw) {
+          const session = JSON.parse(sessionRaw);
+          if (session && (session.role === 'Franchise' || session.role === 'School' || session.schoolRole === 'School')) {
+            const fcId = session.franchiseId || session.schoolId || session.id || session.name;
+            const fcBranding = localStorage.getItem(`bsel_franchise_branding_${fcId}`) || 
+                               sessionStorage.getItem(`bsel_franchise_branding_${fcId}`) || 
+                               localStorage.getItem(`bsel_school_branding_${fcId}`) || 
+                               sessionStorage.getItem(`bsel_school_branding_${fcId}`) || 
+                               localStorage.getItem(`bsel_franchise_branding_${session.id}`) || 
+                               sessionStorage.getItem(`bsel_franchise_branding_${session.id}`) || 
+                               localStorage.getItem(`bsel_school_branding_${session.id}`) || 
+                               sessionStorage.getItem(`bsel_school_branding_${session.id}`) || 
+                               localStorage.getItem(`bsel_franchise_branding_${session.name}`) ||
+                               sessionStorage.getItem(`bsel_franchise_branding_${session.name}`) ||
+                               localStorage.getItem(`bsel_school_branding_${session.name}`) ||
+                               sessionStorage.getItem(`bsel_school_branding_${session.name}`);
+            if (fcBranding) {
+              const parsed = JSON.parse(fcBranding);
+              if (parsed && (parsed.signature !== undefined || parsed.directorSignature !== undefined)) {
+                return parsed.signature !== undefined ? parsed.signature : parsed.directorSignature;
+              }
+            }
+            if (session.signature !== undefined || session.directorSignature !== undefined) {
+              return session.signature !== undefined ? session.signature : session.directorSignature;
+            }
+          }
+        }
+      } catch (_) {}
+    }
+
+    // 2. Otherwise check student-scoped override
     const key = `bsel_cert_principal_signature_${scopeKey}`;
     const saved = localStorage.getItem(key);
     if (saved) {
@@ -242,6 +360,12 @@ export const readStudentCustomSignature = (scopeKey) => {
         localStorage.setItem(key, legacySign);
         return legacySign;
       }
+    }
+
+    // Fallback to global branch signature
+    const globalSign = localStorage.getItem('bsel_certificate_director_signature');
+    if (globalSign) {
+      return globalSign;
     }
   } catch (e) {
     console.warn('Failed to read student custom signature:', e);
@@ -258,6 +382,33 @@ export const saveStudentCustomSignature = (scopeKey, dataUrl) => {
     } else {
       localStorage.removeItem(key);
     }
+
+    // If active session is Franchise, keep franchise signature synchronized
+    if (typeof window !== 'undefined') {
+      try {
+        const sessionRaw = sessionStorage.getItem('bsel_active_session') || localStorage.getItem('bsel_active_session');
+        if (sessionRaw) {
+          const session = JSON.parse(sessionRaw);
+          if (session && session.role === 'Franchise') {
+            const fcId = session.franchiseId || session.id || session.name;
+            const fcBrandingRaw = localStorage.getItem(`bsel_franchise_branding_${fcId}`);
+            const currentFc = fcBrandingRaw ? JSON.parse(fcBrandingRaw) : {};
+            const updatedFc = {
+              ...currentFc,
+              signature: dataUrl,
+              directorSignature: dataUrl
+            };
+            localStorage.setItem(`bsel_franchise_branding_${fcId}`, JSON.stringify(updatedFc));
+            localStorage.setItem(`bsel_franchise_branding_${session.name}`, JSON.stringify(updatedFc));
+            sessionStorage.setItem('bsel_active_session', JSON.stringify({ ...session, ...updatedFc }));
+            window.dispatchEvent(new CustomEvent('bsel_franchise_branding_updated', {
+              detail: { franchiseId: fcId, branding: updatedFc }
+            }));
+          }
+        }
+      } catch (_) {}
+    }
+
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('bsel_student_custom_signature_updated', {
         detail: { scopeKey, signature: dataUrl }
@@ -265,5 +416,84 @@ export const saveStudentCustomSignature = (scopeKey, dataUrl) => {
     }
   } catch (e) {
     console.warn('Failed to save student custom signature:', e);
+  }
+};
+
+export const getBranchScopeKey = (branchName) => {
+  if (!branchName) return 'default';
+  return String(branchName).trim().toLowerCase().replace(/[^a-z0-9_-]/g, '_') || 'default';
+};
+
+export const readBranchCustomHeader = (branchName) => {
+  const branchKey = getBranchScopeKey(branchName);
+  try {
+    const key = `bsel_branch_custom_header_${branchKey}`;
+    const saved = localStorage.getItem(key);
+    if (saved) return JSON.parse(saved);
+  } catch (_) {}
+  try {
+    const legacy = localStorage.getItem('bsel_certificate_school_header');
+    if (legacy) return JSON.parse(legacy);
+  } catch (_) {}
+  return null;
+};
+
+export const saveBranchCustomHeader = (branchName, data) => {
+  const branchKey = getBranchScopeKey(branchName);
+  try {
+    const key = `bsel_branch_custom_header_${branchKey}`;
+    localStorage.setItem(key, JSON.stringify(data));
+    localStorage.setItem('bsel_certificate_school_header', JSON.stringify(data));
+    localStorage.setItem('bsel_cert_school_header_default', JSON.stringify(data));
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('bsel_branch_custom_header_updated', {
+        detail: { branchKey, branchName, data }
+      }));
+      window.dispatchEvent(new CustomEvent('bsel_student_custom_header_updated', {
+        detail: { scopeKey: 'default', data }
+      }));
+    }
+  } catch (e) {
+    console.warn('Failed to save branch custom header:', e);
+  }
+};
+
+export const readBranchCustomSignature = (branchName) => {
+  const branchKey = getBranchScopeKey(branchName);
+  try {
+    const key = `bsel_branch_custom_signature_${branchKey}`;
+    const saved = localStorage.getItem(key);
+    if (saved) return saved;
+  } catch (_) {}
+  try {
+    const legacySign = localStorage.getItem('bsel_certificate_director_signature');
+    if (legacySign) return legacySign;
+  } catch (_) {}
+  return null;
+};
+
+export const saveBranchCustomSignature = (branchName, dataUrl) => {
+  const branchKey = getBranchScopeKey(branchName);
+  try {
+    const key = `bsel_branch_custom_signature_${branchKey}`;
+    if (dataUrl) {
+      localStorage.setItem(key, dataUrl);
+      localStorage.setItem('bsel_certificate_director_signature', dataUrl);
+      localStorage.setItem('bsel_cert_principal_signature_default', dataUrl);
+    } else {
+      localStorage.removeItem(key);
+      localStorage.removeItem('bsel_certificate_director_signature');
+      localStorage.removeItem('bsel_cert_principal_signature_default');
+    }
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('bsel_branch_custom_signature_updated', {
+        detail: { branchKey, branchName, signature: dataUrl }
+      }));
+      window.dispatchEvent(new CustomEvent('bsel_student_custom_signature_updated', {
+        detail: { scopeKey: 'default', signature: dataUrl }
+      }));
+    }
+  } catch (e) {
+    console.warn('Failed to save branch custom signature:', e);
   }
 };

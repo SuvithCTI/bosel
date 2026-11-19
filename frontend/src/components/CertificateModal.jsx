@@ -8,13 +8,15 @@ export default function CertificateModal({
   isOpen = true,
   onClose,
   initialData = {},
+  certData = null,
   showControls = true,
 }) {
+  const data = certData || initialData || {};
   const sessionUser = getActiveSession();
   const isStaff = sessionUser?.role === 'Staff';
   const effectiveShowControls = !isStaff && showControls;
   const [studentName, setStudentName] = useState(() => {
-    if (initialData.studentName) return initialData.studentName;
+    if (data.studentName) return data.studentName;
 
     if (typeof window !== 'undefined') {
       try {
@@ -33,22 +35,22 @@ export default function CertificateModal({
   });
 
   const [courseName, setCourseName] = useState(
-    initialData.courseName || 'Abacus'
+    data.courseName || 'Abacus'
   );
 
   const [level, setLevel] = useState(
-    initialData.level || 'Level 1'
+    data.level || 'Level 1'
   );
 
   const [grade, setGrade] = useState(
-    initialData.grade || 'A'
+    data.grade || 'A'
   );
 
-  const duration = initialData.duration || '6 Months';
+  const duration = data.duration || '6 Months';
 
   const [registrationNo, setRegistrationNo] = useState(() => {
-    if (initialData.registrationNo) {
-      return initialData.registrationNo;
+    if (data.registrationNo) {
+      return data.registrationNo;
     }
 
     if (typeof window !== 'undefined') {
@@ -75,31 +77,45 @@ export default function CertificateModal({
   const seqDigits = regDigits ? String(parseInt(regDigits.slice(-3), 10) || 1).padStart(4, '0') : '0001';
 
   const certificateNo =
-    (initialData.certificateNo && !initialData.certificateNo.includes('BSEL/ABACUS/L1/0007'))
-      ? initialData.certificateNo
+    (data.certificateNo && !data.certificateNo.includes('BSEL/ABACUS/L1/0007'))
+      ? data.certificateNo
       : `BSEL/${coursePrefix}/L${cleanLvlDigits}/${seqDigits}`;
 
   const [centreName, setCentreName] = useState(
-    initialData.centreName || 'test branch'
+    data.centreName || 'test branch'
   );
 
-  const centreCode = initialData.centreCode || '546454';
+  const centreCode = data.centreCode || '546454';
 
   const centreAddress =
-    initialData.centreAddress ||
+    data.centreAddress ||
     'second street, surandai,keelasurandai,tenkasi';
 
   const [issueDate, setIssueDate] = useState(
-    initialData.issueDate || '05-10-2026'
+    data.issueDate || '05-10-2026'
   );
 
   const [studentPhoto, setStudentPhoto] = useState(
-    initialData.studentPhoto || null
+    data.studentPhoto || null
   );
 
   const [certificateType, setCertificateType] = useState(
-    initialData.certificateType || 'COMPETITION'
+    data.certificateType || 'COMPLETION'
   );
+
+  // Sync state whenever data prop changes
+  useEffect(() => {
+    const d = certData || initialData || {};
+    if (d.studentName) setStudentName(d.studentName);
+    if (d.courseName) setCourseName(d.courseName);
+    if (d.level) setLevel(d.level);
+    if (d.grade) setGrade(d.grade);
+    if (d.registrationNo) setRegistrationNo(d.registrationNo);
+    if (d.centreName) setCentreName(d.centreName);
+    if (d.issueDate) setIssueDate(d.issueDate);
+    if (d.studentPhoto !== undefined) setStudentPhoto(d.studentPhoto);
+    if (d.certificateType) setCertificateType(d.certificateType);
+  }, [certData, initialData]);
 
   // Lock background scrolling while the modal is open.
   useEffect(() => {
@@ -189,9 +205,14 @@ export default function CertificateModal({
               certificateType={certificateType}
               showControls={effectiveShowControls}
               showUploadPhoto={false}
-              studentId={initialData?.studentId || initialData?.admissionNo || initialData?.id || registrationNo}
-              admissionNo={initialData?.admissionNo || initialData?.registerNumber || registrationNo}
-              student={initialData}
+              studentId={data?.studentId || data?.admissionNo || data?.id || registrationNo}
+              admissionNo={data?.admissionNo || data?.registerNumber || registrationNo}
+              student={data?.student || data}
+              schoolName={data?.schoolName}
+              schoolSubtitle={data?.schoolSubtitle}
+              schoolMotto={data?.schoolMotto}
+              schoolLogo={data?.schoolLogo}
+              directorSignature={data?.directorSignature || data?.signature}
             />
           </div>
         </div>
