@@ -38,7 +38,12 @@ const TILE_FONT_SIZE = 11;
 const TILE_OPACITY = 0.08;
 
 const CENTER_LOGO_WIDTH = '50%';
-const CENTER_OPACITY =0.09;
+const CENTER_OPACITY = 0.09;
+
+// Default header values (right-side block of the marksheet)
+const DEFAULT_SCHOOL_SUBTITLE = 'VISION FOUNDATION';
+const DEFAULT_SCHOOL_MOTTO = 'EDUCATION · EMPOWERMENT · EXCELLENCE';
+
 // ============================================================
 // REMARK SETTINGS (based on overall percentage)
 // ============================================================
@@ -202,8 +207,6 @@ export const getCourseSubjectModules = (courseName = '') => {
 
 const FRAME_CLIP = { x: 24, y: 24, width: 676, height: 976 };
 
-// Background layer: tiled text only (sent to the back)
-// Tiled watermark (behind the template) plus the centre emblem (drawn last, so it is on top)
 // Tiled watermark (behind the template) plus the centre emblem.
 // The tiles are masked out around the emblem with a soft fade, so the emblem sits on a clean background.
 function BselWatermark() {
@@ -330,6 +333,7 @@ function CenterLogo() {
     </svg>
   );
 }
+
 // ============================================================
 // OFFICIAL MARKSHEET COMPONENT
 // ============================================================
@@ -413,7 +417,6 @@ export default function OfficialMarksheetView({
     );
     setCustomSchoolSubtitle(
       (student?.schoolSubtitle && student.schoolSubtitle.trim())
-        ? student.schoolSubtitle
         : (customH?.subtitle !== undefined ? customH.subtitle : 'VISION FOUNDATION')
     );
     setCustomSchoolMotto(
@@ -452,14 +455,6 @@ export default function OfficialMarksheetView({
       window.removeEventListener('bsel_school_branding_updated', handleFranchiseBrandingUpdate);
     };
   }, []);
-
-  // Real-time synchronization across Certificate and Marksheet for the same student
-  useEffect(() => {
-    const handleHeaderUpdate = (e) => {
-      if (e.detail?.scopeKey === scopeKey) {
-        const d = e.detail.data;
-        if (d?.name !== undefined) setCustomSchoolName(d.name);
-        if (d?.subtitle !== undefined) setCustomSchoolSubtitle(d.subtitle);
         if (d?.motto !== undefined) setCustomSchoolMotto(d.motto);
         if (d?.logo !== undefined) setCustomSchoolLogo(d.logo);
       }
@@ -510,30 +505,6 @@ export default function OfficialMarksheetView({
   const handleRemoveDirectorSign = () => {
     setCustomDirectorSign(null);
     saveStudentCustomSignature(scopeKey, null);
-  };
-
-  const getSchoolNameFontSize = (text) => {
-    const len = (text || '').trim().length;
-    if (len <= 7) return 'clamp(17px, 3.6vw, 28px)';
-    if (len <= 10) return 'clamp(15px, 3.15vw, 24px)';
-    if (len <= 13) return 'clamp(13px, 2.7vw, 20.5px)';
-    if (len <= 16) return 'clamp(11px, 2.35vw, 17.5px)';
-    if (len <= 20) return 'clamp(9.8px, 2.05vw, 15.3px)';
-    return 'clamp(8.5px, 1.8vw, 13px)';
-  };
-
-  const getSchoolSubtitleFontSize = (text) => {
-    const len = (text || '').trim().length;
-    if (len <= 12) return 'clamp(8.5px, 1.7vw, 13px)';
-    if (len <= 18) return 'clamp(7.7px, 1.5vw, 11.5px)';
-    return 'clamp(6.8px, 1.28vw, 9.8px)';
-  };
-
-  const getSchoolMottoFontSize = (text) => {
-    const len = (text || '').trim().length;
-    if (len <= 16) return 'clamp(6px, 1.15vw, 9px)';
-    if (len <= 22) return 'clamp(5.5px, 1.02vw, 8.1px)';
-    return 'clamp(5.1px, 0.9vw, 7.2px)';
   };
 
   if (!student) return null;
@@ -743,8 +714,15 @@ export default function OfficialMarksheetView({
       }}
     >
 
-      {/* Vector template (zIndex 1 inside the template) */}
-      <MarksheetTemplate remark={showMarks ? remarkText : null} />
+      {/* Vector template (zIndex 1 inside the template); draws the header text from the customised values */}
+      <MarksheetTemplate
+        remark={showMarks ? remarkText : null}
+        rightHeading={{
+          title: customSchoolName,
+          subtitle: customSchoolSubtitle,
+          tagline: customSchoolMotto,
+        }}
+      />
 
       {/* Full-page BSEL watermark (zIndex 0, under the template) */}
       <BselWatermark />
@@ -777,10 +755,10 @@ export default function OfficialMarksheetView({
         </div>
       )}
 
-      {/* 0. TOP-RIGHT SCHOOL HEADER & SCHOOL LOGO */}
+      {/* 0. TOP-RIGHT HEADER CLICK AREA (text is drawn by the template) */}
       <div
         onClick={() => !standalone && setIsFormModalOpen(true)}
-        className={`absolute flex flex-col items-center justify-center text-center select-none px-0.5 ${
+        className={`absolute select-none ${
           standalone ? '' : 'cursor-pointer hover:ring-1 hover:ring-amber-400/50 rounded-md transition'
         }`}
         style={{
@@ -791,56 +769,7 @@ export default function OfficialMarksheetView({
           zIndex: 1,
         }}
         title={standalone ? '' : 'Click to customize School Name, Logo & Principal Signature'}
-      >
-        {customSchoolName && (
-          <div
-            className="tracking-normal uppercase text-center w-full whitespace-nowrap"
-            style={{
-              color: '#0b2a55',
-              fontFamily: "'Cinzel', 'Outfit', 'Plus Jakarta Sans', sans-serif",
-              fontWeight: 900,
-              fontSize: getSchoolNameFontSize(customSchoolName),
-              letterSpacing: (customSchoolName || '').trim().length > 13 ? '-0.02em' : '0.02em',
-              lineHeight: 1.02,
-              textShadow: '0 0.5px 1px rgba(19, 66, 122, 0.2)',
-            }}
-          >
-            {customSchoolName}
-          </div>
-        )}
-
-        {customSchoolSubtitle && (
-          <div
-            className="uppercase mt-0.5 text-center w-full whitespace-nowrap"
-            style={{
-              color: '#0b2a55',
-              fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif",
-              fontWeight: 800,
-              fontSize: getSchoolSubtitleFontSize(customSchoolSubtitle),
-              letterSpacing: (customSchoolSubtitle || '').trim().length > 18 ? '0.05em' : '0.09em',
-              lineHeight: 1.05,
-            }}
-          >
-            {customSchoolSubtitle}
-          </div>
-        )}
-
-        {customSchoolMotto && (
-          <div
-            className="uppercase mt-0.5 text-center w-full whitespace-nowrap"
-            style={{
-              color: '#0b2a55',
-              fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif",
-              fontWeight: 700,
-              fontSize: getSchoolMottoFontSize(customSchoolMotto),
-              letterSpacing: '0.07em',
-              lineHeight: 1.05,
-            }}
-          >
-            {customSchoolMotto}
-          </div>
-        )}
-      </div>
+      />
 
       {/* School Logo Container */}
       <div
@@ -1647,7 +1576,7 @@ export default function OfficialMarksheetView({
                   type="text"
                   value={customSchoolMotto}
                   maxLength={30}
-                  placeholder="e.g. EDUCATION • EMPOWERMENT • EXCELLENCE"
+                  placeholder="e.g. EDUCATION · EMPOWERMENT · EXCELLENCE"
                   onChange={(e) => {
                     const v = e.target.value;
                     setCustomSchoolMotto(v);

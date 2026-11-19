@@ -12,14 +12,29 @@ import signImage from '../assets/Sign.png';
 const NAVY = '#0b2a55';
 const GOLD = '#b8892f';
 const SERIF = "'Times New Roman', Times, serif";
+const HEADER_FONT = 'Georgia, serif';
 const TABLE_HEADER_BLUE = '#d4eefa'; // light blue column header row and grade value box
 
 const PAGE_CENTER_X = 362;
+
+// Header blocks
+// Left wordmark is centred on x = 226.
+// Right block sits between the centre seal (ends at x = 422) and the logo box (starts at about x = 627),
+// so it spans x = 430 to 606.
+const LEFT_HEADER_CENTER_X = 226;
+const RIGHT_HEADER_CENTER_X = 518;
+const RIGHT_HEADER_MAX_WIDTH = 176;
 
 // Watermark strip colours
 const STRIP_BG = NAVY;
 const STRIP_BORDER = GOLD;
 const STRIP_TEXT = '#fde68a';
+
+const DEFAULT_RIGHT_HEADING = {
+  title: 'TENKASI',
+  subtitle: 'VISION FOUNDATION',
+  tagline: 'EDUCATION · EMPOWERMENT · EXCELLENCE',
+};
 
 const LABELS = [
   'Registration No.',
@@ -68,6 +83,25 @@ const FRAME_GOLD = { x: 22, y: 22, w: 680, h: 980 };
 const SUBJECT_BAND = { x: 37, y: 467, w: 650, h: 37 };
 const TOTALS_BAND = { x: 58, y: 766, w: 455, h: 30 };
 const GRADE_BAND = { x: 541, y: 763, w: 124, h: 35 };
+
+// Measures real text width in the browser so the fit is accurate
+let measureCtx = null;
+const measureAt100px = (text) => {
+  const str = String(text || '');
+  if (typeof document === 'undefined') return str.length * 60;
+  if (!measureCtx) measureCtx = document.createElement('canvas').getContext('2d');
+  measureCtx.font = 'bold 100px Georgia, serif';
+  return measureCtx.measureText(str).width;
+};
+
+// Returns the largest font size up to maxSize that fits maxWidth.
+// emSpacing approximates the letter-spacing added per character, in px per px of font size.
+const fitHeaderSize = (text, maxSize, maxWidth = RIGHT_HEADER_MAX_WIDTH, emSpacing = 0.01) => {
+  const str = String(text || '');
+  const widthPerPx = measureAt100px(str) / 100 + str.length * emSpacing;
+  if (widthPerPx <= 0) return maxSize;
+  return Math.round(Math.min(maxSize, maxWidth / widthPerPx) * 10) / 10;
+};
 
 // Gold diamond on the gold rule at a corner
 const CornerDiamond = ({ x, y }) => {
@@ -144,7 +178,7 @@ const Star = ({ cx, cy, r }) => {
   return <polygon points={pts.join(' ')} fill={GOLD} />;
 };
 
-export default function MarksheetTemplate({ remark = null }) {
+export default function MarksheetTemplate({ remark = null, rightHeading = null }) {
   const colCenters = TABLE_COLS.slice(0, -1).map((x, i) => (x + TABLE_COLS[i + 1]) / 2);
 
   const goldLeft = FRAME_GOLD.x;
@@ -152,6 +186,13 @@ export default function MarksheetTemplate({ remark = null }) {
   const goldTop = FRAME_GOLD.y;
   const goldBottom = FRAME_GOLD.y + FRAME_GOLD.h;
   const goldMidY = FRAME_GOLD.y + FRAME_GOLD.h / 2;
+
+  // Fall back to the defaults for any empty or missing value
+  const heading = {
+    title: rightHeading?.title || DEFAULT_RIGHT_HEADING.title,
+    subtitle: rightHeading?.subtitle || DEFAULT_RIGHT_HEADING.subtitle,
+    tagline: rightHeading?.tagline || DEFAULT_RIGHT_HEADING.tagline,
+  };
 
   return (
     <svg
@@ -161,6 +202,12 @@ export default function MarksheetTemplate({ remark = null }) {
       style={{ zIndex: 1 }}
       aria-hidden="true"
     >
+      <defs>
+        <clipPath id="strip-clip">
+          <rect x="28" y="0" width="668" height="200" />
+        </clipPath>
+      </defs>
+
       {/* ---------- Border: thick navy outer frame and gold rule ---------- */}
       <rect
         x={FRAME_OUTER.x}
@@ -202,23 +249,12 @@ export default function MarksheetTemplate({ remark = null }) {
         preserveAspectRatio="xMidYMid meet"
       />
 
-      {/* Middle-left: wordmark block */}
+      {/* Left block: three-line wordmark, centred between the crest and the centre seal */}
       <text
-        x="130"
-        y="50"
-        textAnchor="start"
-        fontFamily="Georgia, serif"
-        fontStyle="italic"
-        fontSize="8"
-        fill={NAVY}
-      >
-        Presents through its educational initiative
-      </text>
-      <text
-        x="130"
-        y="84"
-        textAnchor="start"
-        fontFamily="Georgia, serif"
+        x={LEFT_HEADER_CENTER_X}
+        y="62"
+        textAnchor="middle"
+        fontFamily={HEADER_FONT}
         fontWeight="bold"
         fontSize="30"
         fill={NAVY}
@@ -226,14 +262,26 @@ export default function MarksheetTemplate({ remark = null }) {
         B<tspan fill={GOLD}>★</tspan>SEL
       </text>
       <text
-        x="130"
-        y="98"
-        textAnchor="start"
-        fontFamily="Arial, sans-serif"
+        x={LEFT_HEADER_CENTER_X}
+        y="78"
+        textAnchor="middle"
+        fontFamily={HEADER_FONT}
+        fontWeight="bold"
+        fontSize="11"
+        letterSpacing="0.3"
+        fill={NAVY}
+      >
+        Learn · Grow · Achieve
+      </text>
+      <text
+        x={LEFT_HEADER_CENTER_X}
+        y="94"
+        textAnchor="middle"
+        fontFamily={HEADER_FONT}
         fontWeight="bold"
         fontSize="7"
-        fill={NAVY}
         letterSpacing="0.2"
+        fill={NAVY}
       >
         BOARD OF SKILLS AND EDUCATIONAL LEARNING
       </text>
@@ -248,6 +296,45 @@ export default function MarksheetTemplate({ remark = null }) {
         preserveAspectRatio="xMidYMid meet"
       />
 
+      {/* Right block: institution heading, same font, baselines and styling as the left block */}
+      <text
+        x={RIGHT_HEADER_CENTER_X}
+        y="62"
+        textAnchor="middle"
+        fontFamily={HEADER_FONT}
+        fontWeight="bold"
+        fontSize={fitHeaderSize(heading.title, 40, RIGHT_HEADER_MAX_WIDTH, 0.3)}
+        letterSpacing="0.3"
+        fill={NAVY}
+      >
+        {heading.title}
+      </text>
+      <text
+        x={RIGHT_HEADER_CENTER_X}
+        y="78"
+        textAnchor="middle"
+        fontFamily={HEADER_FONT}
+        fontWeight="bold"
+        fontSize={fitHeaderSize(heading.subtitle, 16, RIGHT_HEADER_MAX_WIDTH, 0.3)}
+        letterSpacing="0.3"
+        fill={NAVY}
+      >
+        {heading.subtitle}
+      </text>
+      {/* Right block tagline: same fixed size and spacing as the left block's third line */}
+<text
+  x={RIGHT_HEADER_CENTER_X}
+  y="94"
+  textAnchor="middle"
+  fontFamily={HEADER_FONT}
+  fontWeight="bold"
+  fontSize="7"
+  letterSpacing="0.2"
+  fill={NAVY}
+>
+  {heading.tagline}
+</text>
+
       {/* Thin repeating watermark strip */}
       <rect
         x="24"
@@ -258,19 +345,20 @@ export default function MarksheetTemplate({ remark = null }) {
         stroke={STRIP_BORDER}
         strokeWidth="1"
       />
-      <text
-        x="28"
-        y="131"
-        textLength="668"
-        lengthAdjust="spacing"
-        fontFamily="Arial, sans-serif"
-        fontWeight="bold"
-        fontSize="9"
-        fill={STRIP_TEXT}
-        opacity="0.85"
-      >
-        B★SEL B★SEL B★SEL B★SEL B★SEL B★SEL B★SEL B★SEL B★SEL B★SEL B★SEL B★SEL
-      </text>
+      <g clipPath="url(#strip-clip)">
+        <text
+          x="28"
+          y="131"
+          fontFamily="Georgia, serif"
+          fontWeight="bold"
+          fontSize="9"
+          fill={STRIP_TEXT}
+          opacity="0.85"
+          xmlSpace="preserve"
+        >
+          {Array(40).fill("B★SEL").join("\u00A0\u00A0\u00A0\u00A0")}
+        </text>
+      </g>
 
       {/* ---------- Section: Student & Course Details ---------- */}
       <SectionTitle x={197} y={142} w={331} h={22} fill={GOLD} text="STUDENT & COURSE DETAILS" />
@@ -315,7 +403,7 @@ export default function MarksheetTemplate({ remark = null }) {
         y={SUBJECT_BAND.y + SUBJECT_BAND.h / 2}
         dominantBaseline="central"
         textAnchor="middle"
-        fontFamily="Arial, sans-serif"
+        fontFamily="Georgia, serif"
         fontSize="16"
         letterSpacing="0.8"
         fill="#ffffff"
@@ -462,9 +550,7 @@ export default function MarksheetTemplate({ remark = null }) {
       </text>
 
       {/* ---------- Footer ---------- */}
-
-            {/* Footer headings */}
-            {/* Footer headings (centred over their logo groups, clear of the Remarks box) */}
+      {/* Footer headings (centred over their logo groups, clear of the Remarks box) */}
       <text x="292" y="916" textAnchor="middle" fontFamily="Arial, sans-serif" fontWeight="bold" fontSize="7.5" fill={NAVY}>
         REGISTERED UNDER
       </text>
@@ -515,8 +601,8 @@ export default function MarksheetTemplate({ remark = null }) {
       <text x="60" y="972" fontFamily={SERIF} fontWeight="bold" fontSize="12" fill={NAVY}>
         Center Director / Principal
       </text>
-            {/* Authorized signature image: larger, centred above the label */}
-            {/* Authorized signature image: wider, centred over the label */}
+
+      {/* Authorized signature image: wider, centred over the label */}
       <image
         href={signImage}
         x="523"
