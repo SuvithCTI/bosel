@@ -16,9 +16,9 @@ const TABLE_HEADER_BLUE = '#d4eefa'; // light blue column header row and grade v
 const PAGE_CENTER_X = 362;
 
 // Watermark strip colours
-const STRIP_BG = NAVY;        // strip background
-const STRIP_BORDER = GOLD;    // strip border colour
-const STRIP_TEXT = '#fde68a'; // strip text colour
+const STRIP_BG = NAVY;
+const STRIP_BORDER = GOLD;
+const STRIP_TEXT = '#fde68a';
 
 const LABELS = [
   'Registration No.',
@@ -38,20 +38,20 @@ const TABLE_HEADERS = [
   ['S.No.'],
   ['Subject / Module'],
   ['Max', 'Marks'],
-  ['Practical'],
+  ['Assessment', '(/40)'],
   ['Marks', 'Obtained'],
   ['Percentage'],
 ];
 
 const ROW_LINES = [541, 577, 613, 650, 686, 722];
 
-// Thickness for the table grid (thick lines like the reference sheet)
+// Thickness for the table grid
 const TABLE_OUTER_STROKE = 4;
 const TABLE_INNER_STROKE = 2.5;
 
-// Navy band styling (matches the reference sheet's header bars)
-const BAND_INSET = 4;          // distance of the white inner line from the band edge
-const BAND_INNER_STROKE = 1.2; // weight of the white inner line
+// Navy band styling
+const BAND_INSET = 4;
+const BAND_INNER_STROKE = 1.2;
 
 // Remarks box geometry (on the 724 x 1024 grid)
 const REMARK_BOX = { x: 57, y: 852, w: 456, h: 48 };
@@ -60,17 +60,15 @@ const REMARK_TEXT_X = 102;
 const REMARK_TEXT_Y = 889;
 
 // Border geometry
-// Thick navy outer frame, with the gold rule sitting inside it.
-const FRAME_OUTER = { x: 10, y: 10, w: 704, h: 1007 }; // thick navy outer frame (stroke 8)
-const FRAME_GOLD = { x: 22, y: 22, w: 680, h: 980 };   // gold rule; diamonds sit on this line
+const FRAME_OUTER = { x: 10, y: 10, w: 704, h: 1007 };
+const FRAME_GOLD = { x: 22, y: 22, w: 680, h: 980 };
 
-// Title bar spans from the table's top border down to the column header row,
-// so there is no gap above or below it.
+// Title bar spans from the table's top border down to the column header row
 const SUBJECT_BAND = { x: 37, y: 467, w: 650, h: 37 };
 const TOTALS_BAND = { x: 58, y: 766, w: 455, h: 30 };
 const GRADE_BAND = { x: 541, y: 763, w: 124, h: 35 };
 
-// Gold diamond on the gold rule at a corner (no outline)
+// Gold diamond on the gold rule at a corner
 const CornerDiamond = ({ x, y }) => {
   const d = 7;
   return (
@@ -82,7 +80,7 @@ const CornerDiamond = ({ x, y }) => {
   );
 };
 
-// Smaller gold diamond at the middle of the left and right gold rule (no outline)
+// Edge diamond placeholder (size 0 keeps it invisible, as in the reference)
 const EdgeDiamond = ({ x, y }) => {
   const d = 0;
   return (
@@ -94,7 +92,7 @@ const EdgeDiamond = ({ x, y }) => {
   );
 };
 
-// Navy header band with a thin white inset outline (as in the reference sheet)
+// Navy header band with a thin white inset outline
 const NavyBand = ({ x, y, w, h, inset = BAND_INSET }) => (
   <g>
     <rect x={x} y={y} width={w} height={h} fill={NAVY} stroke={NAVY} strokeWidth="2" />
@@ -159,11 +157,9 @@ export default function MarksheetTemplate({ remark = null }) {
       viewBox="0 0 724 1024"
       preserveAspectRatio="xMidYMid meet"
       className="absolute inset-0 w-full h-full"
+      style={{ zIndex: 1 }}
       aria-hidden="true"
     >
-      {/* ---------- Page background ---------- */}
-      <rect x="0" y="0" width="724" height="1024" fill="#ffffff" />
-
       {/* ---------- Border: thick navy outer frame and gold rule ---------- */}
       <rect
         x={FRAME_OUTER.x}
@@ -195,7 +191,7 @@ export default function MarksheetTemplate({ remark = null }) {
       <EdgeDiamond x={goldRight} y={goldMidY} />
 
       {/* ---------- Header ---------- */}
-      {/* Left: B★SEL crest (same file used by Logo.jsx) */}
+      {/* Left: B★SEL crest */}
       <image
         href="/bsel_logo.png"
         x="44"
@@ -205,7 +201,7 @@ export default function MarksheetTemplate({ remark = null }) {
         preserveAspectRatio="xMidYMid meet"
       />
 
-      {/* Middle-left: wordmark block, kept clear of the logo and the centre seal */}
+      {/* Middle-left: wordmark block */}
       <text
         x="130"
         y="50"
@@ -241,7 +237,7 @@ export default function MarksheetTemplate({ remark = null }) {
         BOARD OF SKILLS AND EDUCATIONAL LEARNING
       </text>
 
-      {/* Centre: government / institutional seal, centred on the page */}
+      {/* Centre: government / institutional seal */}
       <image
         href={centerSeal}
         x={PAGE_CENTER_X - 30}
@@ -251,7 +247,7 @@ export default function MarksheetTemplate({ remark = null }) {
         preserveAspectRatio="xMidYMid meet"
       />
 
-      {/* Thin repeating watermark strip (navy background, gold border) */}
+      {/* Thin repeating watermark strip */}
       <rect
         x="24"
         y="120"
@@ -280,7 +276,7 @@ export default function MarksheetTemplate({ remark = null }) {
 
       {LABELS.map((label, i) => {
         const cy = 181.4 + i * 26.2;
-        const longLabel = label.length >= 19; // e.g. "School / Exam Centre"
+        const longLabel = label.length >= 19;
         return (
           <g key={label} fontFamily={SERIF} fontWeight="bold" fontSize="16" fill={NAVY}>
             <text
@@ -300,11 +296,7 @@ export default function MarksheetTemplate({ remark = null }) {
       <rect x="551" y="228" width="113" height="130" fill="none" stroke={GOLD} strokeWidth="3" />
       <rect x="556" y="233" width="103" height="120" fill="none" stroke={NAVY} strokeWidth="2" />
 
-      {/* ---------- Section: Grade Card / Result Sheet ---------- */}
-     
-
       {/* ---------- Subjects & Marks table ---------- */}
-      {/* Outer thick navy border */}
       <rect
         x="37"
         y="467"
@@ -315,7 +307,7 @@ export default function MarksheetTemplate({ remark = null }) {
         strokeWidth={TABLE_OUTER_STROKE}
       />
 
-      {/* Title bar: fills the space from the top border to the column header row */}
+      {/* Title bar */}
       <NavyBand {...SUBJECT_BAND} />
       <text
         x={SUBJECT_BAND.x + SUBJECT_BAND.w / 2}
@@ -364,7 +356,7 @@ export default function MarksheetTemplate({ remark = null }) {
         );
       })}
 
-      {/* Vertical column dividers (thick) */}
+      {/* Vertical column dividers */}
       {TABLE_COLS.slice(1, -1).map((x) => (
         <line
           key={`v${x}`}
@@ -377,7 +369,7 @@ export default function MarksheetTemplate({ remark = null }) {
         />
       ))}
 
-      {/* Horizontal row lines (thick) */}
+      {/* Horizontal row lines */}
       {ROW_LINES.map((y) => (
         <line
           key={`h${y}`}
@@ -404,7 +396,6 @@ export default function MarksheetTemplate({ remark = null }) {
 
       {/* ---------- Totals / Grade ---------- */}
       <rect x="58" y="766" width="455" height="72" fill="none" stroke={NAVY} strokeWidth="2" />
-      {/* Totals header band: navy with white inset outline */}
       <NavyBand {...TOTALS_BAND} />
       <line x1="58" y1="796" x2="513" y2="796" stroke={NAVY} strokeWidth="1.5" />
       <line x1="210" y1="796" x2="210" y2="838" stroke={NAVY} strokeWidth="1.2" />
@@ -416,9 +407,7 @@ export default function MarksheetTemplate({ remark = null }) {
       </g>
 
       <rect x="541" y="763" width="124" height="75" fill="none" stroke={NAVY} strokeWidth="2" />
-      {/* Grade header band: navy with white inset outline */}
       <NavyBand {...GRADE_BAND} />
-      {/* Grade value box: light blue fill */}
       <rect x="543" y="798" width="120" height="38" fill={TABLE_HEADER_BLUE} />
       <line x1="541" y1="798" x2="665" y2="798" stroke={NAVY} strokeWidth="1.5" />
       <text
@@ -450,7 +439,6 @@ export default function MarksheetTemplate({ remark = null }) {
       </text>
       <Star cx={REMARK_STAR.cx} cy={REMARK_STAR.cy} r={REMARK_STAR.r} />
 
-      {/* Remark text (drawn only when a remark is provided) */}
       {remark && (
         <text
           x={REMARK_TEXT_X}
@@ -473,46 +461,52 @@ export default function MarksheetTemplate({ remark = null }) {
       </text>
 
       {/* ---------- Footer ---------- */}
-      <text x="362" y="910" textAnchor="middle" fontFamily="Arial, sans-serif" fontWeight="bold" fontSize="9" fill={NAVY}>
-        REGISTERED UNDER MINISTRY OF MSME, GOVT. OF INDIA
-      </text>
 
-      {/* Footer logos: MSME (left), IAF (centre), ISO 9001 (right) */}
+      {/* Footer row 1: three logos */}
       <image
         href={msmeLogo}
-        x="283"
-        y="922"
+        x="262"
+        y="912"
         width="60"
         height="32"
         preserveAspectRatio="xMidYMid meet"
       />
       <image
         href={iafLogo}
-        x="346"
-        y="918"
+        x="336"
+        y="910"
         width="62"
-        height="42"
+        height="40"
         preserveAspectRatio="xMidYMid meet"
       />
       <image
         href={isoLogo}
-        x="418"
-        y="918"
-        width="50"
-        height="50"
+        x="412"
+        y="907"
+        width="46"
+        height="46"
         preserveAspectRatio="xMidYMid meet"
       />
 
-      <text x="362" y="978" textAnchor="middle" fontFamily="Arial, sans-serif" fontWeight="bold" fontSize="9" fill={NAVY}>
+      {/* Footer row 2: MSME text */}
+      <text x="362" y="962" textAnchor="middle" fontFamily="Arial, sans-serif" fontWeight="bold" fontSize="9" fill={NAVY}>
+        REGISTERED UNDER MINISTRY OF MSME, GOVT. OF INDIA
+      </text>
+
+      {/* Footer row 3: one gold star */}
+      <Star cx="362" cy="970" r="4.5" />
+
+      {/* Footer row 4: Tamil Nadu text */}
+      <text x="362" y="983" textAnchor="middle" fontFamily="Arial, sans-serif" fontWeight="bold" fontSize="9" fill={NAVY}>
         REGISTERED UNDER GOVT. OF TAMIL NADU (REGD. TRUST)
       </text>
 
       {/* Principal / signature area */}
-      <text x="60" y="972" fontFamily={SERIF} fontWeight="bold" fontSize="12" fill={GOLD}>
+      <text x="60" y="972" fontFamily={SERIF} fontWeight="bold" fontSize="12" fill={NAVY}>
         Center Director / Principal
       </text>
       <image href="/marksheet/bsel-seal.png" x="562" y="918" width="58" height="58" preserveAspectRatio="xMidYMid meet" />
-      <text x="518" y="972" fontFamily={SERIF} fontStyle="italic" fontWeight="bold" fontSize="12" fill={NAVY}>
+      <text x="558" y="972" fontFamily={SERIF} fontStyle="italic" fontWeight="bold" fontSize="12" fill={NAVY}>
         Authorized Signature
       </text>
     </svg>
