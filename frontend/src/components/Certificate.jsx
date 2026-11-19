@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 
-import { Upload, Download, Loader2, Building2, Image as ImageIcon, X, PenTool } from 'lucide-react';
+import { Upload, Download, Loader2, Building2, Image as ImageIcon, X, PenTool, Printer } from 'lucide-react';
 
 import { exportPdfFromElement } from '../utils/pdfExport';
 
@@ -469,11 +469,12 @@ export default function Certificate({
       console.error('PDF generation failed:', err);
 
     } finally {
-
       setIsDownloadingPdf(false);
-
     }
+  };
 
+  const handlePrint = () => {
+    window.print();
   };
 
   const handleLogoFile = (e) => {
@@ -559,37 +560,32 @@ export default function Certificate({
           <div className="flex items-center gap-2 shrink-0">
 
             <button
-
               type="button"
-
               onClick={() => setIsFormModalOpen(true)}
-
-              className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl text-xs sm:text-sm flex items-center gap-1.5 cursor-pointer"
-
+              className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl text-xs sm:text-sm flex items-center gap-1.5 cursor-pointer shadow-sm transition active:scale-95"
             >
-
               <PenTool className="w-3.5 h-3.5" />
-
               <span>Customize Certificate</span>
-
             </button>
 
             <button
-
               type="button"
-
-              onClick={handleDownloadPdf}
-
-              disabled={isDownloadingPdf}
-
-              className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white font-black rounded-xl text-xs sm:text-sm flex items-center gap-1.5 cursor-pointer"
-
+              onClick={handlePrint}
+              className="px-3.5 py-1.5 bg-sky-600 hover:bg-sky-500 text-white font-black rounded-xl text-xs sm:text-sm flex items-center gap-1.5 cursor-pointer shadow-md transition active:scale-95"
+              title="Print Certificate (Landscape)"
             >
+              <Printer className="w-4 h-4" />
+              <span>Print</span>
+            </button>
 
+            <button
+              type="button"
+              onClick={handleDownloadPdf}
+              disabled={isDownloadingPdf}
+              className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white font-black rounded-xl text-xs sm:text-sm flex items-center gap-1.5 cursor-pointer shadow-md transition active:scale-95"
+            >
               {isDownloadingPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-
               <span>{isDownloadingPdf ? 'Generating PDF...' : 'Download PDF'}</span>
-
             </button>
 
           </div>
@@ -805,9 +801,14 @@ export default function Certificate({
 
       {/* ===== Certificate (vector, print-ready) ===== */}
 
-      <div ref={wrapperRef} className="w-full max-w-[1024px]">
+      <div ref={wrapperRef} id="printable-certificate" className="w-full max-w-[1024px]">
 
-        <svg viewBox="-23 -17 1070 757" xmlns="http://www.w3.org/2000/svg" className="w-full h-auto block bg-white shadow-2xl print:shadow-none">
+        <svg
+          id="printable-certificate-svg"
+          viewBox="-23 -17 1070 757"
+          xmlns="http://www.w3.org/2000/svg"
+          className="w-full h-auto block bg-white shadow-2xl print:shadow-none"
+        >
 
           <defs>
 
@@ -874,6 +875,7 @@ export default function Certificate({
           {/* Header: logos */}
           <image
             href={shieldLogo}
+            xlinkHref={shieldLogo}
             x="30"
             y="32"
             width="120"
@@ -882,6 +884,7 @@ export default function Certificate({
           />
           <image
             href={lionSeal}
+            xlinkHref={lionSeal}
             x="464"
             y="35"
             width="96"
@@ -987,6 +990,7 @@ export default function Certificate({
             {headerLogo ? (
               <image
                 href={headerLogo}
+                xlinkHref={headerLogo}
                 x="888"
                 y="30"
                 width="98"
@@ -1121,7 +1125,17 @@ export default function Certificate({
 
             <rect x="46" y="246" width="102" height="116" fill="#fbf9f2" stroke={NAVY} strokeWidth="2.5" />
 
-            {studentPhoto && <image href={studentPhoto} x="46" y="246" width="102" height="116" preserveAspectRatio="xMidYMid slice" />}
+            {studentPhoto && (
+              <image
+                href={studentPhoto}
+                xlinkHref={studentPhoto}
+                x="46"
+                y="246"
+                width="102"
+                height="116"
+                preserveAspectRatio="xMidYMid slice"
+              />
+            )}
 
           </g>
 
@@ -1285,11 +1299,11 @@ export default function Certificate({
 
           <text x="547" y="594" textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="8.5" fill={NAVY}>Authorized Affiliates</text>
 
-          <image href={msmeLogo} x="406" y="605" width="40" height="46" preserveAspectRatio="xMidYMid meet" />
+          <image href={msmeLogo} xlinkHref={msmeLogo} x="406" y="605" width="40" height="46" preserveAspectRatio="xMidYMid meet" />
 
-          <image href={iafLogo} x="476" y="606" width="68" height="44" preserveAspectRatio="xMidYMid meet" />
+          <image href={iafLogo} xlinkHref={iafLogo} x="476" y="606" width="68" height="44" preserveAspectRatio="xMidYMid meet" />
 
-          <image href={isoLogo} x="574" y="605" width="44" height="46" preserveAspectRatio="xMidYMid meet" />
+          <image href={isoLogo} xlinkHref={isoLogo} x="574" y="605" width="44" height="46" preserveAspectRatio="xMidYMid meet" />
 
           <text x="512" y="664" textAnchor="middle" fontFamily="Arial, sans-serif" fontWeight="700" fontSize="8.5" letterSpacing="0.2" fill={NAVY}>
             REGISTERED UNDER MINISTRY OF MSME, GOVT. OF INDIA
@@ -1312,6 +1326,7 @@ export default function Certificate({
             >
               <image
                 href={directorSign}
+                xlinkHref={directorSign}
                 x="63"
                 y="598"
                 width="160"
@@ -1356,6 +1371,7 @@ export default function Certificate({
           {/* Official Authorized Signature & Watermark Stamp */}
           <image
             href={authSignSeal}
+            xlinkHref={authSignSeal}
             x="785"
             y="595"
             width="170"

@@ -31,6 +31,99 @@ export const triggerDirectPdfDownload = (pdf, filename = 'document.pdf') => {
 };
 
 /**
+ * High-fidelity native SVG rasterizer:
+ * Converts an SVG element directly to a high-resolution Canvas by converting
+ * nested <image> tags to data URLs and preserving all vector patterns, gradients,
+ * filters, and typography identically to the live browser preview.
+ */
+export const svgElementToCanvas = async (svgEl, scale = 3) => {
+  if (!svgEl) return null;
+
+  try {
+    // 1. Clone the SVG
+    const clone = svgEl.cloneNode(true);
+
+    // 2. Remove all .print:hidden and helper edit elements from clone
+    const hiddenEls = clone.querySelectorAll('.print\\:hidden, [class*="print:hidden"], [data-html2canvas-ignore="true"]');
+    hiddenEls.forEach((el) => el.remove());
+
+    // 3. Compute target resolution based on viewBox or bounding rect
+    const viewBox = clone.viewBox?.baseVal;
+    const vbW = viewBox && viewBox.width > 0 ? viewBox.width : 1070;
+    const vbH = viewBox && viewBox.height > 0 ? viewBox.height : 757;
+    const width = Math.round(vbW * scale);
+    const height = Math.round(vbH * scale);
+
+    clone.setAttribute('width', `${width}`);
+    clone.setAttribute('height', `${height}`);
+
+    // 4. Convert all <image> hrefs to self-contained data URLs (base64)
+    const images = clone.querySelectorAll('image');
+    for (const img of images) {
+      const href = img.getAttribute('href') || img.getAttribute('xlink:href');
+      if (href && !href.startsWith('data:')) {
+        try {
+          const offImg = new Image();
+          offImg.crossOrigin = 'anonymous';
+          await new Promise((res) => {
+            offImg.onload = res;
+            offImg.onerror = res;
+            offImg.src = href;
+          });
+          if (offImg.naturalWidth) {
+            const offCanvas = document.createElement('canvas');
+            offCanvas.width = offImg.naturalWidth;
+            offCanvas.height = offImg.naturalHeight;
+            const ctx = offCanvas.getContext('2d');
+            ctx.drawImage(offImg, 0, 0);
+            const dataUrl = offCanvas.toDataURL('image/png');
+            img.setAttribute('href', dataUrl);
+            img.setAttribute('xlink:href', dataUrl);
+          }
+        } catch {
+          // Keep original href if conversion fails
+        }
+      }
+    }
+
+    // 5. Inject font styles inside SVG <style>
+    const styleEl = document.createElementNS('http://www.w3.org/2000/svg', 'style');
+    styleEl.textContent = `
+      @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Great+Vibes&family=Outfit:wght@400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
+    `;
+    clone.prepend(styleEl);
+
+    // 6. Serialize and render via Image
+    const xml = new XMLSerializer().serializeToString(clone);
+    const svgBlob = new Blob([xml], { type: 'image/svg+xml;charset=utf-8' });
+    const blobUrl = URL.createObjectURL(svgBlob);
+
+    const renderImg = new Image();
+    await new Promise((resolve, reject) => {
+      renderImg.onload = resolve;
+      renderImg.onerror = reject;
+      renderImg.src = blobUrl;
+    });
+
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, width, height);
+    ctx.drawImage(renderImg, 0, 0, width, height);
+    URL.revokeObjectURL(blobUrl);
+
+    return canvas;
+  } catch (err) {
+    console.warn('Native SVG rasterization fallback to html2canvas:', err);
+    return null;
+  }
+};
+
+/**
  * High-precision, properly aligned PDF export from any HTML DOM element.
  */
 export const exportPdfFromElement = async (element, options = {}) => {
@@ -46,28 +139,53 @@ export const exportPdfFromElement = async (element, options = {}) => {
     scale = 2.5
   } = options;
 
-  // 1. Capture DOM element using html2canvas with scroll-offset normalization
-  const canvas = await html2canvas(element, {
-    scale,
-    useCORS: true,
-    allowTaint: false,
-    logging: false,
-    scrollX: 0,
-    scrollY: 0,
-    windowWidth: element.scrollWidth || document.documentElement.offsetWidth,
-    backgroundColor
-  });
-
-  let imgData;
-  let format = 'JPEG';
-  try {
-    imgData = canvas.toDataURL('image/jpeg', 0.98);
-  } catch {
-    imgData = canvas.toDataURL('image/png');
-    format = 'PNG';
+  // Wait for all webfonts (Cinzel, Great Vibes, etc.) to be fully ready
+  if (typeof document !== 'undefined' && document.fonts && document.fonts.ready) {
+    try {
+      await document.fonts.ready;
+    } catch {
+      // ignore
+    }
   }
 
-  // 2. Initialize jsPDF with standard A4 format
+  // 1. Try native high-fidelity SVG rasterization first if element is or contains an SVG
+  let canvas = null;
+  const svgEl = element.tagName?.toLowerCase() === 'svg' ? element : element.querySelector?.('svg');
+  if (svgEl) {
+    canvas = await svgElementToCanvas(svgEl, scale);
+  }
+
+  // 2. Fallback to html2canvas if native SVG rasterization wasn't applicable or failed
+  if (!canvas) {
+    canvas = await html2canvas(element, {
+      scale,
+      useCORS: true,
+      allowTaint: false,
+      logging: false,
+      scrollX: 0,
+      scrollY: 0,
+      windowWidth: element.scrollWidth || document.documentElement.offsetWidth,
+      backgroundColor,
+      ignoreElements: (el) => {
+        return (
+          el.classList?.contains('print:hidden') ||
+          el.classList?.contains('no-print') ||
+          el.getAttribute?.('data-html2canvas-ignore') === 'true'
+        );
+      }
+    });
+  }
+
+  let imgData;
+  let format = 'PNG';
+  try {
+    imgData = canvas.toDataURL('image/png');
+  } catch {
+    imgData = canvas.toDataURL('image/jpeg', 0.98);
+    format = 'JPEG';
+  }
+
+  // 3. Initialize jsPDF with standard A4 format
   const pdf = new jsPDF({
     orientation,
     unit: 'mm',
@@ -81,7 +199,7 @@ export const exportPdfFromElement = async (element, options = {}) => {
   const availWidth = pageWidth - margin * 2;
   const availHeight = pageHeight - margin * 2;
 
-  // 3. Calculate proportional fit so content is NEVER distorted or clipped
+  // 4. Calculate proportional fit so content is NEVER distorted or clipped
   const canvasAspect = canvas.width / canvas.height;
   let renderWidth = availWidth;
   let renderHeight = availWidth / canvasAspect;
@@ -91,7 +209,7 @@ export const exportPdfFromElement = async (element, options = {}) => {
     renderWidth = availHeight * canvasAspect;
   }
 
-  // 4. Center horizontally and vertically within printable margins
+  // 5. Center horizontally and vertically within printable margins
   const x = margin + (availWidth - renderWidth) / 2;
   const y = margin + (availHeight - renderHeight) / 2;
 
@@ -106,7 +224,7 @@ export const exportPdfFromElement = async (element, options = {}) => {
     'FAST'
   );
 
-  // 5. Trigger direct browser download
+  // 6. Trigger direct browser download
   triggerDirectPdfDownload(pdf, filename);
   return pdf;
 };
@@ -130,16 +248,23 @@ export const exportMergedLandscapeAndPortraitPdf = async ({
   }
 
   // 1. Capture Page 1 (Landscape Certificate)
-  const p1Canvas = await html2canvas(page1Element, {
-    scale: page1Scale,
-    useCORS: true,
-    allowTaint: false,
-    logging: false,
-    scrollX: 0,
-    scrollY: 0,
-    windowWidth: page1Element.scrollWidth || 1050,
-    backgroundColor: '#fcfbf7'
-  });
+  const p1Svg = page1Element.tagName?.toLowerCase() === 'svg' ? page1Element : page1Element.querySelector?.('svg');
+  let p1Canvas = null;
+  if (p1Svg) {
+    p1Canvas = await svgElementToCanvas(p1Svg, page1Scale || 2.5);
+  }
+  if (!p1Canvas) {
+    p1Canvas = await html2canvas(page1Element, {
+      scale: page1Scale,
+      useCORS: true,
+      allowTaint: false,
+      logging: false,
+      scrollX: 0,
+      scrollY: 0,
+      windowWidth: page1Element.scrollWidth || 1050,
+      backgroundColor: '#fcfbf7'
+    });
+  }
 
   let p1ImgData;
   let p1Format = 'JPEG';
