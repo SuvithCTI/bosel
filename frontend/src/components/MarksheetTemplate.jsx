@@ -462,11 +462,20 @@ export default function MarksheetTemplate({ remark = null }) {
 
       {/* ---------- Footer ---------- */}
 
-      {/* Footer row 1: three logos */}
+            {/* Footer headings */}
+            {/* Footer headings (centred over their logo groups, clear of the Remarks box) */}
+      <text x="292" y="916" textAnchor="middle" fontFamily="Arial, sans-serif" fontWeight="bold" fontSize="7.5" fill={NAVY}>
+        REGISTERED UNDER
+      </text>
+      <text x="397" y="916" textAnchor="middle" fontFamily="Arial, sans-serif" fontWeight="bold" fontSize="7.5" fill={NAVY}>
+        AUTHORIZED AFFILIATES
+      </text>
+
+      {/* Footer row 1: three logos, bottom-aligned on y = 966 */}
       <image
         href={msmeLogo}
         x="262"
-        y="912"
+        y="924"
         width="60"
         height="32"
         preserveAspectRatio="xMidYMid meet"
@@ -474,30 +483,30 @@ export default function MarksheetTemplate({ remark = null }) {
       <image
         href={iafLogo}
         x="336"
-        y="910"
+        y="924"
         width="62"
-        height="40"
+        height="38"
         preserveAspectRatio="xMidYMid meet"
       />
       <image
         href={isoLogo}
         x="412"
-        y="907"
+        y="924"
         width="46"
-        height="46"
+        height="42"
         preserveAspectRatio="xMidYMid meet"
       />
 
       {/* Footer row 2: MSME text */}
-      <text x="362" y="962" textAnchor="middle" fontFamily="Arial, sans-serif" fontWeight="bold" fontSize="9" fill={NAVY}>
+      <text x="362" y="975" textAnchor="middle" fontFamily="Arial, sans-serif" fontWeight="bold" fontSize="9" fill={NAVY}>
         REGISTERED UNDER MINISTRY OF MSME, GOVT. OF INDIA
       </text>
 
       {/* Footer row 3: one gold star */}
-      <Star cx="362" cy="970" r="4.5" />
+      <Star cx="362" cy="983" r="3.5" />
 
       {/* Footer row 4: Tamil Nadu text */}
-      <text x="362" y="983" textAnchor="middle" fontFamily="Arial, sans-serif" fontWeight="bold" fontSize="9" fill={NAVY}>
+      <text x="362" y="994" textAnchor="middle" fontFamily="Arial, sans-serif" fontWeight="bold" fontSize="9" fill={NAVY}>
         REGISTERED UNDER GOVT. OF TAMIL NADU (REGD. TRUST)
       </text>
 

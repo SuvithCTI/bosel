@@ -37,8 +37,8 @@ const TILE_ROWS = 48;
 const TILE_FONT_SIZE = 11;
 const TILE_OPACITY = 0.08;
 
-const CENTER_LOGO_WIDTH = '45%';
-const CENTER_OPACITY = 0.12;
+const CENTER_LOGO_WIDTH = '50%';
+const CENTER_OPACITY =0.09;
 // ============================================================
 // REMARK SETTINGS (based on overall percentage)
 // ============================================================
@@ -203,6 +203,9 @@ export const getCourseSubjectModules = (courseName = '') => {
 const FRAME_CLIP = { x: 24, y: 24, width: 676, height: 976 };
 
 // Background layer: tiled text only (sent to the back)
+// Tiled watermark (behind the template) plus the centre emblem (drawn last, so it is on top)
+// Tiled watermark (behind the template) plus the centre emblem.
+// The tiles are masked out around the emblem with a soft fade, so the emblem sits on a clean background.
 function BselWatermark() {
   const PAGE_W = 724;
   const PAGE_H = 1024;
@@ -221,11 +224,15 @@ function BselWatermark() {
     }
   }
 
+  const EMBLEM_SIZE = 362;
+  const EMBLEM_X = PAGE_W / 2 - EMBLEM_SIZE / 2;
+  const EMBLEM_Y = PAGE_H / 2 - EMBLEM_SIZE / 2;
+
   return (
     <div
       aria-hidden="true"
       className="absolute inset-0 overflow-hidden pointer-events-none select-none"
-      style={{ zIndex: 0 }}
+      style={{ zIndex: 2 }}
     >
       <svg
         viewBox={`0 0 ${PAGE_W} ${PAGE_H}`}
@@ -241,50 +248,86 @@ function BselWatermark() {
               height={FRAME_CLIP.height}
             />
           </clipPath>
+
+          {/* Soft radial fade: black = hide tiles (centre), white = show tiles (edges) */}
+          <radialGradient id="bsel-emblem-fade" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="black" />
+            <stop offset="72%" stopColor="black" />
+            <stop offset="100%" stopColor="white" />
+          </radialGradient>
+
+          <mask id="bsel-watermark-mask" maskUnits="userSpaceOnUse" x="0" y="0" width={PAGE_W} height={PAGE_H}>
+            <rect x="0" y="0" width={PAGE_W} height={PAGE_H} fill="white" />
+            <rect
+              x={EMBLEM_X}
+              y={EMBLEM_Y}
+              width={EMBLEM_SIZE}
+              height={EMBLEM_SIZE}
+              fill="url(#bsel-emblem-fade)"
+            />
+          </mask>
         </defs>
 
         <g clipPath="url(#bsel-watermark-clip)">
-          {tiles.map((t) => (
-            <text
-              key={t.key}
-              x={t.x}
-              y={t.y}
-              textAnchor="middle"
-              dominantBaseline="middle"
-              fontFamily="'Times New Roman', Times, serif"
-              fontWeight="700"
-              fontSize={TILE_FONT_SIZE}
-              fill="#0b2a55"
-              fillOpacity={TILE_OPACITY}
-            >
-              {WATERMARK_TEXT}
-            </text>
-          ))}
+          <g mask="url(#bsel-watermark-mask)">
+            {tiles.map((t) => (
+              <text
+                key={t.key}
+                x={t.x}
+                y={t.y}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fontFamily="'Times New Roman', Times, serif"
+                fontWeight="700"
+                fontSize={TILE_FONT_SIZE}
+                fill="#0b2a55"
+                fillOpacity={TILE_OPACITY}
+              >
+                {WATERMARK_TEXT}
+              </text>
+            ))}
+          </g>
         </g>
+
+        {/* Centre emblem: drawn last, on the clean area */}
+        <image
+          href={WATERMARK_LOGO_SRC}
+          x={EMBLEM_X}
+          y={EMBLEM_Y}
+          width={EMBLEM_SIZE}
+          height={EMBLEM_SIZE}
+          opacity={CENTER_OPACITY}
+          preserveAspectRatio="xMidYMid meet"
+        />
       </svg>
     </div>
   );
 }
 
-// Center emblem: its own layer, above the watermark and the template
+// Center emblem: SVG layer on the 724 x 1024 grid, above the watermark and template
 function CenterLogo() {
+  const SIZE = 362;            // 50% of the 724 page width
+  const CX = 362;              // page centre X
+  const CY = 512;              // page centre Y
+
   return (
-    <img
-      src={WATERMARK_LOGO_SRC}
-      alt=""
-      draggable={false}
+    <svg
+      viewBox="0 0 724 1024"
+      preserveAspectRatio="xMidYMid meet"
+      className="absolute inset-0 w-full h-full pointer-events-none"
+      style={{ zIndex: 3 }}
       aria-hidden="true"
-      className="absolute pointer-events-none select-none"
-      style={{
-        left: '50%',
-        top: '50%',
-        width: CENTER_LOGO_WIDTH,
-        height: 'auto',
-        opacity: CENTER_OPACITY,
-        transform: 'translate(-50%, -50%)',
-        zIndex: 2,
-      }}
-    />
+    >
+      <image
+        href={WATERMARK_LOGO_SRC}
+        x={CX - SIZE / 2}
+        y={CY - SIZE / 2}
+        width={SIZE}
+        height={SIZE}
+        opacity={CENTER_OPACITY}
+        preserveAspectRatio="xMidYMid meet"
+      />
+    </svg>
   );
 }
 // ============================================================
