@@ -37,7 +37,6 @@ const TILE_ROWS = 48;
 const TILE_FONT_SIZE = 11;
 const TILE_OPACITY = 0.08;
 
-const CENTER_LOGO_WIDTH = '50%';
 const CENTER_OPACITY = 0.09;
 
 // Default header values (right-side block of the marksheet)
@@ -202,6 +201,14 @@ export const getCourseSubjectModules = (courseName = '') => {
 };
 
 // ============================================================
+// HELPERS
+// ============================================================
+
+// Returns the first value that is a non-empty string
+const firstText = (...values) =>
+  values.find((v) => typeof v === 'string' && v.trim()) || '';
+
+// ============================================================
 // WATERMARK LAYER
 // ============================================================
 
@@ -307,33 +314,6 @@ function BselWatermark() {
   );
 }
 
-// Center emblem: SVG layer on the 724 x 1024 grid, above the watermark and template
-function CenterLogo() {
-  const SIZE = 362;            // 50% of the 724 page width
-  const CX = 362;              // page centre X
-  const CY = 512;              // page centre Y
-
-  return (
-    <svg
-      viewBox="0 0 724 1024"
-      preserveAspectRatio="xMidYMid meet"
-      className="absolute inset-0 w-full h-full pointer-events-none"
-      style={{ zIndex: 3 }}
-      aria-hidden="true"
-    >
-      <image
-        href={WATERMARK_LOGO_SRC}
-        x={CX - SIZE / 2}
-        y={CY - SIZE / 2}
-        width={SIZE}
-        height={SIZE}
-        opacity={CENTER_OPACITY}
-        preserveAspectRatio="xMidYMid meet"
-      />
-    </svg>
-  );
-}
-
 // ============================================================
 // OFFICIAL MARKSHEET COMPONENT
 // ============================================================
@@ -371,72 +351,48 @@ export default function OfficialMarksheetView({
 
   const defaultBranchName = String(defaultBranch).toUpperCase();
 
-  const [customDirectorSign, setCustomDirectorSign] = useState(() => {
-    return (student?.directorSignature !== undefined && student?.directorSignature !== null)
-      ? student.directorSignature
-      : (student?.signature || readStudentCustomSignature(scopeKey) || null);
-  });
+  // Resolves branding: student-level values first, then saved per-student values, then defaults
+  const readBranding = () => {
+    const saved = readStudentCustomHeader(scopeKey) || {};
+    return {
+      name: firstText(student?.schoolName, saved.name) || defaultBranchName,
+      subtitle: firstText(student?.schoolSubtitle, saved.subtitle) || DEFAULT_SCHOOL_SUBTITLE,
+      motto: firstText(student?.schoolMotto, saved.motto) || DEFAULT_SCHOOL_MOTTO,
+      logo: student?.schoolLogo ?? saved.logo ?? null,
+      sign:
+        student?.directorSignature ??
+        student?.signature ??
+        readStudentCustomSignature(scopeKey) ??
+        null,
+    };
+  };
 
-  const [customSchoolName, setCustomSchoolName] = useState(() => {
-    const saved = readStudentCustomHeader(scopeKey);
-    return (student?.schoolName && student.schoolName.trim())
-      ? student.schoolName
-      : (saved?.name || defaultBranchName);
-  });
-
-  const [customSchoolSubtitle, setCustomSchoolSubtitle] = useState(() => {
-    const saved = readStudentCustomHeader(scopeKey);
-    return (student?.schoolSubtitle && student.schoolSubtitle.trim())
-      ? student.schoolSubtitle
-      : (saved?.subtitle || 'VISION FOUNDATION');
-  });
-
-  const [customSchoolMotto, setCustomSchoolMotto] = useState(() => {
-    const saved = readStudentCustomHeader(scopeKey);
-    return (student?.schoolMotto && student.schoolMotto.trim())
-      ? student.schoolMotto
-      : (saved?.motto || 'EDUCATION • EMPOWERMENT • EXCELLENCE');
-  });
-
-  const [customSchoolLogo, setCustomSchoolLogo] = useState(() => {
-    const saved = readStudentCustomHeader(scopeKey);
-    return (student?.schoolLogo !== undefined && student?.schoolLogo !== null)
-      ? student.schoolLogo
-      : (saved?.logo || null);
-  });
+  const [customDirectorSign, setCustomDirectorSign] = useState(() => readBranding().sign);
+  const [customSchoolName, setCustomSchoolName] = useState(() => readBranding().name);
+  const [customSchoolSubtitle, setCustomSchoolSubtitle] = useState(() => readBranding().subtitle);
+  const [customSchoolMotto, setCustomSchoolMotto] = useState(() => readBranding().motto);
+  const [customSchoolLogo, setCustomSchoolLogo] = useState(() => readBranding().logo);
 
   // Re-sync whenever student / scopeKey changes (prevent cross-student leakage)
   useEffect(() => {
-    const customH = readStudentCustomHeader(scopeKey);
-    const customSign = readStudentCustomSignature(scopeKey);
+    const b = readBranding();
+    setCustomSchoolName(b.name);
+    setCustomSchoolSubtitle(b.subtitle);
+    setCustomSchoolMotto(b.motto);
+    setCustomSchoolLogo(b.logo);
+    setCustomDirectorSign(b.sign);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    scopeKey,
+    defaultBranchName,
+    student?.schoolName,
+    student?.schoolSubtitle,
+    student?.schoolMotto,
+    student?.schoolLogo,
+    student?.directorSignature,
+  ]);
 
-    setCustomSchoolName(
-      (student?.schoolName && student.schoolName.trim())
-        ? student.schoolName
-        : (customH?.name !== undefined ? customH.name : defaultBranchName)
-    );
-    setCustomSchoolSubtitle(
-      (student?.schoolSubtitle && student.schoolSubtitle.trim())
-        : (customH?.subtitle !== undefined ? customH.subtitle : 'VISION FOUNDATION')
-    );
-    setCustomSchoolMotto(
-      (student?.schoolMotto && student.schoolMotto.trim())
-        ? student.schoolMotto
-        : (customH?.motto !== undefined ? customH.motto : 'EDUCATION • EMPOWERMENT • EXCELLENCE')
-    );
-    setCustomSchoolLogo(
-      (student?.schoolLogo !== undefined && student?.schoolLogo !== null)
-        ? student.schoolLogo
-        : (customH?.logo !== undefined ? customH.logo : null)
-    );
-    setCustomDirectorSign(
-      (student?.directorSignature !== undefined && student?.directorSignature !== null)
-        ? student.directorSignature
-        : (customSign !== null ? customSign : null)
-    );
-  }, [scopeKey, defaultBranchName, student?.schoolName, student?.schoolSubtitle, student?.schoolMotto, student?.schoolLogo, student?.directorSignature]);
-
-  // Real-time synchronization across Certificate and Marksheet for the same student or franchise
+  // Live updates: franchise/school branding (shared) and per-student header/signature
   useEffect(() => {
     const handleFranchiseBrandingUpdate = (e) => {
       const fb = e.detail?.branding || e.detail?.franchise;
@@ -448,25 +404,30 @@ export default function OfficialMarksheetView({
         if (fb.signature !== undefined) setCustomDirectorSign(fb.signature);
       }
     };
-    window.addEventListener('bsel_franchise_branding_updated', handleFranchiseBrandingUpdate);
-    window.addEventListener('bsel_school_branding_updated', handleFranchiseBrandingUpdate);
-    return () => {
-      window.removeEventListener('bsel_franchise_branding_updated', handleFranchiseBrandingUpdate);
-      window.removeEventListener('bsel_school_branding_updated', handleFranchiseBrandingUpdate);
-    };
-  }, []);
+
+    const handleHeaderUpdate = (e) => {
+      if (e.detail?.scopeKey === scopeKey) {
+        const d = e.detail.data;
+        if (d?.name !== undefined) setCustomSchoolName(d.name);
+        if (d?.subtitle !== undefined) setCustomSchoolSubtitle(d.subtitle);
         if (d?.motto !== undefined) setCustomSchoolMotto(d.motto);
         if (d?.logo !== undefined) setCustomSchoolLogo(d.logo);
       }
     };
+
     const handleSignUpdate = (e) => {
       if (e.detail?.scopeKey === scopeKey) {
         setCustomDirectorSign(e.detail.signature || null);
       }
     };
+
+    window.addEventListener('bsel_franchise_branding_updated', handleFranchiseBrandingUpdate);
+    window.addEventListener('bsel_school_branding_updated', handleFranchiseBrandingUpdate);
     window.addEventListener('bsel_student_custom_header_updated', handleHeaderUpdate);
     window.addEventListener('bsel_student_custom_signature_updated', handleSignUpdate);
     return () => {
+      window.removeEventListener('bsel_franchise_branding_updated', handleFranchiseBrandingUpdate);
+      window.removeEventListener('bsel_school_branding_updated', handleFranchiseBrandingUpdate);
       window.removeEventListener('bsel_student_custom_header_updated', handleHeaderUpdate);
       window.removeEventListener('bsel_student_custom_signature_updated', handleSignUpdate);
     };
