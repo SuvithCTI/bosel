@@ -440,43 +440,69 @@ const buildTableWordHtml = (records, subjectColCount, branch) => {
 
 // ------------------------------------------------
 // PROFESSIONAL TABLE VIEW (Table PDF and Print Table)
+// Sized for A4 landscape with 8mm margins (about 1062px of printable width).
 // ------------------------------------------------
 
 const EXPORT_WIDTH = 1060;
-const CELL_BORDER = `1.2px solid ${NAVY}`;
 const FRAME_BORDER = 3;
 const FRAME_PAD = 4;
 const GOLD = '#b8892f';
 const GOLD_BORDER = 1;
 const INNER_PAD = 16;
 
-const exportCell = {
-  border: CELL_BORDER,
-  padding: '5px 2px',
-  fontSize: '10px',
+// Usable width inside the frames and padding
+const TABLE_INNER_WIDTH =
+  EXPORT_WIDTH - 2 * (FRAME_BORDER + FRAME_PAD + GOLD_BORDER + INNER_PAD);
+
+// Line weights: thin for cells, heavier for subject groups and the outer edge
+const CELL_LINE = `1px solid ${NAVY}`;
+const GROUP_LINE = `2px solid ${NAVY}`;
+const OUTER_LINE = `2.5px solid ${NAVY}`;
+
+// Column widths in px for the fixed columns
+const FIXED_COLS = { sno: 26, name: 118, id: 74, total: 58, pct: 46, grade: 40 };
+
+// Column widths in px for each subject: R1..R4, Avg, Tot
+const SUB_WIDTHS = [20, 20, 20, 20, 25, 25];
+const EXPORT_SUB_HEADS = ['R1', 'R2', 'R3', 'R4', 'Avg', 'Tot'];
+
+const cellStyle = (extra = {}) => ({
+  border: CELL_LINE,
+  padding: '4px 1px',
+  fontSize: '8.5px',
+  lineHeight: 1.2,
   textAlign: 'center',
   color: NAVY,
   verticalAlign: 'middle',
   overflow: 'hidden',
-};
+  whiteSpace: 'nowrap',
+  ...extra,
+});
 
-const exportHead = {
-  border: CELL_BORDER,
-  padding: '5px 2px',
-  fontSize: '10px',
+const headStyle = (extra = {}) => ({
+  border: CELL_LINE,
+  padding: '4px 1px',
+  fontSize: '8px',
   fontWeight: 700,
   textAlign: 'center',
   background: NAVY,
   color: '#ffffff',
+  verticalAlign: 'middle',
   overflow: 'hidden',
-};
+  whiteSpace: 'nowrap',
+  ...extra,
+});
 
 const TableExportView = ({ records, subjectColCount, branch }) => {
   const todayText = formatDate(new Date().toISOString());
+  const subs = Math.max(subjectColCount, 1);
 
-  const FIXED = { sno: 4, name: 12, id: 9, total: 7, pct: 6, grade: 5 };
-  const fixedTotal = Object.values(FIXED).reduce((a, b) => a + b, 0);
-  const subColPct = (100 - fixedTotal) / Math.max(subjectColCount * SUB_COLS, 1);
+  // Shrink subject columns only if there are more subjects than fit
+  const fixedSum = Object.values(FIXED_COLS).reduce((a, b) => a + b, 0);
+  const subBase = SUB_WIDTHS.reduce((a, b) => a + b, 0);
+  const available = TABLE_INNER_WIDTH - fixedSum;
+  const scale = Math.min(1, available / (subs * subBase));
+  const subWidths = SUB_WIDTHS.map((w) => w * scale);
 
   return (
     <div
@@ -488,6 +514,7 @@ const TableExportView = ({ records, subjectColCount, branch }) => {
         color: NAVY,
       }}
     >
+      {/* Outer navy frame */}
       <div
         style={{
           border: `${FRAME_BORDER}px solid ${NAVY}`,
@@ -495,6 +522,7 @@ const TableExportView = ({ records, subjectColCount, branch }) => {
           boxSizing: 'border-box',
         }}
       >
+        {/* Inner gold frame */}
         <div
           style={{
             border: `${GOLD_BORDER}px solid ${GOLD}`,
@@ -502,6 +530,7 @@ const TableExportView = ({ records, subjectColCount, branch }) => {
             boxSizing: 'border-box',
           }}
         >
+          {/* Header */}
           <div style={{ textAlign: 'center', marginBottom: '10px' }}>
             <div style={{ fontSize: '26px', fontWeight: 900, lineHeight: 1.1 }}>
               B<span style={{ color: GOLD }}>★</span>SEL
@@ -512,6 +541,7 @@ const TableExportView = ({ records, subjectColCount, branch }) => {
             <div style={{ fontSize: '12px', marginTop: '3px', fontWeight: 700 }}>{branch}</div>
           </div>
 
+          {/* Title band */}
           <div
             style={{
               background: NAVY,
@@ -527,43 +557,64 @@ const TableExportView = ({ records, subjectColCount, branch }) => {
             STUDENT MARKS &amp; REVISION TEST DASHBOARD
           </div>
 
+          {/* Marks table */}
           <table
             style={{
-              width: '100%',
+              width: `${TABLE_INNER_WIDTH}px`,
               borderCollapse: 'collapse',
               tableLayout: 'fixed',
               marginTop: '8px',
-              border: `2px solid ${NAVY}`,
+              border: OUTER_LINE,
             }}
           >
             <colgroup>
-              <col style={{ width: `${FIXED.sno}%` }} />
-              <col style={{ width: `${FIXED.name}%` }} />
-              <col style={{ width: `${FIXED.id}%` }} />
-              {Array.from({ length: subjectColCount * SUB_COLS }).map((_, i) => (
-                <col key={i} style={{ width: `${subColPct}%` }} />
-              ))}
-              <col style={{ width: `${FIXED.total}%` }} />
-              <col style={{ width: `${FIXED.pct}%` }} />
-              <col style={{ width: `${FIXED.grade}%` }} />
+              <col style={{ width: `${FIXED_COLS.sno}px` }} />
+              <col style={{ width: `${FIXED_COLS.name}px` }} />
+              <col style={{ width: `${FIXED_COLS.id}px` }} />
+              {Array.from({ length: subs }).map((_, i) =>
+                subWidths.map((w, k) => (
+                  <col key={`${i}-${k}`} style={{ width: `${w}px` }} />
+                ))
+              )}
+              <col style={{ width: `${FIXED_COLS.total}px` }} />
+              <col style={{ width: `${FIXED_COLS.pct}px` }} />
+              <col style={{ width: `${FIXED_COLS.grade}px` }} />
             </colgroup>
 
             <thead>
               <tr>
-                <th rowSpan={2} style={exportHead}>S.No</th>
-                <th rowSpan={2} style={{ ...exportHead, textAlign: 'left' }}>Student Name</th>
-                <th rowSpan={2} style={exportHead}>Student ID</th>
-                {Array.from({ length: subjectColCount }).map((_, i) => (
-                  <th key={i} colSpan={SUB_COLS} style={exportHead}>Sub {i + 1}</th>
+                <th rowSpan={2} style={headStyle()}>S.No</th>
+                <th rowSpan={2} style={headStyle({ textAlign: 'left', paddingLeft: '4px' })}>
+                  Student Name
+                </th>
+                <th rowSpan={2} style={headStyle()}>Student ID</th>
+                {Array.from({ length: subs }).map((_, i) => (
+                  <th
+                    key={i}
+                    colSpan={EXPORT_SUB_HEADS.length}
+                    style={headStyle({ borderLeft: GROUP_LINE, borderRight: GROUP_LINE, fontSize: '9px' })}
+                  >
+                    Sub {i + 1}
+                  </th>
                 ))}
-                <th rowSpan={2} style={exportHead}>Total</th>
-                <th rowSpan={2} style={exportHead}>%</th>
-                <th rowSpan={2} style={exportHead}>Grade</th>
+                <th rowSpan={2} style={headStyle({ borderLeft: GROUP_LINE })}>Total</th>
+                <th rowSpan={2} style={headStyle()}>%</th>
+                <th rowSpan={2} style={headStyle()}>Grade</th>
               </tr>
               <tr>
-                {Array.from({ length: subjectColCount }).map((_, i) =>
-                  SUB_SUB_HEADS.map((h, k) => (
-                    <th key={`${i}-${k}`} style={exportHead}>{h}</th>
+                {Array.from({ length: subs }).map((_, i) =>
+                  EXPORT_SUB_HEADS.map((h, k) => (
+                    <th
+                      key={`${i}-${k}`}
+                      style={headStyle({
+                        fontSize: '7.5px',
+                        borderLeft: k === 0 ? GROUP_LINE : CELL_LINE,
+                        borderRight: k === EXPORT_SUB_HEADS.length - 1 ? GROUP_LINE : CELL_LINE,
+                        background: k >= 4 ? '#163e7c' : NAVY,
+                      })}
+                    >
+                      {h}
+                    </th>
                   ))
                 )}
               </tr>
@@ -574,56 +625,68 @@ const TableExportView = ({ records, subjectColCount, branch }) => {
                 const rowBg = idx % 2 === 1 ? '#f4f8fc' : '#ffffff';
                 return (
                   <tr key={rec.key} style={{ background: rowBg, pageBreakInside: 'avoid' }}>
-                    <td style={exportCell}>{idx + 1}</td>
+                    <td style={cellStyle()}>{idx + 1}</td>
                     <td
-                      style={{
-                        ...exportCell,
+                      style={cellStyle({
                         textAlign: 'left',
+                        paddingLeft: '4px',
                         fontWeight: 700,
                         textTransform: 'capitalize',
+                        whiteSpace: 'normal',
                         wordBreak: 'break-word',
-                        fontSize: '11px',
-                      }}
+                        fontSize: '9px',
+                      })}
                     >
                       {rec.student.studentName}
                     </td>
-                    <td style={{ ...exportCell, wordBreak: 'break-all' }}>{rec.student.userId}</td>
-                    {Array.from({ length: subjectColCount }).map((_, i) =>
+                    <td style={cellStyle({ wordBreak: 'break-all' })}>{rec.student.userId}</td>
+
+                    {Array.from({ length: subs }).map((_, i) =>
                       subjectCells(rec.saved, i).map((v, k) => (
                         <td
                           key={`${i}-${k}`}
-                          style={{
-                            ...exportCell,
+                          style={cellStyle({
                             fontWeight: k >= 4 ? 700 : 400,
-                          }}
+                            borderLeft: k === 0 ? GROUP_LINE : CELL_LINE,
+                            borderRight: k === EXPORT_SUB_HEADS.length - 1 ? GROUP_LINE : CELL_LINE,
+                          })}
                         >
                           {dv(v)}
                         </td>
                       ))
                     )}
-                    <td style={{ ...exportCell, fontWeight: 700 }}>{totalCell(rec.saved)}</td>
-                    <td style={exportCell}>{pctCell(rec.saved)}</td>
-                    <td style={{ ...exportCell, fontWeight: 700 }}>{dv(rec.saved.overallGrade)}</td>
+
+                    <td style={cellStyle({ fontWeight: 700, borderLeft: GROUP_LINE })}>
+                      {totalCell(rec.saved)}
+                    </td>
+                    <td style={cellStyle()}>{pctCell(rec.saved)}</td>
+                    <td style={cellStyle({ fontWeight: 700 })}>{dv(rec.saved.overallGrade)}</td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
 
+          {/* Legend and signature */}
+          <div style={{ marginTop: '6px', fontSize: '9px', color: NAVY }}>
+            R1–R4 = weekly revision tests (/40 each) · Avg = average of the four revisions (/40) ·
+            Tot = Avg + final exam converted to /60 (/100)
+          </div>
+
           <div
             style={{
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'flex-end',
-              marginTop: '26px',
-              fontSize: '11px',
+              marginTop: '22px',
+              fontSize: '10px',
             }}
           >
             <div>Generated on {todayText}</div>
             <div
               style={{
                 borderTop: `1px solid ${NAVY}`,
-                width: '220px',
+                width: '200px',
                 paddingTop: '4px',
                 fontWeight: 700,
                 textAlign: 'center',
@@ -1225,41 +1288,51 @@ export default function BranchStudentMarksheetPage({
   return (
     <div className="space-y-2 animate-in fade-in duration-200">
       <style>{`
-        @media print {
-          body.bsel-print-single * { visibility: hidden !important; }
-          body.bsel-print-single #marksheet-print-area,
-          body.bsel-print-single #marksheet-print-area * { visibility: visible !important; }
-          body.bsel-print-single #marksheet-print-area {
-            position: absolute !important;
-            left: 0 !important;
-            top: 0 !important;
-            width: 100% !important;
-            max-width: none !important;
-            margin: 0 !important;
-            padding: 0 !important;
-          }
+  @media print {
+    body.bsel-print-single * { visibility: hidden !important; }
+    body.bsel-print-single #marksheet-print-area,
+    body.bsel-print-single #marksheet-print-area * { visibility: visible !important; }
+    body.bsel-print-single #marksheet-print-area {
+      position: absolute !important;
+      left: 0 !important;
+      top: 0 !important;
+      width: 100% !important;
+      max-width: none !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
 
-          body.bsel-print-table * { visibility: hidden !important; }
-          body.bsel-print-table #${PRINT_ROOT_ID},
-          body.bsel-print-table #${PRINT_ROOT_ID} * { visibility: visible !important; }
-          body.bsel-print-table #${PRINT_ROOT_ID} {
-            position: absolute !important;
-            left: 0 !important;
-            top: 0 !important;
-            width: 100% !important;
-            margin: 0 !important;
-            padding: 0 !important;
-          }
-          body.bsel-print-table #${PRINT_ROOT_ID},
-          body.bsel-print-table #${PRINT_ROOT_ID} * {
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-          }
+    /* Table print: remove the whole app from layout so no blank pages are created */
+    body.bsel-print-table {
+      height: auto !important;
+      overflow: visible !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      background: #ffffff !important;
+    }
+    body.bsel-print-table #root {
+      display: none !important;
+    }
+    body.bsel-print-table * { visibility: hidden !important; }
+    body.bsel-print-table #${PRINT_ROOT_ID},
+    body.bsel-print-table #${PRINT_ROOT_ID} * { visibility: visible !important; }
+    body.bsel-print-table #${PRINT_ROOT_ID} {
+      position: absolute !important;
+      left: 0 !important;
+      top: 0 !important;
+      width: 100% !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+    body.bsel-print-table #${PRINT_ROOT_ID},
+    body.bsel-print-table #${PRINT_ROOT_ID} * {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
 
-          .no-print { display: none !important; }
-        }
-      `}</style>
-
+    .no-print { display: none !important; }
+  }
+`}</style>
       {/* TOP BAR */}
       <div className="flex items-center justify-between gap-2 sm:gap-3">
         <div className="min-w-0">
