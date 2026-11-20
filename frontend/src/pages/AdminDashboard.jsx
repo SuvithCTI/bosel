@@ -1391,9 +1391,16 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
     <div className="admin-mobile min-h-screen bg-slate-100 font-sans text-slate-900 pb-20 lg:pb-12">
       
       <style>{`
-        /* Smooth touch scrolling for wide data tables */
+        /* Smooth touch scrolling for wide data tables with hidden scrollbars */
         .admin-table-container {
           -webkit-overflow-scrolling: touch;
+          scrollbar-width: none !important;
+          -ms-overflow-style: none !important;
+        }
+        .admin-table-container::-webkit-scrollbar {
+          display: none !important;
+          width: 0 !important;
+          height: 0 !important;
         }
 
         @media (max-width: 640px) {

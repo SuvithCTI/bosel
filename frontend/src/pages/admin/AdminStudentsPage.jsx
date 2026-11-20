@@ -358,8 +358,11 @@ export default function AdminStudentsPage({
               </div>
 
               {/* DESKTOP VIEW (hidden lg:block): Full Wide Roster Table */}
-              <div className="hidden lg:block w-full overflow-x-auto admin-table-container">
-                <table className="w-full text-left text-xs min-w-[760px]">
+              <div 
+                className="hidden lg:block w-full overflow-x-auto no-scrollbar admin-table-container"
+                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+              >
+                <table className="w-full text-left text-xs">
                   <thead className="bg-[#081d3d] text-white uppercase text-[10px] tracking-wider font-black">
                     <tr>
                       {isMergeMode && (
