@@ -18,6 +18,7 @@ import {
   ClipboardList,
   Eye,
   Trash2,
+  ArrowLeft
 } from 'lucide-react';
 
 import OfficialMarksheetView, {
@@ -32,6 +33,8 @@ import {
   readMarksheets,
   writeMarksheets,
 } from '../../utils/marksheetStorage';
+import { getRegisteredUsers } from '../../utils/authStorage';
+import { isStudentUser } from '../../utils/studentValidator';
 import { exportPdfFromElement } from '../../utils/pdfExport';
 
 const PLACEHOLDER_ROWS = 3;
@@ -706,10 +709,16 @@ const TableExportView = ({ records, subjectColCount, branch }) => {
 // ------------------------------------------------
 
 export default function BranchStudentMarksheetPage({
-  activeBranch,
+  activeBranch = 'Tenkasi Branch',
   branchStudents = [],
   onBack,
+  portalType = null,
+  entityName = null,
+  entityId = null,
+  title = null,
+  subtitle = null,
 }) {
+  const scopeKey = entityId || entityName || activeBranch || 'default';
   const [searchId, setSearchId] = useState('');
   const [student, setStudent] = useState(null);
 
@@ -718,13 +727,13 @@ export default function BranchStudentMarksheetPage({
   const [savedData, setSavedData] = useState(null);
 
   // Which weekly test is being entered right now
-  const [activeStage, setActiveStage] = useState(() => readStage(activeBranch));
+  const [activeStage, setActiveStage] = useState(() => readStage(scopeKey));
 
   const [isEditing, setIsEditing] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  const [sessionRecords, setSessionRecords] = useState(() => readSession(activeBranch));
+  const [sessionRecords, setSessionRecords] = useState(() => readSession(scopeKey));
 
   const [previewRecord, setPreviewRecord] = useState(null);
   const [isExporting, setIsExporting] = useState(false);
@@ -737,12 +746,12 @@ export default function BranchStudentMarksheetPage({
   const tableExportRef = useRef(null);
 
   useEffect(() => {
-    writeSession(activeBranch, sessionRecords);
-  }, [sessionRecords, activeBranch]);
+    writeSession(scopeKey, sessionRecords);
+  }, [sessionRecords, scopeKey]);
 
   useEffect(() => {
-    writeStage(activeBranch, activeStage);
-  }, [activeStage, activeBranch]);
+    writeStage(scopeKey, activeStage);
+  }, [activeStage, scopeKey]);
 
   // ------------------------------------------------
   // CURRENT RESULTS (live, from the entry fields)
@@ -798,16 +807,33 @@ export default function BranchStudentMarksheetPage({
       return;
     }
 
-    const foundStudent = branchStudents.find((st) => {
+    const pool = (branchStudents && branchStudents.length > 0)
+      ? branchStudents
+      : getRegisteredUsers().filter(isStudentUser);
+
+    let foundStudent = pool.find((st) => {
       return (
         normalize(st.userId) === query ||
         normalize(st.registerNumber) === query ||
-        normalize(st.registrationNo) === query
+        normalize(st.registrationNo) === query ||
+        normalize(st.phone) === query
       );
     });
 
     if (!foundStudent) {
-      setError('Student not found in this branch. Please check the Student ID.');
+      const allStudents = getRegisteredUsers().filter(isStudentUser);
+      foundStudent = allStudents.find((st) => {
+        return (
+          normalize(st.userId) === query ||
+          normalize(st.registerNumber) === query ||
+          normalize(st.registrationNo) === query ||
+          normalize(st.phone) === query
+        );
+      });
+    }
+
+    if (!foundStudent) {
+      setError(`Student not found for "${searchId.trim()}". Please verify the Student ID or Register Number.`);
       return;
     }
 
@@ -1335,18 +1361,33 @@ export default function BranchStudentMarksheetPage({
 `}</style>
       {/* TOP BAR */}
       <div className="flex items-center justify-between gap-2 sm:gap-3">
-        <div className="min-w-0">
-          <h1 className="text-sm sm:text-base font-black text-slate-950 leading-tight">
-            Student Marksheet
-          </h1>
-          <p className="text-[10px] sm:text-[11px] text-slate-500 leading-tight truncate">
-            Weekly revision tests and final exam
-          </p>
+        <div className="flex items-center gap-2.5 min-w-0">
+          {onBack && (
+            <button
+              type="button"
+              onClick={onBack}
+              className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 text-[#0c234b] text-xs font-black transition flex items-center gap-1 cursor-pointer shrink-0 shadow-xs active:scale-95"
+              title="Go Back"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Back</span>
+            </button>
+          )}
+          <div className="min-w-0">
+            <h1 className="text-sm sm:text-base font-black text-slate-950 leading-tight">
+              {title || 'Student Marksheet'}
+            </h1>
+            <p className="text-[10px] sm:text-[11px] text-slate-500 leading-tight truncate">
+              {subtitle || 'Weekly revision tests and final exam'}
+            </p>
+          </div>
         </div>
 
         <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 bg-sky-50 border border-sky-100 rounded-xl shrink-0">
           <GraduationCap className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-sky-700" />
-          <span className="text-[10px] sm:text-xs font-bold text-sky-900">{activeBranch}</span>
+          <span className="text-[10px] sm:text-xs font-bold text-sky-900">
+            {entityName || activeBranch}
+          </span>
         </div>
       </div>
 

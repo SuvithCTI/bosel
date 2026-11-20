@@ -22,7 +22,8 @@ import {
   UserCheck,
   Award,
   RefreshCw,
-  ArrowRight
+  ArrowRight,
+  ClipboardList
 } from 'lucide-react';
 
 import {
@@ -31,6 +32,7 @@ import {
   deleteStaffMember
 } from '../../utils/staffStorage';
 import { setActiveSession } from '../../utils/authStorage';
+import BranchStudentMarksheetPage from './BranchStudentMarksheetPage';
 
 export default function AdminBranchStaffPage({
   activeBranch = 'Tenkasi Branch',
@@ -38,6 +40,8 @@ export default function AdminBranchStaffPage({
   showToast = () => {}
 }) {
   const [staffList, setStaffList] = useState(() => getStoredStaff(activeBranch));
+  const [activeSubTab, setActiveSubTab] = useState('staff'); // 'staff' | 'marksheet'
+  const [selectedStaffForMarksheet, setSelectedStaffForMarksheet] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [copiedKey, setCopiedKey] = useState(null);
   const [visiblePasswords, setVisiblePasswords] = useState({});
@@ -232,6 +236,25 @@ export default function AdminBranchStaffPage({
     );
   }, [staffList, searchQuery]);
 
+  if (activeSubTab === 'marksheet' || selectedStaffForMarksheet) {
+    return (
+      <div className="space-y-4 animate-in fade-in duration-200">
+        <BranchStudentMarksheetPage
+          activeBranch={activeBranch}
+          portalType="staff"
+          entityName={selectedStaffForMarksheet ? `${selectedStaffForMarksheet.name} (${selectedStaffForMarksheet.designation || 'Staff'})` : 'Staff Management'}
+          entityId={selectedStaffForMarksheet?.id}
+          title={selectedStaffForMarksheet ? `${selectedStaffForMarksheet.name} Marksheet` : 'Staff Student Marksheet'}
+          subtitle="Weekly revision tests and final exam evaluation"
+          onBack={() => {
+            setSelectedStaffForMarksheet(null);
+            setActiveSubTab('staff');
+          }}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4 animate-in fade-in duration-200">
       {/* Header Banner */}
@@ -256,6 +279,34 @@ export default function AdminBranchStaffPage({
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
+          {/* Sub-tab navigation */}
+          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
+            <button
+              type="button"
+              onClick={() => { setSelectedStaffForMarksheet(null); setActiveSubTab('staff'); }}
+              className={`px-3 py-1.5 rounded-lg text-xs font-black transition cursor-pointer flex items-center gap-1.5 ${
+                activeSubTab === 'staff' && !selectedStaffForMarksheet
+                  ? 'bg-white text-[#0c234b] shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Users className="w-3.5 h-3.5" />
+              <span>Staff Faculty</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => { setSelectedStaffForMarksheet(null); setActiveSubTab('marksheet'); }}
+              className={`px-3 py-1.5 rounded-lg text-xs font-black transition cursor-pointer flex items-center gap-1.5 ${
+                activeSubTab === 'marksheet'
+                  ? 'bg-[#0c234b] text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <ClipboardList className="w-3.5 h-3.5 text-amber-400" />
+              <span>Student Marksheet</span>
+            </button>
+          </div>
+
           {/* Search */}
           <div className="relative flex-1 sm:w-56 lg:w-64 min-w-[180px]">
             <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -450,6 +501,17 @@ export default function AdminBranchStaffPage({
                 <UserCheck className="w-3.5 h-3.5 text-amber-400 group-hover:scale-110 transition-transform" />
                 <span>Go to Staff Portal</span>
                 <ArrowRight className="w-3.5 h-3.5 text-amber-400 group-hover:translate-x-0.5 transition-transform" />
+              </button>
+
+              {/* Direct Open Student Marksheet for Staff */}
+              <button
+                type="button"
+                onClick={() => setSelectedStaffForMarksheet(staff)}
+                className="w-full py-2 px-3 rounded-xl bg-sky-50 hover:bg-sky-100 border border-sky-200 text-sky-950 text-xs font-black flex items-center justify-center gap-1.5 shadow-xs transition cursor-pointer"
+                title={`Enter student marks for ${staff.name}`}
+              >
+                <ClipboardList className="w-3.5 h-3.5 text-sky-600" />
+                <span>Student Marksheet</span>
               </button>
             </div>
           );

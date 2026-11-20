@@ -15,7 +15,8 @@ import {
   Sparkles,
   X,
   Save,
-  Check
+  Check,
+  ClipboardList
 } from 'lucide-react';
 import {
   getStoredSchools,
@@ -26,6 +27,7 @@ import {
 } from '../../utils/schoolStorage';
 import { setActiveSession, getActiveSession } from '../../utils/authStorage';
 import SchoolCertificateBrandingModal from '../../components/SchoolCertificateBrandingModal';
+import BranchStudentMarksheetPage from './BranchStudentMarksheetPage';
 
 export default function AdminBranchSchoolsPage({
   activeBranch = 'Tenkasi Branch',
@@ -38,6 +40,8 @@ export default function AdminBranchSchoolsPage({
   const [editingSchool, setEditingSchool] = useState(null);
   const [visiblePasswords, setVisiblePasswords] = useState({});
   const [brandingModalSchool, setBrandingModalSchool] = useState(null);
+  const [activeSubTab, setActiveSubTab] = useState('schools'); // 'schools' | 'marksheet'
+  const [selectedSchoolForMarksheet, setSelectedSchoolForMarksheet] = useState(null);
 
   // Form State for Add / Edit
   const [schoolForm, setSchoolForm] = useState({
@@ -203,6 +207,25 @@ export default function AdminBranchSchoolsPage({
     setActivePage('franchise_portal');
   };
 
+  if (activeSubTab === 'marksheet' || selectedSchoolForMarksheet) {
+    return (
+      <div className="space-y-4 animate-in fade-in duration-200">
+        <BranchStudentMarksheetPage
+          activeBranch={activeBranch}
+          portalType="school"
+          entityName={selectedSchoolForMarksheet ? selectedSchoolForMarksheet.name : 'School Management'}
+          entityId={selectedSchoolForMarksheet?.id}
+          title={selectedSchoolForMarksheet ? `${selectedSchoolForMarksheet.name} Marksheet` : 'School Student Marksheet'}
+          subtitle="Weekly revision tests and final exam evaluation"
+          onBack={() => {
+            setSelectedSchoolForMarksheet(null);
+            setActiveSubTab('schools');
+          }}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
       
@@ -230,8 +253,35 @@ export default function AdminBranchSchoolsPage({
           </div>
         </div>
 
-        {/* Action Buttons */}
+        {/* Action Buttons & Sub-Tabs */}
         <div className="flex flex-wrap items-center gap-2.5">
+          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
+            <button
+              type="button"
+              onClick={() => { setSelectedSchoolForMarksheet(null); setActiveSubTab('schools'); }}
+              className={`px-3 py-1.5 rounded-lg text-xs font-black transition cursor-pointer flex items-center gap-1.5 ${
+                activeSubTab === 'schools' && !selectedSchoolForMarksheet
+                  ? 'bg-white text-[#0c234b] shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <School className="w-3.5 h-3.5" />
+              <span>Schools</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => { setSelectedSchoolForMarksheet(null); setActiveSubTab('marksheet'); }}
+              className={`px-3 py-1.5 rounded-lg text-xs font-black transition cursor-pointer flex items-center gap-1.5 ${
+                activeSubTab === 'marksheet'
+                  ? 'bg-[#0c234b] text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <ClipboardList className="w-3.5 h-3.5 text-amber-400" />
+              <span>Student Marksheet</span>
+            </button>
+          </div>
+
           <button
             type="button"
             onClick={handleOpenAdd}
@@ -358,6 +408,17 @@ export default function AdminBranchSchoolsPage({
               >
                 <span>Go to School Dashboard</span>
                 <ArrowRight className="w-4 h-4 text-amber-400 group-hover:translate-x-1 transition-transform" />
+              </button>
+
+              {/* STUDENT MARKSHEET DIRECT ACCESS */}
+              <button
+                type="button"
+                onClick={() => setSelectedSchoolForMarksheet(sch)}
+                className="w-full py-2 px-3 bg-sky-50 hover:bg-sky-100 border border-sky-200 text-sky-950 font-black text-xs rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer shadow-xs active:scale-98"
+                title={`Enter student marks for ${sch.name}`}
+              >
+                <ClipboardList className="w-3.5 h-3.5 text-sky-600" />
+                <span>Student Marksheet</span>
               </button>
 
               {/* SECONDARY: Customize Certificate Branding for this specific School */}
