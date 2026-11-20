@@ -17,6 +17,17 @@ export const DEFAULT_PARTNER_SCHOOLS = [
     phone: '+91 98652 19131',
     studentsCount: 110,
     status: 'Authorized Franchise Branch'
+  },
+  {
+    code: 'BSEL-BR-102',
+    name: 'B★SEL Tirunelveli Branch',
+    branchName: 'Tirunelveli Branch',
+    city: 'Tirunelveli, Tamil Nadu',
+    principal: 'Dr. M. Arumugam',
+    coordinator: 'Mrs. P. Vasanthi',
+    phone: '+91 94431 88201',
+    studentsCount: 85,
+    status: 'Authorized Regional Branch'
   }
 ];
 
@@ -60,11 +71,19 @@ export const getStoredSchools = () => {
         localStorage.setItem('bsel_partner_schools', JSON.stringify(DEFAULT_PARTNER_SCHOOLS));
         return DEFAULT_PARTNER_SCHOOLS;
       }
-      const hasTenkasi = parsed.some(s => s.code === 'BSEL-BR-101' || (s.branchName && s.branchName.toLowerCase().includes('tenkasi')));
-      let list = parsed;
-      if (!hasTenkasi) {
-        list = [...DEFAULT_PARTNER_SCHOOLS, ...parsed];
+      // Ensure only Tenkasi and Tirunelveli branches are present as per official structure
+      let list = parsed.filter(s => {
+        const text = `${s.name || ''} ${s.branchName || ''} ${s.city || ''} ${s.code || ''}`.toLowerCase();
+        return text.includes('tenkasi') || text.includes('tirunelveli');
+      });
+
+      if (!list.some(s => (s.branchName || s.name || '').toLowerCase().includes('tenkasi'))) {
+        list.unshift(DEFAULT_PARTNER_SCHOOLS[0]);
       }
+      if (!list.some(s => (s.branchName || s.name || '').toLowerCase().includes('tirunelveli'))) {
+        list.push(DEFAULT_PARTNER_SCHOOLS[1]);
+      }
+
       let modified = false;
       const cleaned = list.map(s => {
         if (s.city && s.city.toLowerCase().includes('surandai')) {
@@ -76,9 +95,8 @@ export const getStoredSchools = () => {
         }
         return s;
       });
-      if (modified || !hasTenkasi) {
-        localStorage.setItem('bsel_partner_schools', JSON.stringify(cleaned));
-      }
+
+      localStorage.setItem('bsel_partner_schools', JSON.stringify(cleaned));
       return cleaned;
     }
     return DEFAULT_PARTNER_SCHOOLS;

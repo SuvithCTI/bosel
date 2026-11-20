@@ -19,6 +19,7 @@ import {
 import CompactSelect from '../../components/CompactSelect';
 import StudentAvatar from '../../components/StudentAvatar';
 import { updateUserProfile } from '../../utils/authStorage';
+import { isStudentUser } from '../../utils/studentValidator';
 import { ACADEMIC_STAGES, getAcademicStageFromAge } from '../../utils/academicStages';
 import {
   getStudentScopeKey,
@@ -53,7 +54,7 @@ export default function AdminBranchStudentsPage({
   // Course filter state
   const [branchCourseFilter, setBranchCourseFilter] = useState('All');
 
-  // Category filter state (Individual, Academy, School)
+  // Category filter state (Branch, Academy, School)
   const [branchCategoryFilter, setBranchCategoryFilter] = useState('All');
 
   // Class filter state
@@ -62,10 +63,10 @@ export default function AdminBranchStudentsPage({
   // Level filter state
   const [branchLevelFilter, setBranchLevelFilter] = useState('All');
 
-  // Category options: Individual, Academy, School
+  // Category options: Branch, Academy, School
   const categoryOptions = useMemo(() => [
     { value: 'All', label: 'All Categories' },
-    { value: 'Individual', label: 'Individual' },
+    { value: 'Branch', label: 'Branch' },
     { value: 'Academy', label: 'Academy' },
     { value: 'School', label: 'School' }
   ], []);
@@ -218,15 +219,15 @@ export default function AdminBranchStudentsPage({
 
   const getStudentCategory = (student) => {
     const cat = (student.admissionCategory || student.category || student.channel || '').toLowerCase();
-    const inst = (student.institution || student.schoolName || '').toLowerCase();
+    const inst = (student.institution || student.schoolName || student.franchiseName || '').toLowerCase();
 
     if (cat.includes('school') || inst.includes('school') || inst.includes('matric') || inst.includes('vidyalaya') || inst.includes('cbse')) {
       return 'School';
     }
-    if (cat.includes('academy') || inst.includes('academy') || inst.includes('tuition') || inst.includes('institute')) {
+    if (cat.includes('academy') || cat.includes('franchise') || inst.includes('academy') || inst.includes('studio') || inst.includes('tuition') || inst.includes('institute')) {
       return 'Academy';
     }
-    return 'Individual';
+    return 'Branch';
   };
 
   const getCategoryBadge = (student) => {
@@ -237,12 +238,12 @@ export default function AdminBranchStudentsPage({
     if (category === 'Academy') {
       return { label: 'Academy', bg: 'bg-amber-50 text-amber-700 border-amber-200' };
     }
-    return { label: 'Individual', bg: 'bg-sky-50 text-sky-700 border-sky-200' };
+    return { label: 'Branch', bg: 'bg-sky-50 text-sky-700 border-sky-200' };
   };
 
   // Filter students based on course, category, class, and level
   const filteredStudents = useMemo(() => {
-    return (branchStudents || []).filter(student => {
+    return (branchStudents || []).filter(isStudentUser).filter(student => {
       // Course filter (matches 14 official programs)
       if (branchCourseFilter && branchCourseFilter !== 'All') {
         const prog = (student.program || student.courseName || '').toLowerCase();
@@ -256,12 +257,12 @@ export default function AdminBranchStudentsPage({
         if (!matchesCourse) return false;
       }
 
-      // Category filter (Individual, Academy, School)
+      // Category filter (Branch, Academy, School)
       if (branchCategoryFilter && branchCategoryFilter !== 'All') {
         const studentCat = getStudentCategory(student).toLowerCase();
         const targetCat = branchCategoryFilter.toLowerCase();
-        if (targetCat === 'individual') {
-          if (studentCat !== 'individual' && studentCat !== 'franchise') return false;
+        if (targetCat === 'branch' || targetCat === 'individual') {
+          if (studentCat !== 'branch' && studentCat !== 'individual') return false;
         } else if (studentCat !== targetCat) {
           return false;
         }

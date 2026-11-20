@@ -185,6 +185,56 @@ const ABACUS_SUBJECTS = [
 ];
 
 // Each subject: Max 100 = Assessment 40 (average of 4 revision tests) + Exam 60 (final exam converted)
+export const SUBJECT_COUNT = 5;
+export const SUBJECT_MAX = 100;
+export const REVISION_COUNT = 4;
+export const REVISION_MAX = 40;
+export const ASSESSMENT_MAX = 40;
+export const EXAM_CONVERTED_MAX = 60;
+export const TOTAL_MAX = 100;
+
+export const rowPercent = (row) => {
+  if (!row || row.marks === null || row.marks === undefined || !row.max) return null;
+  const m = Number(row.marks);
+  const mx = Number(row.max);
+  if (!Number.isFinite(m) || !Number.isFinite(mx) || mx <= 0) return null;
+  return (m / mx) * 100;
+};
+
+export const computeResult = (subjects = [], revisions = []) => {
+  const numRevs = (revisions || []).map((r) => (r === '' || r === null || r === undefined ? null : Number(r)));
+  const revFilled = numRevs.filter((r) => r !== null && Number.isFinite(r));
+  const assessment = revFilled.length === REVISION_COUNT
+    ? Math.round((revFilled.reduce((acc, v) => acc + v, 0) / REVISION_COUNT) * 100) / 100
+    : (revFilled.length > 0 ? Math.round((revFilled.reduce((acc, v) => acc + v, 0) / revFilled.length) * 100) / 100 : null);
+
+  const numSubs = (subjects || []).map((s) => (s === '' || s === null || s === undefined ? null : Number(s)));
+  const subFilled = numSubs.filter((s) => s !== null && Number.isFinite(s));
+  const examAvg = subFilled.length > 0
+    ? subFilled.reduce((acc, v) => acc + v, 0) / subFilled.length
+    : null;
+  const examConverted = examAvg !== null ? Math.round(((examAvg * EXAM_CONVERTED_MAX) / 100) * 100) / 100 : null;
+
+  const totalMarks = (assessment !== null && examConverted !== null)
+    ? Math.round((assessment + examConverted) * 100) / 100
+    : null;
+  const percentage = totalMarks !== null ? totalMarks : null;
+
+  const totalInputs = SUBJECT_COUNT + REVISION_COUNT;
+  const filledCount = subFilled.length + revFilled.length;
+
+  return {
+    assessment,
+    examConverted,
+    totalMarks,
+    percentage,
+    revisions: numRevs,
+    complete: filledCount === totalInputs,
+    filled: filledCount,
+    total: totalInputs
+  };
+};
+
 export const getCourseSubjectModules = (courseName = '') => {
   const c = String(courseName).toLowerCase();
   const rule = COURSE_RULES.find(([keys]) => keys.some((k) => c.includes(k)));
@@ -551,7 +601,7 @@ export default function OfficialMarksheetView({
     student.school ||
     student.centreName ||
     student.institution ||
-    'Test Branch';
+    'Tenkasi Branch';
 
   const address =
     student.address ||

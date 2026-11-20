@@ -2,6 +2,7 @@
 import { verifyBranchLogin } from './branchAuthStorage';
 import { getStoredStaff } from './staffStorage';
 import { findFranchiseCredentials } from './franchiseStorage';
+import { findSchoolCredentials } from './schoolStorage';
 
 const DEFAULT_USERS = [
   {
@@ -80,38 +81,38 @@ const DEFAULT_USERS = [
     results: []
   },
   {
-    userId: 'branch.chennai',
-    password: 'branch123',
-    studentName: 'Mrs. K. Malathi',
-    name: 'Mrs. K. Malathi',
-    parentName: 'Chennai Branch Administration',
-    email: 'chennai@besellearning.org',
-    phone: '98400 12345',
+    userId: 'bseltirunelveli@bsel.org',
+    password: 'tirunelvelibsel',
+    studentName: 'Dr. M. Arumugam',
+    name: 'Dr. M. Arumugam',
+    parentName: 'Tirunelveli Branch Administration',
+    email: 'bseltirunelveli@bsel.org',
+    phone: '94431 88201',
     grade: 'Centre Director',
     program: 'Branch Operations & Training',
-    institution: 'Vidya Mandir Senior Secondary School, Chennai',
-    branch: 'Chennai Central Branch',
-    branchCode: 'CHN-01',
-    address: 'T. Nagar, Chennai - 600017',
+    institution: 'B★SEL Tirunelveli Branch',
+    branch: 'Tirunelveli Branch',
+    branchCode: 'BSEL-BR-102',
+    address: 'Tirunelveli, Tamil Nadu',
     role: 'Branch Head',
     enrolmentDate: '01 Feb 2026',
     events: [],
     results: []
   },
   {
-    userId: 'branch.coimbatore',
+    userId: 'branch.tirunelveli',
     password: 'branch123',
-    studentName: 'Mrs. Lakshmi Priya',
-    name: 'Mrs. Lakshmi Priya',
-    parentName: 'Coimbatore Branch Administration',
-    email: 'coimbatore@besellearning.org',
-    phone: '94433 22110',
+    studentName: 'Dr. M. Arumugam',
+    name: 'Dr. M. Arumugam',
+    parentName: 'Tirunelveli Branch Administration',
+    email: 'tirunelveli@besellearning.org',
+    phone: '94431 88201',
     grade: 'Centre Director',
     program: 'Branch Operations & Training',
-    institution: 'Bharatiya Vidya Bhavan Matriculation',
-    branch: 'Coimbatore Branch',
-    branchCode: 'CBE-01',
-    address: 'RS Puram, Coimbatore - 641002',
+    institution: 'B★SEL Tirunelveli Regional Academy',
+    branch: 'Tirunelveli Branch',
+    branchCode: 'BSEL-BR-102',
+    address: 'Tirunelveli Junction, Tirunelveli - 627001',
     role: 'Branch Head',
     enrolmentDate: '01 Feb 2026',
     events: [],
@@ -135,8 +136,217 @@ const DEFAULT_USERS = [
     enrolmentDate: '01 Jan 2026',
     events: [],
     results: []
+  },
+  {
+    id: 'demo-stu-fc-101',
+    userId: 'BSEL-9865219101',
+    password: 'franchise123',
+    name: 'M. Rahul',
+    studentName: 'M. Rahul',
+    parentName: 'S. Murugan',
+    fatherName: 'S. Murugan',
+    email: 'rahul.fc@bsel.org',
+    phone: '98652 19101',
+    grade: 'Class 7',
+    program: 'Abacus Speed Arithmetic',
+    courseName: 'Abacus Speed Arithmetic',
+    courseLevel: 'Level 1',
+    level: 'Level 1',
+    institution: 'Tenkasi City Franchise',
+    franchiseId: 'fc-tsi-101',
+    branch: 'Tenkasi Branch',
+    admissionCategory: 'franchise',
+    registerNumber: 'AB26-001',
+    registrationNo: 'AB26-001',
+    feeAmount: '₹450',
+    feePaymentType: 'Paid Online',
+    enrolmentDate: '10 Feb 2026',
+    role: 'Student',
+    results: [
+      {
+        subject: 'Mental Arithmetic & Speed Calculations',
+        marks: 96,
+        maxMarks: 100,
+        result: 'Pass',
+        grade: 'A+'
+      }
+    ]
+  },
+  {
+    id: 'demo-stu-sch-101',
+    userId: 'BSEL-9443188201',
+    password: 'school123',
+    name: 'A. Sneha',
+    studentName: 'A. Sneha',
+    parentName: 'K. Anandhan',
+    fatherName: 'K. Anandhan',
+    email: 'sneha.sch@bsel.org',
+    phone: '94431 88201',
+    grade: 'Class 8',
+    program: 'Computer Office Automation',
+    courseName: 'Computer Office Automation',
+    courseLevel: 'Level 1',
+    level: 'Level 1',
+    institution: "St. Joseph's Matric Higher Secondary School",
+    schoolId: 'sch-tsi-101',
+    branch: 'Tenkasi Branch',
+    admissionCategory: 'school',
+    registerNumber: 'CS26-001',
+    registrationNo: 'CS26-001',
+    feeAmount: '₹450',
+    feePaymentType: 'Paid Online',
+    enrolmentDate: '12 Feb 2026',
+    role: 'Student',
+    results: [
+      {
+        subject: 'Office Automation & Document Architecture',
+        marks: 94,
+        maxMarks: 100,
+        result: 'Pass',
+        grade: 'A+'
+      }
+    ]
+  },
+  // Tirunelveli Schools Admins
+  {
+    userId: 'school.sacredheart',
+    password: 'school123',
+    role: 'School',
+    name: 'Sacred Heart Nursery and Primary School',
+    studentName: 'Sacred Heart Nursery and Primary School',
+    schoolId: 'sch-shnp-101',
+    schoolCode: 'BSEL-SCH-201',
+    schoolName: 'Sacred Heart Nursery and Primary School',
+    branch: 'Tirunelveli Branch',
+    branchCode: 'BSEL-BR-102',
+    institution: 'Sacred Heart Nursery and Primary School',
+    address: 'Main Road, Tirunelveli, Tamil Nadu',
+    phone: '94431 88203',
+    email: 'shnp.tirunelveli@bsel.org',
+    status: 'Active'
+  },
+  {
+    userId: 'school.sacredheartcbse',
+    password: 'school123',
+    role: 'School',
+    name: 'Sacred Heart Public School - CBSE',
+    studentName: 'Sacred Heart Public School - CBSE',
+    schoolId: 'sch-shcbse-102',
+    schoolCode: 'BSEL-SCH-202',
+    schoolName: 'Sacred Heart Public School - CBSE',
+    branch: 'Tirunelveli Branch',
+    branchCode: 'BSEL-BR-102',
+    institution: 'Sacred Heart Public School - CBSE',
+    address: 'By-Pass Road, Tirunelveli, Tamil Nadu',
+    phone: '94431 88204',
+    email: 'shcbse.tirunelveli@bsel.org',
+    status: 'Active'
+  },
+  // Tenkasi Schools Admins
+  {
+    userId: 'school.rcmuthumalai',
+    password: 'school123',
+    role: 'School',
+    name: 'RC Middle School - Uthumalai',
+    studentName: 'RC Middle School - Uthumalai',
+    schoolId: 'sch-rcm-101',
+    schoolCode: 'BSEL-SCH-101',
+    schoolName: 'RC Middle School - Uthumalai',
+    branch: 'Tenkasi Branch',
+    branchCode: 'BSEL-BR-101',
+    institution: 'RC Middle School - Uthumalai',
+    address: 'Church Street, Uthumalai, Tenkasi District, Tamil Nadu',
+    phone: '98652 19135',
+    email: 'rcm.uthumalai@bsel.org',
+    status: 'Active'
+  },
+  {
+    userId: 'school.muslimsveeranam',
+    password: 'school123',
+    role: 'School',
+    name: 'Muslims Primary School - Veeranam',
+    studentName: 'Muslims Primary School - Veeranam',
+    schoolId: 'sch-mps-102',
+    schoolCode: 'BSEL-SCH-102',
+    schoolName: 'Muslims Primary School - Veeranam',
+    branch: 'Tenkasi Branch',
+    branchCode: 'BSEL-BR-101',
+    institution: 'Muslims Primary School - Veeranam',
+    address: 'School Street, Veeranam, Tenkasi District, Tamil Nadu',
+    phone: '98652 19136',
+    email: 'mps.veeranam@bsel.org',
+    status: 'Active'
+  },
+  {
+    userId: 'school.jothiprimary',
+    password: 'school123',
+    role: 'School',
+    name: 'Jothi Primary School - Lakshmi Puram',
+    studentName: 'Jothi Primary School - Lakshmi Puram',
+    schoolId: 'sch-jps-103',
+    schoolCode: 'BSEL-SCH-103',
+    schoolName: 'Jothi Primary School - Lakshmi Puram',
+    branch: 'Tenkasi Branch',
+    branchCode: 'BSEL-BR-101',
+    institution: 'Jothi Primary School - Lakshmi Puram',
+    address: 'Lakshmi Puram, Tenkasi District, Tamil Nadu',
+    phone: '98652 19137',
+    email: 'jps.lakshmipuram@bsel.org',
+    status: 'Active'
+  },
+  {
+    userId: 'school.balaguru',
+    password: 'school123',
+    role: 'School',
+    name: 'Bala Guru Vidhyasalai - Vennilingapuram',
+    studentName: 'Bala Guru Vidhyasalai - Vennilingapuram',
+    schoolId: 'sch-bgv-104',
+    schoolCode: 'BSEL-SCH-104',
+    schoolName: 'Bala Guru Vidhyasalai - Vennilingapuram',
+    branch: 'Tenkasi Branch',
+    branchCode: 'BSEL-BR-101',
+    institution: 'Bala Guru Vidhyasalai - Vennilingapuram',
+    address: 'Main Road, Vennilingapuram, Tenkasi District, Tamil Nadu',
+    phone: '98652 19138',
+    email: 'bgv.vennilingapuram@bsel.org',
+    status: 'Active'
+  },
+  // Tenkasi Academies (Franchises) Admins
+  {
+    userId: 'franchise.aim4life',
+    password: 'franchise123',
+    role: 'Franchise',
+    name: 'Aim 4 Life Dance Studio',
+    studentName: 'Aim 4 Life Dance Studio',
+    franchiseId: 'fc-aim-101',
+    code: 'BSEL-FC-101',
+    branch: 'Tenkasi Branch',
+    branchCode: 'BSEL-BR-101',
+    institution: 'Aim 4 Life Dance Studio',
+    address: '14, Main Road, Tenkasi, Tamil Nadu',
+    phone: '98652 19131',
+    email: 'aim4life@bsel.org',
+    status: 'Active'
+  },
+  {
+    userId: 'franchise.champions',
+    password: 'franchise123',
+    role: 'Franchise',
+    name: 'Champions Cultural Academy',
+    studentName: 'Champions Cultural Academy',
+    franchiseId: 'fc-cca-102',
+    code: 'BSEL-FC-102',
+    branch: 'Tenkasi Branch',
+    branchCode: 'BSEL-BR-101',
+    institution: 'Champions Cultural Academy',
+    address: '28, Gandhi Salai, Tenkasi, Tamil Nadu',
+    phone: '98652 19134',
+    email: 'champions@bsel.org',
+    status: 'Active'
   }
 ];
+
+export { isStudentUser } from './studentValidator';
 
 export const getRegisteredUsers = () => {
   if (typeof window === 'undefined') return DEFAULT_USERS;
@@ -879,6 +1089,22 @@ export const validateLogin = (enteredUserId, enteredPassword) => {
     }
   }
 
+  // 1D. School Login Check
+  const schoolAuthResult = findSchoolCredentials(cleanId, cleanPassword);
+  if (schoolAuthResult) {
+    if (schoolAuthResult.success) {
+      return {
+        success: true,
+        user: schoolAuthResult.school
+      };
+    } else {
+      return {
+        success: false,
+        message: schoolAuthResult.message || 'Incorrect Password for School.'
+      };
+    }
+  }
+
   // 2. Official District Branch Login Check (bsel+districtname@bsel.org / districtname+bsel)
   const branchAuthResult = verifyBranchLogin(cleanId, cleanPassword);
   if (branchAuthResult) {
@@ -902,8 +1128,7 @@ export const validateLogin = (enteredUserId, enteredPassword) => {
       b.userId.toLowerCase() === cleanId || 
       (b.email && b.email.toLowerCase() === cleanId) ||
       (cleanId.includes('tenkasi') && b.branch?.toLowerCase().includes('tenkasi')) ||
-      (cleanId.includes('chennai') && b.branch?.toLowerCase().includes('chennai')) ||
-      (cleanId.includes('coimbatore') && b.branch?.toLowerCase().includes('coimbatore'))
+      (cleanId.includes('tirunelveli') && b.branch?.toLowerCase().includes('tirunelveli'))
     );
 
     // Support any branch ID (e.g. branch.admin, branch.madurai, etc.)

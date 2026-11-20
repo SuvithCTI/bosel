@@ -28,6 +28,7 @@ import {
   getActiveSession,
   getCoursePrefix
 } from '../../utils/authStorage';
+import { isStudentUser } from '../../utils/studentValidator';
 import { getStoredBatches } from '../../data/batchesData';
 import { getStoredSchools } from '../../data/schoolsData';
 import { getStoredPayments } from '../../data/paymentsData';
@@ -127,7 +128,7 @@ export default function StaffDashboard({
 
   // Filter branch students for activeBranch (matches Branch Admin logic)
   const branchStudents = usersList
-    .filter(u => u.role !== 'Super Admin' && u.role !== 'Branch Head' && u.role !== 'Staff')
+    .filter(isStudentUser)
     .filter(u => {
       const studentBranch = (u.branch || u.institution || '').toLowerCase();
       const targetBranch = (activeBranch || '').toLowerCase();

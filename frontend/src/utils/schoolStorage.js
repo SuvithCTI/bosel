@@ -3,9 +3,160 @@
 import { safeSetItem, safeGetItem } from './franchiseStorage';
 
 export const DEFAULT_SCHOOLS = [
+  // -------------------------------------------------------------------------
+  // Tirunelveli Branch Schools
+  // -------------------------------------------------------------------------
+  {
+    id: 'sch-shnp-101',
+    code: 'BSEL-SCH-201',
+    name: 'Sacred Heart Nursery and Primary School',
+    schoolName: 'SACRED HEART',
+    subtitle: 'NURSERY & PRIMARY',
+    motto: 'LOVE • WISDOM • SERVICE',
+    logo: null,
+    signature: null,
+    coordinator: 'Sr. M. Antoniammal',
+    city: 'Tirunelveli',
+    address: 'Main Road, Tirunelveli, Tamil Nadu',
+    phone: '94431 88203',
+    email: 'shnp.tirunelveli@bsel.org',
+    branch: 'Tirunelveli Branch',
+    branchCode: 'BSEL-BR-102',
+    userId: 'school.sacredheart',
+    password: 'school123',
+    role: 'School',
+    status: 'Active',
+    studentsCount: 140,
+    batchesCount: 5,
+    createdAt: '2026-01-10'
+  },
+  {
+    id: 'sch-shcbse-102',
+    code: 'BSEL-SCH-202',
+    name: 'Sacred Heart Public School - CBSE',
+    schoolName: 'SACRED HEART CBSE',
+    subtitle: 'PUBLIC SCHOOL',
+    motto: 'EXCELLENCE IN EDUCATION',
+    logo: null,
+    signature: null,
+    coordinator: 'Rev. Fr. Joseph Raj',
+    city: 'Tirunelveli',
+    address: 'By-Pass Road, Tirunelveli, Tamil Nadu',
+    phone: '94431 88204',
+    email: 'shcbse.tirunelveli@bsel.org',
+    branch: 'Tirunelveli Branch',
+    branchCode: 'BSEL-BR-102',
+    userId: 'school.sacredheartcbse',
+    password: 'school123',
+    role: 'School',
+    status: 'Active',
+    studentsCount: 185,
+    batchesCount: 6,
+    createdAt: '2026-01-12'
+  },
+
+  // -------------------------------------------------------------------------
+  // Tenkasi Branch Schools
+  // -------------------------------------------------------------------------
+  {
+    id: 'sch-rcm-101',
+    code: 'BSEL-SCH-101',
+    name: 'RC Middle School - Uthumalai',
+    schoolName: 'RC MIDDLE SCHOOL',
+    subtitle: 'UTHUMALAI DIVISION',
+    motto: 'TRUTH • KNOWLEDGE • SERVICE',
+    logo: null,
+    signature: null,
+    coordinator: 'Mr. A. Xavier',
+    city: 'Tenkasi',
+    address: 'Church Street, Uthumalai, Tenkasi District, Tamil Nadu',
+    phone: '98652 19135',
+    email: 'rcm.uthumalai@bsel.org',
+    branch: 'Tenkasi Branch',
+    branchCode: 'BSEL-BR-101',
+    userId: 'school.rcmuthumalai',
+    password: 'school123',
+    role: 'School',
+    status: 'Active',
+    studentsCount: 95,
+    batchesCount: 3,
+    createdAt: '2026-01-14'
+  },
+  {
+    id: 'sch-mps-102',
+    code: 'BSEL-SCH-102',
+    name: 'Muslims Primary School - Veeranam',
+    schoolName: 'MUSLIMS PRIMARY',
+    subtitle: 'VEERANAM DIVISION',
+    motto: 'LEARN • GROW • ACHIEVE',
+    logo: null,
+    signature: null,
+    coordinator: 'Mr. M. Abdul Rahman',
+    city: 'Tenkasi',
+    address: 'School Street, Veeranam, Tenkasi District, Tamil Nadu',
+    phone: '98652 19136',
+    email: 'mps.veeranam@bsel.org',
+    branch: 'Tenkasi Branch',
+    branchCode: 'BSEL-BR-101',
+    userId: 'school.muslimsveeranam',
+    password: 'school123',
+    role: 'School',
+    status: 'Active',
+    studentsCount: 80,
+    batchesCount: 3,
+    createdAt: '2026-01-15'
+  },
+  {
+    id: 'sch-jps-103',
+    code: 'BSEL-SCH-103',
+    name: 'Jothi Primary School - Lakshmi Puram',
+    schoolName: 'JOTHI PRIMARY',
+    subtitle: 'LAKSHMI PURAM',
+    motto: 'LIGHT • KNOWLEDGE • WISDOM',
+    logo: null,
+    signature: null,
+    coordinator: 'Mrs. S. Gandhimathi',
+    city: 'Tenkasi',
+    address: 'Lakshmi Puram, Tenkasi District, Tamil Nadu',
+    phone: '98652 19137',
+    email: 'jps.lakshmipuram@bsel.org',
+    branch: 'Tenkasi Branch',
+    branchCode: 'BSEL-BR-101',
+    userId: 'school.jothiprimary',
+    password: 'school123',
+    role: 'School',
+    status: 'Active',
+    studentsCount: 110,
+    batchesCount: 4,
+    createdAt: '2026-01-16'
+  },
+  {
+    id: 'sch-bgv-104',
+    code: 'BSEL-SCH-104',
+    name: 'Bala Guru Vidhyasalai - Vennilingapuram',
+    schoolName: 'BALA GURU VIDHYA',
+    subtitle: 'VENNILINGAPURAM',
+    motto: 'DISCIPLINE • KNOWLEDGE • SUCCESS',
+    logo: null,
+    signature: null,
+    coordinator: 'Mr. K. Gurusamy',
+    city: 'Tenkasi',
+    address: 'Main Road, Vennilingapuram, Tenkasi District, Tamil Nadu',
+    phone: '98652 19138',
+    email: 'bgv.vennilingapuram@bsel.org',
+    branch: 'Tenkasi Branch',
+    branchCode: 'BSEL-BR-101',
+    userId: 'school.balaguru',
+    password: 'school123',
+    role: 'School',
+    status: 'Active',
+    studentsCount: 105,
+    batchesCount: 4,
+    createdAt: '2026-01-18'
+  },
   {
     id: 'sch-stj-101',
-    code: 'BSEL-SCH-101',
+    code: 'BSEL-SCH-100',
     name: "St. Joseph's Matric Higher Secondary School",
     schoolName: "ST. JOSEPH'S MATRIC",
     subtitle: 'TENKASI DISTRICT',
@@ -100,10 +251,21 @@ export const getStoredSchools = (branchFilter = '') => {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
         schoolList = parsed.filter((s) => s.id !== 'sch-ros-102' && s.id !== 'sch-alh-103');
+        let modified = false;
+        DEFAULT_SCHOOLS.forEach((defSch) => {
+          if (!schoolList.some((s) => s.id === defSch.id || s.userId === defSch.userId)) {
+            schoolList.push(defSch);
+            modified = true;
+          }
+        });
         if (schoolList.length === 0) {
           schoolList = DEFAULT_SCHOOLS;
+          modified = true;
         }
-        safeSetItem('bsel_schools_list', JSON.stringify(schoolList));
+        if (modified) {
+          safeSetItem('bsel_schools_list', JSON.stringify(schoolList));
+          syncSchoolsToRegisteredUsers(schoolList);
+        }
       } else {
         schoolList = DEFAULT_SCHOOLS;
         safeSetItem('bsel_schools_list', JSON.stringify(DEFAULT_SCHOOLS));
@@ -372,17 +534,24 @@ export const findSchoolCredentials = (cleanId = '', cleanPassword = '') => {
   const idLower = cleanId.toLowerCase().trim();
   const pass = cleanPassword.trim();
 
-  // Also check default generic "school" user
-  if (idLower === 'school' && (pass === 'school123' || pass === 'admin123')) {
+  // Also check default generic "school" or "school.stjosephs"
+  if (idLower === 'school' || idLower === 'school.stjosephs' || idLower === 'stjosephs' || idLower === 'schooladmin') {
     const defaultSch = schools[0] || DEFAULT_SCHOOLS[0];
-    return {
-      success: true,
-      school: {
-        ...defaultSch,
-        userId: 'school',
-        role: 'School'
-      }
-    };
+    if (pass === 'school123' || pass === 'admin123' || (defaultSch && pass === defaultSch.password)) {
+      return {
+        success: true,
+        school: {
+          ...defaultSch,
+          userId: defaultSch.userId || 'school.stjosephs',
+          role: 'School'
+        }
+      };
+    } else {
+      return {
+        success: false,
+        message: 'Incorrect Password for School. Please use "school123" or the password assigned to your school.'
+      };
+    }
   }
 
   const matched = schools.find((s) => {
@@ -391,11 +560,14 @@ export const findSchoolCredentials = (cleanId = '', cleanPassword = '') => {
     const sEmail = (s.email || '').toLowerCase().trim();
     const sPhone = String(s.phone || '').replace(/\D/g, '');
     const cleanEnteredDigits = idLower.replace(/\D/g, '');
+    const cleanIdNoPrefix = idLower.replace(/^school[.-]/, '');
 
     return (
       idLower === sId ||
       idLower === sCode ||
       idLower === sEmail ||
+      (sId && sId.replace(/^school[.-]/, '') === cleanIdNoPrefix) ||
+      (s.name && s.name.toLowerCase().includes(idLower)) ||
       (sPhone && cleanEnteredDigits && sPhone === cleanEnteredDigits)
     );
   });

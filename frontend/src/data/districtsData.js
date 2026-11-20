@@ -1,5 +1,4 @@
-// Official 38 Districts of Tamil Nadu for B★SEL Branches
-
+// Official 38 Districts of Tamil Nadu (for Address & General District Lookups)
 export const TAMIL_NADU_DISTRICTS = [
   'Ariyalur',
   'Chengalpattu',
@@ -41,13 +40,18 @@ export const TAMIL_NADU_DISTRICTS = [
   'Virudhunagar'
 ];
 
-export const DISTRICT_BRANCH_OPTIONS = TAMIL_NADU_DISTRICTS.map((district) => ({
-  value: district,
-  label: district,
-  district
-}));
+// The strictly authorized B★SEL Branches: Tenkasi and Tirunelveli
+export const AUTHORIZED_BRANCHES = [
+  'Tenkasi',
+  'Tirunelveli'
+];
 
-// Function to return strictly the 38 clean district names
+export const DISTRICT_BRANCH_OPTIONS = [
+  { value: 'Tenkasi', label: 'Tenkasi Branch', district: 'Tenkasi' },
+  { value: 'Tirunelveli', label: 'Tirunelveli Branch', district: 'Tirunelveli' }
+];
+
+// Function to return strictly the authorized branches
 export const getAllDistrictBranches = () => {
   return DISTRICT_BRANCH_OPTIONS;
 };
