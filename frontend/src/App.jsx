@@ -12,6 +12,7 @@ import FranchisePage from './pages/FranchisePage';
 import ContactPage from './pages/ContactPage';
 import LoginPage from './pages/LoginPage';
 import CertificatePage from './pages/CertificatePage';
+import CertificateVerificationPage from './pages/CertificateVerificationPage';
 import AdminDashboard from './pages/AdminDashboard';
 import StaffDashboard from './pages/staff/StaffDashboard';
 import FranchiseDashboard from './pages/franchise/FranchiseDashboard';
@@ -43,11 +44,42 @@ export default function App() {
   // -------------------------------------------------------
   const [activePage, setActivePageState] = useState(() => {
     if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const cleanHash = window.location.hash ? window.location.hash.replace(/^#\/?/, '').split('?')[0] : '';
+
+      // HIGHEST PRIORITY: Public Student Certificate Verification
+      // Must take precedence over any logged-in admin session or saved page!
+      if (
+        window.location.pathname.startsWith('/verify') ||
+        cleanHash.startsWith('verify') ||
+        params.get('page') === 'verify' ||
+        params.get('cert')
+      ) {
+        return 'verify';
+      }
+
+      // Explicit page parameter in query (e.g. ?page=about)
+      if (params.get('page')) {
+        return params.get('page');
+      }
+
+      // Direct URL pathname routes
+      if (window.location.pathname.startsWith('/admin')) {
+        return 'admin';
+      }
+      if (window.location.pathname.startsWith('/staff')) {
+        return 'staff';
+      }
+      if (window.location.pathname.startsWith('/franchise')) {
+        return 'franchise_portal';
+      }
+
       const session = getActiveSession();
       const savedPage = sessionStorage.getItem('bsel_current_page');
 
       // If a page was specifically selected in this session (e.g. 'home' via Visit Website), honor it
-      if (savedPage) {
+      // but avoid stale verify or redirect loops
+      if (savedPage && savedPage !== 'verify') {
         return savedPage;
       }
 
@@ -64,35 +96,40 @@ export default function App() {
         return 'franchise_portal';
       }
 
-      const params = new URLSearchParams(window.location.search);
-
-      if (params.get('page')) {
-        return params.get('page');
-      }
-
-      if (window.location.pathname.startsWith('/admin')) {
-        return 'admin';
-      }
-
-      if (window.location.pathname.startsWith('/staff')) {
-        return 'staff';
-      }
-
-      if (window.location.pathname.startsWith('/franchise')) {
-        return 'franchise_portal';
-      }
-
-      if (window.location.hash) {
-        const cleanHash = window.location.hash.replace(/^#\/?/, '');
+      if (cleanHash) {
         if (cleanHash.startsWith('admin')) return 'admin';
         if (cleanHash.startsWith('staff')) return 'staff';
         if (cleanHash.startsWith('franchise')) return 'franchise_portal';
+        if (cleanHash.startsWith('verify')) return 'verify';
         return cleanHash;
       }
     }
 
     return 'home';
   });
+
+  // Listen to popstate and URL changes so back/forward or scanned links trigger verify immediately
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handleLocationChange = () => {
+      const params = new URLSearchParams(window.location.search);
+      const cleanHash = window.location.hash ? window.location.hash.replace(/^#\/?/, '').split('?')[0] : '';
+      if (
+        window.location.pathname.startsWith('/verify') ||
+        cleanHash.startsWith('verify') ||
+        params.get('page') === 'verify' ||
+        params.get('cert')
+      ) {
+        setActivePageState('verify');
+      }
+    };
+    window.addEventListener('popstate', handleLocationChange);
+    window.addEventListener('hashchange', handleLocationChange);
+    return () => {
+      window.removeEventListener('popstate', handleLocationChange);
+      window.removeEventListener('hashchange', handleLocationChange);
+    };
+  }, []);
 
   const setActivePage = useCallback((page) => {
     setActivePageState(page);
@@ -135,7 +172,8 @@ export default function App() {
     activePage === 'admin' ||
     activePage === 'staff' ||
     activePage === 'franchise_portal' ||
-    activePage === 'login';
+    activePage === 'login' ||
+    activePage === 'verify';
 
   // -------------------------------------------------------
   // Modal states
@@ -319,6 +357,10 @@ export default function App() {
 
         {activePage === 'certificate' && (
           <CertificatePage />
+        )}
+
+        {activePage === 'verify' && (
+          <CertificateVerificationPage setActivePage={setActivePage} />
         )}
 
         {activePage === 'contact' && (
