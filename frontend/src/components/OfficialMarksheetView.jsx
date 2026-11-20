@@ -186,6 +186,7 @@ const ABACUS_SUBJECTS = [
 
 // ============================================================
 // ASSESSMENT & MARKSHEET METRICS / EXPORTS
+// All values are rounded to whole numbers (no decimals).
 // ============================================================
 
 export const SUBJECT_COUNT = 5;
@@ -202,7 +203,7 @@ export const rowPercent = (sub) => {
   const m = Number(sub.marks);
   const max = Number(sub.max) || SUBJECT_MAX;
   if (!Number.isFinite(m) || max <= 0) return '-';
-  return `${((m / max) * 100).toFixed(2)}%`;
+  return `${Math.round((m / max) * 100)}%`;
 };
 
 export const computeResult = (subjectsInput = [], revisionsInput = []) => {
@@ -224,29 +225,31 @@ export const computeResult = (subjectsInput = [], revisionsInput = []) => {
 
   // Assessment = average of 4 revision tests (out of ASSESSMENT_MAX = 40)
   const assessment = validRevisions.length > 0
-    ? Math.round((validRevisions.reduce((a, b) => a + b, 0) / validRevisions.length) * 100) / 100
+    ? Math.round(validRevisions.reduce((a, b) => a + b, 0) / validRevisions.length)
     : null;
 
   // Exam average (out of 100)
   const examAverage = validSubjects.length > 0
-    ? Math.round((validSubjects.reduce((a, b) => a + b, 0) / validSubjects.length) * 100) / 100
+    ? Math.round(validSubjects.reduce((a, b) => a + b, 0) / validSubjects.length)
     : null;
 
   // Exam converted to 60
   const examConverted = examAverage !== null
-    ? Math.round(((examAverage * EXAM_CONVERTED_MAX) / EXAM_MAX) * 100) / 100
+    ? Math.round((examAverage * EXAM_CONVERTED_MAX) / EXAM_MAX)
     : null;
 
   // Total marks: sum of all subjects
   const totalMarks = validSubjects.length > 0
-    ? validSubjects.reduce((a, b) => a + b, 0)
+    ? Math.round(validSubjects.reduce((a, b) => a + b, 0))
     : null;
 
-  const percentage = totalMarks !== null && complete
+  const rawPercentage = totalMarks !== null && complete
     ? (totalMarks / TOTAL_MAX) * 100
     : validSubjects.length > 0
       ? (totalMarks / (validSubjects.length * SUBJECT_MAX)) * 100
       : null;
+
+  const percentage = rawPercentage !== null ? Math.round(rawPercentage) : null;
 
   return {
     subjects: parsedSubjects,
@@ -286,11 +289,11 @@ export const getCourseSubjectModules = (courseName = '') => {
 const firstText = (...values) =>
   values.find((v) => typeof v === 'string' && v.trim()) || '';
 
-// Formats any number to exactly 2 decimals; returns '-' for empty values
+// Rounds any number to a whole number; returns '-' for empty values
 const fmt2 = (v) => {
   if (v === null || v === undefined || v === '') return '-';
   const n = Number(v);
-  return Number.isFinite(n) ? n.toFixed(2) : String(v);
+  return Number.isFinite(n) ? String(Math.round(n)) : String(v);
 };
 
 // ============================================================
@@ -580,9 +583,21 @@ export default function OfficialMarksheetView({
     0
   );
 
+  // Total obtained = sum of the "Marks Obtained" column shown in the table
+  // (falls back to the subject total when a subject has no exam mark)
+  const totalObtained = subjects.reduce((sum, s) => {
+    const examMark = Number(s.exam);
+    const value =
+      s.exam !== null && s.exam !== undefined && s.exam !== '' && Number.isFinite(examMark)
+        ? examMark
+        : Number(s.marks) || 0;
+    return sum + value;
+  }, 0);
+
+  // Whole-number percentage
   const percentage = totalMax
-    ? ((totalMarks / totalMax) * 100).toFixed(2)
-    : '0.00';
+    ? String(Math.round((totalMarks / totalMax) * 100))
+    : '0';
 
   const overallGrade = getGrade(Number(percentage));
 
@@ -1121,7 +1136,7 @@ export default function OfficialMarksheetView({
               zIndex: 1,
             }}
           >
-            {fmt2(totalMarks)}
+            {fmt2(totalObtained)}
           </div>
 
           <div
