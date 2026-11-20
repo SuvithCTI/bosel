@@ -31,6 +31,7 @@ const DETAIL_ROWS = [
   { field: 'courseLevel', label: 'Course & Level' },
   { field: 'duration', label: 'Duration' },
   { field: 'school', label: 'School / Exam Centre' },
+  { field: 'phone', label: 'Contact Number' },
 ];
 
 export default function QuestionPaperCoverPage({
@@ -222,6 +223,9 @@ export default function QuestionPaperCoverPage({
     student?.institution ||
     'Tenkasi';
 
+  // 10. Contact Number
+  const phoneDisplay = details.phone || student?.phone || student?.mobile || '';
+
   // Branch Name, Subtitle, Tagline and Logo for right header
   const branchNameDisplay =
     details.branchName ||
@@ -326,6 +330,7 @@ export default function QuestionPaperCoverPage({
       parentName: parentNameDisplay,
       duration: durationDisplay,
       school: schoolDisplay,
+      phone: phoneDisplay,
     };
 
     if (editMode) {
