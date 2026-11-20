@@ -21,8 +21,7 @@ import {
   X,
   Save,
   Image as ImageIcon,
-  PenTool,
-  ClipboardList
+  PenTool
 } from 'lucide-react';
 
 import {
@@ -34,7 +33,6 @@ import {
 } from '../../utils/franchiseStorage';
 import { setActiveSession, getActiveSession } from '../../utils/authStorage';
 import FranchiseCertificateBrandingModal from '../../components/FranchiseCertificateBrandingModal';
-import BranchStudentMarksheetPage from './BranchStudentMarksheetPage';
 
 export default function AdminBranchFranchisesPage({
   activeBranch = 'Tenkasi Branch',
@@ -45,8 +43,6 @@ export default function AdminBranchFranchisesPage({
   const [franchises, setFranchises] = useState(() => getStoredFranchises(activeBranch));
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingFranchise, setEditingFranchise] = useState(null);
-  const [activeSubTab, setActiveSubTab] = useState('franchises'); // 'franchises' | 'marksheet'
-  const [selectedFranchiseForMarksheet, setSelectedFranchiseForMarksheet] = useState(null);
   const [visiblePasswords, setVisiblePasswords] = useState({});
   const [brandingModalFranchise, setBrandingModalFranchise] = useState(null);
 
@@ -216,25 +212,6 @@ export default function AdminBranchFranchisesPage({
     setActivePage('franchise_portal');
   };
 
-  if (activeSubTab === 'marksheet' || selectedFranchiseForMarksheet) {
-    return (
-      <div className="space-y-4 animate-in fade-in duration-200">
-        <BranchStudentMarksheetPage
-          activeBranch={activeBranch}
-          portalType="franchise"
-          entityName={selectedFranchiseForMarksheet ? selectedFranchiseForMarksheet.name : 'Academy & Franchise Management'}
-          entityId={selectedFranchiseForMarksheet?.id}
-          title={selectedFranchiseForMarksheet ? `${selectedFranchiseForMarksheet.name} Marksheet` : 'Academy Student Marksheet'}
-          subtitle="Weekly revision tests and final exam evaluation"
-          onBack={() => {
-            setSelectedFranchiseForMarksheet(null);
-            setActiveSubTab('franchises');
-          }}
-        />
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
       
@@ -247,57 +224,30 @@ export default function AdminBranchFranchisesPage({
           <div>
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
-                Regional Academy & Franchise Network
+                Regional Franchise Network
               </span>
               <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase">
                 {activeBranch}
               </span>
             </div>
             <h2 className="text-lg sm:text-xl font-black text-slate-950 mt-0.5">
-              Authorized Academy & Franchise Management
+              Authorized Franchise Management
             </h2>
             <p className="text-xs text-slate-500">
-              Manage learning centres & academies, configure login credentials, and jump directly to each Franchise Dashboard.
+              Manage learning centre franchises, configure login credentials, and jump directly to each Franchise Dashboard.
             </p>
           </div>
         </div>
 
-        {/* Action Buttons & Sub-Tabs */}
+        {/* Action Buttons */}
         <div className="flex flex-wrap items-center gap-2.5">
-          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
-            <button
-              type="button"
-              onClick={() => { setSelectedFranchiseForMarksheet(null); setActiveSubTab('franchises'); }}
-              className={`px-3 py-1.5 rounded-lg text-xs font-black transition cursor-pointer flex items-center gap-1.5 ${
-                activeSubTab === 'franchises' && !selectedFranchiseForMarksheet
-                  ? 'bg-white text-[#0c234b] shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <Building className="w-3.5 h-3.5" />
-              <span>Academies</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => { setSelectedFranchiseForMarksheet(null); setActiveSubTab('marksheet'); }}
-              className={`px-3 py-1.5 rounded-lg text-xs font-black transition cursor-pointer flex items-center gap-1.5 ${
-                activeSubTab === 'marksheet'
-                  ? 'bg-[#0c234b] text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <ClipboardList className="w-3.5 h-3.5 text-amber-400" />
-              <span>Student Marksheet</span>
-            </button>
-          </div>
-
           <button
             type="button"
             onClick={handleOpenAdd}
             className="flex-1 sm:flex-initial px-4 py-2.5 bg-[#0c234b] hover:bg-[#153a78] text-white text-xs font-black rounded-xl transition flex items-center justify-center gap-2 shadow-sm cursor-pointer"
           >
             <Plus className="w-4 h-4 text-amber-400" />
-            <span>+ Add New Academy</span>
+            <span>+ Add New Franchise</span>
           </button>
         </div>
       </div>
@@ -417,17 +367,6 @@ export default function AdminBranchFranchisesPage({
               >
                 <span>Go to Franchise Dashboard</span>
                 <ArrowRight className="w-4 h-4 text-amber-400 group-hover:translate-x-1 transition-transform" />
-              </button>
-
-              {/* STUDENT MARKSHEET DIRECT ACCESS */}
-              <button
-                type="button"
-                onClick={() => setSelectedFranchiseForMarksheet(fc)}
-                className="w-full py-2 px-3 bg-sky-50 hover:bg-sky-100 border border-sky-200 text-sky-950 font-black text-xs rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer shadow-xs active:scale-98"
-                title={`Enter student marks for ${fc.name}`}
-              >
-                <ClipboardList className="w-3.5 h-3.5 text-sky-600" />
-                <span>Student Marksheet</span>
               </button>
 
               {/* SECONDARY: Customize Certificate Branding for this specific Franchise */}
