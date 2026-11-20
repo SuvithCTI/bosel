@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Building,
+  School,
   Users,
   FileText,
   ClipboardList,
@@ -31,6 +32,7 @@ import {
   getCoursePrefix,
   setActiveSession
 } from '../../utils/authStorage';
+import { isStudentUser } from '../../utils/studentValidator';
 import { getStoredBatches } from '../../data/batchesData';
 import { getStoredSchools, getSchoolBranding } from '../../utils/schoolStorage';
 import { getStoredPayments } from '../../data/paymentsData';
@@ -51,8 +53,20 @@ export default function FranchiseDashboard({
   onLogout,
   onOpenCertificate: _onOpenCertificate
 }) {
-  const currentSession = sessionUser || getActiveSession() || {};
-  const isSchool = currentSession.role === 'School' || Boolean(currentSession.schoolId);
+  let storedSession = null;
+  try {
+    const sRaw = sessionStorage.getItem('bsel_active_session') || localStorage.getItem('bsel_active_session');
+    if (sRaw) storedSession = JSON.parse(sRaw);
+  } catch (_) {}
+
+  const activeUser = getActiveSession();
+  const currentSession = (storedSession && (storedSession.role === 'School' || storedSession.role === 'Franchise' || storedSession.schoolId || storedSession.franchiseId)) 
+    ? storedSession 
+    : ((sessionUser && (sessionUser.role === 'School' || sessionUser.role === 'Franchise' || sessionUser.schoolId || sessionUser.franchiseId)) 
+        ? sessionUser 
+        : (activeUser || {}));
+
+  const isSchool = currentSession.role === 'School' || Boolean(currentSession.schoolId) || Boolean(currentSession.schoolRole);
 
   const [franchisesList, setFranchisesList] = useState(() => getStoredFranchises());
   const [schoolsList, setSchoolsList] = useState(() => getStoredSchools());
@@ -61,8 +75,16 @@ export default function FranchiseDashboard({
   let currentEntity = null;
   if (isSchool) {
     const matchedSchool = schoolsList.find(
-      s => s.userId === currentSession.userId || s.id === currentSession.schoolId || s.id === currentSession.franchiseId || s.name === currentSession.name
-    ) || schoolsList[0] || {
+      s => (currentSession.schoolId && s.id === currentSession.schoolId) ||
+           (currentSession.id && s.id === currentSession.id) ||
+           (currentSession.userId && s.userId === currentSession.userId) ||
+           (currentSession.code && s.code === currentSession.code) ||
+           (currentSession.name && s.name.trim().toLowerCase() === currentSession.name.trim().toLowerCase())
+    ) || (currentSession.name ? {
+      ...currentSession,
+      id: currentSession.schoolId || currentSession.id || 'sch-dynamic',
+      branch: currentSession.branch || 'Tenkasi Branch'
+    } : (schoolsList[0] || {
       id: 'sch-stj-101',
       code: 'BSEL-SCH-101',
       name: "St. Joseph's Matric Higher Secondary School",
@@ -73,10 +95,11 @@ export default function FranchiseDashboard({
       city: 'Tenkasi',
       address: '15, Church Road, Near New Bus Stand, Tenkasi, Tamil Nadu',
       branch: 'Tenkasi Branch'
-    };
+    }));
     const storedBranding = getSchoolBranding(matchedSchool.id) || {};
     currentEntity = {
       ...matchedSchool,
+      branch: matchedSchool.branch || currentSession.branch || 'Tenkasi Branch',
       schoolName: storedBranding.schoolName || matchedSchool.schoolName || matchedSchool.name,
       subtitle: storedBranding.subtitle || matchedSchool.subtitle || 'TENKASI DISTRICT',
       motto: storedBranding.motto || matchedSchool.motto || 'KNOWLEDGE • CHARACTER • SERVICE',
@@ -85,8 +108,16 @@ export default function FranchiseDashboard({
     };
   } else {
     const matchedFranchise = franchisesList.find(
-      f => f.userId === currentSession.userId || f.id === currentSession.franchiseId || f.name === currentSession.name
-    ) || franchisesList[0] || {
+      f => (currentSession.franchiseId && f.id === currentSession.franchiseId) ||
+           (currentSession.id && f.id === currentSession.id) ||
+           (currentSession.userId && f.userId === currentSession.userId) ||
+           (currentSession.code && f.code === currentSession.code) ||
+           (currentSession.name && f.name.trim().toLowerCase() === currentSession.name.trim().toLowerCase())
+    ) || (currentSession.name ? {
+      ...currentSession,
+      id: currentSession.franchiseId || currentSession.id || 'fc-dynamic',
+      branch: currentSession.branch || 'Tenkasi Branch'
+    } : (franchisesList[0] || {
       id: 'fc-tsi-101',
       code: 'BSEL-FC-101',
       name: 'Tenkasi City Franchise',
@@ -97,10 +128,11 @@ export default function FranchiseDashboard({
       city: 'Tenkasi',
       address: '12, Main Bazaar Road, Near New Bus Stand, Tenkasi, Tamil Nadu',
       branch: 'Tenkasi Branch'
-    };
+    }));
     const storedBranding = getFranchiseBranding(matchedFranchise.id) || {};
     currentEntity = {
       ...matchedFranchise,
+      branch: matchedFranchise.branch || currentSession.branch || 'Tenkasi Branch',
       schoolName: storedBranding.schoolName || matchedFranchise.schoolName || matchedFranchise.name,
       subtitle: storedBranding.subtitle || matchedFranchise.subtitle || 'VISION FOUNDATION',
       motto: storedBranding.motto || matchedFranchise.motto || 'EDUCATION • EMPOWERMENT • EXCELLENCE',
@@ -201,7 +233,7 @@ export default function FranchiseDashboard({
 
   // Filter franchise/school students: strictly students belonging to this franchise or school
   const franchiseStudents = usersList
-    .filter(u => u.role !== 'Super Admin' && u.role !== 'Branch Head' && u.role !== 'Staff' && u.role !== 'Franchise' && u.role !== 'School')
+    .filter(isStudentUser)
     .filter(u => {
       if (isSchool) {
         const targetId = currentEntity.id;
@@ -394,19 +426,23 @@ export default function FranchiseDashboard({
             {/* Desktop Divider */}
             <div className="hidden lg:block h-8 w-px bg-white/20 shrink-0"></div>
 
-            {/* Desktop-Only Logged-In Entity Indicator Badge */}
-            <div className="hidden lg:flex items-center gap-2.5 bg-white/10 hover:bg-white/15 px-3 py-1.5 rounded-xl border border-white/20 backdrop-blur-xs transition min-w-0 shadow-xs">
-              <div className="w-7 h-7 rounded-lg bg-amber-400/20 border border-amber-400/40 flex items-center justify-center shrink-0">
+            {/* Header Logged-In Entity Indicator Badge (Displays Branch & School/Franchise Name) */}
+            <div className="flex items-center gap-2 sm:gap-2.5 bg-white/10 hover:bg-white/15 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl border border-white/20 backdrop-blur-xs transition min-w-0 shadow-xs">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-amber-400/20 border border-amber-400/40 flex items-center justify-center shrink-0">
                 {isSchool ? <School className="w-4 h-4 text-amber-300" /> : <Building className="w-4 h-4 text-amber-300" />}
               </div>
               <div className="flex flex-col min-w-0 leading-tight">
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 flex-wrap">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
                   <span className="text-[9px] font-black uppercase tracking-wider text-amber-300 truncate">
                     {isSchool ? 'LOGGED IN SCHOOL' : 'LOGGED IN FRANCHISE'}
                   </span>
+                  <span className="text-white/40 text-[9px]">•</span>
+                  <span className="text-[9px] font-black uppercase tracking-wider text-emerald-300 truncate bg-emerald-950/40 px-1.5 py-0.5 rounded border border-emerald-500/30">
+                    {currentFranchise.branch || currentSession.branch || 'Tenkasi Branch'}
+                  </span>
                 </div>
-                <span className="text-xs sm:text-sm font-black text-white truncate max-w-[200px] xl:max-w-xs">
+                <span className="text-xs sm:text-sm font-black text-white truncate max-w-[160px] sm:max-w-xs md:max-w-sm lg:max-w-md xl:max-w-lg">
                   {currentFranchise.name}
                 </span>
               </div>
@@ -415,12 +451,35 @@ export default function FranchiseDashboard({
 
           {/* Controls */}
           <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
-            {/* Quick Switch to Branch Admin Button (if user has branch admin privileges) */}
+            {/* Quick Switch to Branch Admin Button (if user came from branch admin or has admin privileges) */}
             <button
               onClick={() => {
-                const session = getActiveSession() || {};
-                sessionStorage.setItem('bsel_active_admin_role', 'Branch Head');
-                sessionStorage.setItem('bsel_active_branch', currentFranchise.branch || 'Tenkasi Branch');
+                let returnSession = null;
+                try {
+                  const raw = sessionStorage.getItem('bsel_admin_return_session');
+                  if (raw) returnSession = JSON.parse(raw);
+                } catch (_) {}
+
+                const targetBranch = returnSession?.branch || currentFranchise.branch || 'Tenkasi Branch';
+                const targetRole = returnSession?.role || 'Branch Head';
+
+                if (returnSession) {
+                  setActiveSession(returnSession);
+                } else {
+                  // Fallback branch admin session for this branch
+                  const isTirunelveli = targetBranch.toLowerCase().includes('tirunelveli');
+                  const fallbackAdmin = {
+                    userId: isTirunelveli ? 'bseltirunelveli@bsel.org' : 'bseltenkasi@bsel.org',
+                    studentName: isTirunelveli ? 'Dr. M. Arumugam' : 'Mrs. Thangam Sivaji',
+                    name: isTirunelveli ? 'Dr. M. Arumugam' : 'Mrs. Thangam Sivaji',
+                    role: 'Branch Head',
+                    branch: isTirunelveli ? 'Tirunelveli Branch' : 'Tenkasi Branch'
+                  };
+                  setActiveSession(fallbackAdmin);
+                }
+
+                sessionStorage.setItem('bsel_active_admin_role', targetRole);
+                sessionStorage.setItem('bsel_active_branch', targetBranch);
                 setActivePage('admin');
               }}
               className="text-xs font-black bg-amber-400/20 hover:bg-amber-400/30 text-amber-300 border border-amber-400/40 p-1.5 sm:px-3 sm:py-1.5 rounded-xl transition shadow-sm cursor-pointer flex items-center gap-1.5 active:scale-95 whitespace-nowrap shrink-0"
@@ -460,17 +519,20 @@ export default function FranchiseDashboard({
             <div className="w-5 h-5 rounded-md bg-amber-400/20 border border-amber-400/40 flex items-center justify-center shrink-0">
               {isSchool ? <School className="w-3 h-3 text-amber-300" /> : <Building className="w-3 h-3 text-amber-300" />}
             </div>
-            <span className="text-[10px] font-black uppercase tracking-wider text-amber-300/90 shrink-0">
-              {isSchool ? 'School:' : 'Franchise:'}
-            </span>
-            <span className="text-xs font-black text-white truncate">
-              {currentFranchise.name}
-            </span>
+            <div className="flex items-center gap-1.5 min-w-0 truncate">
+              <span className="text-[10px] font-black uppercase tracking-wider text-emerald-300 shrink-0">
+                {currentFranchise.branch || currentSession.branch || 'Tenkasi Branch'}
+              </span>
+              <span className="text-white/40 text-[9px]">•</span>
+              <span className="text-xs font-black text-white truncate">
+                {currentFranchise.name}
+              </span>
+            </div>
           </div>
 
           <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-[10px] font-bold shrink-0">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span>Active</span>
+            <span className="text-[10px] font-black uppercase">{isSchool ? 'School' : 'Franchise'}</span>
           </div>
         </div>
       </header>
@@ -618,68 +680,6 @@ export default function FranchiseDashboard({
                 </div>
               </div>
 
-              {/* Entity Metrics Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                
-                {/* Enrolled Students */}
-                <div className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
-                  <div>
-                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
-                      {isSchool ? 'SCHOOL ENROLLED STUDENTS' : 'FRANCHISE ENROLLED STUDENTS'}
-                    </span>
-                    <div className="text-2xl font-black text-slate-950 mt-1">
-                      {franchiseStudents.length}
-                    </div>
-                    <span className="text-[11px] font-bold text-emerald-700 flex items-center gap-1 mt-0.5">
-                      <CheckCircle2 className="w-3 h-3" />
-                      Active Enrolled Learners
-                    </span>
-                  </div>
-                  <div className="w-11 h-11 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center">
-                    <Users className="w-5 h-5" />
-                  </div>
-                </div>
-
-                {/* Active Batches */}
-                <div className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
-                  <div>
-                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
-                      ACTIVE BATCHES
-                    </span>
-                    <div className="text-2xl font-black text-slate-950 mt-1">
-                      {franchiseBatches.length || currentFranchise.batchesCount || 3} Batches
-                    </div>
-                    <span className="text-[11px] font-bold text-sky-700 flex items-center gap-1 mt-0.5">
-                      <CheckCircle2 className="w-3 h-3" />
-                      Scheduled Class Slots
-                    </span>
-                  </div>
-                  <div className="w-11 h-11 rounded-xl bg-sky-100 text-sky-800 flex items-center justify-center">
-                    <ClipboardList className="w-5 h-5" />
-                  </div>
-                </div>
-
-                {/* Fee Collections */}
-                <div className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
-                  <div>
-                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
-                      {isSchool ? 'SCHOOL FEES COLLECTED' : 'FRANCHISE FEES COLLECTED'}
-                    </span>
-                    <div className="text-2xl font-black text-slate-950 mt-1">
-                      {franchiseRevenueFormatted}
-                    </div>
-                    <span className="text-[11px] font-bold text-amber-700 flex items-center gap-1 mt-0.5">
-                      <CheckCircle2 className="w-3 h-3" />
-                      {isSchool ? 'School Partner Collections' : 'Franchise Center Collections'}
-                    </span>
-                  </div>
-                  <div className="w-11 h-11 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center">
-                    <Award className="w-5 h-5" />
-                  </div>
-                </div>
-
-              </div>
-
               {/* Quick Action Banners */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 
@@ -743,6 +743,8 @@ export default function FranchiseDashboard({
             <StaffStudentDetailsPage
               activeBranch={currentFranchise.branch}
               branchStudents={franchiseStudents}
+              portalType={isSchool ? 'school' : 'franchise'}
+              entityName={currentFranchise.name}
               setViewingAdmissionStudent={setViewingAdmissionStudent}
               handleOpenMarksheet={handleOpenMarksheet}
               handleOpenCertForStudent={handleOpenCertForStudent}
@@ -757,6 +759,8 @@ export default function FranchiseDashboard({
             <StaffStudentMarksheetPage
               activeBranch={currentFranchise.branch}
               branchStudents={franchiseStudents}
+              portalType={isSchool ? 'school' : 'franchise'}
+              entityName={currentFranchise.name}
               onBack={() => handleTabSelect('franchise_overview')}
             />
           )}

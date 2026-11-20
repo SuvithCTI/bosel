@@ -615,7 +615,7 @@ export default function OfficialMarksheetView({
     student.school ||
     student.centreName ||
     student.institution ||
-    'Test Branch';
+    'Tenkasi Branch';
 
   const address =
     student.address ||

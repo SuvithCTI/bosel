@@ -122,8 +122,23 @@ export const DEFAULT_TENKASI_BRANCH = {
   phone: '+91 98652 19131'
 };
 
+export const DEFAULT_TIRUNELVELI_BRANCH = {
+  slug: 'tirunelveli',
+  district: 'Tirunelveli',
+  branchName: 'Tirunelveli Branch',
+  email: 'bseltirunelveli@bsel.org',
+  userId: 'bseltirunelveli@bsel.org',
+  password: 'tirunelvelibsel',
+  code: 'BSEL-BR-102',
+  branchCode: 'BSEL-BR-102',
+  isCustomBranch: true,
+  principal: 'Dr. M. Arumugam',
+  coordinator: 'Mrs. P. Vasanthi',
+  phone: '+91 94431 88201'
+};
+
 export const getStoredBranchCredentials = () => {
-  if (typeof window === 'undefined') return { tenkasi: DEFAULT_TENKASI_BRANCH };
+  if (typeof window === 'undefined') return { tenkasi: DEFAULT_TENKASI_BRANCH, tirunelveli: DEFAULT_TIRUNELVELI_BRANCH };
 
   try {
     const raw = localStorage.getItem('bsel_branch_credentials');
@@ -139,13 +154,24 @@ export const getStoredBranchCredentials = () => {
         isCustomBranch: true,
         updatedAt: new Date().toISOString()
       };
-      localStorage.setItem('bsel_branch_credentials', JSON.stringify(combined));
     }
+
+    // Always ensure the official Tirunelveli Branch Admin exists and is marked as custom branch
+    if (!combined['tirunelveli'] || !combined['tirunelveli'].isCustomBranch || !combined['tirunelveli'].password) {
+      combined['tirunelveli'] = {
+        ...DEFAULT_TIRUNELVELI_BRANCH,
+        ...combined['tirunelveli'],
+        isCustomBranch: true,
+        updatedAt: new Date().toISOString()
+      };
+    }
+
+    localStorage.setItem('bsel_branch_credentials', JSON.stringify(combined));
 
     return combined;
   } catch (err) {
     console.error('Error reading branch credentials:', err);
-    return { tenkasi: DEFAULT_TENKASI_BRANCH };
+    return { tenkasi: DEFAULT_TENKASI_BRANCH, tirunelveli: DEFAULT_TIRUNELVELI_BRANCH };
   }
 };
 
@@ -394,6 +420,7 @@ export const verifyBranchLogin = (inputIdentifier, inputPassword) => {
 
     if (creds.isCustomBranch) {
       const isTenkasi = slug === 'tenkasi' || creds.code === 'BSEL-BR-101' || creds.branchName?.toLowerCase().includes('tenkasi');
+      const isTirunelveli = slug === 'tirunelveli' || creds.code === 'BSEL-BR-102' || creds.branchName?.toLowerCase().includes('tirunelveli');
       const isTenkasiId = cleanId === 'bseltenkasi@bsel.org' ||
         cleanId === 'bsel+tenkasi@bsel.org' ||
         cleanId === 'bseltenkasi' ||
@@ -404,9 +431,21 @@ export const verifyBranchLogin = (inputIdentifier, inputPassword) => {
         cleanId === 'branch-tenkasi' ||
         cleanId === 'tenkasi' ||
         cleanId.includes('tenkasi');
+      const isTirunelveliId = cleanId === 'bseltirunelveli@bsel.org' ||
+        cleanId === 'bsel+tirunelveli@bsel.org' ||
+        cleanId === 'bseltirunelveli' ||
+        cleanId === 'bsel+tirunelveli' ||
+        cleanId === 'tirunelveli@bsel.org' ||
+        cleanId === 'tirunelveli@besellearning.org' ||
+        cleanId === 'branch.tirunelveli' ||
+        cleanId === 'branch-tirunelveli' ||
+        cleanId === 'tirunelveli' ||
+        cleanId.includes('tirunelveli');
 
       const isCustomIdMatch = isTenkasi
         ? (cleanId === storedUserId || cleanId === emailLower || isTenkasiId)
+        : isTirunelveli
+        ? (cleanId === storedUserId || cleanId === emailLower || isTirunelveliId)
         : (cleanId === storedUserId || cleanId === emailLower);
 
       if (!isCustomIdMatch) continue;
@@ -418,13 +457,20 @@ export const verifyBranchLogin = (inputIdentifier, inputPassword) => {
            cleanPass === 'branch123' ||
            cleanPass === 'admin123' ||
            cleanPass === 'besel2026')
+        : isTirunelveli
+        ? (cleanPass === creds.password ||
+           cleanPass === 'tirunelvelibsel' ||
+           cleanPass === 'tirunelveli+bsel' ||
+           cleanPass === 'branch123' ||
+           cleanPass === 'admin123' ||
+           cleanPass === 'besel2026')
         : cleanPass === creds.password;
 
       if (!isCustomPassMatch) {
         return {
           success: false,
           isBranch: true,
-          message: `Incorrect password for ${creds.branchName}. Use "tenkasibsel" or "branch123".`
+          message: `Incorrect password for ${creds.branchName}. Use "${isTirunelveli ? 'tirunelvelibsel' : 'tenkasibsel'}" or "branch123".`
         };
       }
 

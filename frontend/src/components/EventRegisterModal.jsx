@@ -220,7 +220,7 @@ export default function EventRegisterModal({
         ).toUpperCase()}/L1/${
           ticketId.replace(/\D/g, '').slice(-4) || '1024'
         }`,
-        centreName: formData.schoolName || 'test branch',
+        centreName: formData.schoolName || 'Tenkasi Branch',
         centreCode: '546454',
         centreAddress: `${formData.city || 'Tenkasi'}, Tamil Nadu`,
         issueDate: todayFormatted,

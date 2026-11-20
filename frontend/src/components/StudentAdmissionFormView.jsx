@@ -694,7 +694,7 @@ export default function StudentAdmissionFormView({ student, onClose, batchMode =
 
               <Field label="SCHOOL / BRANCH" className="col-span-2">
                 <span className="font-extrabold text-[#0c234b]">
-                  {student.branch || student.institution || 'Aim 4 Life'}
+                  {student.branch || student.institution || 'Tenkasi Branch'}
                 </span>
               </Field>
 

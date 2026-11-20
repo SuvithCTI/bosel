@@ -275,28 +275,6 @@ export default function AdminSchoolsPage({
             )}
           </div>
 
-          {/* Quick Jump Dropdown */}
-          <div className="relative flex-1 sm:w-52 min-w-[180px]">
-            <select
-              value=""
-              onChange={(e) => {
-                if (!e.target.value) return;
-                const found = allBranches.find(
-                  (b) => b.district === e.target.value || b.branchName === e.target.value || b.name === e.target.value
-                );
-                if (found) handleEnterBranchAdmin(found);
-              }}
-              className="w-full text-xs font-black text-[#0c234b] bg-amber-50/90 border border-amber-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400 cursor-pointer shadow-xs"
-            >
-              <option value="">⚡ Direct Jump to Branch...</option>
-              {allBranches.map((b) => (
-                <option key={b.code} value={b.district || b.branchName || b.name}>
-                  {b.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
           {/* Add New Branch */}
           <button
             type="button"
@@ -347,46 +325,12 @@ export default function AdminSchoolsPage({
                 </div>
               </div>
 
-              {(branch.logo || branch.tagline || branch.coordinator || branch.signature) && (
-                <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-3">
-                  {branch.tagline && (
-                    <p className="mb-3 text-xs font-semibold italic leading-relaxed text-slate-700">
-                      “{branch.tagline}”
-                    </p>
-                  )}
-                  <div className="flex flex-wrap items-start gap-4">
-                    {branch.logo && (
-                      <div className="flex min-w-[88px] flex-col items-center gap-1.5">
-                        <span className="text-[9px] font-black uppercase tracking-wider text-slate-500">Branch Logo</span>
-                        <img
-                          src={branch.logo}
-                          alt={`${branch.branchName} logo`}
-                          title="Branch Logo"
-                          className="h-14 w-14 rounded-lg border border-slate-200 bg-white p-1 object-contain"
-                        />
-                      </div>
-                    )}
-                    <div className="min-w-0 flex-1">
-                      {branch.coordinator && (
-                        <p className="text-[11px] text-slate-600">
-                          Branch Coordinator: <span className="font-bold text-slate-800">{branch.coordinator}</span>
-                        </p>
-                      )}
-                      {branch.signature && (
-                        <div className="mt-3 flex flex-col items-start gap-1.5">
-                          <span className="text-[9px] font-black uppercase tracking-wider text-slate-500">Coordinator Signature</span>
-                          <img
-                            src={branch.signature}
-                            alt={`${branch.branchName} coordinator signature`}
-                            title="Coordinator Signature"
-                            className="h-10 max-w-40 rounded-md border border-slate-200 bg-white px-2 py-1 object-contain object-left"
-                          />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
+              {/* Branch Coordinator Box (Clean & Simple matching Image 2) */}
+              <div className="rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-2.5">
+                <p className="text-xs text-slate-700 font-medium">
+                  Branch Coordinator: <span className="font-bold text-slate-900">{branch.coordinator || 'Branch Coordinator'}</span>
+                </p>
+              </div>
 
               {/* OFFICIAL BRANCH LOGIN CREDENTIALS BOX */}
               <div className="rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50/80 via-sky-50/40 to-white p-3 space-y-2">

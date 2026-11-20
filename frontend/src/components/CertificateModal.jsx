@@ -82,7 +82,7 @@ export default function CertificateModal({
       : `BSEL/${coursePrefix}/L${cleanLvlDigits}/${seqDigits}`;
 
   const [centreName, setCentreName] = useState(
-    data.centreName || 'test branch'
+    data.centreName || 'Tenkasi Branch'
   );
 
   const centreCode = data.centreCode || '546454';

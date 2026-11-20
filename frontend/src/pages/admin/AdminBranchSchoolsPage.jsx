@@ -24,6 +24,7 @@ import {
   deleteStoredSchool,
   getSchoolBranding
 } from '../../utils/schoolStorage';
+import { setActiveSession, getActiveSession } from '../../utils/authStorage';
 import SchoolCertificateBrandingModal from '../../components/SchoolCertificateBrandingModal';
 
 export default function AdminBranchSchoolsPage({
@@ -167,10 +168,16 @@ export default function AdminBranchSchoolsPage({
 
   // Direct Jump to School Dashboard
   const handleGoToSchoolDashboard = (school) => {
+    // Preserve current admin session for seamless return to branch admin
+    const currentActive = getActiveSession();
+    if (currentActive && (currentActive.role === 'Branch Head' || currentActive.role === 'Super Admin')) {
+      sessionStorage.setItem('bsel_admin_return_session', JSON.stringify(currentActive));
+    }
+
     const b = getSchoolBranding(school.id) || {};
     const sessionPayload = {
       ...school,
-      role: 'Franchise', // Uses the full student management & certificate desk portal
+      role: 'School',
       schoolRole: 'School',
       studentName: school.name,
       name: school.name,
@@ -191,6 +198,7 @@ export default function AdminBranchSchoolsPage({
       localStorage.setItem('bsel_active_session', JSON.stringify(sessionPayload));
     } catch (_) {}
 
+    setActiveSession(sessionPayload);
     showToast(`Opening School Dashboard for ${school.name}...`);
     setActivePage('franchise_portal');
   };

@@ -54,9 +54,60 @@ export const safeGetItem = (key) => {
 };
 
 export const DEFAULT_FRANCHISES = [
+  // -------------------------------------------------------------------------
+  // Tenkasi Branch Academies / Franchises
+  // -------------------------------------------------------------------------
   {
-    id: 'fc-tsi-101',
+    id: 'fc-aim-101',
     code: 'BSEL-FC-101',
+    name: 'Aim 4 Life Dance Studio',
+    schoolName: 'AIM 4 LIFE',
+    subtitle: 'DANCE STUDIO',
+    motto: 'PASSION • RHYTHM • GRACE',
+    logo: null,
+    signature: null,
+    coordinator: 'Mrs. S. Kavitha',
+    city: 'Tenkasi',
+    address: '14, Main Road, Tenkasi, Tamil Nadu',
+    phone: '98652 19131',
+    email: 'aim4life@bsel.org',
+    branch: 'Tenkasi Branch',
+    branchCode: 'BSEL-BR-101',
+    userId: 'franchise.aim4life',
+    password: 'franchise123',
+    role: 'Franchise',
+    status: 'Active',
+    studentsCount: 45,
+    batchesCount: 3,
+    createdAt: '2026-01-10'
+  },
+  {
+    id: 'fc-cca-102',
+    code: 'BSEL-FC-102',
+    name: 'Champions Cultural Academy',
+    schoolName: 'CHAMPIONS CULTURAL',
+    subtitle: 'TALENT & ARTS ACADEMY',
+    motto: 'EMPOWER • EXCEL • ACHIEVE',
+    logo: null,
+    signature: null,
+    coordinator: 'Mr. R. Karthik',
+    city: 'Tenkasi',
+    address: '28, Gandhi Salai, Tenkasi, Tamil Nadu',
+    phone: '98652 19134',
+    email: 'champions@bsel.org',
+    branch: 'Tenkasi Branch',
+    branchCode: 'BSEL-BR-101',
+    userId: 'franchise.champions',
+    password: 'franchise123',
+    role: 'Franchise',
+    status: 'Active',
+    studentsCount: 38,
+    batchesCount: 2,
+    createdAt: '2026-01-15'
+  },
+  {
+    id: 'fc-tsi-100',
+    code: 'BSEL-FC-100',
     name: 'Tenkasi City Franchise',
     schoolName: 'TENKASI REGIONAL',
     subtitle: 'VISION FOUNDATION',
@@ -100,10 +151,21 @@ export const getStoredFranchises = (branchFilter = '') => {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
         franchiseList = parsed.filter((f) => f.id !== 'fc-ala-102' && f.id !== 'fc-kdl-103');
+        let modified = false;
+        DEFAULT_FRANCHISES.forEach((defFc) => {
+          if (!franchiseList.some((f) => f.id === defFc.id || f.userId === defFc.userId)) {
+            franchiseList.push(defFc);
+            modified = true;
+          }
+        });
         if (franchiseList.length === 0) {
           franchiseList = DEFAULT_FRANCHISES;
+          modified = true;
         }
-        safeSetItem('bsel_franchises_list', JSON.stringify(franchiseList));
+        if (modified) {
+          safeSetItem('bsel_franchises_list', JSON.stringify(franchiseList));
+          syncFranchisesToRegisteredUsers(franchiseList);
+        }
       } else {
         franchiseList = DEFAULT_FRANCHISES;
         safeSetItem('bsel_franchises_list', JSON.stringify(DEFAULT_FRANCHISES));
@@ -443,11 +505,14 @@ export const findFranchiseCredentials = (cleanId = '', cleanPassword = '') => {
     const fEmail = (f.email || '').toLowerCase().trim();
     const fPhone = String(f.phone || '').replace(/\D/g, '');
     const cleanEnteredDigits = idLower.replace(/\D/g, '');
+    const cleanIdNoPrefix = idLower.replace(/^franchise[.-]/, '');
 
     return (
       idLower === fId ||
       idLower === fCode ||
       idLower === fEmail ||
+      (fId && fId.replace(/^franchise[.-]/, '') === cleanIdNoPrefix) ||
+      (f.name && f.name.toLowerCase().includes(idLower)) ||
       (fPhone && cleanEnteredDigits && fPhone === cleanEnteredDigits)
     );
   });

@@ -31,7 +31,7 @@ import {
   deleteStoredFranchise,
   getFranchiseBranding
 } from '../../utils/franchiseStorage';
-import { setActiveSession } from '../../utils/authStorage';
+import { setActiveSession, getActiveSession } from '../../utils/authStorage';
 import FranchiseCertificateBrandingModal from '../../components/FranchiseCertificateBrandingModal';
 
 export default function AdminBranchFranchisesPage({
@@ -179,6 +179,12 @@ export default function AdminBranchFranchisesPage({
 
   // Direct Jump to Franchise Dashboard
   const handleGoToFranchiseDashboard = (franchise) => {
+    // Preserve current admin session for seamless return to branch admin
+    const currentActive = getActiveSession();
+    if (currentActive && (currentActive.role === 'Branch Head' || currentActive.role === 'Super Admin')) {
+      sessionStorage.setItem('bsel_admin_return_session', JSON.stringify(currentActive));
+    }
+
     const b = getFranchiseBranding(franchise.id) || {};
     const sessionPayload = {
       ...franchise,
@@ -195,6 +201,12 @@ export default function AdminBranchFranchisesPage({
       signature: b.signature !== undefined ? b.signature : (franchise.signature || null),
       directorSignature: b.signature !== undefined ? b.signature : (franchise.signature || null)
     };
+
+    try {
+      sessionStorage.setItem('bsel_active_session', JSON.stringify(sessionPayload));
+      localStorage.setItem('bsel_active_session', JSON.stringify(sessionPayload));
+    } catch (_) {}
+
     setActiveSession(sessionPayload);
     showToast(`Opening Franchise Dashboard for ${franchise.name}...`);
     setActivePage('franchise_portal');

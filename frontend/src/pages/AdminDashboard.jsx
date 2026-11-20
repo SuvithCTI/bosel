@@ -81,6 +81,7 @@ import {
   clearActiveSession,
   getCoursePrefix
 } from '../utils/authStorage';
+import { isStudentUser } from '../utils/studentValidator';
 
 import { 
   getStoredEvents, 
@@ -930,7 +931,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
       duration: student.duration || '6 Months',
       registrationNo: regNo,
       certificateNo: certNo,
-      centreName: student.branch || student.institution || activeBranch || 'test branch',
+      centreName: student.branch || student.institution || activeBranch || 'Tenkasi Branch',
       centreCode: '545454',
       centreAddress: student.address || 'second street, surandai,keelasurandai,tenkasi',
       issueDate: student.enrolmentDate || '05-10-2026',
@@ -1096,7 +1097,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
         duration: student.duration || '6 Months',
         registrationNo: regNo,
         certificateNo: certNo,
-        centreName: student.branch || student.institution || activeBranch || 'test branch',
+        centreName: student.branch || student.institution || activeBranch || 'Tenkasi Branch',
         centreCode: '545454',
         centreAddress: student.address || 'second street, surandai,keelasurandai,tenkasi',
         issueDate: student.enrolmentDate || '05-10-2026',
@@ -1248,7 +1249,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
   
   // Super Admin: All students with filters
   const filteredStudentsSuperAdmin = usersList
-    .filter(u => u.role !== 'Super Admin' && u.role !== 'Branch Head')
+    .filter(isStudentUser)
     .filter(u => {
       const matchSearch = 
         u.studentName?.toLowerCase().includes(studentSearch.toLowerCase()) ||
@@ -1279,7 +1280,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
 
   // Branch Head: Scoped strictly to activeBranch
   const branchStudents = usersList
-    .filter(u => u.role !== 'Super Admin' && u.role !== 'Branch Head')
+    .filter(isStudentUser)
     .filter(u => {
       const studentBranch = (u.branch || u.institution || '').toLowerCase();
       const targetBranch = (activeBranch || '').toLowerCase();
@@ -1375,7 +1376,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
   // -------------------------------------------------------------
   // METRICS CALCULATIONS
   // -------------------------------------------------------------
-  const totalStudentsCount = usersList.filter(u => u.role !== 'Super Admin' && u.role !== 'Branch Head').length;
+  const totalStudentsCount = usersList.filter(isStudentUser).length;
   const totalBranchesCount = schoolsList.length;
   const totalCoursesCount = coursesList.length;
   const totalEventsCount = eventsList.length;

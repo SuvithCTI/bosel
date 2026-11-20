@@ -17,6 +17,8 @@ export const DEFAULT_STAFF_MEMBERS = [
     grade: 'Academic Staff',
     program: 'Abacus & Vedic Mathematics',
     institution: 'B★SEL Tenkasi Branch',
+    assignedUnit: 'Tenkasi Branch',
+    affiliationType: 'Branch',
     address: 'Tenkasi, Tamil Nadu',
     createdAt: '2026-01-15'
   },
@@ -36,8 +38,75 @@ export const DEFAULT_STAFF_MEMBERS = [
     grade: 'Academic Staff',
     program: 'Student Operations & Evaluation',
     institution: 'B★SEL Learning Center',
+    assignedUnit: 'Tenkasi Branch',
+    affiliationType: 'Branch',
     address: 'Tenkasi, Tamil Nadu',
     createdAt: '2026-01-10'
+  },
+  {
+    id: 'staff-fc-101',
+    userId: 'staff.franchise',
+    password: 'staff123',
+    name: 'S. Muthukumar',
+    studentName: 'S. Muthukumar',
+    role: 'Staff',
+    designation: 'Franchise Academic Instructor',
+    branch: 'Tenkasi Branch',
+    branchCode: 'BSEL-BR-101',
+    email: 'franchisestaff@bsel.org',
+    phone: '9865219133',
+    status: 'Active',
+    grade: 'Academic Staff',
+    program: 'Abacus & Vedic Mathematics',
+    institution: 'Tenkasi City Franchise',
+    franchiseId: 'fc-tsi-101',
+    assignedUnit: 'Tenkasi City Franchise',
+    affiliationType: 'Franchise',
+    address: '12, Main Bazaar Road, Tenkasi',
+    createdAt: '2026-01-18'
+  },
+  {
+    id: 'staff-sch-101',
+    userId: 'staff.school',
+    password: 'staff123',
+    name: 'Sr. Maria Theresa',
+    studentName: 'Sr. Maria Theresa',
+    role: 'Staff',
+    designation: 'School Academic Coordinator',
+    branch: 'Tenkasi Branch',
+    branchCode: 'BSEL-BR-101',
+    email: 'schoolstaff@bsel.org',
+    phone: '9443188221',
+    status: 'Active',
+    grade: 'Academic Staff',
+    program: 'Computer & Science Faculty',
+    institution: "St. Joseph's Matric Higher Secondary School",
+    schoolId: 'sch-tsi-101',
+    assignedUnit: "St. Joseph's Matric Higher Secondary School",
+    affiliationType: 'School',
+    address: '15, Church Road, Tenkasi',
+    createdAt: '2026-01-19'
+  },
+  {
+    id: 'staff-tnv-101',
+    userId: 'staff.tirunelveli',
+    password: 'staff123',
+    name: 'S. Anand',
+    studentName: 'S. Anand',
+    role: 'Staff',
+    designation: 'Senior Academic Instructor',
+    branch: 'Tirunelveli Branch',
+    branchCode: 'BSEL-BR-102',
+    email: 'anand.tnv@bsel.org',
+    phone: '9443188202',
+    status: 'Active',
+    grade: 'Academic Staff',
+    program: 'Abacus & Vedic Mathematics',
+    institution: 'B★SEL Tirunelveli Branch',
+    assignedUnit: 'Tirunelveli Branch',
+    affiliationType: 'Branch',
+    address: 'Tirunelveli, Tamil Nadu',
+    createdAt: '2026-01-20'
   }
 ];
 
@@ -61,6 +130,17 @@ export const getStoredStaff = (branchFilter = '') => {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
         staffList = parsed;
+        let modified = false;
+        DEFAULT_STAFF_MEMBERS.forEach((defStaff) => {
+          if (!staffList.some((s) => (s.userId && s.userId.toLowerCase() === defStaff.userId.toLowerCase()) || s.id === defStaff.id)) {
+            staffList.push(defStaff);
+            modified = true;
+          }
+        });
+        if (modified) {
+          localStorage.setItem('bsel_staff_members', JSON.stringify(staffList));
+          syncStaffToRegisteredUsers(staffList);
+        }
       } else {
         staffList = DEFAULT_STAFF_MEMBERS;
         localStorage.setItem('bsel_staff_members', JSON.stringify(DEFAULT_STAFF_MEMBERS));

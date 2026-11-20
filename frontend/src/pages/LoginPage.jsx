@@ -22,8 +22,8 @@ import {
   isPhoneNumberRegistered,
   getLastRegisteredCreds,
 } from '../utils/authStorage';
-import { getFranchiseBranding } from '../utils/franchiseStorage';
-import { getSchoolBranding } from '../utils/schoolStorage';
+import { getFranchiseBranding, getStoredFranchises } from '../utils/franchiseStorage';
+import { getSchoolBranding, getStoredSchools } from '../utils/schoolStorage';
 
 // -------------------------------------------------------
 // Student profile storage
@@ -277,7 +277,7 @@ export default function LoginPage({
   const [currentUser, setCurrentUser] = useState(() => {
     const session = getActiveSession();
 
-    if (!session || session.role === 'Super Admin' || session.role === 'Branch Head' || session.role === 'Staff') {
+    if (!session || session.role === 'Super Admin' || session.role === 'Branch Head' || session.role === 'Staff' || session.role === 'Franchise' || session.role === 'School') {
       return null;
     }
 
@@ -337,7 +337,7 @@ export default function LoginPage({
     const syncSession = () => {
       const session = getActiveSession();
 
-      if (session && session.role !== 'Super Admin' && session.role !== 'Branch Head' && session.role !== 'Staff') {
+      if (session && session.role !== 'Super Admin' && session.role !== 'Branch Head' && session.role !== 'Staff' && session.role !== 'Franchise' && session.role !== 'School') {
         setCurrentUser(normalizeStudent(session));
       } else {
         setCurrentUser(null);
@@ -420,7 +420,7 @@ export default function LoginPage({
 
     if (!authUser) {
       const cleanDigits = userId.replace(/\D/g, '');
-      if (cleanDigits.length === 10 && !isPhoneNumberRegistered(cleanDigits) && !userId.toLowerCase().startsWith('admin') && !userId.toLowerCase().startsWith('branch') && !userId.toLowerCase().startsWith('staff')) {
+      if (cleanDigits.length === 10 && !isPhoneNumberRegistered(cleanDigits) && !userId.toLowerCase().startsWith('admin') && !userId.toLowerCase().startsWith('branch') && !userId.toLowerCase().startsWith('staff') && !userId.toLowerCase().startsWith('franchise') && !userId.toLowerCase().startsWith('school')) {
         setErrorMessage(`Mobile number "${cleanDigits}" is not registered. Only candidates who have filled the admission form and received credentials can log in. Please click 'Fill Admission Form to Enroll' below.`);
         return;
       }
@@ -460,7 +460,8 @@ export default function LoginPage({
       const b = isSchoolUser ? (sb || fb) : (fb || sb);
       const mergedFranchiseUser = {
         ...authUser,
-        role: authUser.role || (isSchoolUser ? 'School' : 'Franchise'),
+        role: isSchoolUser ? 'School' : 'Franchise',
+        schoolRole: isSchoolUser ? 'School' : null,
         schoolId: authUser.schoolId || (isSchoolUser ? (authUser.id || authUser.userId) : null),
         franchiseId: authUser.franchiseId || (!isSchoolUser ? (authUser.id || authUser.userId) : null),
         schoolName: b?.schoolName || authUser.schoolName || authUser.name,
@@ -720,7 +721,7 @@ export default function LoginPage({
             </div>
 
             {/* RIGHT COLUMN: Form & Credentials */}
-            <div className="md:col-span-7 flex flex-col justify-center space-y-2 sm:space-y-2.5 max-w-sm w-full mx-auto md:mx-0">
+            <div className="md:col-span-7 flex flex-col justify-center space-y-2 sm:space-y-2.5 max-w-sm sm:max-w-md w-full mx-auto md:mx-0">
               {/* Header */}
               <div className="space-y-0.5">
                 <h1 className="text-base sm:text-xl font-bold text-white tracking-tight">
@@ -854,7 +855,7 @@ export default function LoginPage({
                       Select Role
                     </span>
                   </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
+                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
                     <button
                       type="button"
                       onClick={() => {
@@ -862,18 +863,19 @@ export default function LoginPage({
                         setPassword('admin123');
                         setErrorMessage('');
                       }}
-                      className="w-full py-1 px-1 bg-blue-900/50 hover:bg-blue-800/70 border border-blue-400/40 text-blue-100 font-semibold rounded-md text-[10px] sm:text-[11px] transition active:scale-95 cursor-pointer text-center flex flex-col items-center justify-center min-h-[28px] sm:min-h-[30px]"
+                      className="w-full py-1 px-1 bg-blue-900/50 hover:bg-blue-800/70 border border-blue-400/40 text-blue-100 font-semibold rounded-md text-[10px] sm:text-[11px] transition active:scale-95 cursor-pointer text-center flex items-center justify-center min-h-[28px] sm:min-h-[30px]"
                     >
                       Super Admin
                     </button>
                     <button
                       type="button"
                       onClick={() => {
-                        setUserId('bseltenkasi@bsel.org');
-                        setPassword('tenkasibsel');
+                        setUserId((prev) => (prev === 'bseltenkasi@bsel.org' ? 'bseltirunelveli@bsel.org' : 'bseltenkasi@bsel.org'));
+                        setPassword((prev) => (prev === 'tenkasibsel' ? 'tirunelvelibsel' : 'tenkasibsel'));
                         setErrorMessage('');
                       }}
                       className="w-full py-1 px-1 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/50 text-amber-300 font-semibold rounded-md text-[10px] sm:text-[11px] transition active:scale-95 cursor-pointer text-center flex items-center justify-center min-h-[28px] sm:min-h-[30px]"
+                      title="Click to toggle between Tenkasi and Tirunelveli branch credentials"
                     >
                       Branch Admin
                     </button>
@@ -891,13 +893,52 @@ export default function LoginPage({
                     <button
                       type="button"
                       onClick={() => {
-                        setUserId('franchise');
-                        setPassword('franchise123');
+                        try {
+                          const frs = getStoredFranchises();
+                          if (frs && frs.length > 0) {
+                            const curIdx = frs.findIndex((f) => f.userId === userId);
+                            const nextIdx = (curIdx + 1) % frs.length;
+                            setUserId(frs[nextIdx].userId);
+                            setPassword(frs[nextIdx].password || 'franchise123');
+                          } else {
+                            setUserId('franchise.aim4life');
+                            setPassword('franchise123');
+                          }
+                        } catch {
+                          setUserId('franchise.aim4life');
+                          setPassword('franchise123');
+                        }
                         setErrorMessage('');
                       }}
                       className="w-full py-1 px-1 bg-indigo-500/20 hover:bg-indigo-500/30 border border-indigo-400/50 text-indigo-200 font-semibold rounded-md text-[10px] sm:text-[11px] transition active:scale-95 cursor-pointer text-center flex items-center justify-center min-h-[28px] sm:min-h-[30px]"
+                      title="Click to toggle between Franchise/Academy logins"
                     >
                       Franchise
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        try {
+                          const schs = getStoredSchools();
+                          if (schs && schs.length > 0) {
+                            const curIdx = schs.findIndex((s) => s.userId === userId);
+                            const nextIdx = (curIdx + 1) % schs.length;
+                            setUserId(schs[nextIdx].userId);
+                            setPassword(schs[nextIdx].password || 'school123');
+                          } else {
+                            setUserId('school.sacredheart');
+                            setPassword('school123');
+                          }
+                        } catch {
+                          setUserId('school.sacredheart');
+                          setPassword('school123');
+                        }
+                        setErrorMessage('');
+                      }}
+                      className="w-full py-1 px-1 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/50 text-emerald-200 font-semibold rounded-md text-[10px] sm:text-[11px] transition active:scale-95 cursor-pointer text-center flex items-center justify-center min-h-[28px] sm:min-h-[30px]"
+                      title="Click to toggle between School logins"
+                    >
+                      School
                     </button>
                     {lastCreds?.userId ? (
                       <button
@@ -907,11 +948,11 @@ export default function LoginPage({
                           setPassword(lastCreds.password);
                           setErrorMessage('');
                         }}
-                        className="w-full py-1 px-1 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/50 text-emerald-200 font-semibold rounded-md text-[10px] sm:text-[11px] transition active:scale-95 cursor-pointer text-center flex flex-col items-center justify-center min-h-[28px] sm:min-h-[30px]"
+                        className="w-full py-1 px-1 bg-teal-500/20 hover:bg-teal-500/30 border border-teal-400/50 text-teal-200 font-semibold rounded-md text-[10px] sm:text-[11px] transition active:scale-95 cursor-pointer text-center flex flex-col items-center justify-center min-h-[28px] sm:min-h-[30px]"
                         title={`Enrolled: ${lastCreds.studentName || 'Student'}`}
                       >
                         <span className="truncate max-w-[75px] sm:max-w-none">{lastCreds.studentName ? lastCreds.studentName.split(' ')[0] : 'Enrolled'}</span>
-                        <span className="text-[8px] text-emerald-300/80 font-mono">My Account</span>
+                        <span className="text-[8px] text-teal-300/80 font-mono">My Account</span>
                       </button>
                     ) : (
                       <button

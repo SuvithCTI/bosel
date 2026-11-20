@@ -1,4 +1,5 @@
 import React from 'react';
+import { isStudentUser } from '../../utils/studentValidator';
 import {
   TrendingUp,
   Users,
@@ -33,7 +34,7 @@ export default function AdminOverviewPage({
   setActiveTab,
   setShowAddStudentModal
 }) {
-  const recentStudents = (usersList || []).slice(0, 5);
+  const recentStudents = (usersList || []).filter(isStudentUser).slice(0, 5);
   const recentEvents = (eventsList || []).slice(0, 4);
 
   return (

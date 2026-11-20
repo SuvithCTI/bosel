@@ -16,13 +16,16 @@ import {
   Save,
   ChevronDown,
   Layers,
-  Pencil
+  Pencil,
+  UserPlus
 } from 'lucide-react';
 
 import { exportPdfFromElement } from '../../utils/pdfExport';
 import { getStoredCourses } from '../../data/coursesData';
 import MergedStudentPdfModal from '../../components/MergedStudentPdfModal';
-import { getCoursePrefix, getRegisteredUsers } from '../../utils/authStorage';
+import AdmissionModal from '../../components/AdmissionModal';
+import { getCoursePrefix, getRegisteredUsers, getActiveSession } from '../../utils/authStorage';
+import { isStudentUser } from '../../utils/studentValidator';
 import { getCourseSubjectModules } from '../../components/OfficialMarksheetView';
 import { getStudentPhotoUrl, getStudentRegisterNumber } from '../../utils/studentDataHelpers';
 
@@ -33,9 +36,9 @@ export const DEFAULT_STUDENT_ENQUIRIES = [
     userId: 'BSEL-9898989898',
     admissionNo: 'HW27-003',
     registerNumber: 'HW27-003',
-    branchName: 'Aim 4 Life',
-    branch: 'Aim 4 Life',
-    institution: 'Aim 4 Life',
+    branchName: 'Tenkasi Branch',
+    branch: 'Tenkasi Branch',
+    institution: 'Tenkasi Branch',
     studentName: 'shanju',
     name: 'shanju',
     parentName: 'R. Shanmugam',
@@ -51,16 +54,16 @@ export const DEFAULT_STUDENT_ENQUIRIES = [
     feeStatus: 'Paid',
     gender: 'Female',
     dob: '2016-04-12',
-    address: '14, Temple Street, Anna Nagar, Chennai - 600040'
+    address: '14, Temple Street, Tenkasi - 627811'
   },
   {
     id: 'ENQ-002',
     userId: 'BSEL-9897987645',
     admissionNo: 'AB27-002',
     registerNumber: 'AB27-002',
-    branchName: 'test branch',
-    branch: 'test branch',
-    institution: 'test branch',
+    branchName: 'Tirunelveli Branch',
+    branch: 'Tirunelveli Branch',
+    institution: 'Tirunelveli Branch',
     studentName: 'sankar',
     name: 'sankar',
     parentName: 'K. Sankaralingam',
@@ -76,16 +79,16 @@ export const DEFAULT_STUDENT_ENQUIRIES = [
     feeStatus: 'Paid',
     gender: 'Male',
     dob: '2015-08-20',
-    address: '22, Main Road, Surandai, Tenkasi - 627859'
+    address: '22, Main Road, Tirunelveli Junction - 627001'
   },
   {
     id: 'ENQ-003',
     userId: 'BSEL-9865219131',
     admissionNo: 'AB27-001',
     registerNumber: 'AB27-001',
-    branchName: 'test branch',
-    branch: 'test branch',
-    institution: 'test branch',
+    branchName: 'Tenkasi Branch',
+    branch: 'Tenkasi Branch',
+    institution: 'Tenkasi Branch',
     studentName: 'sivaji',
     name: 'sivaji',
     parentName: 'M. Sivaji Pandian',
@@ -108,9 +111,9 @@ export const DEFAULT_STUDENT_ENQUIRIES = [
     userId: 'BSEL-9442188771',
     admissionNo: 'ADM-2026-004',
     registerNumber: 'ADM-2026-004',
-    branchName: 'Aim 4 Life',
-    branch: 'Aim 4 Life',
-    institution: 'Aim 4 Life',
+    branchName: 'Tirunelveli Branch',
+    branch: 'Tirunelveli Branch',
+    institution: 'Tirunelveli Branch',
     studentName: 'Kavya Maran',
     name: 'Kavya Maran',
     parentName: 'S. Maran',
@@ -126,16 +129,16 @@ export const DEFAULT_STUDENT_ENQUIRIES = [
     feeStatus: 'Paid',
     gender: 'Female',
     dob: '2017-02-18',
-    address: '5B, Green Valley, T. Nagar, Chennai - 600017'
+    address: '5B, Green Valley, Palayamkottai, Tirunelveli - 627002'
   },
   {
     id: 'ENQ-005',
     userId: 'BSEL-9840123456',
     admissionNo: 'DN27-005',
     registerNumber: 'DN27-005',
-    branchName: 'Aim 4 Life',
-    branch: 'Aim 4 Life',
-    institution: 'Aim 4 Life',
+    branchName: 'Tenkasi Branch',
+    branch: 'Tenkasi Branch',
+    institution: 'Tenkasi Branch',
     studentName: 'Arjun Subramanian',
     name: 'Arjun Subramanian',
     parentName: 'V. Subramanian',
@@ -158,9 +161,9 @@ export const DEFAULT_STUDENT_ENQUIRIES = [
     userId: 'BSEL-9865219131',
     admissionNo: 'TK27-006',
     registerNumber: 'TK27-006',
-    branchName: 'Tenkasi Regional Branch',
-    branch: 'Tenkasi Regional Branch',
-    institution: 'Tenkasi Regional Branch',
+    branchName: 'Tenkasi Branch',
+    branch: 'Tenkasi Branch',
+    institution: 'Tenkasi Branch',
     studentName: 'Sivakumar S',
     name: 'Sivakumar S',
     parentName: 'M. Sankar',
@@ -183,9 +186,9 @@ export const DEFAULT_STUDENT_ENQUIRIES = [
     userId: 'BSEL-9443188776',
     admissionNo: 'TK27-007',
     registerNumber: 'TK27-007',
-    branchName: 'Tenkasi Regional Branch',
-    branch: 'Tenkasi Regional Branch',
-    institution: 'Tenkasi Regional Branch',
+    branchName: 'Tirunelveli Branch',
+    branch: 'Tirunelveli Branch',
+    institution: 'Tirunelveli Branch',
     studentName: 'Priya Dharshini',
     name: 'Priya Dharshini',
     parentName: 'R. Ramakrishnan',
@@ -195,13 +198,13 @@ export const DEFAULT_STUDENT_ENQUIRIES = [
     level: 'Level 2',
     mobile: '9443188776',
     phone: '9443188776',
-    email: 'priya.tenkasi@gmail.com',
+    email: 'priya.tirunelveli@gmail.com',
     submitted: '2026-10-11 14:45:00',
     status: 'Pending',
     feeStatus: 'Paid',
     gender: 'Female',
     dob: '2016-09-22',
-    address: '42, North Car Street, Surandai, Tenkasi - 627859'
+    address: '42, South Bazaar, Tirunelveli - 627001'
   }
 ];
 
@@ -211,9 +214,10 @@ export const getStoredStudentEnquiries = () => {
     const raw = localStorage.getItem('bsel_student_enquiries');
     let parsed = raw ? JSON.parse(raw) : [];
     if (!Array.isArray(parsed)) parsed = [];
+    parsed = parsed.filter(isStudentUser);
 
     // Also get all registered students from official student registration
-    const registeredUsers = getRegisteredUsers().filter(u => u.role !== 'Super Admin' && u.role !== 'Branch Head');
+    const registeredUsers = getRegisteredUsers().filter(isStudentUser);
 
     // Map registered users to enquiry structure with 100% full detail fidelity
     const registeredEnquiries = registeredUsers.map(u => {
@@ -228,8 +232,8 @@ export const getStoredStudentEnquiries = () => {
         branchName: u.schoolName || u.franchiseName || u.branch || u.institution || 'Tenkasi Regional Branch',
         branch: u.branch || u.institution || 'Tenkasi Regional Branch',
         institution: u.institution || u.schoolName || u.franchiseName || u.branch || 'Tenkasi Regional Branch',
-        schoolName: u.schoolName || '',
-        franchiseName: u.franchiseName || '',
+        schoolName: u.schoolName || (u.admissionCategory === 'school' || u.schoolId ? (u.institution || '') : ''),
+        franchiseName: u.franchiseName || (u.admissionCategory === 'franchise' || u.franchiseId ? (u.institution || '') : ''),
         schoolId: u.schoolId || null,
         franchiseId: u.franchiseId || null,
         admissionCategory: u.admissionCategory || 'Branch',
@@ -315,6 +319,8 @@ const getInitials = (name = '') => {
 export default function StaffStudentDetailsPage({
   activeBranch = 'All branches',
   branchStudents = null,
+  portalType = null,
+  entityName = null,
   setViewingAdmissionStudent,
   handleOpenMarksheet,
   handleOpenCertForStudent,
@@ -322,11 +328,14 @@ export default function StaffStudentDetailsPage({
   showToast = () => {},
   schoolsList = []
 }) {
+  const session = useMemo(() => getActiveSession() || {}, []);
+  const effectivePortalType = portalType || (session.role === 'School' || session.schoolId ? 'school' : (session.role === 'Franchise' || session.franchiseId ? 'franchise' : 'branch'));
   const [enquiries, setEnquiries] = useState(() => getStoredStudentEnquiries());
   const [courses, setCourses] = useState(() => getStoredCourses());
   const [selectedIds, setSelectedIds] = useState([]);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [localMergedPdfData, setLocalMergedPdfData] = useState(null);
+  const [showAdmissionModal, setShowAdmissionModal] = useState(false);
 
   // Live synchronization with Master Courses Repository
   useEffect(() => {
@@ -366,7 +375,7 @@ export default function StaffStudentDetailsPage({
   // Normalize scoped branchStudents if passed from Franchise/School dashboard
   const normalizedBranchStudents = useMemo(() => {
     if (!Array.isArray(branchStudents)) return null;
-    return branchStudents.map(u => {
+    return branchStudents.filter(isStudentUser).map(u => {
       const parent = u.parentName || u.fatherName || '';
       const regNo = u.registerNumber || u.registrationNo || getStudentRegisterNumber(u);
       return {
@@ -379,8 +388,8 @@ export default function StaffStudentDetailsPage({
         branchName: u.schoolName || u.franchiseName || u.institution || u.branch || activeBranch,
         branch: u.branch || u.institution || activeBranch,
         institution: u.institution || u.schoolName || u.franchiseName || u.branch || activeBranch,
-        schoolName: u.schoolName || '',
-        franchiseName: u.franchiseName || '',
+        schoolName: u.schoolName || (u.admissionCategory === 'school' || u.schoolId ? (u.institution || '') : ''),
+        franchiseName: u.franchiseName || (u.admissionCategory === 'franchise' || u.franchiseId ? (u.institution || '') : ''),
         schoolId: u.schoolId || null,
         franchiseId: u.franchiseId || null,
         admissionCategory: u.admissionCategory || 'Branch',
@@ -739,7 +748,7 @@ export default function StaffStudentDetailsPage({
         duration: item.duration || '6 Months',
         registrationNo: regNo,
         certificateNo: certNo,
-        centreName: item.branchName || item.branch || item.institution || activeBranch || 'Test Branch',
+        centreName: item.branchName || item.branch || item.institution || activeBranch || 'Tenkasi Branch',
         centreCode: item.centreCode || '545454',
         centreAddress: item.address || 'Tenkasi, Tamil Nadu',
         issueDate: item.submitted ? item.submitted.split(' ')[0] : '05-10-2026',
@@ -768,7 +777,7 @@ export default function StaffStudentDetailsPage({
         certificateNo: certNo,
         level: activeLvl,
         duration: item.duration || '6 Months',
-        school: item.branchName || item.branch || item.institution || activeBranch || 'Test Branch',
+        school: item.branchName || item.branch || item.institution || activeBranch || 'Tenkasi Branch',
         address: item.address || 'Tenkasi, Tamil Nadu',
         subjects,
         totalMax,
@@ -892,10 +901,20 @@ export default function StaffStudentDetailsPage({
             </p>
           </div>
 
-          {/* Staff Info Note */}
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] font-bold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200">
-              Staff Record Viewing Desk
+          {/* Action Buttons & Desk Badge */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              type="button"
+              onClick={() => setShowAdmissionModal(true)}
+              className="px-3.5 py-2 text-xs font-black rounded-xl bg-gradient-to-r from-emerald-600 via-emerald-700 to-teal-800 hover:from-emerald-700 hover:to-teal-900 active:scale-95 text-white shadow-sm hover:shadow transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+              title="Open Student Registration Form for School or Academy"
+            >
+              <UserPlus className="w-3.5 h-3.5 text-emerald-200 shrink-0" />
+              <span>Student Registration Form</span>
+            </button>
+
+            <span className="text-[11px] font-bold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200 whitespace-nowrap">
+              {effectivePortalType === 'school' ? 'School Record Desk' : (effectivePortalType === 'franchise' ? 'Academy Record Desk' : 'Staff Record Viewing Desk')}
             </span>
           </div>
         </div>
@@ -983,7 +1002,9 @@ export default function StaffStudentDetailsPage({
                     </th>
                   )}
                   <th className="py-3 px-3">STUDENT DETAILS</th>
-                  <th className="py-3 px-3">BRANCH NAME</th>
+                  <th className="py-3 px-3">
+                    {effectivePortalType === 'school' ? 'SCHOOL NAME' : effectivePortalType === 'franchise' ? 'FRANCHISE NAME' : 'BRANCH NAME'}
+                  </th>
                   <th className="py-3 px-3">COURSE NAME</th>
                   <th className="py-3 px-3 text-center">LEVEL DOCUMENTS</th>
                 </tr>
@@ -1079,9 +1100,13 @@ export default function StaffStudentDetailsPage({
                           </div>
                         </td>
 
-                        {/* 3. Branch Name */}
+                        {/* 3. Branch / School / Franchise Name */}
                         <td className="py-3 px-3 text-slate-700 font-semibold whitespace-nowrap">
-                          {item.branchName || item.branch || item.institution || 'Aim 4 Life'}
+                          {effectivePortalType === 'franchise'
+                            ? (item.franchiseName || item.institution || entityName || 'Tenkasi City Franchise')
+                            : effectivePortalType === 'school'
+                            ? (item.schoolName || item.institution || entityName || "St. Joseph's Matric Higher Secondary School")
+                            : (item.branchName || item.branch || item.institution || activeBranch || 'Tenkasi Branch')}
                         </td>
 
                         {/* 4. Course Name */}
@@ -1230,6 +1255,24 @@ export default function StaffStudentDetailsPage({
           data={localMergedPdfData}
           onClose={() => setLocalMergedPdfData(null)}
           showToast={showToast}
+        />
+      )}
+
+      {/* Official Student Registration Form Modal */}
+      {showAdmissionModal && (
+        <AdmissionModal
+          isOpen={showAdmissionModal}
+          onClose={() => setShowAdmissionModal(false)}
+          initialBranch={activeBranch ? String(activeBranch).replace(/\s*branch/gi, '').trim() : 'Tenkasi'}
+          lockBranch={true}
+          lockAdmissionCategory={true}
+          initialAdmissionCategory={effectivePortalType === 'school' ? 'School' : (effectivePortalType === 'franchise' ? 'Franchise' : 'Branch')}
+          initialInstitution={entityName || activeBranch}
+          onSuccess={() => {
+            setShowAdmissionModal(false);
+            setEnquiries(getStoredStudentEnquiries());
+            showToast('Student registered successfully!');
+          }}
         />
       )}
 

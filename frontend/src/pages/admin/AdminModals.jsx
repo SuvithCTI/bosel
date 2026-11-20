@@ -296,7 +296,10 @@ export default function AdminModals({
         }}
         setActivePage={setActivePage}
         initialBranch={currentAdminRole === 'Branch Head' ? (activeBranch ? activeBranch.replace(/\s+Branch$/i, '') : 'Tenkasi') : 'Tenkasi'}
-        lockBranch={false}
+        lockBranch={currentAdminRole === 'Branch Head'}
+        lockAdmissionCategory={currentAdminRole === 'Branch Head'}
+        initialAdmissionCategory={currentAdminRole === 'Branch Head' ? 'Branch' : null}
+        initialInstitution={currentAdminRole === 'Branch Head' ? activeBranch : null}
         skipPayment={false}
         onSuccess={(account) => {
           setUsersList(getRegisteredUsers());
@@ -1811,10 +1814,10 @@ export default function AdminModals({
           <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-150 my-auto">
             <div className="bg-[#081d3d] text-white p-4 flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-black">Affiliate New Branch / Exam Centre</h3>
+                <h3 className="text-sm font-black text-white">Add New Branch</h3>
                 <p className="text-[11px] text-slate-300">Assigns unique B★SEL Centre Code and sets Centre Director credentials</p>
               </div>
-              <button onClick={() => setShowAddSchoolModal(false)} className="text-white/80 hover:text-white">
+              <button onClick={() => setShowAddSchoolModal(false)} className="text-white/80 hover:text-white cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -1855,135 +1858,68 @@ export default function AdminModals({
               setShowAddSchoolModal(false);
               showToast(`Added "${created.name}" with branch login credentials.`);
             }} className="p-5 space-y-3.5 text-xs">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="sm:col-span-2">
-                  <label className="font-bold text-slate-700 block mb-1">Branch / Institute Name *</label>
+              <div className="space-y-3">
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">Branch Name *</label>
                   <input
                     type="text"
                     required
                     value={newSchool.name}
                     onChange={(e) => setNewSchool(prev => ({ ...prev, name: e.target.value, branchName: e.target.value }))}
-                    placeholder="e.g. B★SEL Madurai Regional Academy"
+                    placeholder="e.g. B★SEL Madurai Branch"
                     className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none font-bold"
                   />
                 </div>
 
-                <div className="sm:col-span-2 rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-3">
-                  <h4 className="font-black text-slate-800">Branch Branding</h4>
-
-                  <div>
-                    <label className="font-bold text-slate-700 block mb-1">Tagline</label>
-                    <input
-                      type="text"
-                      value={newSchool.tagline || ''}
-                      onChange={(e) => setNewSchool((prev) => ({ ...prev, tagline: e.target.value }))}
-                      placeholder="Branch tagline"
-                      className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div className="space-y-2">
-                      <label className="font-bold text-slate-700 block">Branch Logo</label>
-                      <input
-                        ref={branchLogoInputRef}
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => handleBranchImageUpload(e, 'logo')}
-                        className="hidden"
-                      />
-                      <div className="flex items-center gap-3">
-                        <div className="h-14 w-14 rounded-lg border border-slate-300 bg-white flex items-center justify-center overflow-hidden shrink-0">
-                          {newSchool.logo ? (
-                            <img src={newSchool.logo} alt="Branch logo preview" className="h-full w-full object-contain" />
-                          ) : (
-                            <ImageIcon className="w-5 h-5 text-slate-300" />
-                          )}
-                        </div>
-                        <div>
-                          <button
-                            type="button"
-                            onClick={() => branchLogoInputRef.current?.click()}
-                            className="px-3 py-1.5 bg-[#081d3d] text-white rounded-lg font-bold flex items-center gap-1.5 text-xs cursor-pointer"
-                          >
-                            <Upload className="w-3.5 h-3.5 text-amber-400" />
-                            Upload logo
-                          </button>
-                          <p className="mt-1 text-[10px] text-slate-500">Image file, under 500 KB</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="font-bold text-slate-700 block">Branch Coordinator Signature</label>
-                      <input
-                        ref={branchSignatureInputRef}
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => handleBranchImageUpload(e, 'signature')}
-                        className="hidden"
-                      />
-                      <div className="flex items-center gap-3">
-                        <div className="h-14 w-24 rounded-lg border border-slate-300 bg-white flex items-center justify-center overflow-hidden shrink-0">
-                          {newSchool.signature ? (
-                            <img src={newSchool.signature} alt="Coordinator signature preview" className="h-full w-full object-contain" />
-                          ) : (
-                            <ImageIcon className="w-5 h-5 text-slate-300" />
-                          )}
-                        </div>
-                        <div>
-                          <button
-                            type="button"
-                            onClick={() => branchSignatureInputRef.current?.click()}
-                            className="px-3 py-1.5 bg-[#081d3d] text-white rounded-lg font-bold flex items-center gap-1.5 text-xs cursor-pointer"
-                          >
-                            <Upload className="w-3.5 h-3.5 text-amber-400" />
-                            Upload signature
-                          </button>
-                          <p className="mt-1 text-[10px] text-slate-500">Image file, under 500 KB</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="font-bold text-slate-700 block mb-1">Branch Coordinator Name</label>
-                    <input
-                      type="text"
-                      value={newSchool.coordinator || ''}
-                      onChange={(e) => setNewSchool((prev) => ({ ...prev, coordinator: e.target.value }))}
-                      placeholder="Coordinator name"
-                      className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
-                    />
-                  </div>
-                </div>
-
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">User ID *</label>
+                  <label className="font-bold text-slate-700 block mb-1">Location / District</label>
                   <input
                     type="text"
-                    required
-                    autoComplete="username"
-                    value={newSchool.userId}
-                    onChange={(e) => setNewSchool(prev => ({ ...prev, userId: e.target.value }))}
-                    placeholder="Branch admin login ID"
+                    value={newSchool.city || ''}
+                    onChange={(e) => setNewSchool(prev => ({ ...prev, city: e.target.value }))}
+                    placeholder="e.g. Madurai, Tamil Nadu"
                     className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Password *</label>
+                  <label className="font-bold text-slate-700 block mb-1">Branch Coordinator Name</label>
                   <input
-                    type="password"
-                    required
-                    autoComplete="new-password"
-                    value={newSchool.password}
-                    onChange={(e) => setNewSchool(prev => ({ ...prev, password: e.target.value }))}
-                    placeholder="Set branch login password"
+                    type="text"
+                    value={newSchool.coordinator || ''}
+                    onChange={(e) => setNewSchool(prev => ({ ...prev, coordinator: e.target.value }))}
+                    placeholder="Coordinator name"
                     className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
                   />
                 </div>
 
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-1">User ID *</label>
+                    <input
+                      type="text"
+                      required
+                      autoComplete="username"
+                      value={newSchool.userId}
+                      onChange={(e) => setNewSchool(prev => ({ ...prev, userId: e.target.value }))}
+                      placeholder="Branch admin login ID"
+                      className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none font-mono"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-1">Password *</label>
+                    <input
+                      type="password"
+                      required
+                      autoComplete="new-password"
+                      value={newSchool.password}
+                      onChange={(e) => setNewSchool(prev => ({ ...prev, password: e.target.value }))}
+                      placeholder="Set branch login password"
+                      className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none font-mono"
+                    />
+                  </div>
+                </div>
               </div>
 
               <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
@@ -1996,9 +1932,9 @@ export default function AdminModals({
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-[#081d3d] hover:bg-[#123068] text-white rounded-xl font-black transition"
+                  className="px-5 py-2 bg-[#081d3d] hover:bg-[#123068] text-white rounded-xl font-black transition cursor-pointer"
                 >
-                  Affiliate Branch
+                  Add Branch
                 </button>
               </div>
             </form>
