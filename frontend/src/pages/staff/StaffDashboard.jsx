@@ -10,7 +10,9 @@ import {
   X,
   ShieldCheck,
   CheckCircle2,
-  ArrowRight
+  ArrowRight,
+  UserCheck,
+  User
 } from 'lucide-react';
 
 import StaffOverviewPage from './StaffOverviewPage';
@@ -28,6 +30,7 @@ import {
   getActiveSession,
   getCoursePrefix
 } from '../../utils/authStorage';
+import { getStoredStaff } from '../../utils/staffStorage';
 import { isStudentUser } from '../../utils/studentValidator';
 import { getStoredBatches } from '../../data/batchesData';
 import { getStoredSchools } from '../../data/schoolsData';
@@ -44,11 +47,41 @@ export default function StaffDashboard({
   onLogout,
   onOpenCertificate: _onOpenCertificate
 }) {
-  const currentStaff = sessionUser || getActiveSession() || {
-    studentName: 'B★SEL Staff Member',
-    role: 'Staff',
-    branch: 'Tenkasi Branch'
-  };
+  const [currentStaff, setCurrentStaff] = useState(() => {
+    const session = sessionUser || getActiveSession();
+    const branch = session?.branch || 'Tenkasi Branch';
+    const cleanBranch = branch.replace('Regional Branch', 'Branch').trim();
+    const staffList = getStoredStaff(cleanBranch);
+
+    if (session && session.role === 'Staff' && session.name && session.userId) {
+      const matched = staffList.find(s => s.userId === session.userId || s.id === session.id);
+      return { ...(matched || {}), ...session };
+    }
+
+    if (session?.userId) {
+      const match = staffList.find(s => s.userId === session.userId || s.email === session.userId);
+      if (match) return { ...match, ...session };
+    }
+
+    if (staffList.length > 0) {
+      return { ...staffList[0], ...(session || {}) };
+    }
+
+    return session || {
+      name: 'R. Kaviya',
+      studentName: 'R. Kaviya',
+      userId: 'staff.tenkasi',
+      password: 'staff123',
+      role: 'Staff',
+      designation: 'Senior Academic Instructor',
+      branch: 'Tenkasi Branch',
+      email: 'kaviya@bsel.org',
+      phone: '9865219132',
+      affiliationType: 'Branch',
+      assignedUnit: 'Tenkasi Branch',
+      status: 'Active'
+    };
+  });
 
   const [activeTab, setActiveTab] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -59,9 +92,20 @@ export default function StaffDashboard({
   });
 
   const [activeBranch, setActiveBranch] = useState(() => {
-    const rawBranch = currentStaff.branch || 'Tenkasi Branch';
+    const rawBranch = currentStaff.branch || sessionUser?.branch || getActiveSession()?.branch || 'Tenkasi Branch';
     return rawBranch.replace('Regional Branch', 'Branch').trim();
   });
+
+  useEffect(() => {
+    if (sessionUser) {
+      const branch = sessionUser.branch || 'Tenkasi Branch';
+      const cleanBranch = branch.replace('Regional Branch', 'Branch').trim();
+      const staffList = getStoredStaff(cleanBranch);
+      const matched = staffList.find(s => s.userId === sessionUser.userId || s.id === sessionUser.id);
+      setCurrentStaff({ ...(matched || {}), ...sessionUser });
+      setActiveBranch(cleanBranch);
+    }
+  }, [sessionUser]);
 
   const [usersList, setUsersList] = useState(() => getRegisteredUsers());
   const [batchesList, setBatchesList] = useState(() => getStoredBatches());
@@ -308,20 +352,23 @@ export default function StaffDashboard({
             {/* Desktop Divider */}
             <div className="hidden lg:block h-8 w-px bg-white/20 shrink-0"></div>
 
-            {/* Desktop-Only Logged-In Branch Indicator Badge */}
-            <div className="hidden lg:flex items-center gap-2 bg-white/10 hover:bg-white/15 px-3 py-1.5 rounded-xl border border-white/20 backdrop-blur-xs transition min-w-0 shadow-xs">
-              <div className="w-6 h-6 rounded-lg bg-amber-400/20 border border-amber-400/40 flex items-center justify-center shrink-0">
-                <Building className="w-3.5 h-3.5 text-amber-300" />
+            {/* Desktop-Only Logged-In Staff Indicator Badge */}
+            <div className="hidden lg:flex items-center gap-2.5 bg-white/10 hover:bg-white/15 px-3 py-1.5 rounded-xl border border-white/20 backdrop-blur-xs transition min-w-0 shadow-xs">
+              <div className="w-7 h-7 rounded-lg bg-amber-400/20 border border-amber-400/40 flex items-center justify-center shrink-0 text-amber-300 font-black text-xs">
+                {currentStaff.name ? currentStaff.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'ST'}
               </div>
               <div className="flex flex-col min-w-0 leading-tight">
                 <div className="flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
                   <span className="text-[9px] font-black uppercase tracking-wider text-amber-300 truncate">
-                    LOGGED IN BRANCH
+                    LOGGED IN STAFF
                   </span>
                 </div>
                 <span className="text-xs sm:text-sm font-black text-white truncate max-w-[180px] xl:max-w-xs">
-                  {activeBranch}
+                  {currentStaff.name || currentStaff.studentName || 'Academic Staff'}
+                </span>
+                <span className="text-[10px] text-slate-300 font-semibold truncate max-w-[180px] xl:max-w-xs">
+                  {currentStaff.designation || 'Instructor'} • {activeBranch}
                 </span>
               </div>
             </div>
@@ -353,17 +400,20 @@ export default function StaffDashboard({
 
         </div>
 
-        {/* Mobile-Dedicated Active Branch Status Sub-Bar */}
+        {/* Mobile-Dedicated Active Staff Status Sub-Bar */}
         <div className="lg:hidden bg-gradient-to-r from-[#051329] via-[#091e3d] to-[#0c2650] px-3 py-1.5 border-t border-amber-400/20 flex items-center justify-between gap-2 shadow-inner">
           <div className="flex items-center gap-2 min-w-0">
             <div className="w-5 h-5 rounded-md bg-amber-400/20 border border-amber-400/40 flex items-center justify-center shrink-0">
-              <Building className="w-3 h-3 text-amber-300" />
+              <UserCheck className="w-3 h-3 text-amber-300" />
             </div>
             <span className="text-[10px] font-black uppercase tracking-wider text-amber-300/90 shrink-0">
-              Logged In:
+              Staff:
             </span>
             <span className="text-xs font-black text-white truncate">
-              {activeBranch}
+              {currentStaff.name || currentStaff.studentName || 'Academic Staff'}
+            </span>
+            <span className="text-[10px] text-slate-300 truncate hidden xs:inline">
+              ({activeBranch})
             </span>
           </div>
 
@@ -476,6 +526,26 @@ export default function StaffDashboard({
               </button>
             </nav>
           </div>
+
+          {/* Sidebar Footer: Logged-in Staff Profile Summary */}
+          <div className="p-3 border-t border-slate-200 bg-slate-50 mt-auto">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-[#0c234b] text-amber-400 border border-amber-400/30 flex items-center justify-center font-black text-xs shrink-0 shadow-xs">
+                {currentStaff.name ? currentStaff.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'ST'}
+              </div>
+              <div className="min-w-0 flex-1 leading-tight">
+                <span className="text-[9px] font-black uppercase tracking-wider text-amber-600 block">
+                  Staff Account
+                </span>
+                <span className="text-xs font-black text-slate-900 truncate block">
+                  {currentStaff.name || currentStaff.studentName || 'Academic Staff'}
+                </span>
+                <code className="text-[10px] font-mono text-slate-500 truncate block">
+                  {currentStaff.userId || 'staff'}
+                </code>
+              </div>
+            </div>
+          </div>
         </aside>
 
         {/* =========================================================================
@@ -484,6 +554,7 @@ export default function StaffDashboard({
         <main className="flex-1 min-w-0 w-full lg:ml-72 xl:ml-80 p-4 sm:p-6 lg:p-8 space-y-5 bg-slate-100">
           {activeTab === 'staff_overview' && (
             <StaffOverviewPage
+              currentStaff={currentStaff}
               activeBranch={activeBranch}
               branchStudents={branchStudents}
               branchBatches={branchBatches}
