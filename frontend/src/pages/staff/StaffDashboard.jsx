@@ -11,6 +11,7 @@ import {
   ShieldCheck,
   CheckCircle2,
   ArrowRight,
+  ArrowLeft,
   UserCheck,
   User
 } from 'lucide-react';
@@ -28,6 +29,7 @@ import Logo from '../../components/Logo';
 import {
   getRegisteredUsers,
   getActiveSession,
+  setActiveSession,
   getCoursePrefix
 } from '../../utils/authStorage';
 import { getStoredStaff } from '../../utils/staffStorage';
@@ -45,7 +47,9 @@ export default function StaffDashboard({
   setActivePage,
   sessionUser,
   onLogout,
-  onOpenCertificate: _onOpenCertificate
+  onOpenCertificate: _onOpenCertificate,
+  onBack,
+  goBack
 }) {
   const [currentStaff, setCurrentStaff] = useState(() => {
     const session = sessionUser || getActiveSession();
@@ -143,10 +147,28 @@ export default function StaffDashboard({
     return () => window.removeEventListener('resize', updateHeaderHeight);
   }, []);
 
+  const [tabHistory, setTabHistory] = useState([activeTab]);
+
   const handleTabSelect = (tabKey) => {
+    if (tabKey === activeTab) return;
+    setTabHistory((prev) => [...prev, tabKey]);
     setActiveTab(tabKey);
     sessionStorage.setItem('bsel_staff_active_tab', tabKey);
     setMobileSidebarOpen(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleTabBack = () => {
+    if (tabHistory.length > 1) {
+      const nextHistory = [...tabHistory];
+      nextHistory.pop();
+      const prevTab = nextHistory[nextHistory.length - 1];
+      setTabHistory(nextHistory);
+      setActiveTab(prevTab);
+      sessionStorage.setItem('bsel_staff_active_tab', prevTab);
+    } else {
+      setActiveTab('staff_overview');
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -376,6 +398,44 @@ export default function StaffDashboard({
 
           {/* Controls */}
           <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+            {/* Quick Return to Branch Admin Button (Matches Attachment 3) */}
+            <button
+              type="button"
+              onClick={() => {
+                let returnSession = null;
+                try {
+                  const raw = sessionStorage.getItem('bsel_admin_return_session');
+                  if (raw) returnSession = JSON.parse(raw);
+                } catch (_) {}
+
+                const targetBranch = returnSession?.branch || activeBranch || 'Tenkasi Branch';
+                const targetRole = returnSession?.role || 'Branch Head';
+
+                if (returnSession) {
+                  setActiveSession(returnSession);
+                } else {
+                  const isTirunelveli = targetBranch.toLowerCase().includes('tirunelveli');
+                  const fallbackAdmin = {
+                    userId: isTirunelveli ? 'bseltirunelveli@bsel.org' : 'bseltenkasi@bsel.org',
+                    studentName: isTirunelveli ? 'Dr. M. Arumugam' : 'Mrs. Thangam Sivaji',
+                    name: isTirunelveli ? 'Dr. M. Arumugam' : 'Mrs. Thangam Sivaji',
+                    role: 'Branch Head',
+                    branch: isTirunelveli ? 'Tirunelveli Branch' : 'Tenkasi Branch'
+                  };
+                  setActiveSession(fallbackAdmin);
+                }
+
+                sessionStorage.setItem('bsel_active_admin_role', targetRole);
+                sessionStorage.setItem('bsel_active_branch', targetBranch);
+                setActivePage('admin');
+              }}
+              className="text-xs font-bold text-amber-300 border border-amber-400/60 bg-[#0c234b]/40 hover:bg-amber-400/20 active:scale-95 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full transition shadow-sm cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0"
+              title="Return to Branch Admin"
+            >
+              <ArrowLeft className="w-3.5 h-3.5 text-amber-300" />
+              <span>Branch Admin</span>
+            </button>
+
             {/* View Live Website Button */}
             <button
               onClick={() => setActivePage('home')}
@@ -580,7 +640,7 @@ export default function StaffDashboard({
             <StaffStudentMarksheetPage
               activeBranch={activeBranch}
               branchStudents={branchStudents}
-              onBack={() => handleTabSelect('staff_overview')}
+              onBack={handleTabBack}
             />
           )}
         </main>

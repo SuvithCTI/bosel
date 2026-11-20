@@ -43,15 +43,22 @@ export default function App() {
   // -------------------------------------------------------
   const [activePage, setActivePageState] = useState(() => {
     if (typeof window !== 'undefined') {
-      const session = getActiveSession();
-      const savedPage = sessionStorage.getItem('bsel_current_page');
+      const params = new URLSearchParams(window.location.search);
+      const urlPage = params.get('page');
 
-      // If a page was specifically selected in this session (e.g. 'home' via Visit Website), honor it
-      if (savedPage) {
-        return savedPage;
+      // 1. Explicit ?page=... URL parameter always takes highest precedence
+      if (urlPage) {
+        return urlPage;
       }
 
-      // If a student account is currently active and no saved page, default to student dashboard
+      // If user directly opened or reloaded the root URL '/', default to 'home'
+      if (window.location.pathname === '/' && !window.location.search && !window.location.hash) {
+        return 'home';
+      }
+
+      const session = getActiveSession();
+
+      // If a student account is currently active, default to student dashboard
       if (isStudentUser(session)) {
         return 'login';
       }
@@ -64,29 +71,28 @@ export default function App() {
         return 'franchise_portal';
       }
 
-      const params = new URLSearchParams(window.location.search);
-
-      if (params.get('page')) {
-        return params.get('page');
+      const savedPage = sessionStorage.getItem('bsel_current_page');
+      if (savedPage && savedPage !== 'login') {
+        return savedPage;
       }
 
       if (window.location.pathname.startsWith('/admin')) {
-        return 'admin';
+        return (session?.role === 'Super Admin' || session?.role === 'Branch Head') ? 'admin' : 'login';
       }
 
       if (window.location.pathname.startsWith('/staff')) {
-        return 'staff';
+        return session?.role === 'Staff' ? 'staff' : 'login';
       }
 
       if (window.location.pathname.startsWith('/franchise')) {
-        return 'franchise_portal';
+        return (session?.role === 'Franchise' || session?.role === 'School') ? 'franchise_portal' : 'login';
       }
 
       if (window.location.hash) {
         const cleanHash = window.location.hash.replace(/^#\/?/, '');
-        if (cleanHash.startsWith('admin')) return 'admin';
-        if (cleanHash.startsWith('staff')) return 'staff';
-        if (cleanHash.startsWith('franchise') || cleanHash.startsWith('school')) return 'franchise_portal';
+        if (cleanHash.startsWith('admin')) return (session?.role === 'Super Admin' || session?.role === 'Branch Head') ? 'admin' : 'login';
+        if (cleanHash.startsWith('staff')) return session?.role === 'Staff' ? 'staff' : 'login';
+        if (cleanHash.startsWith('franchise') || cleanHash.startsWith('school')) return (session?.role === 'Franchise' || session?.role === 'School') ? 'franchise_portal' : 'login';
         return cleanHash;
       }
     }
@@ -94,9 +100,144 @@ export default function App() {
     return 'home';
   });
 
-  const setActivePage = useCallback((page) => {
-    setActivePageState(page);
+  // Navigation history stack for seamless Back button handling across the full website
+  const [pageHistory, setPageHistory] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = sessionStorage.getItem('bsel_page_history');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+      } catch (_) {}
+    }
+    return ['home'];
+  });
+
+  const setActivePage = useCallback((nextPage, options = {}) => {
+    const { replace = false } = options || {};
+
+    setActivePageState((current) => {
+      if (current === nextPage) return current;
+
+      if (typeof window !== 'undefined') {
+        const url = new URL(window.location.href);
+        if (nextPage === 'home') {
+          url.searchParams.delete('page');
+        } else {
+          url.searchParams.set('page', nextPage);
+        }
+
+        if (replace) {
+          window.history.replaceState({ page: nextPage }, '', url.toString());
+        } else {
+          window.history.pushState({ page: nextPage }, '', url.toString());
+        }
+
+        setPageHistory((prev) => {
+          const updated = replace ? [...prev.slice(0, -1), nextPage] : [...prev, nextPage];
+          try {
+            sessionStorage.setItem('bsel_page_history', JSON.stringify(updated.slice(-25)));
+            sessionStorage.setItem('bsel_current_page', nextPage);
+          } catch (_) {}
+          return updated;
+        });
+      }
+
+      return nextPage;
+    });
+
     window.scrollTo(0, 0);
+  }, []);
+
+  const goBack = useCallback(() => {
+    setPageHistory((prev) => {
+      const session = getActiveSession();
+      // Filter out any pages that the user is not authorized to see right now
+      const isPageAllowed = (pg) => {
+        if (pg === 'admin') return session && (session.role === 'Super Admin' || session.role === 'Branch Head');
+        if (pg === 'staff') return session && session.role === 'Staff';
+        if (pg === 'franchise_portal') return session && (session.role === 'Franchise' || session.role === 'School');
+        return true;
+      };
+
+      if (prev.length > 1) {
+        const nextStack = [...prev];
+        nextStack.pop(); // remove current page
+
+        // Find the last allowed page in history
+        while (nextStack.length > 0 && !isPageAllowed(nextStack[nextStack.length - 1])) {
+          nextStack.pop();
+        }
+
+        const targetPage = nextStack[nextStack.length - 1] || 'home';
+        try {
+          sessionStorage.setItem('bsel_page_history', JSON.stringify(nextStack));
+          sessionStorage.setItem('bsel_current_page', targetPage);
+        } catch (_) {}
+
+        setActivePageState(targetPage);
+        if (typeof window !== 'undefined') {
+          const url = new URL(window.location.href);
+          if (targetPage === 'home') {
+            url.searchParams.delete('page');
+          } else {
+            url.searchParams.set('page', targetPage);
+          }
+          window.history.pushState({ page: targetPage }, '', url.toString());
+        }
+        return nextStack.length > 0 ? nextStack : ['home'];
+      } else {
+        // Fallback to home
+        setActivePageState('home');
+        try {
+          sessionStorage.setItem('bsel_current_page', 'home');
+          sessionStorage.setItem('bsel_page_history', JSON.stringify(['home']));
+        } catch (_) {}
+        if (typeof window !== 'undefined') {
+          const url = new URL(window.location.href);
+          url.searchParams.delete('page');
+          window.history.pushState({ page: 'home' }, '', url.toString());
+        }
+        return ['home'];
+      }
+    });
+    window.scrollTo(0, 0);
+  }, []);
+
+  // Synchronize browser forward/back buttons (popstate)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    // Initialize history state on first mount if not present
+    const params = new URLSearchParams(window.location.search);
+    const currentPage = params.get('page') || activePage || 'home';
+    const url = new URL(window.location.href);
+    if (currentPage !== 'home') {
+      url.searchParams.set('page', currentPage);
+    } else {
+      url.searchParams.delete('page');
+    }
+    window.history.replaceState({ page: currentPage }, '', url.toString());
+
+    const handlePopState = (event) => {
+      const pageFromState = event.state?.page;
+      const searchParams = new URLSearchParams(window.location.search);
+      const pageFromUrl = searchParams.get('page');
+      const targetPage = pageFromState || pageFromUrl || 'home';
+
+      setActivePageState(targetPage);
+      setPageHistory((prev) => {
+        if (prev.length > 1 && prev[prev.length - 2] === targetPage) {
+          return prev.slice(0, -1);
+        }
+        return [...prev, targetPage];
+      });
+      window.scrollTo(0, 0);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
   useLayoutEffect(() => {
@@ -208,6 +349,53 @@ export default function App() {
       );
     };
   }, []);
+
+  // -------------------------------------------------------
+  // Route Guard: Protect authenticated dashboard pages
+  // -------------------------------------------------------
+  useEffect(() => {
+    const session = getActiveSession();
+    if (activePage === 'admin') {
+      if (!session || (session.role !== 'Super Admin' && session.role !== 'Branch Head')) {
+        setActivePage('login');
+      }
+    } else if (activePage === 'staff') {
+      if (!session || session.role !== 'Staff') {
+        setActivePage('login');
+      }
+    } else if (activePage === 'franchise_portal') {
+      if (!session || (session.role !== 'Franchise' && session.role !== 'School')) {
+        setActivePage('login');
+      }
+    }
+  }, [activePage, sessionUser, setActivePage]);
+
+  // -------------------------------------------------------
+  // Universal Dashboard Sign Out Handler
+  // -------------------------------------------------------
+  const handleDashboardLogout = useCallback(() => {
+    clearActiveSession();
+
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('bsel_active_admin_role');
+      sessionStorage.removeItem('bsel_active_branch');
+      sessionStorage.removeItem('bsel_current_page');
+      if (window.location.hash && (window.location.hash.includes('admin') || window.location.hash.includes('staff') || window.location.hash.includes('franchise') || window.location.hash.includes('school'))) {
+        try {
+          window.history.replaceState(null, '', window.location.pathname.replace(/\/admin|\/staff|\/franchise/gi, '') || '/');
+        } catch (_) {}
+      }
+    }
+
+    setSessionUser(null);
+    setIsStudentDashboardOpen(false);
+    setActivePage('login');
+
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    });
+  }, [setActivePage]);
 
   // -------------------------------------------------------
   // Program selection
@@ -329,6 +517,8 @@ export default function App() {
         {activePage === 'login' && (
           <LoginPage
             setActivePage={setActivePage}
+            onBack={goBack}
+            goBack={goBack}
             onStudentDashboardChange={handleStudentDashboardChange}
           />
         )}
@@ -337,18 +527,9 @@ export default function App() {
         {activePage === 'admin' && (
           <AdminDashboard
             setActivePage={setActivePage}
-            onLogout={() => {
-              clearActiveSession();
-
-              setSessionUser(null);
-              setIsStudentDashboardOpen(false);
-              setActivePage('login');
-
-              window.scrollTo({
-                top: 0,
-                behavior: 'smooth',
-              });
-            }}
+            onBack={goBack}
+            goBack={goBack}
+            onLogout={handleDashboardLogout}
             onOpenCertificate={handleOpenCertificate}
           />
         )}
@@ -357,19 +538,10 @@ export default function App() {
         {activePage === 'staff' && (
           <StaffDashboard
             setActivePage={setActivePage}
+            onBack={goBack}
+            goBack={goBack}
             sessionUser={sessionUser}
-            onLogout={() => {
-              clearActiveSession();
-
-              setSessionUser(null);
-              setIsStudentDashboardOpen(false);
-              setActivePage('login');
-
-              window.scrollTo({
-                top: 0,
-                behavior: 'smooth',
-              });
-            }}
+            onLogout={handleDashboardLogout}
             onOpenCertificate={handleOpenCertificate}
           />
         )}
@@ -378,19 +550,10 @@ export default function App() {
         {activePage === 'franchise_portal' && (
           <FranchiseDashboard
             setActivePage={setActivePage}
+            onBack={goBack}
+            goBack={goBack}
             sessionUser={sessionUser}
-            onLogout={() => {
-              clearActiveSession();
-
-              setSessionUser(null);
-              setIsStudentDashboardOpen(false);
-              setActivePage('login');
-
-              window.scrollTo({
-                top: 0,
-                behavior: 'smooth',
-              });
-            }}
+            onLogout={handleDashboardLogout}
             onOpenCertificate={handleOpenCertificate}
           />
         )}

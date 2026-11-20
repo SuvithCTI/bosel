@@ -16,6 +16,7 @@ import {
   TrendingUp, 
   MapPin, 
   ArrowRight,
+  ArrowLeft,
   X,
   CreditCard,
   Building,
@@ -141,7 +142,7 @@ export {
   getMarksheetSubjects
 };
 
-export default function AdminDashboard({ setActivePage, onLogout, onOpenCertificate: _onOpenCertificate }) {
+export default function AdminDashboard({ setActivePage, onLogout, onOpenCertificate: _onOpenCertificate, onBack, goBack }) {
   // Session determination
   const sessionUser = getActiveSession();
 
@@ -219,10 +220,28 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
     return () => window.removeEventListener('resize', updateHeaderHeight);
   }, [currentAdminRole, activeBranch]);
 
+  const [tabHistory, setTabHistory] = useState([activeTab]);
+
   const handleTabSelect = (tabKey) => {
+    if (tabKey === activeTab) return;
+    setTabHistory((prev) => [...prev, tabKey]);
     setActiveTab(tabKey);
     setMobileSidebarOpen(false);
-    window.scrollTo(0, 0);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleTabBack = () => {
+    if (tabHistory.length > 1) {
+      const nextHistory = [...tabHistory];
+      nextHistory.pop();
+      const prevTab = nextHistory[nextHistory.length - 1];
+      setTabHistory(nextHistory);
+      setActiveTab(prevTab);
+    } else {
+      const fallbackTab = currentAdminRole === 'Branch Head' ? 'branch_overview' : 'overview';
+      setActiveTab(fallbackTab);
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // Sync state with local events
@@ -1518,6 +1537,19 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
 
           {/* Controls */}
           <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+            {/* If user switched to Branch Head from Super Admin, give Return to Super Admin button */}
+            {sessionUser?.role === 'Super Admin' && currentAdminRole === 'Branch Head' && (
+              <button
+                type="button"
+                onClick={() => handleRoleSwitch('Super Admin')}
+                className="text-xs font-bold text-amber-300 border border-amber-400/60 bg-[#0c234b]/40 hover:bg-amber-400/20 active:scale-95 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full transition shadow-sm cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0"
+                title="Return to Central Super Admin Portal"
+              >
+                <ArrowLeft className="w-3.5 h-3.5 text-amber-300" />
+                <span>Super Admin</span>
+              </button>
+            )}
+
             {/* View Live Website Button (Icon on mobile, text on sm+) */}
             <button
               onClick={() => setActivePage('home')}
@@ -1998,7 +2030,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
               <BranchStudentMarksheetPage
                 activeBranch={activeBranch}
                 branchStudents={branchStudents}
-                onBack={() => handleTabSelect('branch_overview')}
+                onBack={handleTabBack}
               />
           )}
 

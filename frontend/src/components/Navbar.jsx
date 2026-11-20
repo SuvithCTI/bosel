@@ -149,11 +149,16 @@ export default function Navbar({ activePage, setActivePage, sessionUser }) {
               {/* Mobile User Login Portal Icon */}
               <button
                 type="button"
-                onClick={() => handleNavClick((sessionUser?.role === 'Super Admin' || sessionUser?.role === 'Branch Head') ? 'admin' : 'login')}
+                onClick={() => handleNavClick(
+                  (sessionUser?.role === 'Super Admin' || sessionUser?.role === 'Branch Head') ? 'admin' :
+                  (sessionUser?.role === 'Staff') ? 'staff' :
+                  (sessionUser?.role === 'Franchise' || sessionUser?.role === 'School') ? 'franchise_portal' :
+                  'login'
+                )}
                 title={sessionUser ? `Logged in as ${sessionUser.name || sessionUser.studentName}` : 'Login Portal'}
                 aria-label="Login Portal"
                 className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition active:scale-95 cursor-pointer ${
-                  activePage === 'login' || activePage === 'admin'
+                  activePage === 'login' || activePage === 'admin' || activePage === 'staff' || activePage === 'franchise_portal'
                     ? 'bg-amber-400 text-slate-950 ring-2 ring-amber-300 shadow font-black text-xs'
                     : sessionUser
                     ? 'bg-amber-400 text-slate-950 shadow font-black text-xs'

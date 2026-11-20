@@ -203,6 +203,15 @@ export default function AdminBranchStaffPage({
 
   // Direct switch to Staff Portal
   const handleSwitchToStaffPortal = (staff) => {
+    try {
+      const currentAdmin = getActiveSession();
+      if (currentAdmin) {
+        sessionStorage.setItem('bsel_admin_return_session', JSON.stringify(currentAdmin));
+      }
+      sessionStorage.setItem('bsel_admin_return_branch', activeBranch);
+      sessionStorage.setItem('bsel_active_admin_role', 'Branch Head');
+    } catch (_) {}
+
     const sessionData = {
       ...staff,
       userId: staff.userId,

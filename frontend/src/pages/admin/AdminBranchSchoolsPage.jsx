@@ -194,6 +194,12 @@ export default function AdminBranchSchoolsPage({
     };
 
     try {
+      const currentAdmin = getActiveSession();
+      if (currentAdmin) {
+        sessionStorage.setItem('bsel_admin_return_session', JSON.stringify(currentAdmin));
+      }
+      sessionStorage.setItem('bsel_admin_return_branch', activeBranch);
+      sessionStorage.setItem('bsel_active_admin_role', 'Branch Head');
       sessionStorage.setItem('bsel_active_session', JSON.stringify(sessionPayload));
       localStorage.setItem('bsel_active_session', JSON.stringify(sessionPayload));
     } catch (_) {}
@@ -238,7 +244,7 @@ export default function AdminBranchSchoolsPage({
             className="flex-1 sm:flex-initial px-4 py-2.5 bg-[#0c234b] hover:bg-[#153a78] text-white text-xs font-black rounded-xl transition flex items-center justify-center gap-2 shadow-sm cursor-pointer"
           >
             <Plus className="w-4 h-4 text-amber-400" />
-            <span>+ Add New School</span>
+            <span>Add New School</span>
           </button>
         </div>
       </div>

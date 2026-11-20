@@ -257,6 +257,8 @@ const normalizeStudent = (user) => {
 // -------------------------------------------------------
 export default function LoginPage({
   setActivePage,
+  onBack,
+  goBack,
   onStudentDashboardChange,
 }) {
   // User ID
@@ -617,6 +619,11 @@ export default function LoginPage({
 
     if (typeof window !== 'undefined') {
       sessionStorage.removeItem('bsel_current_page');
+      if (window.location.hash) {
+        try {
+          window.history.replaceState(null, '', window.location.pathname || '/');
+        } catch (_) {}
+      }
     }
 
     setCurrentUser(null);
@@ -674,12 +681,16 @@ export default function LoginPage({
           <button
             type="button"
             onClick={() => {
-              if (setActivePage) {
-                setActivePage('home');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              } else {
+              if (onBack) {
+                onBack();
+              } else if (goBack) {
+                goBack();
+              } else if (typeof window !== 'undefined' && window.history.length > 1) {
                 window.history.back();
+              } else if (setActivePage) {
+                setActivePage('home');
               }
+              window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
             className="inline-flex items-center gap-1.5 text-xs font-semibold text-white/90 hover:text-white bg-white/10 hover:bg-white/20 active:scale-95 px-2.5 py-1 rounded-lg border border-white/20 backdrop-blur transition cursor-pointer shadow-xs"
           >
