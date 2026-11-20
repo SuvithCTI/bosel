@@ -1739,7 +1739,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                     }`}
                   >
                     <Users className={`w-4 h-4 shrink-0 ${activeTab === 'branch_students' ? 'text-sky-400' : 'text-slate-500'}`} />
-                    <span className="truncate">Concern Branch Students</span>
+                    <span className="truncate">Student Registration</span>
                   </button>
 
                   <button
@@ -2041,7 +2041,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                 }`}
               >
                 <Users className="w-4 h-4" />
-                <span>Students</span>
+                <span>Student Reg</span>
               </button>
 
               {/* Branch Tab 3: Enquiries / Student Details */}
