@@ -188,6 +188,7 @@ const buildDefaultDetails = (student, regNoOverride) => {
 export default function StudentQuestionPaperView({ student, onClose }) {
   const page1Ref = useRef(null);
   const questionsFileInputRef = useRef(null);
+  const attachedQuestionsRef = useRef(null);
 
   const [isEditMode, setIsEditMode] = useState(false);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
@@ -382,6 +383,9 @@ export default function StudentQuestionPaperView({ student, onClose }) {
         saveStudentUploadedQuestions(scopeKey, fileData);
         setUploadedQuestions(fileData);
         showTempMsg(`Questions file "${file.name}" uploaded successfully for ${studentDetails.studentName}!`);
+        setTimeout(() => {
+          attachedQuestionsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }, 150);
       } catch (err) {
         console.error('Storage error:', err);
         alert('Could not save the file to local storage. It may exceed available browser storage limit.');
@@ -675,7 +679,10 @@ export default function StudentQuestionPaperView({ student, onClose }) {
       {/* =========================================================================
           ATTACHED QUESTIONS FILE SECTION (FOR RESPECTIVE STUDENT - SCREEN VIEW)
           ========================================================================= */}
-      <div className="no-print w-full max-w-[724px] mt-4 mb-8 bg-white border border-slate-300 rounded-xl p-4 shadow-xl">
+      <div 
+        ref={attachedQuestionsRef}
+        className="no-print w-full max-w-[724px] mt-4 mb-8 bg-white border border-slate-300 rounded-xl p-4 shadow-xl"
+      >
         <div className="flex items-center justify-between pb-3 border-b border-slate-200">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-sky-100 text-sky-700 flex items-center justify-center font-bold">
@@ -702,50 +709,115 @@ export default function StudentQuestionPaperView({ student, onClose }) {
         </div>
 
         {uploadedQuestions ? (
-          <div className="mt-3.5 p-3.5 bg-slate-50 border border-slate-200 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="w-10 h-10 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center font-bold shrink-0">
-                <FileText className="w-5 h-5" />
+          <div className="space-y-3 mt-3.5">
+            <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center font-bold shrink-0">
+                  <FileText className="w-5 h-5" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-black text-slate-900 truncate" title={uploadedQuestions.fileName}>
+                    {uploadedQuestions.fileName}
+                  </p>
+                  <p className="text-[10.5px] text-slate-500 font-medium mt-0.5">
+                    Size: {uploadedQuestions.fileSize} • Uploaded: {uploadedQuestions.uploadedAt}
+                  </p>
+                </div>
               </div>
-              <div className="min-w-0">
-                <p className="text-xs font-black text-slate-900 truncate" title={uploadedQuestions.fileName}>
-                  {uploadedQuestions.fileName}
-                </p>
-                <p className="text-[10.5px] text-slate-500 font-medium mt-0.5">
-                  Size: {uploadedQuestions.fileSize} • Uploaded: {uploadedQuestions.uploadedAt}
-                </p>
+
+              <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+                <button
+                  type="button"
+                  onClick={handleViewQuestionsFile}
+                  className="px-3 py-1.5 bg-sky-600 hover:bg-sky-500 text-white rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer shadow-2xs"
+                  title="View / Open file in new tab"
+                >
+                  <Eye className="w-3.5 h-3.5" />
+                  <span>Open Fullscreen</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleDownloadQuestionsFile}
+                  className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer shadow-2xs"
+                  title="Download questions file"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Download</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleRemoveQuestionsFile}
+                  className="p-1.5 text-rose-600 hover:bg-rose-50 border border-rose-200 rounded-lg transition cursor-pointer"
+                  title="Remove questions file"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
-              <button
-                type="button"
-                onClick={handleViewQuestionsFile}
-                className="px-3 py-1.5 bg-sky-600 hover:bg-sky-500 text-white rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer shadow-2xs"
-                title="View / Open file in new tab"
-              >
-                <Eye className="w-3.5 h-3.5" />
-                <span>View File</span>
-              </button>
+            {/* LIVE AUTOMATIC EMBEDDED PREVIEW */}
+            <div className="border border-slate-300 rounded-xl overflow-hidden bg-slate-900/5 shadow-sm">
+              <div className="bg-[#0c234b] text-white text-xs font-bold px-3.5 py-2 flex items-center justify-between">
+                <span className="flex items-center gap-1.5 text-amber-300">
+                  <Eye className="w-3.5 h-3.5" />
+                  <span>Automatic Document Preview</span>
+                </span>
+                <span className="text-[11px] font-normal text-slate-200 truncate max-w-[200px] sm:max-w-xs">
+                  {uploadedQuestions.fileName}
+                </span>
+              </div>
 
-              <button
-                type="button"
-                onClick={handleDownloadQuestionsFile}
-                className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer shadow-2xs"
-                title="Download questions file"
-              >
-                <Download className="w-3.5 h-3.5" />
-                <span>Download</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={handleRemoveQuestionsFile}
-                className="p-1.5 text-rose-600 hover:bg-rose-50 border border-rose-200 rounded-lg transition cursor-pointer"
-                title="Remove questions file"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
+              <div className="p-2 sm:p-3 flex items-center justify-center bg-slate-50 min-h-[350px]">
+                {uploadedQuestions.fileType?.startsWith('image/') || uploadedQuestions.fileName?.match(/\.(png|jpe?g|webp|gif|bmp|svg)$/i) ? (
+                  <div className="w-full flex items-center justify-center bg-white border border-slate-200 rounded-lg p-2.5 shadow-inner">
+                    <img
+                      src={uploadedQuestions.dataUrl}
+                      alt={uploadedQuestions.fileName}
+                      className="max-h-[750px] w-auto max-w-full object-contain rounded"
+                    />
+                  </div>
+                ) : uploadedQuestions.fileType?.includes('pdf') || uploadedQuestions.fileName?.endsWith('.pdf') ? (
+                  <div className="w-full h-[650px] bg-white border border-slate-200 rounded-lg overflow-hidden shadow-inner">
+                    <iframe
+                      src={`${uploadedQuestions.dataUrl}#toolbar=1&navpanes=0`}
+                      title={uploadedQuestions.fileName}
+                      className="w-full h-full border-0"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-full py-10 px-4 flex flex-col items-center justify-center text-center bg-white border border-slate-200 rounded-lg">
+                    <div className="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center mb-3 shadow-xs">
+                      <FileText className="w-7 h-7" />
+                    </div>
+                    <h4 className="text-sm font-bold text-slate-900 mb-1">
+                      {uploadedQuestions.fileName}
+                    </h4>
+                    <p className="text-xs text-slate-500 max-w-sm mb-4">
+                      Word document attached. Click below to view or download.
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={handleViewQuestionsFile}
+                        className="px-3.5 py-1.5 bg-sky-600 hover:bg-sky-500 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>Open Document</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleDownloadQuestionsFile}
+                        className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        <span>Download</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         ) : (
