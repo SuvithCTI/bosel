@@ -37,6 +37,23 @@
     letter-spacing: -0.01em;
   }
 
+  /* Any heading inside text-white or dark containers must be crisp white */
+  .text-white,
+  .text-white h1,
+  .text-white h2,
+  .text-white h3,
+  .text-white h4,
+  .text-white h5,
+  .text-white h6,
+  [class*="text-white"] h1,
+  [class*="text-white"] h2,
+  [class*="text-white"] h3,
+  [class*="text-white"] h4,
+  [class*="text-white"] h5,
+  [class*="text-white"] h6 {
+    color: #ffffff !important;
+  }
+
   label {
     color: #000000;
     font-weight: 800;

@@ -334,7 +334,7 @@ export default function AdminModals({
                   <Clock className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-black">
+                  <h3 className="text-sm font-black text-white !text-white">
                     {editingBatch ? 'Edit Batch Timing & Schedule' : `Create New Batch for ${activeBranch}`}
                   </h3>
                   <p className="text-[11px] text-slate-300">Set classroom schedule, days, and intake capacity</p>
@@ -1175,7 +1175,7 @@ export default function AdminModals({
           <div className="bg-white w-full max-w-xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-150 my-auto">
             <div className="bg-[#081d3d] text-white p-4 flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-black">Publish New Event / Championship</h3>
+                <h3 className="text-sm font-black text-white !text-white">Publish New Event / Championship</h3>
                 <p className="text-[11px] text-slate-300">Syncs immediately to the public Events page and student registration desk</p>
               </div>
               <button onClick={() => setShowAddEventModal(false)} className="text-white/80 hover:text-white">
@@ -1311,7 +1311,7 @@ export default function AdminModals({
             {/* Header */}
             <div className="bg-[#081d3d] text-white p-4 flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-black flex items-center gap-2">
+                <h3 className="text-sm font-black text-white !text-white flex items-center gap-2">
                   <Edit3 className="w-4 h-4 text-amber-400" />
                   <span>Edit Event — #{editingEvent.sNo} {editingEvent.eventName}</span>
                 </h3>
@@ -1481,7 +1481,7 @@ export default function AdminModals({
           <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-150 my-auto">
             <div className="bg-[#081d3d] text-white p-4 flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-black">Record Payment & Generate Official Receipt</h3>
+                <h3 className="text-sm font-black text-white !text-white">Record Payment & Generate Official Receipt</h3>
                 <p className="text-[11px] text-slate-300">Creates an authenticated transaction in the Payment Sector ledger</p>
               </div>
               <button onClick={() => setShowAddPaymentModal(false)} className="text-white/80 hover:text-white">
@@ -1626,7 +1626,7 @@ export default function AdminModals({
           <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-150 my-auto">
             <div className="bg-[#081d3d] text-white p-4 flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-black">Edit Student Profile: {editingStudent.studentName}</h3>
+                <h3 className="text-sm font-black text-white !text-white">Edit Student Profile: {editingStudent.studentName}</h3>
                 <p className="text-[11px] text-slate-300">ID: {editingStudent.userId} • Reg: {editingStudent.registerNumber || editingStudent.registrationNo}</p>
               </div>
               <button onClick={() => setEditingStudent(null)} className="text-white/80 hover:text-white">
