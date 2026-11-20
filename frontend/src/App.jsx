@@ -14,6 +14,7 @@ import LoginPage from './pages/LoginPage';
 import CertificatePage from './pages/CertificatePage';
 import AdminDashboard from './pages/AdminDashboard';
 import StaffDashboard from './pages/staff/StaffDashboard';
+import FranchiseDashboard from './pages/franchise/FranchiseDashboard';
 
 import ProgramModal from './components/ProgramModal';
 import EventRegisterModal from './components/EventRegisterModal';
@@ -59,6 +60,10 @@ export default function App() {
         return 'staff';
       }
 
+      if (session?.role === 'Franchise') {
+        return 'franchise_portal';
+      }
+
       const params = new URLSearchParams(window.location.search);
 
       if (params.get('page')) {
@@ -73,10 +78,15 @@ export default function App() {
         return 'staff';
       }
 
+      if (window.location.pathname.startsWith('/franchise')) {
+        return 'franchise_portal';
+      }
+
       if (window.location.hash) {
         const cleanHash = window.location.hash.replace(/^#\/?/, '');
         if (cleanHash.startsWith('admin')) return 'admin';
         if (cleanHash.startsWith('staff')) return 'staff';
+        if (cleanHash.startsWith('franchise')) return 'franchise_portal';
         return cleanHash;
       }
     }
@@ -120,10 +130,11 @@ export default function App() {
     });
 
   // Hide the global website layout on the admin dashboard,
-  // staff dashboard, or on the login page (including student dashboard).
+  // staff dashboard, franchise dashboard, or on the login page (including student dashboard).
   const hideGlobalLayout =
     activePage === 'admin' ||
     activePage === 'staff' ||
+    activePage === 'franchise_portal' ||
     activePage === 'login';
 
   // -------------------------------------------------------
@@ -345,6 +356,27 @@ export default function App() {
         {/* Staff Dashboard */}
         {activePage === 'staff' && (
           <StaffDashboard
+            setActivePage={setActivePage}
+            sessionUser={sessionUser}
+            onLogout={() => {
+              clearActiveSession();
+
+              setSessionUser(null);
+              setIsStudentDashboardOpen(false);
+              setActivePage('login');
+
+              window.scrollTo({
+                top: 0,
+                behavior: 'smooth',
+              });
+            }}
+            onOpenCertificate={handleOpenCertificate}
+          />
+        )}
+
+        {/* Franchise Dashboard */}
+        {activePage === 'franchise_portal' && (
+          <FranchiseDashboard
             setActivePage={setActivePage}
             sessionUser={sessionUser}
             onLogout={() => {

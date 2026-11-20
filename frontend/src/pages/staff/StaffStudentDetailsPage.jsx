@@ -225,9 +225,14 @@ export const getStoredStudentEnquiries = () => {
         admissionNo: regNo,
         registerNumber: regNo,
         registerNumbers: Array.isArray(u.registerNumbers) ? u.registerNumbers : (regNo ? regNo.split(',').map(s => s.trim()) : []),
-        branchName: u.branch || u.institution || 'Tenkasi Regional Branch',
+        branchName: u.schoolName || u.franchiseName || u.branch || u.institution || 'Tenkasi Regional Branch',
         branch: u.branch || u.institution || 'Tenkasi Regional Branch',
-        institution: u.institution || u.branch || 'Tenkasi Regional Branch',
+        institution: u.institution || u.schoolName || u.franchiseName || u.branch || 'Tenkasi Regional Branch',
+        schoolName: u.schoolName || '',
+        franchiseName: u.franchiseName || '',
+        schoolId: u.schoolId || null,
+        franchiseId: u.franchiseId || null,
+        admissionCategory: u.admissionCategory || 'Branch',
         studentName: u.studentName || u.name || 'Student',
         name: u.studentName || u.name || 'Student',
         parentName: parent,
@@ -309,6 +314,7 @@ const getInitials = (name = '') => {
 
 export default function StaffStudentDetailsPage({
   activeBranch = 'All branches',
+  branchStudents = null,
   setViewingAdmissionStudent,
   handleOpenMarksheet,
   handleOpenCertForStudent,
@@ -357,11 +363,79 @@ export default function StaffStudentDetailsPage({
     };
   }, []);
 
+  // Normalize scoped branchStudents if passed from Franchise/School dashboard
+  const normalizedBranchStudents = useMemo(() => {
+    if (!Array.isArray(branchStudents)) return null;
+    return branchStudents.map(u => {
+      const parent = u.parentName || u.fatherName || '';
+      const regNo = u.registerNumber || u.registrationNo || getStudentRegisterNumber(u);
+      return {
+        ...u,
+        id: u.userId || u.id || regNo,
+        userId: u.userId || u.id,
+        admissionNo: regNo,
+        registerNumber: regNo,
+        registerNumbers: Array.isArray(u.registerNumbers) ? u.registerNumbers : (regNo ? regNo.split(',').map(s => s.trim()) : []),
+        branchName: u.schoolName || u.franchiseName || u.institution || u.branch || activeBranch,
+        branch: u.branch || u.institution || activeBranch,
+        institution: u.institution || u.schoolName || u.franchiseName || u.branch || activeBranch,
+        schoolName: u.schoolName || '',
+        franchiseName: u.franchiseName || '',
+        schoolId: u.schoolId || null,
+        franchiseId: u.franchiseId || null,
+        admissionCategory: u.admissionCategory || 'Branch',
+        studentName: u.studentName || u.name || 'Student',
+        name: u.studentName || u.name || 'Student',
+        parentName: parent,
+        fatherName: parent,
+        courseName: u.program || u.courseName || 'Abacus Speed Arithmetic',
+        program: u.program || u.courseName || 'Abacus Speed Arithmetic',
+        grade: u.grade || u.level || u.courseLevel || 'Level 1',
+        level: u.level || u.grade || u.courseLevel || 'Level 1',
+        courseLevel: u.courseLevel || u.level || u.grade || 'Level 1',
+        courseDuration: u.courseDuration || u.duration || '6 Months',
+        duration: u.duration || u.courseDuration || '6 Months',
+        selectedCourses: Array.isArray(u.selectedCourses) ? u.selectedCourses : (Array.isArray(u.courses) ? u.courses : []),
+        courses: Array.isArray(u.selectedCourses) ? u.selectedCourses : (Array.isArray(u.courses) ? u.courses : []),
+        mobile: u.phone || u.mobile || '',
+        phone: u.phone || u.mobile || '',
+        alternatePhone: u.alternatePhone || u.alternativePhone || '',
+        email: u.email || '',
+        submitted: u.enrolmentDate || u.date || new Date().toISOString().split('T')[0],
+        date: u.date || u.enrolmentDate || new Date().toISOString().split('T')[0],
+        enrolmentDate: u.enrolmentDate || u.date || '',
+        status: u.status || 'Confirmed',
+        feeStatus: (u.feePaymentType === 'Paid' || u.feePaymentType === 'Pay Now') ? 'Paid' : 'Pending',
+        feePaymentType: u.feePaymentType || 'Pay Now',
+        feeAmount: u.feeAmount || '₹450',
+        paymentMode: u.paymentMode || 'UPI / QR Code',
+        receiptRefNo: u.receiptRefNo || '',
+        gender: u.gender || 'Male',
+        dob: u.dob || u.dateOfBirth || '',
+        dateOfBirth: u.dateOfBirth || u.dob || '',
+        age: u.age !== undefined && u.age !== null ? String(u.age) : '',
+        studentClass: u.studentClass || '',
+        studentStage: u.studentStage || '',
+        address: u.address || '',
+        village: u.village || '',
+        city: u.city || '',
+        district: u.district || '',
+        pincode: u.pincode || u.pinCode || '',
+        aadharNumber: u.aadharNumber || u.aadhaarNumber || u.aadhaar || '',
+        studentPhoto: u.studentPhoto || u.photoUrl || null,
+        photoUrl: u.photoUrl || u.studentPhoto || null,
+        results: u.results || [],
+        events: u.events || []
+      };
+    });
+  }, [branchStudents, activeBranch]);
+
   // Filtered dataset
   const filteredRecords = useMemo(() => {
-    return enquiries.filter((item) => {
-      // 1. Branch scoping if activeBranch is specific
-      if (activeBranch && activeBranch !== 'All branches') {
+    const dataset = normalizedBranchStudents !== null ? normalizedBranchStudents : enquiries;
+    return dataset.filter((item) => {
+      // 1. Branch scoping if activeBranch is specific and no explicit branchStudents was supplied
+      if (normalizedBranchStudents === null && activeBranch && activeBranch !== 'All branches') {
         const itemBranch = (item.branchName || item.branch || item.institution || '').toLowerCase();
         const target = activeBranch.toLowerCase();
         if (!itemBranch.includes(target) && !target.includes(itemBranch)) {
@@ -642,6 +716,20 @@ export default function StaffStudentDetailsPage({
       const safeRegNo = (regNo || 'REG').trim().replace(/[^a-zA-Z0-9]/g, '_');
       const filename = `BSEL_Merged_Certificate_Marksheet_${safeStudent}_${safeRegNo}.pdf`;
 
+      // Check active franchise session for custom branding
+      let fcBranding = null;
+      if (typeof window !== 'undefined') {
+        try {
+          const sRaw = sessionStorage.getItem('bsel_active_session') || localStorage.getItem('bsel_active_session');
+          if (sRaw) {
+            const s = JSON.parse(sRaw);
+            if (s && s.role === 'Franchise') {
+              fcBranding = s;
+            }
+          }
+        } catch (_) {}
+      }
+
       const certData = {
         studentName: item.studentName || item.name || 'Candidate Name',
         courseName: courseName,
@@ -656,7 +744,12 @@ export default function StaffStudentDetailsPage({
         centreAddress: item.address || 'Tenkasi, Tamil Nadu',
         issueDate: item.submitted ? item.submitted.split(' ')[0] : '05-10-2026',
         certificateType: 'COMPLETION',
-        studentPhoto: photo
+        studentPhoto: photo,
+        schoolName: fcBranding?.schoolName || item.schoolName,
+        schoolSubtitle: fcBranding?.subtitle || item.schoolSubtitle,
+        schoolMotto: fcBranding?.motto || item.schoolMotto,
+        schoolLogo: fcBranding?.logo || item.schoolLogo,
+        directorSignature: fcBranding?.signature || fcBranding?.directorSignature || item.directorSignature
       };
 
       const subjects = getCourseSubjectModules(courseName);
@@ -684,7 +777,12 @@ export default function StaffStudentDetailsPage({
         resultText: percentage >= 85 ? 'FIRST CLASS WITH DISTINCTION' : 'FIRST CLASS',
         overallGrade: percentage >= 90 ? 'O (Outstanding)' : percentage >= 80 ? 'A+ (Excellent)' : 'A (Very Good)',
         marksheetNo: `BSEL/MS/2026/${String(item.userId || item.id || '').replace(/\D/g, '').slice(-4) || '1042'}`,
-        issueDate: item.submitted ? item.submitted.split(' ')[0] : '05-10-2026'
+        issueDate: item.submitted ? item.submitted.split(' ')[0] : '05-10-2026',
+        schoolName: fcBranding?.schoolName || item.schoolName,
+        schoolSubtitle: fcBranding?.subtitle || item.schoolSubtitle,
+        schoolMotto: fcBranding?.motto || item.schoolMotto,
+        schoolLogo: fcBranding?.logo || item.schoolLogo,
+        directorSignature: fcBranding?.signature || fcBranding?.directorSignature || item.directorSignature
       };
 
       return {

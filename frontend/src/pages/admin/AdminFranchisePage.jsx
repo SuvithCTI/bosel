@@ -1,5 +1,5 @@
 import { deleteFranchiseLead, getFranchiseDisplayId } from '../../data/franchiseData';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Building,
   Check,
@@ -15,7 +15,8 @@ import {
   ExternalLink,
   ShieldCheck,
   Calendar,
-  Layers
+  Layers,
+  Search
 } from 'lucide-react';
 
 export default function AdminFranchisePage({
@@ -26,9 +27,12 @@ export default function AdminFranchisePage({
   setFranchiseStatusFilter,
   handleUpdateFranchiseStatus,
   handleApproveFranchiseToBranch,
-  showToast
+  showToast,
+  activeBranch,
+  currentAdminRole
 }) {
   const [selectedLead, setSelectedLead] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Lock background scroll when modal is open so the background page cannot move
   useEffect(() => {
@@ -53,6 +57,20 @@ export default function AdminFranchisePage({
     }
   }, [selectedLead]);
 
+  const displayedLeads = useMemo(() => {
+    if (!searchQuery.trim()) return filteredFranchiseLeads;
+    const q = searchQuery.toLowerCase().trim();
+    return filteredFranchiseLeads.filter(
+      (l) =>
+        l.name?.toLowerCase().includes(q) ||
+        l.city?.toLowerCase().includes(q) ||
+        l.district?.toLowerCase().includes(q) ||
+        l.phone?.includes(q) ||
+        l.refId?.toLowerCase().includes(q) ||
+        l.interestedProgram?.toLowerCase().includes(q)
+    );
+  }, [filteredFranchiseLeads, searchQuery]);
+
   return (
     <div className="space-y-3.5 animate-in fade-in duration-200">
       {/* Top Header & Filter Bar */}
@@ -61,32 +79,50 @@ export default function AdminFranchisePage({
           <h2 className="text-sm sm:text-base font-black text-slate-950 flex items-center gap-2">
             <Building className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" />
             <span>Franchise Partner Enquiries & Applications</span>
+            {activeBranch && (
+              <span className="text-[10px] font-bold text-indigo-800 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-full">
+                {activeBranch}
+              </span>
+            )}
           </h2>
           <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5">
-            Click any enquiry card to inspect full application form details and approve authorized branches.
+            Click any enquiry card to inspect full application form details and update partnership status.
           </p>
         </div>
 
-        {/* Status Filter */}
-        <div className="flex items-center gap-2 shrink-0">
-          <span className="text-xs font-bold text-slate-500">Filter:</span>
-          <select
-            value={franchiseStatusFilter}
-            onChange={(e) => setFranchiseStatusFilter(e.target.value)}
-            className="px-2.5 py-1 text-xs bg-white border border-slate-300 rounded-lg font-bold outline-none cursor-pointer"
-          >
-            <option value="All">All Leads ({franchiseList.length})</option>
-            <option value="New Franchise Lead">New Lead</option>
-            <option value="In Discussion">In Discussion</option>
-            <option value="Site Inspection Scheduled">Site Inspection</option>
-            <option value="Approved Franchise Branch">Approved Branch</option>
-          </select>
+        {/* Search & Status Filter */}
+        <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
+          <div className="relative flex-1 sm:w-48 min-w-[150px]">
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search enquiries..."
+              className="w-full text-xs font-semibold pl-8 pr-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+            />
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-xs font-bold text-slate-500">Filter:</span>
+            <select
+              value={franchiseStatusFilter}
+              onChange={(e) => setFranchiseStatusFilter(e.target.value)}
+              className="px-2.5 py-1 text-xs bg-white border border-slate-300 rounded-lg font-bold outline-none cursor-pointer"
+            >
+              <option value="All">All Leads ({franchiseList.length})</option>
+              <option value="New Franchise Lead">New Lead</option>
+              <option value="In Discussion">In Discussion</option>
+              <option value="Site Inspection Scheduled">Site Inspection</option>
+              <option value="Approved Franchise Branch">Approved Branch</option>
+            </select>
+          </div>
         </div>
       </div>
 
       {/* Small & Sleek Franchise Leads Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-        {filteredFranchiseLeads.map((lead) => (
+        {displayedLeads.map((lead) => (
           <div 
             key={lead.refId} 
             onClick={() => setSelectedLead(lead)}

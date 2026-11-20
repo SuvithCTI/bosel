@@ -54,6 +54,10 @@ import AdminBranchStudentsPage from './admin/AdminBranchStudentsPage';
 import AdminBranchFeesPage from './admin/AdminBranchFeesPage';
 import AdminBranchCertificatesPage from './admin/AdminBranchCertificatesPage';
 import AdminBranchStudentDetailsPage from './admin/AdminBranchStudentDetailsPage';
+import AdminBranchStaffPage from './admin/AdminBranchStaffPage';
+import AdminBranchSchoolsPage from './admin/AdminBranchSchoolsPage';
+import AdminBranchFranchiseProfilePage from './admin/AdminBranchFranchiseProfilePage';
+import AdminBranchFranchisesPage from './admin/AdminBranchFranchisesPage';
 import AdminModals from './admin/AdminModals';
 
 import BranchStudentMarksheetPage from './admin/BranchStudentMarksheetPage';
@@ -1606,7 +1610,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                 {currentAdminRole === 'Super Admin' ? 'Executive Desks' : 'Branch Management'}
               </span>
               <span className="text-[10px] font-bold text-slate-400">
-                {currentAdminRole === 'Super Admin' ? '7 Modules' : '5 Modules'}
+                7 Modules
               </span>
             </div>
 
@@ -1777,15 +1781,41 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
 
                   <button
                     type="button"
-                    onClick={() => handleTabSelect('branch_certificates')}
+                    onClick={() => handleTabSelect('branch_staff')}
                     className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-black transition cursor-pointer text-left ${
-                      activeTab === 'branch_certificates'
+                      activeTab === 'branch_staff'
                         ? 'bg-[#0c234b] text-white shadow-sm ring-1 ring-amber-400/40'
                         : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950'
                     }`}
                   >
-                    <Award className={`w-4 h-4 shrink-0 ${activeTab === 'branch_certificates' ? 'text-amber-400' : 'text-slate-500'}`} />
-                    <span className="truncate">Branch Certificate Desk</span>
+                    <UserCheck className={`w-4 h-4 shrink-0 ${activeTab === 'branch_staff' ? 'text-amber-400' : 'text-slate-500'}`} />
+                    <span className="truncate">Staff Management</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleTabSelect('branch_franchise')}
+                    className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-black transition cursor-pointer text-left ${
+                      activeTab === 'branch_franchise'
+                        ? 'bg-[#0c234b] text-white shadow-sm ring-1 ring-amber-400/40'
+                        : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950'
+                    }`}
+                  >
+                    <Building className={`w-4 h-4 shrink-0 ${activeTab === 'branch_franchise' ? 'text-indigo-400' : 'text-slate-500'}`} />
+                    <span className="truncate">Franchise Management</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleTabSelect('branch_schools')}
+                    className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-black transition cursor-pointer text-left ${
+                      activeTab === 'branch_schools'
+                        ? 'bg-[#0c234b] text-white shadow-sm ring-1 ring-amber-400/40'
+                        : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950'
+                    }`}
+                  >
+                    <School className={`w-4 h-4 shrink-0 ${activeTab === 'branch_schools' ? 'text-emerald-400' : 'text-slate-500'}`} />
+                    <span className="truncate">School Management</span>
                   </button>
                 </>
               )}
@@ -1997,13 +2027,33 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
             />
           )}
 
-          {/* BRANCH HEAD: TAB 5 - BRANCH CERTIFICATE DESK */}
-          {currentAdminRole === 'Branch Head' && activeTab === 'branch_certificates' && (
-            <AdminBranchCertificatesPage
+          {/* BRANCH HEAD: TAB - STAFF MANAGEMENT */}
+          {currentAdminRole === 'Branch Head' && activeTab === 'branch_staff' && (
+            <AdminBranchStaffPage
               activeBranch={activeBranch}
-              branchStudents={branchStudents}
-              certData={certData}
-              handleOpenCertForStudent={handleOpenCertForStudent}
+              setActivePage={setActivePage}
+              showToast={showToast}
+            />
+          )}
+
+
+          {/* BRANCH HEAD: TAB 6 - FRANCHISE NETWORK & BRANDING */}
+          {currentAdminRole === 'Branch Head' && activeTab === 'branch_franchise' && (
+            <AdminBranchFranchisesPage
+              activeBranch={activeBranch}
+              showToast={showToast}
+              setActivePage={setActivePage}
+              handleTabSelect={handleTabSelect}
+            />
+          )}
+
+          {/* BRANCH HEAD: TAB 7 - SCHOOL MANAGEMENT */}
+          {currentAdminRole === 'Branch Head' && activeTab === 'branch_schools' && (
+            <AdminBranchSchoolsPage
+              activeBranch={activeBranch}
+              showToast={showToast}
+              setActivePage={setActivePage}
+              handleTabSelect={handleTabSelect}
             />
           )}
 
@@ -2017,7 +2067,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
         className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#081d3d] border-t-2 border-amber-400 text-white shadow-2xl"
         style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
       >
-        <div className="grid grid-cols-5 h-14 items-stretch select-none">
+        <div className={`grid ${currentAdminRole === 'Branch Head' ? 'grid-cols-4' : 'grid-cols-5'} h-14 items-stretch select-none`}>
           {currentAdminRole === 'Branch Head' ? (
             <>
               {/* Branch Tab 1: Overview */}
@@ -2066,18 +2116,6 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
               >
                 <ClipboardList className="w-4 h-4" />
                 <span>Marksheet</span>
-              </button>
-
-              {/* Branch Tab 5: Certificates */}
-              <button
-                type="button"
-                onClick={() => handleTabSelect('branch_certificates')}
-                className={`flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold transition cursor-pointer ${
-                  activeTab === 'branch_certificates' ? 'text-amber-400 bg-white/10' : 'text-slate-300 hover:text-white'
-                }`}
-              >
-                <Award className="w-4 h-4" />
-                <span>Certs</span>
               </button>
             </>
           ) : (
