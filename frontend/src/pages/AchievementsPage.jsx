@@ -273,20 +273,20 @@ function Hero() {
             </span>
           </h1>
 
-          <p className="mt-6 max-w-2xl text-lg font-bold leading-8 text-slate-900 sm:text-xl">
+          <p className="mt-3 sm:mt-6 max-w-2xl text-xs sm:text-lg font-medium sm:font-bold leading-relaxed sm:leading-8 text-slate-800 sm:text-slate-900">
             Celebrating the dedication, skills, and accomplishments of our
             students through competitions, championships, and school
             recognition programs.
           </p>
 
-          <p className="mt-5 max-w-2xl text-base leading-8 text-slate-700 sm:text-lg">
+          <p className="hidden sm:block mt-5 max-w-2xl text-base leading-8 text-slate-700 sm:text-lg">
             Empowering school children with fundamental life skills,
             mathematical speed, artistic flair, and cultural discipline
             through structured training and national-level competitions.
           </p>
 
           {/* Buttons */}
-          <div className="mt-8 flex w-full flex-col gap-4 sm:w-auto sm:flex-row sm:flex-wrap">
+          <div className="mt-5 sm:mt-8 flex w-full flex-col gap-3 sm:gap-4 sm:w-auto sm:flex-row sm:flex-wrap">
             <a
               href="#competitions"
               className="inline-flex w-full items-center justify-center gap-3 rounded-full bg-blue-900 px-7 py-4 text-sm font-extrabold text-white shadow-md transition duration-300 hover:-translate-y-1 hover:bg-blue-950 sm:w-auto sm:text-base"
