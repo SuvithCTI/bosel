@@ -184,54 +184,82 @@ const ABACUS_SUBJECTS = [
   'Speed Arithmetic Accuracy & Viva',
 ];
 
-// Each subject: Max 100 = Assessment 40 (average of 4 revision tests) + Exam 60 (final exam converted)
+// ============================================================
+// ASSESSMENT & MARKSHEET METRICS / EXPORTS
+// ============================================================
+
 export const SUBJECT_COUNT = 5;
 export const SUBJECT_MAX = 100;
 export const REVISION_COUNT = 4;
 export const REVISION_MAX = 40;
 export const ASSESSMENT_MAX = 40;
+export const EXAM_MAX = 100;
 export const EXAM_CONVERTED_MAX = 60;
-export const TOTAL_MAX = 100;
+export const TOTAL_MAX = SUBJECT_COUNT * SUBJECT_MAX; // 500
 
-export const rowPercent = (row) => {
-  if (!row || row.marks === null || row.marks === undefined || !row.max) return null;
-  const m = Number(row.marks);
-  const mx = Number(row.max);
-  if (!Number.isFinite(m) || !Number.isFinite(mx) || mx <= 0) return null;
-  return (m / mx) * 100;
+export const rowPercent = (sub) => {
+  if (!sub || sub.marks === null || sub.marks === undefined || sub.marks === '') return '-';
+  const m = Number(sub.marks);
+  const max = Number(sub.max) || SUBJECT_MAX;
+  if (!Number.isFinite(m) || max <= 0) return '-';
+  return `${((m / max) * 100).toFixed(2)}%`;
 };
 
-export const computeResult = (subjects = [], revisions = []) => {
-  const numRevs = (revisions || []).map((r) => (r === '' || r === null || r === undefined ? null : Number(r)));
-  const revFilled = numRevs.filter((r) => r !== null && Number.isFinite(r));
-  const assessment = revFilled.length === REVISION_COUNT
-    ? Math.round((revFilled.reduce((acc, v) => acc + v, 0) / REVISION_COUNT) * 100) / 100
-    : (revFilled.length > 0 ? Math.round((revFilled.reduce((acc, v) => acc + v, 0) / revFilled.length) * 100) / 100 : null);
+export const computeResult = (subjectsInput = [], revisionsInput = []) => {
+  const parseVal = (v) => {
+    if (v === '' || v === null || v === undefined) return null;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  };
 
-  const numSubs = (subjects || []).map((s) => (s === '' || s === null || s === undefined ? null : Number(s)));
-  const subFilled = numSubs.filter((s) => s !== null && Number.isFinite(s));
-  const examAvg = subFilled.length > 0
-    ? subFilled.reduce((acc, v) => acc + v, 0) / subFilled.length
+  const parsedSubjects = Array.from({ length: SUBJECT_COUNT }, (_, i) => parseVal(subjectsInput[i]));
+  const parsedRevisions = Array.from({ length: REVISION_COUNT }, (_, i) => parseVal(revisionsInput[i]));
+
+  const validSubjects = parsedSubjects.filter((v) => v !== null);
+  const validRevisions = parsedRevisions.filter((v) => v !== null);
+
+  const filled = validSubjects.length + validRevisions.length;
+  const total = SUBJECT_COUNT + REVISION_COUNT;
+  const complete = validSubjects.length === SUBJECT_COUNT && validRevisions.length === REVISION_COUNT;
+
+  // Assessment = average of 4 revision tests (out of ASSESSMENT_MAX = 40)
+  const assessment = validRevisions.length > 0
+    ? Math.round((validRevisions.reduce((a, b) => a + b, 0) / validRevisions.length) * 100) / 100
     : null;
-  const examConverted = examAvg !== null ? Math.round(((examAvg * EXAM_CONVERTED_MAX) / 100) * 100) / 100 : null;
 
-  const totalMarks = (assessment !== null && examConverted !== null)
-    ? Math.round((assessment + examConverted) * 100) / 100
+  // Exam average (out of 100)
+  const examAverage = validSubjects.length > 0
+    ? Math.round((validSubjects.reduce((a, b) => a + b, 0) / validSubjects.length) * 100) / 100
     : null;
-  const percentage = totalMarks !== null ? totalMarks : null;
 
-  const totalInputs = SUBJECT_COUNT + REVISION_COUNT;
-  const filledCount = subFilled.length + revFilled.length;
+  // Exam converted to 60
+  const examConverted = examAverage !== null
+    ? Math.round(((examAverage * EXAM_CONVERTED_MAX) / EXAM_MAX) * 100) / 100
+    : null;
+
+  // Total marks: sum of all subjects
+  const totalMarks = validSubjects.length > 0
+    ? validSubjects.reduce((a, b) => a + b, 0)
+    : null;
+
+  const percentage = totalMarks !== null && complete
+    ? (totalMarks / TOTAL_MAX) * 100
+    : validSubjects.length > 0
+      ? (totalMarks / (validSubjects.length * SUBJECT_MAX)) * 100
+      : null;
 
   return {
+    subjects: parsedSubjects,
+    revisions: parsedRevisions,
+    filled,
+    total,
+    complete,
     assessment,
+    examAverage,
     examConverted,
     totalMarks,
+    totalMaximum: TOTAL_MAX,
     percentage,
-    revisions: numRevs,
-    complete: filledCount === totalInputs,
-    filled: filledCount,
-    total: totalInputs
   };
 };
 
