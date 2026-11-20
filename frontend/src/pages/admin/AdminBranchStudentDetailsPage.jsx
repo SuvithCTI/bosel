@@ -28,6 +28,8 @@ import { getCoursePrefix, getRegisteredUsers } from '../../utils/authStorage';
 import { isStudentUser } from '../../utils/studentValidator';
 import { getCourseSubjectModules } from '../../components/OfficialMarksheetView';
 import { getStudentPhotoUrl, getStudentRegisterNumber } from '../../utils/studentDataHelpers';
+import CompactSelect from '../../components/CompactSelect';
+import { ACADEMIC_STAGES } from '../../utils/academicStages';
 
 // Initial default enquiries matching the official portal screenshot
 export const DEFAULT_STUDENT_ENQUIRIES = [
@@ -340,8 +342,63 @@ export default function AdminBranchStudentDetailsPage({
 
   // Search & Pagination
   const [searchQuery, setSearchQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('All');
+  const [classFilter, setClassFilter] = useState('All');
+  const [levelFilter, setLevelFilter] = useState('All');
+  const [courseFilter, setCourseFilter] = useState('All');
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
+
+  // Category options: Branch, Academy, School
+  const categoryOptions = useMemo(() => [
+    { value: 'All', label: 'All Categories' },
+    { value: 'Branch', label: 'Branch' },
+    { value: 'Academy', label: 'Academy' },
+    { value: 'School', label: 'School' }
+  ], []);
+
+  // Official courses for filtering
+  const allCourses = useMemo(() => [
+    { value: 'All', label: 'All Courses' },
+    { value: 'ABACUS SPEED ARITHMETIC', label: 'ABACUS SPEED ARITHMETIC', keywords: ['abacus'] },
+    { value: 'CALLIGRAPHY & HANDWRITING MASTERY', label: 'CALLIGRAPHY & HANDWRITING MASTERY', keywords: ['handwriting', 'calligraphy'] },
+    { value: 'EARLY PHONICS & READING MASTERY', label: 'EARLY PHONICS & READING MASTERY', keywords: ['phonics', 'reading'] },
+    { value: 'CREATIVE DRAWING & VISUAL ARTS', label: 'CREATIVE DRAWING & VISUAL ARTS', keywords: ['drawing', 'visual arts', 'art'] },
+    { value: 'COGNITIVE MEMORY & RECALL MASTERY', label: 'COGNITIVE MEMORY & RECALL MASTERY', keywords: ['memory', 'cognitive'] },
+    { value: 'CLASSICAL BHARATANATYAM DANCE', label: 'CLASSICAL BHARATANATYAM DANCE', keywords: ['bharatanatyam', 'dance'] },
+    { value: 'MICROSOFT OFFICE PRODUCTIVITY SUITE', label: 'MICROSOFT OFFICE PRODUCTIVITY SUITE', keywords: ['office', 'ms office', 'word', 'excel'] },
+    { value: 'HTML5 WEBPAGE ARCHITECTURE', label: 'HTML5 WEBPAGE ARCHITECTURE', keywords: ['html'] },
+    { value: 'CSS3 STYLING, FLEXBOX, GRID & ANIMATIONS', label: 'CSS3 STYLING, FLEXBOX, GRID & ANIMATIONS', keywords: ['css'] },
+    { value: 'PYTHON PROGRAMMING & LOGICAL THINKING', label: 'PYTHON PROGRAMMING & LOGICAL THINKING', keywords: ['python'] },
+    { value: 'COMPUTER HARDWARE & DIGITAL LITERACY', label: 'COMPUTER HARDWARE & DIGITAL LITERACY', keywords: ['computer', 'hardware'] },
+    { value: 'ADOBE PHOTOSHOP & DIGITAL IMAGING', label: 'ADOBE PHOTOSHOP & DIGITAL IMAGING', keywords: ['photoshop'] },
+    { value: 'ARTIFICIAL INTELLIGENCE & PRODUCTIVITY', label: 'ARTIFICIAL INTELLIGENCE & PRODUCTIVITY', keywords: ['artificial intelligence', 'ai'] },
+    { value: 'CANVA VISUAL DESIGN & BRANDING', label: 'CANVA VISUAL DESIGN & BRANDING', keywords: ['canva'] }
+  ], []);
+
+  // Class options
+  const classOptions = useMemo(() => [
+    { value: 'All', label: 'All Classes' },
+    ...ACADEMIC_STAGES.map((s) => ({
+      value: s.className,
+      label: s.className,
+      stage: s.stage
+    }))
+  ], []);
+
+  // Level options
+  const levelOptions = useMemo(() => [
+    { value: 'All', label: 'All Levels' },
+    { value: 'level_1', label: 'Level 1' },
+    { value: 'level_2', label: 'Level 2' },
+    { value: 'level_3', label: 'Level 3' },
+    { value: 'level_4', label: 'Level 4' },
+    { value: 'level_5', label: 'Level 5' },
+    { value: 'level_6', label: 'Level 6' },
+    { value: 'level_7', label: 'Level 7' },
+    { value: 'level_8', label: 'Level 8' },
+    { value: 'level_9', label: 'Level 9' }
+  ], []);
 
   // Status edit tracker: { [enquiryId]: status }
   const [pendingStatusUpdates, setPendingStatusUpdates] = useState({});
@@ -376,9 +433,11 @@ export default function AdminBranchStudentDetailsPage({
 
       // 2. Search query filter
       if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
+        const q = searchQuery.toLowerCase().trim();
         const matches =
           (item.admissionNo || '').toLowerCase().includes(q) ||
+          (item.registerNumber || '').toLowerCase().includes(q) ||
+          (item.userId || '').toLowerCase().includes(q) ||
           (item.studentName || item.name || '').toLowerCase().includes(q) ||
           (item.branchName || item.branch || '').toLowerCase().includes(q) ||
           (item.courseName || item.program || '').toLowerCase().includes(q) ||
@@ -387,9 +446,45 @@ export default function AdminBranchStudentDetailsPage({
         if (!matches) return false;
       }
 
+      // 3. Category Filter
+      if (categoryFilter !== 'All') {
+        const cat = (item.admissionCategory || item.category || '').toLowerCase();
+        const isSchool = cat === 'school' || Boolean(item.schoolId) || Boolean(item.schoolName);
+        const isAcademy = cat === 'academy' || cat === 'franchise' || Boolean(item.franchiseId) || Boolean(item.franchiseName);
+        if (categoryFilter === 'School' && !isSchool) return false;
+        if (categoryFilter === 'Academy' && !isAcademy) return false;
+        if (categoryFilter === 'Branch' && (isSchool || isAcademy)) return false;
+      }
+
+      // 4. Class Filter
+      if (classFilter !== 'All') {
+        const itemClass = (item.standard || item.class || item.className || item.grade || '').toLowerCase();
+        const targetClass = classFilter.toLowerCase();
+        if (!itemClass.includes(targetClass)) return false;
+      }
+
+      // 5. Level Filter
+      if (levelFilter !== 'All') {
+        const itemLevel = (item.level || item.grade || item.courseLevel || '').toLowerCase();
+        const targetLevel = levelFilter.toLowerCase().replace('_', ' '); // "level 1"
+        if (!itemLevel.includes(targetLevel) && !itemLevel.includes(levelFilter.toLowerCase())) return false;
+      }
+
+      // 6. Course Filter
+      if (courseFilter !== 'All') {
+        const selectedCourseObj = allCourses.find((c) => c.value === courseFilter);
+        const itemCourse = (item.courseName || item.program || '').toLowerCase();
+        if (selectedCourseObj && selectedCourseObj.keywords) {
+          const match = selectedCourseObj.keywords.some((kw) => itemCourse.includes(kw.toLowerCase()));
+          if (!match && !itemCourse.includes(courseFilter.toLowerCase())) return false;
+        } else if (!itemCourse.includes(courseFilter.toLowerCase())) {
+          return false;
+        }
+      }
+
       return true;
     });
-  }, [enquiries, activeBranch, searchQuery]);
+  }, [enquiries, activeBranch, searchQuery, categoryFilter, classFilter, levelFilter, courseFilter, allCourses]);
 
   // Pagination calculations
   const totalRecords = filteredRecords.length;
@@ -898,49 +993,130 @@ export default function AdminBranchStudentDetailsPage({
           </div>
         </div>
 
-        {/* Search Bar & Rows Per Page */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-0.5">
-          <div className="relative flex-1 max-w-md">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setCurrentPage(1);
-              }}
-              placeholder="Search records by name, course, branch, mobile..."
-              className="w-full pl-9 pr-8 py-2 bg-slate-50 hover:bg-white focus:bg-white border border-slate-200 focus:border-sky-500 rounded-xl text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-sky-100 outline-none transition"
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={() => {
-                  setSearchQuery('');
+        {/* Search Bar & 5-Filter Controls Row */}
+        <div className="flex flex-col gap-2 pt-0.5">
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-2 items-center">
+            {/* Search */}
+            <div className="col-span-2 md:col-span-1 xl:col-span-1 relative">
+              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
                   setCurrentPage(1);
                 }}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 text-xs px-1 font-bold cursor-pointer"
-              >
-                ✕
-              </button>
-            )}
+                placeholder="Search candidate, ID, phone..."
+                className="w-full pl-8 pr-7 py-2 text-xs border border-slate-200 rounded-lg focus:border-sky-500 focus:ring-1 focus:ring-sky-100 outline-none bg-slate-50/50 hover:bg-white focus:bg-white transition"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery('');
+                    setCurrentPage(1);
+                  }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 text-xs px-1 font-bold cursor-pointer"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
+            {/* Category Filter */}
+            <div className="col-span-1">
+              <CompactSelect
+                value={categoryFilter}
+                onChange={(val) => {
+                  setCategoryFilter(val);
+                  setCurrentPage(1);
+                }}
+                options={categoryOptions}
+                placeholder="All Categories"
+                maxHeight="max-h-56"
+              />
+            </div>
+
+            {/* Class Filter */}
+            <div className="col-span-1">
+              <CompactSelect
+                value={classFilter}
+                onChange={(val) => {
+                  setClassFilter(val);
+                  setCurrentPage(1);
+                }}
+                options={classOptions}
+                placeholder="All Classes"
+                maxHeight="max-h-56"
+              />
+            </div>
+
+            {/* Level Filter */}
+            <div className="col-span-1">
+              <CompactSelect
+                value={levelFilter}
+                onChange={(val) => {
+                  setLevelFilter(val);
+                  setCurrentPage(1);
+                }}
+                options={levelOptions}
+                placeholder="All Levels"
+                maxHeight="max-h-56"
+              />
+            </div>
+
+            {/* Course Filter */}
+            <div className="col-span-1 md:col-span-2 xl:col-span-1">
+              <CompactSelect
+                value={courseFilter}
+                onChange={(val) => {
+                  setCourseFilter(val);
+                  setCurrentPage(1);
+                }}
+                options={allCourses}
+                placeholder="All Courses"
+                maxHeight="max-h-56"
+              />
+            </div>
           </div>
 
-          <div className="flex items-center justify-end gap-2 text-xs">
-            <span className="font-semibold text-slate-500">Rows per page:</span>
-            <select
-              value={rowsPerPage}
-              onChange={(e) => {
-                setRowsPerPage(e.target.value === 'All' ? 'All' : Number(e.target.value));
-                setCurrentPage(1);
-              }}
-              className="bg-slate-50 hover:bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-800 outline-none cursor-pointer focus:ring-2 focus:ring-sky-100 transition"
-            >
-              <option value={10}>10</option>
-              <option value={25}>25</option>
-              <option value={50}>50</option>
-              <option value="All">All</option>
-            </select>
+          {/* Sub-row: Result count, Reset filters & Rows per page */}
+          <div className="flex items-center justify-between text-xs text-slate-500 pt-0.5">
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-slate-600">Showing {filteredRecords.length} records</span>
+              {(categoryFilter !== 'All' || classFilter !== 'All' || levelFilter !== 'All' || courseFilter !== 'All' || searchQuery) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery('');
+                    setCategoryFilter('All');
+                    setClassFilter('All');
+                    setLevelFilter('All');
+                    setCourseFilter('All');
+                    setCurrentPage(1);
+                  }}
+                  className="text-xs font-bold text-sky-600 hover:text-sky-800 hover:underline cursor-pointer ml-1"
+                >
+                  Reset Filters
+                </button>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-slate-500">Rows per page:</span>
+              <select
+                value={rowsPerPage}
+                onChange={(e) => {
+                  setRowsPerPage(e.target.value === 'All' ? 'All' : Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="bg-slate-50 hover:bg-white border border-slate-200 rounded-xl px-2.5 py-1 text-xs font-bold text-slate-800 outline-none cursor-pointer focus:ring-2 focus:ring-sky-100 transition"
+              >
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+                <option value="All">All</option>
+              </select>
+            </div>
           </div>
         </div>
 
