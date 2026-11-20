@@ -393,7 +393,10 @@ export default function HomePage({ setActivePage, onSelectProgram }) {
 
         {/* 2. DESKTOP / TABLET TABLE VIEW (>= 640px) */}
         <div className="hidden sm:block bg-white rounded-2xl shadow-md border border-slate-200 overflow-hidden">
-          <div className="overflow-x-auto">
+          <div 
+            className="overflow-x-auto no-scrollbar admin-table-container"
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          >
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-[#0F2B5C] text-white text-xs md:text-sm font-bold uppercase tracking-wider">

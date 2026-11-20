@@ -945,7 +945,10 @@ export default function AdminBranchStudentDetailsPage({
             </span>
           </div>
 
-          <div className="w-full overflow-x-auto admin-table-container">
+          <div 
+            className="w-full overflow-x-auto no-scrollbar admin-table-container"
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          >
             <table className="w-full text-left border-collapse text-xs min-w-[720px]">
 
               {/* Header */}

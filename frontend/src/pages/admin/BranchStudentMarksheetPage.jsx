@@ -1593,7 +1593,10 @@ export default function BranchStudentMarksheetPage({
         </div>
 
         {/* DESKTOP / TABLET: SUBJECT TABLE */}
-        <div className="hidden sm:block overflow-x-auto">
+        <div 
+          className="hidden sm:block overflow-x-auto no-scrollbar admin-table-container"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
           <table className="w-full text-left border-collapse min-w-[860px]">
             <thead className="bg-slate-50">
               <tr>
@@ -1850,7 +1853,10 @@ export default function BranchStudentMarksheetPage({
         </div>
 
         {/* DESKTOP / TABLET: TABLE (scrolls sideways; revision columns per subject) */}
-        <div className="hidden sm:block overflow-x-auto p-2">
+        <div 
+          className="hidden sm:block overflow-x-auto p-2 no-scrollbar admin-table-container"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
           <table className="w-full text-center min-w-[1100px] border-collapse border border-slate-300">
             <thead className="bg-[#0b2a55] text-white">
               <tr>

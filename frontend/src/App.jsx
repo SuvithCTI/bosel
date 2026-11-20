@@ -276,7 +276,7 @@ export default function App() {
   // Main application layout
   // -------------------------------------------------------
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 text-slate-800 font-sans selection:bg-amber-400 selection:text-slate-950">
+    <div className="min-h-screen flex flex-col bg-slate-50 text-slate-800 font-sans selection:bg-amber-400 selection:text-slate-950 overflow-x-hidden">
 
       {/* Global Navbar */}
       {!hideGlobalLayout && (

@@ -471,7 +471,10 @@ export default function StaffStudentMarksheetPage({
         </div>
 
         {/* SUBJECT TABLE */}
-        <div className="overflow-x-auto">
+        <div 
+          className="overflow-x-auto no-scrollbar admin-table-container"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
           <table className="w-full text-left min-w-[600px]">
             <thead className="bg-slate-50">
               <tr>

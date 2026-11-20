@@ -472,7 +472,10 @@ export default function AdminBranchStudentsPage({
           </span>
         </div>
 
-        <div className="w-full overflow-x-auto admin-table-container">
+        <div 
+          className="w-full overflow-x-auto no-scrollbar admin-table-container"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
           <table className="w-full text-left text-xs min-w-[860px]">
             <thead className="bg-[#081d3d] text-white uppercase text-[10px] tracking-wider font-black">
               <tr>
