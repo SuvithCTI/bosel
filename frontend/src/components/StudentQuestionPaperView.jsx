@@ -20,6 +20,10 @@ import {
   FileUp,
   FileQuestion,
   Eye,
+  Plus,
+  ChevronLeft,
+  ChevronRight,
+  Layers,
 } from 'lucide-react';
 import { exportPdfFromElement } from '../utils/pdfExport';
 import {
@@ -198,20 +202,30 @@ export default function StudentQuestionPaperView({ student, onClose }) {
   const storageKey = `bsel_custom_qp_${regNo || student?.id || 'default'}`;
   const scopeKey = getStudentScopeKey(student);
 
-  // 1. Uploaded questions file state (scoped to student)
-  const [uploadedQuestions, setUploadedQuestions] = useState(() => {
-    return readStudentUploadedQuestions(scopeKey);
+  // 1. Uploaded questions files state (scoped to student, supports multiple files)
+  const normalizeFiles = (val) => {
+    if (!val) return [];
+    if (Array.isArray(val)) return val;
+    if (typeof val === 'object') return [val];
+    return [];
+  };
+
+  const [uploadedFiles, setUploadedFiles] = useState(() => {
+    return normalizeFiles(readStudentUploadedQuestions(scopeKey));
   });
 
+  const [activeFileIndex, setActiveFileIndex] = useState(0);
+
   useEffect(() => {
-    const saved = readStudentUploadedQuestions(scopeKey);
-    setUploadedQuestions(saved);
+    const saved = normalizeFiles(readStudentUploadedQuestions(scopeKey));
+    setUploadedFiles(saved);
+    setActiveFileIndex(0);
   }, [scopeKey]);
 
   useEffect(() => {
     const handleQuestionsUpdate = (e) => {
       if (e.detail?.scopeKey === scopeKey) {
-        setUploadedQuestions(e.detail?.fileData || null);
+        setUploadedFiles(normalizeFiles(e.detail?.fileData));
       }
     };
     window.addEventListener('bsel_student_questions_updated', handleQuestionsUpdate);
@@ -348,83 +362,115 @@ export default function StudentQuestionPaperView({ student, onClose }) {
     }
   };
 
-  // Handler to upload a questions file (PDF, Doc, Image) for the respective student
-  const handleUploadQuestionsFile = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  // Handler to upload one or multiple questions files (PDF, Doc, Image) for the respective student
+  const handleUploadQuestionsFile = async (e) => {
+    const fileList = Array.from(e.target.files || []);
+    if (fileList.length === 0) return;
 
-    if (file.size > 10 * 1024 * 1024) {
-      alert('File is too large. Please select a question paper file under 10 MB.');
+    // Check individual file size limit (10MB)
+    const oversized = fileList.filter(f => f.size > 10 * 1024 * 1024);
+    if (oversized.length > 0) {
+      alert(`The following file(s) exceed 10 MB limit:\n${oversized.map(f => f.name).join('\n')}\nPlease choose files under 10 MB.`);
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const dataUrl = event.target.result;
-      const formattedSize = file.size > 1024 * 1024
-        ? `${(file.size / (1024 * 1024)).toFixed(1)} MB`
-        : `${Math.round(file.size / 1024)} KB`;
+    const readFileAsync = (file) => {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const dataUrl = event.target.result;
+          const formattedSize = file.size > 1024 * 1024
+            ? `${(file.size / (1024 * 1024)).toFixed(1)} MB`
+            : `${Math.round(file.size / 1024)} KB`;
 
-      const fileData = {
-        fileName: file.name,
-        fileType: file.type || 'application/octet-stream',
-        fileSize: formattedSize,
-        dataUrl,
-        uploadedAt: new Date().toLocaleDateString('en-GB', {
-          day: '2-digit',
-          month: 'short',
-          year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-        }),
-      };
-
-      try {
-        saveStudentUploadedQuestions(scopeKey, fileData);
-        setUploadedQuestions(fileData);
-        showTempMsg(`Questions file "${file.name}" uploaded successfully for ${studentDetails.studentName}!`);
-        setTimeout(() => {
-          attachedQuestionsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }, 150);
-      } catch (err) {
-        console.error('Storage error:', err);
-        alert('Could not save the file to local storage. It may exceed available browser storage limit.');
-      }
+          resolve({
+            id: `qf_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
+            fileName: file.name,
+            fileType: file.type || 'application/octet-stream',
+            fileSize: formattedSize,
+            dataUrl,
+            uploadedAt: new Date().toLocaleDateString('en-GB', {
+              day: '2-digit',
+              month: 'short',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+            }),
+          });
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
     };
 
-    reader.readAsDataURL(file);
-    e.target.value = '';
+    try {
+      const newItems = await Promise.all(fileList.map(readFileAsync));
+      const combined = [...uploadedFiles, ...newItems];
+
+      saveStudentUploadedQuestions(scopeKey, combined);
+      setUploadedFiles(combined);
+      setActiveFileIndex(combined.length - newItems.length);
+
+      showTempMsg(`${newItems.length} question paper file(s) uploaded successfully!`);
+      setTimeout(() => {
+        attachedQuestionsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 150);
+    } catch (err) {
+      console.error('File reading error:', err);
+      alert('Could not process or save the file(s). Browser local storage quota may have been exceeded.');
+    } finally {
+      if (questionsFileInputRef.current) {
+        questionsFileInputRef.current.value = '';
+      }
+    }
   };
 
-  const handleRemoveQuestionsFile = () => {
-    if (!window.confirm(`Remove the uploaded questions file for ${studentDetails.studentName}?`)) return;
+  const handleRemoveSingleFile = (indexToRemove) => {
+    const targetFile = uploadedFiles[indexToRemove];
+    if (!targetFile) return;
+    if (!window.confirm(`Remove "${targetFile.fileName}" from ${studentDetails.studentName}'s uploaded question papers?`)) return;
+
+    const updated = uploadedFiles.filter((_, idx) => idx !== indexToRemove);
+    saveStudentUploadedQuestions(scopeKey, updated.length > 0 ? updated : null);
+    setUploadedFiles(updated);
+    if (activeFileIndex >= updated.length) {
+      setActiveFileIndex(Math.max(0, updated.length - 1));
+    }
+    showTempMsg(`Removed "${targetFile.fileName}".`);
+  };
+
+  const handleRemoveAllQuestionsFiles = () => {
+    if (!window.confirm(`Remove all (${uploadedFiles.length}) uploaded question paper files for ${studentDetails.studentName}?`)) return;
     saveStudentUploadedQuestions(scopeKey, null);
-    setUploadedQuestions(null);
-    showTempMsg('Uploaded questions file removed.');
+    setUploadedFiles([]);
+    setActiveFileIndex(0);
+    showTempMsg('All uploaded questions files removed.');
     if (questionsFileInputRef.current) {
       questionsFileInputRef.current.value = '';
     }
   };
 
-  const handleDownloadQuestionsFile = () => {
-    if (!uploadedQuestions?.dataUrl) return;
+  const handleDownloadSingleFile = (fileItem) => {
+    const target = fileItem || uploadedFiles[activeFileIndex];
+    if (!target?.dataUrl) return;
     const a = document.createElement('a');
-    a.href = uploadedQuestions.dataUrl;
-    a.download = uploadedQuestions.fileName || `${studentDetails.regNo}_questions`;
+    a.href = target.dataUrl;
+    a.download = target.fileName || `${studentDetails.regNo}_questions`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
   };
 
-  const handleViewQuestionsFile = () => {
-    if (!uploadedQuestions?.dataUrl) return;
+  const handleViewSingleFileFullscreen = (fileItem) => {
+    const target = fileItem || uploadedFiles[activeFileIndex];
+    if (!target?.dataUrl) return;
     const win = window.open();
     if (win) {
       win.document.write(
-        `<title>${uploadedQuestions.fileName} - ${studentDetails.studentName}</title>` +
-        (uploadedQuestions.fileType?.startsWith('image/')
-          ? `<body style="margin:0;background:#0f172a;display:flex;align-items:center;justify-content:center;min-height:100vh;"><img src="${uploadedQuestions.dataUrl}" style="max-width:98vw;max-height:98vh;object-fit:contain;box-shadow:0 10px 30px rgba(0,0,0,0.5);border-radius:6px;" /></body>`
-          : `<iframe src="${uploadedQuestions.dataUrl}" frameborder="0" style="border:0; position:fixed; top:0; left:0; width:100%; height:100%;" allowfullscreen></iframe>`)
+        `<title>${target.fileName} - ${studentDetails.studentName}</title>` +
+        (target.fileType?.startsWith('image/')
+          ? `<body style="margin:0;background:#0f172a;display:flex;align-items:center;justify-content:center;min-height:100vh;"><img src="${target.dataUrl}" style="max-width:98vw;max-height:98vh;object-fit:contain;box-shadow:0 10px 30px rgba(0,0,0,0.5);border-radius:6px;" /></body>`
+          : `<iframe src="${target.dataUrl}" frameborder="0" style="border:0; position:fixed; top:0; left:0; width:100%; height:100%;" allowfullscreen></iframe>`)
       );
     }
   };
@@ -434,10 +480,11 @@ export default function StudentQuestionPaperView({ student, onClose }) {
       className="fixed inset-0 z-[99999] isolate overflow-y-auto bg-slate-950/90 backdrop-blur-sm flex flex-col items-center justify-start py-3 px-2 sm:px-4"
       style={{ minHeight: '100dvh' }}
     >
-      {/* Hidden file input for manual questions upload */}
+      {/* Hidden file input for manual questions upload (supports multiple files) */}
       <input
         ref={questionsFileInputRef}
         type="file"
+        multiple
         accept=".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx,.txt"
         onChange={handleUploadQuestionsFile}
         className="hidden"
@@ -491,44 +538,38 @@ export default function StudentQuestionPaperView({ student, onClose }) {
           </div>
         </div>
 
-        {/* Center: UPLOAD QUESTIONS BUTTON FOR RESPECTIVE STUDENT */}
+        {/* Center: UPLOAD QUESTIONS BUTTON FOR RESPECTIVE STUDENT (Supports Multiple Files) */}
         <div className="flex items-center gap-2">
-          {uploadedQuestions ? (
+          {uploadedFiles.length > 0 ? (
             <div className="flex items-center gap-1.5 bg-amber-400 text-slate-950 px-2.5 py-1 rounded-lg text-xs font-black shadow-md border border-amber-300">
               <Paperclip className="w-3.5 h-3.5 text-slate-900 shrink-0" />
-              <span className="truncate max-w-[100px] sm:max-w-[160px]" title={uploadedQuestions.fileName}>
-                {uploadedQuestions.fileName}
+              <span className="truncate max-w-[110px] sm:max-w-[170px]" title={uploadedFiles[activeFileIndex]?.fileName || 'Question Papers'}>
+                {uploadedFiles.length === 1 ? uploadedFiles[0].fileName : `${uploadedFiles.length} Question Files`}
               </span>
               <button
                 type="button"
-                onClick={handleViewQuestionsFile}
+                onClick={() => {
+                  attachedQuestionsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }}
                 className="px-1.5 py-0.5 bg-slate-950 hover:bg-slate-800 text-amber-300 rounded text-[10px] font-bold cursor-pointer transition flex items-center gap-0.5"
-                title="View / Open uploaded questions file"
+                title="Scroll down to view and preview files"
               >
                 <Eye className="w-2.5 h-2.5" />
-                <span>View</span>
-              </button>
-              <button
-                type="button"
-                onClick={handleDownloadQuestionsFile}
-                className="p-1 hover:bg-black/15 text-slate-900 rounded cursor-pointer transition"
-                title="Download questions file"
-              >
-                <Download className="w-3 h-3" />
+                <span>Preview</span>
               </button>
               <button
                 type="button"
                 onClick={() => questionsFileInputRef.current?.click()}
-                className="p-1 hover:bg-black/15 text-sky-900 rounded cursor-pointer transition"
-                title="Replace questions file"
+                className="p-1 hover:bg-black/15 text-slate-950 rounded cursor-pointer transition flex items-center"
+                title="Add more question paper files"
               >
-                <Upload className="w-3 h-3" />
+                <Plus className="w-3.5 h-3.5" />
               </button>
               <button
                 type="button"
-                onClick={handleRemoveQuestionsFile}
+                onClick={handleRemoveAllQuestionsFiles}
                 className="p-1 hover:bg-rose-100 text-rose-800 rounded cursor-pointer transition"
-                title="Remove uploaded questions"
+                title="Remove all uploaded questions"
               >
                 <X className="w-3 h-3" />
               </button>
@@ -538,7 +579,7 @@ export default function StudentQuestionPaperView({ student, onClose }) {
               type="button"
               onClick={() => questionsFileInputRef.current?.click()}
               className="px-3 py-1.5 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 active:scale-95 text-white rounded-lg text-xs font-black transition flex items-center gap-1.5 shadow-md cursor-pointer border border-sky-300/40"
-              title="Upload question sheet or paper (PDF, Image, Word document) for this student"
+              title="Upload question sheet or paper (multiple files supported: PDF, Image, Word document) for this student"
             >
               <FileUp className="w-3.5 h-3.5 text-amber-300 shrink-0" />
               <span>Upload Questions</span>
@@ -683,142 +724,241 @@ export default function StudentQuestionPaperView({ student, onClose }) {
         ref={attachedQuestionsRef}
         className="no-print w-full max-w-[724px] mt-4 mb-8 bg-white border border-slate-300 rounded-xl p-4 shadow-xl"
       >
-        <div className="flex items-center justify-between pb-3 border-b border-slate-200">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-200 gap-2 flex-wrap">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-sky-100 text-sky-700 flex items-center justify-center font-bold">
+            <div className="w-8 h-8 rounded-lg bg-sky-100 text-sky-700 flex items-center justify-center font-bold shrink-0">
               <FileQuestion className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-xs font-black text-slate-900 uppercase tracking-wide">
-                Uploaded Questions for {studentDetails.studentName}
+              <h3 className="text-xs font-black text-slate-900 uppercase tracking-wide flex items-center gap-1.5 flex-wrap">
+                <span>Uploaded Question Papers</span>
+                {uploadedFiles.length > 0 && (
+                  <span className="bg-amber-100 text-amber-900 px-2 py-0.5 rounded-full text-[10px] font-black border border-amber-300">
+                    {uploadedFiles.length} File{uploadedFiles.length > 1 ? 's' : ''}
+                  </span>
+                )}
               </h3>
               <p className="text-[11px] text-slate-500 font-medium">
-                Reg: {studentDetails.regNo} • Course: {studentDetails.course} ({studentDetails.level})
+                Reg: {studentDetails.regNo} • {studentDetails.studentName}
               </p>
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={() => questionsFileInputRef.current?.click()}
-            className="px-3 py-1.5 bg-[#0c234b] hover:bg-[#123068] text-white rounded-lg text-xs font-black transition flex items-center gap-1.5 cursor-pointer shadow-xs"
-          >
-            <Upload className="w-3.5 h-3.5 text-amber-400" />
-            <span>{uploadedQuestions ? 'Replace Questions File' : 'Upload Questions File'}</span>
-          </button>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => questionsFileInputRef.current?.click()}
+              className="px-3 py-1.5 bg-[#0c234b] hover:bg-[#123068] text-white rounded-lg text-xs font-black transition flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
+            >
+              <Plus className="w-3.5 h-3.5 text-amber-400" />
+              <span>{uploadedFiles.length > 0 ? 'Add More Files' : 'Upload Questions'}</span>
+            </button>
+
+            {uploadedFiles.length > 1 && (
+              <button
+                type="button"
+                onClick={handleRemoveAllQuestionsFiles}
+                className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer"
+                title="Remove all files"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Clear All</span>
+              </button>
+            )}
+          </div>
         </div>
 
-        {uploadedQuestions ? (
+        {uploadedFiles.length > 0 ? (
           <div className="space-y-3 mt-3.5">
-            <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-10 h-10 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center font-bold shrink-0">
-                  <FileText className="w-5 h-5" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-xs font-black text-slate-900 truncate" title={uploadedQuestions.fileName}>
-                    {uploadedQuestions.fileName}
-                  </p>
-                  <p className="text-[10.5px] text-slate-500 font-medium mt-0.5">
-                    Size: {uploadedQuestions.fileSize} • Uploaded: {uploadedQuestions.uploadedAt}
-                  </p>
-                </div>
+            {/* MULTI-FILE TAB SELECTOR */}
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-2 sm:p-2.5">
+              <div className="flex items-center justify-between mb-1.5 px-1 text-[11px] font-bold text-slate-600">
+                <span className="flex items-center gap-1">
+                  <Layers className="w-3.5 h-3.5 text-sky-600" />
+                  <span>Attached Files (Click to switch preview):</span>
+                </span>
+                <span>{activeFileIndex + 1} of {uploadedFiles.length} selected</span>
               </div>
 
-              <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
-                <button
-                  type="button"
-                  onClick={handleViewQuestionsFile}
-                  className="px-3 py-1.5 bg-sky-600 hover:bg-sky-500 text-white rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer shadow-2xs"
-                  title="View / Open file in new tab"
-                >
-                  <Eye className="w-3.5 h-3.5" />
-                  <span>Open Fullscreen</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleDownloadQuestionsFile}
-                  className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer shadow-2xs"
-                  title="Download questions file"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>Download</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleRemoveQuestionsFile}
-                  className="p-1.5 text-rose-600 hover:bg-rose-50 border border-rose-200 rounded-lg transition cursor-pointer"
-                  title="Remove questions file"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
+              <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+                {uploadedFiles.map((f, idx) => {
+                  const isActive = idx === activeFileIndex;
+                  return (
+                    <div
+                      key={f.id || idx}
+                      onClick={() => setActiveFileIndex(idx)}
+                      className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer shrink-0 border select-none ${
+                        isActive
+                          ? 'bg-[#0c234b] text-white border-amber-400 shadow-sm ring-2 ring-amber-400/40'
+                          : 'bg-white text-slate-700 hover:bg-slate-100 border-slate-300'
+                      }`}
+                    >
+                      <FileText className={`w-3.5 h-3.5 ${isActive ? 'text-amber-400' : 'text-slate-500'}`} />
+                      <span className="truncate max-w-[110px] sm:max-w-[150px]" title={f.fileName}>
+                        {idx + 1}. {f.fileName}
+                      </span>
+                      <span className={`text-[9.5px] px-1 py-0.2 rounded font-medium ${isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'}`}>
+                        {f.fileSize}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemoveSingleFile(idx);
+                        }}
+                        className={`p-0.5 rounded-full hover:bg-rose-600 hover:text-white transition ${
+                          isActive ? 'text-slate-300' : 'text-slate-400'
+                        }`}
+                        title="Delete this file"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
-            {/* LIVE AUTOMATIC EMBEDDED PREVIEW */}
-            <div className="border border-slate-300 rounded-xl overflow-hidden bg-slate-900/5 shadow-sm">
-              <div className="bg-[#0c234b] text-white text-xs font-bold px-3.5 py-2 flex items-center justify-between">
-                <span className="flex items-center gap-1.5 text-amber-300">
-                  <Eye className="w-3.5 h-3.5" />
-                  <span>Automatic Document Preview</span>
-                </span>
-                <span className="text-[11px] font-normal text-slate-200 truncate max-w-[200px] sm:max-w-xs">
-                  {uploadedQuestions.fileName}
-                </span>
-              </div>
-
-              <div className="p-2 sm:p-3 flex items-center justify-center bg-slate-50 min-h-[350px]">
-                {uploadedQuestions.fileType?.startsWith('image/') || uploadedQuestions.fileName?.match(/\.(png|jpe?g|webp|gif|bmp|svg)$/i) ? (
-                  <div className="w-full flex items-center justify-center bg-white border border-slate-200 rounded-lg p-2.5 shadow-inner">
-                    <img
-                      src={uploadedQuestions.dataUrl}
-                      alt={uploadedQuestions.fileName}
-                      className="max-h-[750px] w-auto max-w-full object-contain rounded"
-                    />
+            {/* ACTIVE FILE TOOLBAR */}
+            {uploadedFiles[activeFileIndex] && (
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-9 h-9 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center font-bold shrink-0">
+                    <FileText className="w-4 h-4" />
                   </div>
-                ) : uploadedQuestions.fileType?.includes('pdf') || uploadedQuestions.fileName?.endsWith('.pdf') ? (
-                  <div className="w-full h-[650px] bg-white border border-slate-200 rounded-lg overflow-hidden shadow-inner">
-                    <iframe
-                      src={`${uploadedQuestions.dataUrl}#toolbar=1&navpanes=0`}
-                      title={uploadedQuestions.fileName}
-                      className="w-full h-full border-0"
-                    />
-                  </div>
-                ) : (
-                  <div className="w-full py-10 px-4 flex flex-col items-center justify-center text-center bg-white border border-slate-200 rounded-lg">
-                    <div className="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center mb-3 shadow-xs">
-                      <FileText className="w-7 h-7" />
-                    </div>
-                    <h4 className="text-sm font-bold text-slate-900 mb-1">
-                      {uploadedQuestions.fileName}
-                    </h4>
-                    <p className="text-xs text-slate-500 max-w-sm mb-4">
-                      Word document attached. Click below to view or download.
+                  <div className="min-w-0">
+                    <p className="text-xs font-black text-slate-900 truncate" title={uploadedFiles[activeFileIndex].fileName}>
+                      {uploadedFiles[activeFileIndex].fileName}
                     </p>
-                    <div className="flex items-center gap-2">
+                    <p className="text-[10.5px] text-slate-500 font-medium mt-0.5">
+                      Size: {uploadedFiles[activeFileIndex].fileSize} • Uploaded: {uploadedFiles[activeFileIndex].uploadedAt}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1.5 self-end sm:self-auto shrink-0 flex-wrap">
+                  {uploadedFiles.length > 1 && (
+                    <div className="flex items-center bg-white border border-slate-300 rounded-lg p-0.5 mr-1">
                       <button
                         type="button"
-                        onClick={handleViewQuestionsFile}
-                        className="px-3.5 py-1.5 bg-sky-600 hover:bg-sky-500 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                        disabled={activeFileIndex === 0}
+                        onClick={() => setActiveFileIndex(prev => Math.max(0, prev - 1))}
+                        className="p-1 text-slate-700 hover:text-slate-950 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition"
+                        title="Previous File"
                       >
-                        <Eye className="w-3.5 h-3.5" />
-                        <span>Open Document</span>
+                        <ChevronLeft className="w-4 h-4" />
                       </button>
+                      <span className="text-[10px] font-bold px-1.5 text-slate-600">
+                        {activeFileIndex + 1}/{uploadedFiles.length}
+                      </span>
                       <button
                         type="button"
-                        onClick={handleDownloadQuestionsFile}
-                        className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                        disabled={activeFileIndex === uploadedFiles.length - 1}
+                        onClick={() => setActiveFileIndex(prev => Math.min(uploadedFiles.length - 1, prev + 1))}
+                        className="p-1 text-slate-700 hover:text-slate-950 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition"
+                        title="Next File"
                       >
-                        <Download className="w-3.5 h-3.5" />
-                        <span>Download</span>
+                        <ChevronRight className="w-4 h-4" />
                       </button>
                     </div>
-                  </div>
-                )}
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => handleViewSingleFileFullscreen(uploadedFiles[activeFileIndex])}
+                    className="px-2.5 py-1.5 bg-sky-600 hover:bg-sky-500 text-white rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer shadow-2xs"
+                    title="Open in new window / tab"
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                    <span>Fullscreen</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleDownloadSingleFile(uploadedFiles[activeFileIndex])}
+                    className="px-2.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer shadow-2xs"
+                    title="Download active file"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Download</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveSingleFile(activeFileIndex)}
+                    className="p-1.5 text-rose-600 hover:bg-rose-50 border border-rose-200 rounded-lg transition cursor-pointer"
+                    title="Remove this file"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
+
+            {/* LIVE AUTOMATIC EMBEDDED PREVIEW FOR ACTIVE FILE */}
+            {uploadedFiles[activeFileIndex] && (
+              <div className="border border-slate-300 rounded-xl overflow-hidden bg-slate-900/5 shadow-sm">
+                <div className="bg-[#0c234b] text-white text-xs font-bold px-3.5 py-2 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5 text-amber-300">
+                    <Eye className="w-3.5 h-3.5" />
+                    <span>Previewing File {activeFileIndex + 1} of {uploadedFiles.length}</span>
+                  </span>
+                  <span className="text-[11px] font-normal text-slate-200 truncate max-w-[200px] sm:max-w-xs">
+                    {uploadedFiles[activeFileIndex].fileName}
+                  </span>
+                </div>
+
+                <div className="p-2 sm:p-3 flex items-center justify-center bg-slate-50 min-h-[350px]">
+                  {uploadedFiles[activeFileIndex].fileType?.startsWith('image/') || uploadedFiles[activeFileIndex].fileName?.match(/\.(png|jpe?g|webp|gif|bmp|svg)$/i) ? (
+                    <div className="w-full flex items-center justify-center bg-white border border-slate-200 rounded-lg p-2.5 shadow-inner">
+                      <img
+                        src={uploadedFiles[activeFileIndex].dataUrl}
+                        alt={uploadedFiles[activeFileIndex].fileName}
+                        className="max-h-[750px] w-auto max-w-full object-contain rounded"
+                      />
+                    </div>
+                  ) : uploadedFiles[activeFileIndex].fileType?.includes('pdf') || uploadedFiles[activeFileIndex].fileName?.endsWith('.pdf') ? (
+                    <div className="w-full h-[650px] bg-white border border-slate-200 rounded-lg overflow-hidden shadow-inner">
+                      <iframe
+                        src={`${uploadedFiles[activeFileIndex].dataUrl}#toolbar=1&navpanes=0`}
+                        title={uploadedFiles[activeFileIndex].fileName}
+                        className="w-full h-full border-0"
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-full py-10 px-4 flex flex-col items-center justify-center text-center bg-white border border-slate-200 rounded-lg">
+                      <div className="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center mb-3 shadow-xs">
+                        <FileText className="w-7 h-7" />
+                      </div>
+                      <h4 className="text-sm font-bold text-slate-900 mb-1">
+                        {uploadedFiles[activeFileIndex].fileName}
+                      </h4>
+                      <p className="text-xs text-slate-500 max-w-sm mb-4">
+                        Word document attached. Click below to view or download.
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleViewSingleFileFullscreen(uploadedFiles[activeFileIndex])}
+                          className="px-3.5 py-1.5 bg-sky-600 hover:bg-sky-500 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                          <span>Open Document</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDownloadSingleFile(uploadedFiles[activeFileIndex])}
+                          className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                          <span>Download</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <div
@@ -827,10 +967,10 @@ export default function StudentQuestionPaperView({ student, onClose }) {
           >
             <Upload className="w-7 h-7 text-sky-500 mx-auto mb-1.5 group-hover:scale-110 transition-transform" />
             <p className="text-xs font-bold text-slate-800">
-              Click to upload questions for <span className="font-black text-sky-900">{studentDetails.studentName}</span>
+              Click to upload question papers for <span className="font-black text-sky-900">{studentDetails.studentName}</span>
             </p>
             <p className="text-[10.5px] text-slate-500 mt-1">
-              Supports PDF, Word Documents (.doc, .docx), and Images (PNG, JPG) up to 10 MB.
+              Supports selecting multiple files at once (PDF, Word Documents, Images) up to 10 MB each.
             </p>
           </div>
         )}

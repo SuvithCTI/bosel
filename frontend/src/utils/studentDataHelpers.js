@@ -477,7 +477,13 @@ export const readStudentUploadedQuestions = (scopeKey) => {
     const key = `bsel_student_questions_file_${scopeKey}`;
     const saved = localStorage.getItem(key);
     if (saved) {
-      return JSON.parse(saved);
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed)) {
+        return parsed.length > 0 ? parsed : null;
+      }
+      if (parsed && typeof parsed === 'object') {
+        return [parsed];
+      }
     }
   } catch (e) {
     console.warn('Failed to read student uploaded questions:', e);
@@ -489,7 +495,7 @@ export const saveStudentUploadedQuestions = (scopeKey, fileData) => {
   if (!scopeKey) return;
   try {
     const key = `bsel_student_questions_file_${scopeKey}`;
-    if (fileData) {
+    if (fileData && (Array.isArray(fileData) ? fileData.length > 0 : true)) {
       localStorage.setItem(key, JSON.stringify(fileData));
     } else {
       localStorage.removeItem(key);
