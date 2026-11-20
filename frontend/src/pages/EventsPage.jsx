@@ -177,7 +177,10 @@ export default function EventsPage({ onRegisterEvent }) {
             2. DESKTOP TABLE VIEW (>= 768px)
            ========================================================================= */}
         <div className="hidden md:block bg-white rounded-2xl shadow-md border border-slate-200 overflow-hidden">
-          <div className="overflow-x-auto">
+          <div 
+            className="overflow-x-auto no-scrollbar admin-table-container"
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          >
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-[#0F2B5C] text-white text-xs md:text-sm font-black uppercase tracking-wider">

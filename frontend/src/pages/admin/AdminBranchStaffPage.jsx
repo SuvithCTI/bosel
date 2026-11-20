@@ -13,6 +13,7 @@ import {
   Phone,
   Mail,
   Building,
+  School,
   ShieldCheck,
   Sparkles,
   ExternalLink,
@@ -92,7 +93,9 @@ export default function AdminBranchStaffPage({
       userId: `staff.${branchPrefix}${randomSuffix}`,
       password: 'staff123',
       phone: '9865219131',
-      email: ''
+      email: '',
+      affiliationType: 'Branch',
+      assignedUnit: activeBranch
     });
     setFormError('');
     setShowModal(true);
@@ -101,13 +104,16 @@ export default function AdminBranchStaffPage({
   // Open modal for editing existing staff
   const handleOpenEditModal = (staff) => {
     setEditingStaffId(staff.id);
+    const aff = staff.affiliationType || (staff.institution?.includes('Franchise') ? 'Franchise' : (staff.institution?.includes('School') || staff.institution?.includes('Matric') ? 'School' : 'Branch'));
     setFormData({
       name: staff.name || '',
       designation: staff.designation || 'Academic Staff',
       userId: staff.userId || '',
       password: staff.password || '',
       phone: staff.phone || '',
-      email: staff.email || ''
+      email: staff.email || '',
+      affiliationType: aff,
+      assignedUnit: staff.assignedUnit || staff.institution || activeBranch
     });
     setFormError('');
     setShowModal(true);
@@ -155,6 +161,7 @@ export default function AdminBranchStaffPage({
       return;
     }
 
+    const assignedUnit = formData.assignedUnit || (formData.affiliationType === 'Franchise' ? 'Tenkasi City Franchise' : (formData.affiliationType === 'School' ? "St. Joseph's Matric Higher Secondary School" : activeBranch));
     const payload = {
       id: editingStaffId || undefined,
       name: formData.name.trim(),
@@ -165,6 +172,9 @@ export default function AdminBranchStaffPage({
       email: (formData.email.trim() || `${formData.userId.trim().toLowerCase()}@bsel.org`).toLowerCase(),
       branch: activeBranch,
       branchCode: 'BSEL-BR-101',
+      assignedUnit: assignedUnit,
+      affiliationType: formData.affiliationType || 'Branch',
+      institution: assignedUnit,
       status: 'Active'
     };
 
@@ -279,45 +289,6 @@ export default function AdminBranchStaffPage({
         </div>
       </div>
 
-      {/* KPI Summary Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Branch Staff</span>
-          <div className="text-xl font-black text-slate-900 mt-0.5">{staffList.length}</div>
-          <span className="text-[10px] font-bold text-sky-700 mt-0.5 flex items-center gap-1">
-            <Check className="w-3 h-3" /> In {activeBranch}
-          </span>
-        </div>
-
-        <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Active Credentials</span>
-          <div className="text-xl font-black text-emerald-600 mt-0.5">
-            {staffList.filter((s) => s.status !== 'Inactive').length}
-          </div>
-          <span className="text-[10px] font-bold text-emerald-700 mt-0.5 flex items-center gap-1">
-            <ShieldCheck className="w-3 h-3" /> Login Ready
-          </span>
-        </div>
-
-        <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Instructors</span>
-          <div className="text-xl font-black text-indigo-600 mt-0.5">
-            {staffList.filter((s) => (s.designation || '').toLowerCase().includes('instructor') || (s.designation || '').toLowerCase().includes('academic')).length || staffList.length}
-          </div>
-          <span className="text-[10px] font-bold text-indigo-700 mt-0.5 flex items-center gap-1">
-            <Award className="w-3 h-3" /> Faculty
-          </span>
-        </div>
-
-        <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Staff Portal Access</span>
-          <div className="text-xl font-black text-amber-500 mt-0.5">Live</div>
-          <span className="text-[10px] font-bold text-amber-700 mt-0.5 flex items-center gap-1">
-            <Sparkles className="w-3 h-3" /> Marks & Records
-          </span>
-        </div>
-      </div>
-
       {/* Staff Grid Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredStaff.map((staff) => {
@@ -339,9 +310,26 @@ export default function AdminBranchStaffPage({
                     <h3 className="text-sm font-black text-slate-950 truncate leading-snug">
                       {staff.name}
                     </h3>
-                    <span className="text-[11px] font-bold text-sky-700 block truncate">
-                      {staff.designation || 'Academic Staff'}
-                    </span>
+                    <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                      <span className="text-[11px] font-bold text-sky-700 block truncate">
+                        {staff.designation || 'Academic Staff'}
+                      </span>
+                      {staff.affiliationType === 'Franchise' || staff.institution?.includes('Franchise') ? (
+                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-indigo-50 border border-indigo-200 text-indigo-700 text-[9px] font-black uppercase">
+                          <Building className="w-2.5 h-2.5" />
+                          Franchise Staff
+                        </span>
+                      ) : staff.affiliationType === 'School' || staff.institution?.includes('School') || staff.institution?.includes('Matric') ? (
+                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-emerald-50 border border-emerald-200 text-emerald-800 text-[9px] font-black uppercase">
+                          <School className="w-2.5 h-2.5" />
+                          School Staff
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-sky-50 border border-sky-200 text-sky-800 text-[9px] font-black uppercase">
+                          Branch Staff
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -613,6 +601,32 @@ export default function AdminBranchStaffPage({
                   <span>Assigned Branch:</span>
                 </span>
                 <span className="text-xs font-black text-[#0c234b]">{activeBranch}</span>
+              </div>
+
+              {/* Assigned Unit / Category */}
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">
+                  Assigned Unit / Department
+                </label>
+                <select
+                  value={formData.affiliationType || 'Branch'}
+                  onChange={(e) => {
+                    const aff = e.target.value;
+                    let unitName = activeBranch;
+                    if (aff === 'Franchise') unitName = 'Tenkasi City Franchise';
+                    if (aff === 'School') unitName = "St. Joseph's Matric Higher Secondary School";
+                    setFormData({
+                      ...formData,
+                      affiliationType: aff,
+                      assignedUnit: unitName
+                    });
+                  }}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0c234b]/20 focus:border-[#0c234b]"
+                >
+                  <option value="Branch">Branch Staff — {activeBranch}</option>
+                  <option value="Franchise">Franchise Staff — Tenkasi City Franchise</option>
+                  <option value="School">School Staff — St. Joseph's Matric Higher Secondary School</option>
+                </select>
               </div>
 
               {/* Modal Footer Actions */}

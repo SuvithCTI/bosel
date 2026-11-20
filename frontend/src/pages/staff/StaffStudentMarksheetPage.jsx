@@ -28,14 +28,19 @@ import {
   writeMarksheets,
   saveStudentMarksheet
 } from '../../utils/marksheetStorage';
+import { getActiveSession } from '../../utils/authStorage';
 
 const PLACEHOLDER_ROWS = 3;
 
 export default function StaffStudentMarksheetPage({
   activeBranch,
   branchStudents = [],
+  portalType = null,
+  entityName = null,
   onBack
 }) {
+  const session = getActiveSession() || {};
+  const effectivePortalType = portalType || (session.role === 'School' || session.schoolId ? 'school' : (session.role === 'Franchise' || session.franchiseId ? 'franchise' : 'branch'));
   const [searchId, setSearchId] = useState('');
   const [student, setStudent] = useState(null);
 
@@ -310,7 +315,7 @@ export default function StaffStudentMarksheetPage({
 
         <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 bg-sky-50 border border-sky-100 rounded-xl shrink-0">
           <GraduationCap className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-sky-700" />
-          <span className="text-[10px] sm:text-xs font-bold text-sky-900">{activeBranch}</span>
+          <span className="text-[10px] sm:text-xs font-bold text-sky-900">{entityName || activeBranch}</span>
         </div>
       </div>
 
@@ -411,7 +416,7 @@ export default function StaffStudentMarksheetPage({
               label="Grade / Level"
               value={student ? student.grade || 'Not available' : dash}
             />
-            <InfoCard label="Branch" value={activeBranch} />
+            <InfoCard label={effectivePortalType === 'school' ? 'School' : effectivePortalType === 'franchise' ? 'Franchise' : 'Branch'} value={entityName || activeBranch} />
           </div>
         </div>
 
@@ -471,7 +476,10 @@ export default function StaffStudentMarksheetPage({
         </div>
 
         {/* SUBJECT TABLE */}
-        <div className="overflow-x-auto">
+        <div 
+          className="overflow-x-auto no-scrollbar admin-table-container"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
           <table className="w-full text-left min-w-[600px]">
             <thead className="bg-slate-50">
               <tr>

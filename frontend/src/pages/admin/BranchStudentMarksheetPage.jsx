@@ -54,11 +54,11 @@ const EXAM_CONVERTED_MAX = 60;  // final exam is converted to 60
 const SUBJECT_MAX = ASSESSMENT_MAX + EXAM_CONVERTED_MAX; // 100
 
 const STAGES = [
-  { key: 'rev1', type: 'revision', index: 0, tab: 'Wk 1 · Rev 1', short: 'Rev 1', label: 'Week 1 - Revision 1' },
-  { key: 'rev2', type: 'revision', index: 1, tab: 'Wk 2 · Rev 2', short: 'Rev 2', label: 'Week 2 - Revision 2' },
-  { key: 'rev3', type: 'revision', index: 2, tab: 'Wk 3 · Rev 3', short: 'Rev 3', label: 'Week 3 - Revision 3' },
-  { key: 'rev4', type: 'revision', index: 3, tab: 'Wk 4 · Rev 4', short: 'Rev 4', label: 'Week 4 - Revision 4' },
-  { key: 'exam', type: 'exam', index: null, tab: 'Wk 5 · Final Exam', short: 'Final Exam', label: 'Week 5 - Final Exam' },
+  { key: 'rev1', type: 'revision', index: 0, tab: 'Rev 1', short: 'Rev 1', label: 'Week 1 - Revision 1' },
+  { key: 'rev2', type: 'revision', index: 1, tab: 'Rev 2', short: 'Rev 2', label: 'Week 2 - Revision 2' },
+  { key: 'rev3', type: 'revision', index: 2, tab: 'Rev 3', short: 'Rev 3', label: 'Week 3 - Revision 3' },
+  { key: 'rev4', type: 'revision', index: 3, tab: 'Rev 4', short: 'Rev 4', label: 'Week 4 - Revision 4' },
+  { key: 'exam', type: 'exam', index: null, tab: 'Exam', short: 'Exam', label: 'Week 5 - Final Exam' },
 ];
 
 const REV_STAGES = STAGES.filter((s) => s.type === 'revision');
@@ -1593,7 +1593,10 @@ export default function BranchStudentMarksheetPage({
         </div>
 
         {/* DESKTOP / TABLET: SUBJECT TABLE */}
-        <div className="hidden sm:block overflow-x-auto">
+        <div 
+          className="hidden sm:block overflow-x-auto no-scrollbar admin-table-container"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
           <table className="w-full text-left border-collapse min-w-[860px]">
             <thead className="bg-slate-50">
               <tr>
@@ -1850,7 +1853,10 @@ export default function BranchStudentMarksheetPage({
         </div>
 
         {/* DESKTOP / TABLET: TABLE (scrolls sideways; revision columns per subject) */}
-        <div className="hidden sm:block overflow-x-auto p-2">
+        <div 
+          className="hidden sm:block overflow-x-auto p-2 no-scrollbar admin-table-container"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
           <table className="w-full text-center min-w-[1100px] border-collapse border border-slate-300">
             <thead className="bg-[#0b2a55] text-white">
               <tr>

@@ -13,12 +13,18 @@ import {
   Edit3,
   Trash2,
   FileDown,
-  School
+  School,
+  Paperclip
 } from 'lucide-react';
 import CompactSelect from '../../components/CompactSelect';
 import StudentAvatar from '../../components/StudentAvatar';
 import { updateUserProfile } from '../../utils/authStorage';
+import { isStudentUser } from '../../utils/studentValidator';
 import { ACADEMIC_STAGES, getAcademicStageFromAge } from '../../utils/academicStages';
+import {
+  getStudentScopeKey,
+  readStudentUploadedQuestions,
+} from '../../utils/studentDataHelpers';
 
 export default function AdminBranchStudentsPage({
   activeBranch = 'Concern Branch',
@@ -48,7 +54,7 @@ export default function AdminBranchStudentsPage({
   // Course filter state
   const [branchCourseFilter, setBranchCourseFilter] = useState('All');
 
-  // Category filter state (Individual, Academy, School)
+  // Category filter state (Branch, Academy, School)
   const [branchCategoryFilter, setBranchCategoryFilter] = useState('All');
 
   // Class filter state
@@ -57,10 +63,10 @@ export default function AdminBranchStudentsPage({
   // Level filter state
   const [branchLevelFilter, setBranchLevelFilter] = useState('All');
 
-  // Category options: Individual, Academy, School
+  // Category options: Branch, Academy, School
   const categoryOptions = useMemo(() => [
     { value: 'All', label: 'All Categories' },
-    { value: 'Individual', label: 'Individual' },
+    { value: 'Branch', label: 'Branch' },
     { value: 'Academy', label: 'Academy' },
     { value: 'School', label: 'School' }
   ], []);
@@ -213,15 +219,15 @@ export default function AdminBranchStudentsPage({
 
   const getStudentCategory = (student) => {
     const cat = (student.admissionCategory || student.category || student.channel || '').toLowerCase();
-    const inst = (student.institution || student.schoolName || '').toLowerCase();
+    const inst = (student.institution || student.schoolName || student.franchiseName || '').toLowerCase();
 
     if (cat.includes('school') || inst.includes('school') || inst.includes('matric') || inst.includes('vidyalaya') || inst.includes('cbse')) {
       return 'School';
     }
-    if (cat.includes('academy') || inst.includes('academy') || inst.includes('tuition') || inst.includes('institute')) {
+    if (cat.includes('academy') || cat.includes('franchise') || inst.includes('academy') || inst.includes('studio') || inst.includes('tuition') || inst.includes('institute')) {
       return 'Academy';
     }
-    return 'Individual';
+    return 'Branch';
   };
 
   const getCategoryBadge = (student) => {
@@ -232,12 +238,12 @@ export default function AdminBranchStudentsPage({
     if (category === 'Academy') {
       return { label: 'Academy', bg: 'bg-amber-50 text-amber-700 border-amber-200' };
     }
-    return { label: 'Individual', bg: 'bg-sky-50 text-sky-700 border-sky-200' };
+    return { label: 'Branch', bg: 'bg-sky-50 text-sky-700 border-sky-200' };
   };
 
   // Filter students based on course, category, class, and level
   const filteredStudents = useMemo(() => {
-    return (branchStudents || []).filter(student => {
+    return (branchStudents || []).filter(isStudentUser).filter(student => {
       // Course filter (matches 14 official programs)
       if (branchCourseFilter && branchCourseFilter !== 'All') {
         const prog = (student.program || student.courseName || '').toLowerCase();
@@ -251,12 +257,12 @@ export default function AdminBranchStudentsPage({
         if (!matchesCourse) return false;
       }
 
-      // Category filter (Individual, Academy, School)
+      // Category filter (Branch, Academy, School)
       if (branchCategoryFilter && branchCategoryFilter !== 'All') {
         const studentCat = getStudentCategory(student).toLowerCase();
         const targetCat = branchCategoryFilter.toLowerCase();
-        if (targetCat === 'individual') {
-          if (studentCat !== 'individual' && studentCat !== 'franchise') return false;
+        if (targetCat === 'branch' || targetCat === 'individual') {
+          if (studentCat !== 'branch' && studentCat !== 'individual') return false;
         } else if (studentCat !== targetCat) {
           return false;
         }
@@ -467,7 +473,10 @@ export default function AdminBranchStudentsPage({
           </span>
         </div>
 
-        <div className="w-full overflow-x-auto admin-table-container">
+        <div 
+          className="w-full overflow-x-auto no-scrollbar admin-table-container"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
           <table className="w-full text-left text-xs min-w-[860px]">
             <thead className="bg-[#081d3d] text-white uppercase text-[10px] tracking-wider font-black">
               <tr>
@@ -656,15 +665,31 @@ export default function AdminBranchStudentsPage({
 
                       {/* Question Paper Column */}
                       <td className="py-3 px-3 text-center whitespace-nowrap">
-                        <button
-                          type="button"
-                          onClick={() => handleOpenQuestionPaperForStudent?.(student)}
-                          className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 hover:border-amber-300 font-bold rounded-lg text-xs transition cursor-pointer inline-flex items-center justify-center gap-1.5 shadow-xs whitespace-nowrap active:scale-95"
-                          title="View Question Paper"
-                        >
-                          <FileSpreadsheet className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                          <span>Qn Paper</span>
-                        </button>
+                        {(() => {
+                          const hasUploadedQ = Boolean(readStudentUploadedQuestions(getStudentScopeKey(student)));
+                          return (
+                            <div className="flex flex-col items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => handleOpenQuestionPaperForStudent?.(student)}
+                                className={`px-3 py-1.5 font-bold rounded-lg text-xs transition cursor-pointer inline-flex items-center justify-center gap-1.5 shadow-xs whitespace-nowrap active:scale-95 ${
+                                  hasUploadedQ
+                                    ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-950 border border-emerald-300'
+                                    : 'bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 hover:border-amber-300'
+                                }`}
+                                title="View Question Paper (Page 1) and Uploaded Questions"
+                              >
+                                <FileSpreadsheet className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                                <span>Qn Paper</span>
+                              </button>
+                              {hasUploadedQ && (
+                                <span className="inline-flex items-center gap-0.5 text-[9.5px] font-black text-emerald-700 bg-emerald-100/80 px-1.5 py-0.5 rounded-full">
+                                  <Paperclip className="w-2.5 h-2.5" /> Questions File
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </td>
                     </tr>
                   );

@@ -81,6 +81,7 @@ import {
   clearActiveSession,
   getCoursePrefix
 } from '../utils/authStorage';
+import { isStudentUser } from '../utils/studentValidator';
 
 import { 
   getStoredEvents, 
@@ -930,7 +931,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
       duration: student.duration || '6 Months',
       registrationNo: regNo,
       certificateNo: certNo,
-      centreName: student.branch || student.institution || activeBranch || 'test branch',
+      centreName: student.branch || student.institution || activeBranch || 'Tenkasi Branch',
       centreCode: '545454',
       centreAddress: student.address || 'second street, surandai,keelasurandai,tenkasi',
       issueDate: student.enrolmentDate || '05-10-2026',
@@ -1096,7 +1097,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
         duration: student.duration || '6 Months',
         registrationNo: regNo,
         certificateNo: certNo,
-        centreName: student.branch || student.institution || activeBranch || 'test branch',
+        centreName: student.branch || student.institution || activeBranch || 'Tenkasi Branch',
         centreCode: '545454',
         centreAddress: student.address || 'second street, surandai,keelasurandai,tenkasi',
         issueDate: student.enrolmentDate || '05-10-2026',
@@ -1248,7 +1249,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
   
   // Super Admin: All students with filters
   const filteredStudentsSuperAdmin = usersList
-    .filter(u => u.role !== 'Super Admin' && u.role !== 'Branch Head')
+    .filter(isStudentUser)
     .filter(u => {
       const matchSearch = 
         u.studentName?.toLowerCase().includes(studentSearch.toLowerCase()) ||
@@ -1279,7 +1280,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
 
   // Branch Head: Scoped strictly to activeBranch
   const branchStudents = usersList
-    .filter(u => u.role !== 'Super Admin' && u.role !== 'Branch Head')
+    .filter(isStudentUser)
     .filter(u => {
       const studentBranch = (u.branch || u.institution || '').toLowerCase();
       const targetBranch = (activeBranch || '').toLowerCase();
@@ -1375,7 +1376,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
   // -------------------------------------------------------------
   // METRICS CALCULATIONS
   // -------------------------------------------------------------
-  const totalStudentsCount = usersList.filter(u => u.role !== 'Super Admin' && u.role !== 'Branch Head').length;
+  const totalStudentsCount = usersList.filter(isStudentUser).length;
   const totalBranchesCount = schoolsList.length;
   const totalCoursesCount = coursesList.length;
   const totalEventsCount = eventsList.length;
@@ -1388,12 +1389,21 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
   const branchRevenueFormatted = `₹${branchRevenueNumber.toLocaleString('en-IN')}`;
 
   return (
-    <div className="admin-mobile min-h-screen bg-slate-100 font-sans text-slate-900 pb-20 lg:pb-12">
+    <div className="admin-mobile min-h-screen bg-slate-100 font-sans text-slate-900 pb-20 lg:pb-12 overflow-x-hidden">
       
       <style>{`
-        /* Smooth touch scrolling for wide data tables */
-        .admin-table-container {
+        /* Smooth touch scrolling for wide data tables with hidden scrollbars */
+        .admin-table-container,
+        .overflow-x-auto {
           -webkit-overflow-scrolling: touch;
+          scrollbar-width: none !important;
+          -ms-overflow-style: none !important;
+        }
+        .admin-table-container::-webkit-scrollbar,
+        .overflow-x-auto::-webkit-scrollbar {
+          display: none !important;
+          width: 0 !important;
+          height: 0 !important;
         }
 
         @media (max-width: 640px) {
@@ -1743,7 +1753,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                     }`}
                   >
                     <Users className={`w-4 h-4 shrink-0 ${activeTab === 'branch_students' ? 'text-sky-400' : 'text-slate-500'}`} />
-                    <span className="truncate">Concern Branch Students</span>
+                    <span className="truncate">Student Registration</span>
                   </button>
 
                   <button
@@ -1865,7 +1875,6 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
               handleOpenCertForStudent={handleOpenCertForStudent}
               handleOpenReceiptForStudent={handleOpenReceiptForStudent}
               handleOpenEventRegForStudent={handleOpenEventRegForStudent}
-              handleOpenQuestionPaperForStudent={handleOpenQuestionPaperForStudent}
               setViewingAdmissionStudent={setViewingAdmissionStudent}
               studentSearch={studentSearch}
               setStudentSearch={setStudentSearch}
@@ -2091,7 +2100,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                 }`}
               >
                 <Users className="w-4 h-4" />
-                <span>Students</span>
+                <span>Student Reg</span>
               </button>
 
               {/* Branch Tab 3: Enquiries / Student Details */}

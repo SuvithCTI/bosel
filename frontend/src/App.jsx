@@ -31,9 +31,9 @@ import {
 // Helper to determine if an active session belongs to a student
 const isStudentUser = (user) => {
   if (!user) return false;
-  if (user.role === 'Super Admin' || user.role === 'Branch Head' || user.role === 'Staff') return false;
+  if (user.role === 'Super Admin' || user.role === 'Branch Head' || user.role === 'Staff' || user.role === 'Franchise' || user.role === 'School') return false;
   const uid = String(user.userId || user.id || '').toLowerCase();
-  if (uid === 'admin' || uid === 'staff' || uid.startsWith('branch.') || uid.startsWith('sch-')) return false;
+  if (uid === 'admin' || uid === 'staff' || uid.startsWith('branch.') || uid.startsWith('sch-') || uid.startsWith('school')) return false;
   return true;
 };
 
@@ -92,14 +92,14 @@ export default function App() {
         return 'staff';
       }
 
-      if (session?.role === 'Franchise') {
+      if (session?.role === 'Franchise' || session?.role === 'School') {
         return 'franchise_portal';
       }
 
       if (cleanHash) {
         if (cleanHash.startsWith('admin')) return 'admin';
         if (cleanHash.startsWith('staff')) return 'staff';
-        if (cleanHash.startsWith('franchise')) return 'franchise_portal';
+        if (cleanHash.startsWith('franchise') || cleanHash.startsWith('school')) return 'franchise_portal';
         if (cleanHash.startsWith('verify')) return 'verify';
         return cleanHash;
       }
@@ -293,7 +293,7 @@ export default function App() {
         duration: '6 Months',
         registrationNo: 'AB27-001',
         certificateNo: 'BSEL/ABACUS/L1/0007',
-        centreName: 'test branch',
+        centreName: 'Tenkasi Branch',
         centreCode: '546454',
         centreAddress:
           'second street, surandai,keelasurandai,tenkasi',
@@ -314,7 +314,7 @@ export default function App() {
   // Main application layout
   // -------------------------------------------------------
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 text-slate-800 font-sans selection:bg-amber-400 selection:text-slate-950">
+    <div className="min-h-screen flex flex-col bg-slate-50 text-slate-800 font-sans selection:bg-amber-400 selection:text-slate-950 overflow-x-hidden">
 
       {/* Global Navbar */}
       {!hideGlobalLayout && (

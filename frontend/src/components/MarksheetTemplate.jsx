@@ -54,7 +54,7 @@ const TABLE_HEADERS = [
   ['S.No.'],
   ['Subject / Module'],
   ['Max', 'Marks'],
-  ['Assessment', '(/40)'],
+  ['Assessment'],
   ['Marks', 'Obtained'],
   ['Percentage'],
 ];

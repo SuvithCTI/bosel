@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   X, 
   GraduationCap, 
@@ -295,7 +295,10 @@ export default function AdmissionModal({
   initialBranch = null,
   lockBranch = false,
   skipPayment = false,
-  onSuccess = null
+  onSuccess = null,
+  initialAdmissionCategory = null,
+  initialInstitution = null,
+  lockAdmissionCategory = false
 }) {
   const [coursesList, setCoursesList] = useState(() => getStoredCourses());
 
@@ -326,27 +329,43 @@ export default function AdmissionModal({
   const dynamicProgramNames = coursesList.map(c => c.fullName || c.name);
   const availablePrograms = dynamicProgramNames.length > 0 ? dynamicProgramNames : BSEL_PROGRAMS;
 
-  // 2. Branch: every district name
-  const availableBranches = initialBranch && !TAMIL_NADU_DISTRICTS.includes(initialBranch)
-    ? [initialBranch, ...TAMIL_NADU_DISTRICTS]
-    : TAMIL_NADU_DISTRICTS;
+  // 2. Branch: strictly Tenkasi and Tirunelveli branches
+  const cleanInitBranch = initialBranch ? String(initialBranch).replace(/\s*(regional\s*)?branch\s*/gi, '').trim() : null;
+  const availableBranches = cleanInitBranch && !['Tenkasi', 'Tirunelveli'].includes(cleanInitBranch)
+    ? [cleanInitBranch, 'Tenkasi', 'Tirunelveli']
+    : ['Tenkasi', 'Tirunelveli'];
 
   const initialCourse = initialProgram || availablePrograms[0] || 'Abacus Speed Arithmetic';
-  const defaultBranch = initialBranch || (availableBranches.includes('Tenkasi') ? 'Tenkasi' : availableBranches[0]);
+  const defaultBranch = cleanInitBranch || 'Tenkasi';
   const initialLevel = getLevelsForCourse(initialCourse, coursesList)[0] || 'Level 1';
   const initialSingleFee = parseCourseFee(initialCourse, coursesList);
   const initialRegNumber = generateRegisterNumber(initialCourse);
+
+  const categoryInit = (initialAdmissionCategory === 'Academy' ? 'Franchise' : initialAdmissionCategory) || (lockAdmissionCategory ? 'Branch' : 'Branch');
+  let initSchoolId = null;
+  let initFranchiseId = null;
+  let initInst = defaultBranch;
+
+  if (categoryInit === 'School') {
+    const sFound = schoolsList.find(s => initialInstitution && (s.name?.toLowerCase().includes(initialInstitution.toLowerCase()) || initialInstitution.toLowerCase().includes(s.name?.toLowerCase())));
+    initSchoolId = sFound?.id || (schoolsList[0]?.id || null);
+    initInst = initialInstitution || sFound?.name || schoolsList[0]?.name || defaultBranch;
+  } else if (categoryInit === 'Franchise') {
+    const fFound = franchisesList.find(f => initialInstitution && (f.name?.toLowerCase().includes(initialInstitution.toLowerCase()) || initialInstitution.toLowerCase().includes(f.name?.toLowerCase())));
+    initFranchiseId = fFound?.id || (franchisesList[0]?.id || null);
+    initInst = initialInstitution || fFound?.name || franchisesList[0]?.name || defaultBranch;
+  }
 
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0], // 1. Date
     registerNumber: initialRegNumber, // 2. Register number [non-editable]
     branch: defaultBranch, // 3. Branch
-    admissionCategory: 'Branch', // 'Branch' | 'School' | 'Franchise'
-    schoolId: null,
-    franchiseId: null,
-    franchiseName: '',
-    institution: defaultBranch, // School / Franchise / Branch Name
-    schoolName: defaultBranch,
+    admissionCategory: categoryInit, // 'Branch' | 'School' | 'Franchise'
+    schoolId: initSchoolId,
+    franchiseId: initFranchiseId,
+    franchiseName: categoryInit === 'Franchise' ? initInst : '',
+    institution: initInst, // School / Franchise / Branch Name
+    schoolName: initInst,
     courseName: initialCourse, // 4. Course Name (kept for backward compat)
     selectedCourses: [
       {
@@ -415,6 +434,43 @@ export default function AdmissionModal({
   const [isPhotoEditorOpen, setIsPhotoEditorOpen] = useState(false);
   const [editorBgColor, setEditorBgColor] = useState('original');
   const [originalPhotoSrc, setOriginalPhotoSrc] = useState(null);
+
+  // Sync initial category, branch, and institution whenever modal opens
+  useEffect(() => {
+    if (isOpen) {
+      const curBranch = cleanInitBranch || defaultBranch;
+      const cat = initialAdmissionCategory 
+        ? ((initialAdmissionCategory === 'Academy') ? 'Franchise' : initialAdmissionCategory) 
+        : (lockAdmissionCategory ? 'Branch' : null);
+      
+      let sId = null;
+      let fId = null;
+      let instName = curBranch;
+
+      if (cat === 'School') {
+        const sFound = schoolsList.find(s => initialInstitution && (s.name?.toLowerCase().includes(initialInstitution.toLowerCase()) || initialInstitution.toLowerCase().includes(s.name?.toLowerCase())));
+        sId = sFound?.id || (schoolsList[0]?.id || null);
+        instName = initialInstitution || sFound?.name || schoolsList[0]?.name || curBranch;
+      } else if (cat === 'Franchise') {
+        const fFound = franchisesList.find(f => initialInstitution && (f.name?.toLowerCase().includes(initialInstitution.toLowerCase()) || initialInstitution.toLowerCase().includes(f.name?.toLowerCase())));
+        fId = fFound?.id || (franchisesList[0]?.id || null);
+        instName = initialInstitution || fFound?.name || franchisesList[0]?.name || curBranch;
+      }
+
+      setFormData(prev => ({
+        ...prev,
+        ...(curBranch ? { branch: curBranch } : {}),
+        ...(cat ? {
+          admissionCategory: cat,
+          schoolId: sId,
+          franchiseId: fId,
+          franchiseName: cat === 'Franchise' ? instName : '',
+          institution: instName,
+          schoolName: instName
+        } : {})
+      }));
+    }
+  }, [isOpen, initialAdmissionCategory, initialInstitution, initialBranch, lockAdmissionCategory, cleanInitBranch, defaultBranch, schoolsList, franchisesList]);
   const [editorPreviewUrl, setEditorPreviewUrl] = useState(null);
   const [isProcessingBg, setIsProcessingBg] = useState(false);
   const editorImageRef = useRef(null);
@@ -483,6 +539,49 @@ export default function AdmissionModal({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  const normalizeBranchName = (b = '') =>
+    String(b || '').toLowerCase().replace(/\s*(regional\s*)?branch\s*/gi, '').trim();
+
+  const selectedBranchSlug = normalizeBranchName(formData.branch);
+
+  const filteredSchoolsByBranch = useMemo(() => {
+    const list = schoolsList.filter((s) => {
+      const schBranch = normalizeBranchName(s.branch || s.city || '');
+      return schBranch.includes(selectedBranchSlug) || selectedBranchSlug.includes(schBranch);
+    });
+    if (lockAdmissionCategory && initialInstitution && formData.admissionCategory === 'School') {
+      const alreadyThere = list.some(s => s.name?.toLowerCase().trim() === initialInstitution.toLowerCase().trim());
+      if (!alreadyThere) {
+        list.unshift({
+          id: formData.schoolId || 'inst_locked_school',
+          name: initialInstitution,
+          branch: formData.branch,
+          city: formData.branch
+        });
+      }
+    }
+    return list;
+  }, [schoolsList, selectedBranchSlug, lockAdmissionCategory, initialInstitution, formData.admissionCategory, formData.schoolId, formData.branch]);
+
+  const filteredFranchisesByBranch = useMemo(() => {
+    const list = franchisesList.filter((f) => {
+      const fcBranch = normalizeBranchName(f.branch || f.city || '');
+      return fcBranch.includes(selectedBranchSlug) || selectedBranchSlug.includes(fcBranch);
+    });
+    if (lockAdmissionCategory && initialInstitution && (formData.admissionCategory === 'Franchise' || formData.admissionCategory === 'Academy')) {
+      const alreadyThere = list.some(f => f.name?.toLowerCase().trim() === initialInstitution.toLowerCase().trim());
+      if (!alreadyThere) {
+        list.unshift({
+          id: formData.franchiseId || 'inst_locked_franchise',
+          name: initialInstitution,
+          branch: formData.branch,
+          city: formData.branch
+        });
+      }
+    }
+    return list;
+  }, [franchisesList, selectedBranchSlug, lockAdmissionCategory, initialInstitution, formData.admissionCategory, formData.franchiseId, formData.branch]);
 
   // Lock background scroll when modal is open
   useEffect(() => {
@@ -1582,13 +1681,73 @@ export default function AdmissionModal({
                                 onClick={() => {
                                   setIsOtherBranch(false);
                                   setCustomBranchName('');
-                                  setFormData(prev => ({ 
-                                    ...prev, 
-                                    branch: b,
-                                    institution: prev.admissionCategory === 'Branch' ? b : prev.institution,
-                                    schoolName: prev.admissionCategory === 'Branch' ? b : prev.schoolName,
-                                    district: (!prev.district || prev.district === prev.branch || prev.district === 'Tenkasi') ? b : prev.district
-                                  }));
+                                  const newBranch = b;
+                                  const newSlug = normalizeBranchName(newBranch);
+                                  const newBranchSchools = schoolsList.filter((s) => {
+                                    const sB = normalizeBranchName(s.branch || s.city || '');
+                                    return sB.includes(newSlug) || newSlug.includes(sB);
+                                  });
+                                  const newBranchFranchises = franchisesList.filter((f) => {
+                                    const fB = normalizeBranchName(f.branch || f.city || '');
+                                    return fB.includes(newSlug) || newSlug.includes(fB);
+                                  });
+
+                                  setFormData((prev) => {
+                                    let nextSchoolId = prev.schoolId;
+                                    let nextSchoolName = prev.schoolName;
+                                    let nextFranchiseId = prev.franchiseId;
+                                    let nextFranchiseName = prev.franchiseName;
+                                    let nextInstitution = prev.institution;
+
+                                    if (prev.admissionCategory === 'Branch') {
+                                      nextInstitution = newBranch;
+                                      nextSchoolName = newBranch;
+                                    } else if (prev.admissionCategory === 'School') {
+                                      const match = newBranchSchools.find((s) => s.id === prev.schoolId);
+                                      if (match) {
+                                        nextSchoolId = match.id;
+                                        nextSchoolName = match.name;
+                                        nextInstitution = match.name;
+                                      } else if (newBranchSchools.length > 0) {
+                                        nextSchoolId = newBranchSchools[0].id;
+                                        nextSchoolName = newBranchSchools[0].name;
+                                        nextInstitution = newBranchSchools[0].name;
+                                      } else {
+                                        nextSchoolId = null;
+                                        nextSchoolName = '';
+                                        nextInstitution = '';
+                                      }
+                                    } else if (prev.admissionCategory === 'Franchise') {
+                                      const match = newBranchFranchises.find((f) => f.id === prev.franchiseId);
+                                      if (match) {
+                                        nextFranchiseId = match.id;
+                                        nextFranchiseName = match.name;
+                                        nextInstitution = match.name;
+                                        nextSchoolName = match.schoolName || match.name;
+                                      } else if (newBranchFranchises.length > 0) {
+                                        nextFranchiseId = newBranchFranchises[0].id;
+                                        nextFranchiseName = newBranchFranchises[0].name;
+                                        nextInstitution = newBranchFranchises[0].name;
+                                        nextSchoolName = newBranchFranchises[0].schoolName || newBranchFranchises[0].name;
+                                      } else {
+                                        nextFranchiseId = null;
+                                        nextFranchiseName = '';
+                                        nextInstitution = '';
+                                        nextSchoolName = '';
+                                      }
+                                    }
+
+                                    return {
+                                      ...prev,
+                                      branch: newBranch,
+                                      schoolId: nextSchoolId,
+                                      schoolName: nextSchoolName,
+                                      franchiseId: nextFranchiseId,
+                                      franchiseName: nextFranchiseName,
+                                      institution: nextInstitution,
+                                      district: (!prev.district || prev.district === prev.branch || prev.district === 'Tenkasi' || prev.district === 'Tirunelveli') ? newBranch : prev.district
+                                    };
+                                  });
                                   setBranchDropdownOpen(false);
                                   setBranchSearch('');
                                 }}
@@ -1664,22 +1823,26 @@ export default function AdmissionModal({
                             <GraduationCap className="w-3.5 h-3.5 text-sky-700" />
                             <span>Admission Through <span className="text-rose-600">*</span></span>
                           </span>
-                          <span className="text-[10px] font-semibold text-slate-400">
-                            Select category
-                          </span>
+                          {!lockAdmissionCategory && (
+                            <span className="text-[10px] font-semibold text-slate-400">
+                              Select category
+                            </span>
+                          )}
                         </label>
                         <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
                           {[
                             { id: 'Branch', label: 'Branch', icon: Building2 },
                             { id: 'School', label: 'School', icon: School },
-                            { id: 'Franchise', label: 'Franchise', icon: GraduationCap }
+                            { id: 'Franchise', label: 'Academy', icon: GraduationCap }
                           ].map(({ id, label, icon: Icon }) => {
                             const isSelected = formData.admissionCategory === id || (id === 'Franchise' && formData.admissionCategory === 'Academy');
                             return (
                               <button
                                 key={id}
                                 type="button"
+                                disabled={lockAdmissionCategory}
                                 onClick={() => {
+                                  if (lockAdmissionCategory) return;
                                   if (id === 'Branch') {
                                     setFormData(prev => ({
                                       ...prev,
@@ -1691,7 +1854,7 @@ export default function AdmissionModal({
                                       franchiseName: ''
                                     }));
                                   } else if (id === 'School') {
-                                    const defaultSch = schoolsList[0];
+                                    const defaultSch = filteredSchoolsByBranch[0];
                                     setFormData(prev => ({
                                       ...prev,
                                       admissionCategory: 'School',
@@ -1702,7 +1865,7 @@ export default function AdmissionModal({
                                       franchiseName: ''
                                     }));
                                   } else if (id === 'Franchise') {
-                                    const defaultFc = franchisesList[0];
+                                    const defaultFc = filteredFranchisesByBranch[0];
                                     setFormData(prev => ({
                                       ...prev,
                                       admissionCategory: 'Franchise',
@@ -1714,13 +1877,17 @@ export default function AdmissionModal({
                                     }));
                                   }
                                 }}
-                                className={`py-2 px-1.5 sm:px-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                                  isSelected
-                                    ? 'bg-sky-600 border-sky-600 text-white shadow-xs scale-[1.01]'
-                                    : 'bg-white border-slate-300 text-slate-700 hover:border-sky-300 hover:bg-sky-50/50'
+                                className={`py-2 px-1.5 sm:px-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+                                  lockAdmissionCategory
+                                    ? isSelected
+                                      ? 'bg-sky-600 border-sky-600 text-white shadow-xs cursor-not-allowed opacity-95 font-black'
+                                      : 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed opacity-50 pointer-events-none'
+                                    : isSelected
+                                      ? 'bg-sky-600 border-sky-600 text-white shadow-xs scale-[1.01] cursor-pointer'
+                                      : 'bg-white border-slate-300 text-slate-700 hover:border-sky-300 hover:bg-sky-50/50 cursor-pointer'
                                 }`}
                               >
-                                <Icon className={`w-3.5 h-3.5 ${isSelected ? 'text-white' : 'text-sky-600'}`} />
+                                <Icon className={`w-3.5 h-3.5 ${isSelected ? 'text-white' : (lockAdmissionCategory ? 'text-slate-400' : 'text-sky-600')}`} />
                                 <span>{label}</span>
                               </button>
                             );
@@ -1736,10 +1903,13 @@ export default function AdmissionModal({
                               <School className="w-3.5 h-3.5 text-sky-700" />
                               <span>Affiliated School <span className="text-rose-600">*</span></span>
                             </span>
-                            <span className="text-[10px] font-semibold text-slate-400">Select School</span>
+                            {!lockAdmissionCategory && (
+                              <span className="text-[10px] font-semibold text-slate-400">Select School</span>
+                            )}
                           </label>
                           <select
-                            value={formData.schoolId || (schoolsList.some(s => s.name === formData.institution) ? schoolsList.find(s => s.name === formData.institution)?.id : '__custom__')}
+                            disabled={lockAdmissionCategory && Boolean(initialInstitution)}
+                            value={formData.schoolId || (filteredSchoolsByBranch.some(s => s.name === formData.institution) ? filteredSchoolsByBranch.find(s => s.name === formData.institution)?.id : '__custom__')}
                             onChange={(e) => {
                               const val = e.target.value;
                               if (val === '__custom__') {
@@ -1750,7 +1920,7 @@ export default function AdmissionModal({
                                   institution: ''
                                 }));
                               } else {
-                                const sch = schoolsList.find(s => s.id === val);
+                                const sch = filteredSchoolsByBranch.find(s => s.id === val);
                                 if (sch) {
                                   setFormData(prev => ({
                                     ...prev,
@@ -1761,20 +1931,27 @@ export default function AdmissionModal({
                                 }
                               }
                             }}
-                            className="w-full px-2.5 sm:px-3 py-2 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none text-base sm:text-sm shadow-2xs"
+                            className={`w-full px-2.5 sm:px-3 py-2 border rounded-lg sm:rounded-xl font-semibold text-base sm:text-sm shadow-2xs ${
+                              lockAdmissionCategory && Boolean(initialInstitution)
+                                ? 'bg-slate-100 text-slate-700 cursor-not-allowed border-slate-300 font-bold'
+                                : 'bg-white text-slate-950 border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-sky-500'
+                            }`}
                           >
-                            {schoolsList.map(s => (
+                            {filteredSchoolsByBranch.map(s => (
                               <option key={s.id} value={s.id}>
                                 {s.name} ({s.city || s.branch || 'Tamil Nadu'})
                               </option>
                             ))}
-                            <option value="__custom__">Other School (Type custom name)...</option>
+                            {!(lockAdmissionCategory && initialInstitution) && (
+                              <option value="__custom__">Other School (Type custom name)...</option>
+                            )}
                           </select>
 
-                          {(!formData.schoolId || !schoolsList.some(s => s.id === formData.schoolId)) && (
+                          {(!formData.schoolId || !filteredSchoolsByBranch.some(s => s.id === formData.schoolId)) && !(lockAdmissionCategory && initialInstitution) && (
                             <input
                               type="text"
                               required
+                              disabled={lockAdmissionCategory && Boolean(initialInstitution)}
                               placeholder="Type affiliated School Name..."
                               value={formData.institution || ''}
                               onChange={(e) => {
@@ -1799,12 +1976,15 @@ export default function AdmissionModal({
                           <label className="block text-[11px] sm:text-xs font-black text-slate-800 flex items-center justify-between">
                             <span className="flex items-center gap-1.5">
                               <GraduationCap className="w-3.5 h-3.5 text-sky-700" />
-                              <span>Authorized Franchise <span className="text-rose-600">*</span></span>
+                              <span>Authorized Academy <span className="text-rose-600">*</span></span>
                             </span>
-                            <span className="text-[10px] font-semibold text-slate-400">Select Franchise</span>
+                            {!lockAdmissionCategory && (
+                              <span className="text-[10px] font-semibold text-slate-400">Select Academy</span>
+                            )}
                           </label>
                           <select
-                            value={formData.franchiseId || (franchisesList.some(f => f.name === formData.institution) ? franchisesList.find(f => f.name === formData.institution)?.id : '__custom__')}
+                            disabled={lockAdmissionCategory && Boolean(initialInstitution)}
+                            value={formData.franchiseId || (filteredFranchisesByBranch.some(f => f.name === formData.institution) ? filteredFranchisesByBranch.find(f => f.name === formData.institution)?.id : '__custom__')}
                             onChange={(e) => {
                               const val = e.target.value;
                               if (val === '__custom__') {
@@ -1816,7 +1996,7 @@ export default function AdmissionModal({
                                   schoolName: ''
                                 }));
                               } else {
-                                const fc = franchisesList.find(f => f.id === val);
+                                const fc = filteredFranchisesByBranch.find(f => f.id === val);
                                 if (fc) {
                                   setFormData(prev => ({
                                     ...prev,
@@ -1828,20 +2008,27 @@ export default function AdmissionModal({
                                 }
                               }
                             }}
-                            className="w-full px-2.5 sm:px-3 py-2 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none text-base sm:text-sm shadow-2xs"
+                            className={`w-full px-2.5 sm:px-3 py-2 border rounded-lg sm:rounded-xl font-semibold text-base sm:text-sm shadow-2xs ${
+                              lockAdmissionCategory && Boolean(initialInstitution)
+                                ? 'bg-slate-100 text-slate-700 cursor-not-allowed border-slate-300 font-bold'
+                                : 'bg-white text-slate-950 border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-sky-500'
+                            }`}
                           >
-                            {franchisesList.map(f => (
+                            {filteredFranchisesByBranch.map(f => (
                               <option key={f.id} value={f.id}>
                                 {f.name} ({f.city || f.branch || 'Tamil Nadu'})
                               </option>
                             ))}
-                            <option value="__custom__">Other Franchise Academy (Type custom name)...</option>
+                            {!(lockAdmissionCategory && initialInstitution) && (
+                              <option value="__custom__">Other Academy (Type custom name)...</option>
+                            )}
                           </select>
 
-                          {(!formData.franchiseId || !franchisesList.some(f => f.id === formData.franchiseId)) && (
+                          {(!formData.franchiseId || !filteredFranchisesByBranch.some(f => f.id === formData.franchiseId)) && !(lockAdmissionCategory && initialInstitution) && (
                             <input
                               type="text"
                               required
+                              disabled={lockAdmissionCategory && Boolean(initialInstitution)}
                               placeholder="Type Franchise / Academy Name..."
                               value={formData.institution || ''}
                               onChange={(e) => {

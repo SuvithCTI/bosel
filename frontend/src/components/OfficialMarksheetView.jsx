@@ -184,7 +184,85 @@ const ABACUS_SUBJECTS = [
   'Speed Arithmetic Accuracy & Viva',
 ];
 
-// Each subject: Max 100 = Assessment 40 (average of 4 revision tests) + Exam 60 (final exam converted)
+// ============================================================
+// ASSESSMENT & MARKSHEET METRICS / EXPORTS
+// ============================================================
+
+export const SUBJECT_COUNT = 5;
+export const SUBJECT_MAX = 100;
+export const REVISION_COUNT = 4;
+export const REVISION_MAX = 40;
+export const ASSESSMENT_MAX = 40;
+export const EXAM_MAX = 100;
+export const EXAM_CONVERTED_MAX = 60;
+export const TOTAL_MAX = SUBJECT_COUNT * SUBJECT_MAX; // 500
+
+export const rowPercent = (sub) => {
+  if (!sub || sub.marks === null || sub.marks === undefined || sub.marks === '') return '-';
+  const m = Number(sub.marks);
+  const max = Number(sub.max) || SUBJECT_MAX;
+  if (!Number.isFinite(m) || max <= 0) return '-';
+  return `${((m / max) * 100).toFixed(2)}%`;
+};
+
+export const computeResult = (subjectsInput = [], revisionsInput = []) => {
+  const parseVal = (v) => {
+    if (v === '' || v === null || v === undefined) return null;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  };
+
+  const parsedSubjects = Array.from({ length: SUBJECT_COUNT }, (_, i) => parseVal(subjectsInput[i]));
+  const parsedRevisions = Array.from({ length: REVISION_COUNT }, (_, i) => parseVal(revisionsInput[i]));
+
+  const validSubjects = parsedSubjects.filter((v) => v !== null);
+  const validRevisions = parsedRevisions.filter((v) => v !== null);
+
+  const filled = validSubjects.length + validRevisions.length;
+  const total = SUBJECT_COUNT + REVISION_COUNT;
+  const complete = validSubjects.length === SUBJECT_COUNT && validRevisions.length === REVISION_COUNT;
+
+  // Assessment = average of 4 revision tests (out of ASSESSMENT_MAX = 40)
+  const assessment = validRevisions.length > 0
+    ? Math.round((validRevisions.reduce((a, b) => a + b, 0) / validRevisions.length) * 100) / 100
+    : null;
+
+  // Exam average (out of 100)
+  const examAverage = validSubjects.length > 0
+    ? Math.round((validSubjects.reduce((a, b) => a + b, 0) / validSubjects.length) * 100) / 100
+    : null;
+
+  // Exam converted to 60
+  const examConverted = examAverage !== null
+    ? Math.round(((examAverage * EXAM_CONVERTED_MAX) / EXAM_MAX) * 100) / 100
+    : null;
+
+  // Total marks: sum of all subjects
+  const totalMarks = validSubjects.length > 0
+    ? validSubjects.reduce((a, b) => a + b, 0)
+    : null;
+
+  const percentage = totalMarks !== null && complete
+    ? (totalMarks / TOTAL_MAX) * 100
+    : validSubjects.length > 0
+      ? (totalMarks / (validSubjects.length * SUBJECT_MAX)) * 100
+      : null;
+
+  return {
+    subjects: parsedSubjects,
+    revisions: parsedRevisions,
+    filled,
+    total,
+    complete,
+    assessment,
+    examAverage,
+    examConverted,
+    totalMarks,
+    totalMaximum: TOTAL_MAX,
+    percentage,
+  };
+};
+
 export const getCourseSubjectModules = (courseName = '') => {
   const c = String(courseName).toLowerCase();
   const rule = COURSE_RULES.find(([keys]) => keys.some((k) => c.includes(k)));
@@ -207,6 +285,13 @@ export const getCourseSubjectModules = (courseName = '') => {
 // Returns the first value that is a non-empty string
 const firstText = (...values) =>
   values.find((v) => typeof v === 'string' && v.trim()) || '';
+
+// Formats any number to exactly 2 decimals; returns '-' for empty values
+const fmt2 = (v) => {
+  if (v === null || v === undefined || v === '') return '-';
+  const n = Number(v);
+  return Number.isFinite(n) ? n.toFixed(2) : String(v);
+};
 
 // ============================================================
 // WATERMARK LAYER
@@ -482,10 +567,7 @@ export default function OfficialMarksheetView({
   const showMarks = !hideMarks && (showMarksFlag || Boolean(savedSheet?.complete));
 
   const subjects = savedSheet?.subjects?.length
-    ? savedSheet.subjects.map((s) => ({
-        ...s,
-        pct: s.marks === null || s.marks === undefined ? '-' : `${s.marks}%`,
-      }))
+    ? savedSheet.subjects
     : getCourseSubjectModules(courseName);
 
   const totalMax = subjects.reduce(
@@ -499,8 +581,8 @@ export default function OfficialMarksheetView({
   );
 
   const percentage = totalMax
-    ? ((totalMarks / totalMax) * 100).toFixed(1)
-    : '0.0';
+    ? ((totalMarks / totalMax) * 100).toFixed(2)
+    : '0.00';
 
   const overallGrade = getGrade(Number(percentage));
 
@@ -547,7 +629,7 @@ export default function OfficialMarksheetView({
     student.school ||
     student.centreName ||
     student.institution ||
-    'Test Branch';
+    'Tenkasi Branch';
 
   const address =
     student.address ||
@@ -968,7 +1050,7 @@ export default function OfficialMarksheetView({
                   zIndex: 1,
                 }}
               >
-                {sub.max}
+                {fmt2(sub.max)}
               </div>
 
               <div
@@ -981,7 +1063,7 @@ export default function OfficialMarksheetView({
                   zIndex: 1,
                 }}
               >
-                {sub.assessment ?? '-'}
+                {fmt2(sub.assessment)}
               </div>
 
               <div
@@ -994,7 +1076,7 @@ export default function OfficialMarksheetView({
                   zIndex: 1,
                 }}
               >
-                {sub.exam ?? '-'}
+                {fmt2(sub.exam)}
               </div>
 
               <div
@@ -1007,7 +1089,7 @@ export default function OfficialMarksheetView({
                   zIndex: 1,
                 }}
               >
-                {sub.pct ?? '-'}
+                {sub.marks !== null && sub.marks !== undefined ? `${fmt2(sub.marks)}%` : '-'}
               </div>
             </React.Fragment>
           );
@@ -1026,7 +1108,7 @@ export default function OfficialMarksheetView({
               zIndex: 1,
             }}
           >
-            {totalMax}
+            {fmt2(totalMax)}
           </div>
 
           <div
@@ -1039,7 +1121,7 @@ export default function OfficialMarksheetView({
               zIndex: 1,
             }}
           >
-            {totalMarks}
+            {fmt2(totalMarks)}
           </div>
 
           <div

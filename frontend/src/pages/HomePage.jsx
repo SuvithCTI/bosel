@@ -1,15 +1,22 @@
 import { getProgramPartnerLogo } from '../data/partnerLogos';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   ArrowRight, 
   Calendar, 
   School,
-  Ticket
+  Ticket,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { PROGRAMS_DATA, DIGITAL_PROGRAMS_DATA } from '../data/programsData';
 import { getStoredEvents } from '../data/eventsData';
 import { getStoredCourses } from '../data/coursesData';
 import heroIllustration from '../assets/hero-cropped.png';
+import heroSlide1 from '../assets/hero-slides/hero-slide-1.jpg';
+import heroSlide2 from '../assets/hero-slides/hero-slide-2.jpg';
+import heroSlide3 from '../assets/hero-slides/hero-slide-3.jpg';
+import heroSlide4 from '../assets/hero-slides/hero-slide-4.jpg';
+import heroSlide5 from '../assets/hero-slides/hero-slide-5.jpg';
 import { 
   IsoShieldIcon, 
   CertificateMedalIcon, 
@@ -17,9 +24,63 @@ import {
   BrainGrowthIcon 
 } from '../components/FeatureIcons';
 
+const HERO_SLIDES = [
+  {
+    image: heroSlide1,
+    title: 'Foundational Skills & Whole-Brain Growth',
+    subtitle: 'Abacus, Drawing, Handwriting, Color Management & Language Arts',
+    tag: 'Whole-Brain Growth'
+  },
+  {
+    image: heroSlide2,
+    title: 'Future Skills & Interactive Learning',
+    subtitle: 'Coding, Robotics, AI & Creative Arts for young minds',
+    tag: 'Future-Ready Skills'
+  },
+  {
+    image: heroSlide3,
+    title: 'Holistic Academy & STEM Exploration',
+    subtitle: 'From mental math & athletics to performing arts & digital mastery',
+    tag: 'Holistic Excellence'
+  },
+  {
+    image: heroSlide4,
+    title: 'Excellence & Certified Competitions',
+    subtitle: 'State, National & Global championship platforms for children',
+    tag: 'Verified Excellence'
+  },
+  {
+    image: heroSlide5,
+    title: 'Empowering Young Achievers',
+    subtitle: 'Nurturing talent across academics, arts, tech & life skills',
+    tag: 'Student Achievers'
+  }
+];
+
 export default function HomePage({ setActivePage, onSelectProgram }) {
   const [eventsList, setEventsList] = useState(() => getStoredEvents());
   const [coursesList, setCoursesList] = useState(() => getStoredCourses());
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [isCarouselPaused, setIsCarouselPaused] = useState(false);
+  const touchStartXRef = useRef(null);
+
+  // Auto-scroll carousel every 3.5 seconds
+  useEffect(() => {
+    if (isCarouselPaused) return;
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % HERO_SLIDES.length);
+    }, 3500);
+
+    return () => clearInterval(interval);
+  }, [isCarouselPaused]);
+
+  const handlePrevSlide = () => {
+    setCurrentSlide((prev) => (prev === 0 ? HERO_SLIDES.length - 1 : prev - 1));
+  };
+
+  const handleNextSlide = () => {
+    setCurrentSlide((prev) => (prev + 1) % HERO_SLIDES.length);
+  };
 
   useEffect(() => {
     const handleEventsUpdate = () => setEventsList(getStoredEvents());
@@ -101,14 +162,89 @@ export default function HomePage({ setActivePage, onSelectProgram }) {
               </div>
             </div>
 
-            {/* Hero Illustration (Top on Mobile, Right Column on Desktop) */}
-            <div className="order-1 lg:order-2 lg:col-span-6 xl:col-span-7 flex items-center justify-center lg:justify-end">
-              <img 
-                src={heroIllustration} 
-                alt="Learn. Create. Excel. - B★SEL Skill Development" 
-                className="w-full max-w-[340px] sm:max-w-[480px] md:max-w-[620px] lg:max-w-[850px] xl:max-w-[950px] h-auto object-contain select-none drop-shadow-sm"
-                loading="eager"
-              />
+            {/* Hero Auto-Scrolling Illustration Carousel (5 Images) */}
+            <div 
+              className="order-1 lg:order-2 lg:col-span-6 xl:col-span-7 flex flex-col items-center justify-center lg:items-end w-full"
+              onMouseEnter={() => setIsCarouselPaused(true)}
+              onMouseLeave={() => setIsCarouselPaused(false)}
+              onTouchStart={(e) => {
+                touchStartXRef.current = e.touches[0].clientX;
+                setIsCarouselPaused(true);
+              }}
+              onTouchEnd={(e) => {
+                if (touchStartXRef.current !== null) {
+                  const touchEndX = e.changedTouches[0].clientX;
+                  const diff = touchStartXRef.current - touchEndX;
+                  if (diff > 50) {
+                    handleNextSlide();
+                  } else if (diff < -50) {
+                    handlePrevSlide();
+                  }
+                  touchStartXRef.current = null;
+                }
+                setIsCarouselPaused(false);
+              }}
+            >
+              <div className="relative w-full max-w-[340px] sm:max-w-[480px] md:max-w-[620px] lg:max-w-[750px] xl:max-w-[850px] aspect-[4/3] overflow-hidden bg-transparent group select-none">
+                
+                {/* 5 Stacked Slide Images with Smooth Crossfade Transition */}
+                {HERO_SLIDES.map((slide, idx) => {
+                  const isActive = idx === currentSlide;
+                  return (
+                    <div
+                      key={idx}
+                      className={`absolute inset-0 transition-all duration-700 ease-in-out flex items-center justify-center ${
+                        isActive 
+                          ? 'opacity-100 scale-100 z-10' 
+                          : 'opacity-0 scale-95 pointer-events-none z-0'
+                      }`}
+                    >
+                      <img
+                        src={slide.image}
+                        alt="B★SEL Skill Development"
+                        className="w-full h-full object-contain select-none drop-shadow-sm"
+                        loading={idx === 0 ? 'eager' : 'lazy'}
+                      />
+                    </div>
+                  );
+                })}
+
+                {/* Left & Right Subtle Arrow Controls */}
+                <button
+                  type="button"
+                  onClick={handlePrevSlide}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/90 hover:bg-white text-slate-800 hover:text-[#0F2B5C] shadow-md flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 cursor-pointer active:scale-95"
+                  title="Previous image"
+                >
+                  <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleNextSlide}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/90 hover:bg-white text-slate-800 hover:text-[#0F2B5C] shadow-md flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 cursor-pointer active:scale-95"
+                  title="Next image"
+                >
+                  <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
+                </button>
+              </div>
+
+              {/* 5 Dots Indicator */}
+              <div className="mt-3 flex items-center justify-center gap-1.5 w-full">
+                {HERO_SLIDES.map((_, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setCurrentSlide(idx)}
+                    className={`h-2 transition-all duration-300 rounded-full cursor-pointer ${
+                      idx === currentSlide
+                        ? 'w-6 bg-amber-400'
+                        : 'w-2 bg-slate-200 hover:bg-slate-300'
+                    }`}
+                    title={`Go to slide ${idx + 1}`}
+                  />
+                ))}
+              </div>
+
             </div>
 
           </div>
@@ -393,7 +529,10 @@ export default function HomePage({ setActivePage, onSelectProgram }) {
 
         {/* 2. DESKTOP / TABLET TABLE VIEW (>= 640px) */}
         <div className="hidden sm:block bg-white rounded-2xl shadow-md border border-slate-200 overflow-hidden">
-          <div className="overflow-x-auto">
+          <div 
+            className="overflow-x-auto no-scrollbar admin-table-container"
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          >
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-[#0F2B5C] text-white text-xs md:text-sm font-bold uppercase tracking-wider">

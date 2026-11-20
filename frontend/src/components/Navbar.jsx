@@ -96,8 +96,19 @@ export default function Navbar({ activePage, setActivePage, sessionUser }) {
               {sessionUser ? (
                 <button
                   type="button"
-                  onClick={() => handleNavClick((sessionUser.role === 'Super Admin' || sessionUser.role === 'Branch Head') ? 'admin' : 'login')}
-                  title={`Return to ${sessionUser.role === 'Super Admin' || sessionUser.role === 'Branch Head' ? 'Admin' : 'Student'} Dashboard`}
+                  onClick={() => handleNavClick(
+                    (sessionUser.role === 'Super Admin' || sessionUser.role === 'Branch Head') ? 'admin' :
+                    (sessionUser.role === 'Staff') ? 'staff' :
+                    (sessionUser.role === 'Franchise' || sessionUser.role === 'School') ? 'franchise_portal' :
+                    'login'
+                  )}
+                  title={`Return to ${
+                    (sessionUser.role === 'Super Admin' || sessionUser.role === 'Branch Head') ? 'Admin' :
+                    (sessionUser.role === 'Staff') ? 'Staff' :
+                    (sessionUser.role === 'School') ? 'School' :
+                    (sessionUser.role === 'Franchise') ? 'Franchise' :
+                    'Student'
+                  } Dashboard`}
                   aria-label="Dashboard"
                   className="ml-2 inline-flex items-center gap-2 rounded-full bg-amber-400 hover:bg-amber-300 text-slate-950 px-3 py-1.5 font-black text-xs shadow-md transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer select-none"
                 >
@@ -105,7 +116,11 @@ export default function Navbar({ activePage, setActivePage, sessionUser }) {
                     {(sessionUser.name || sessionUser.studentName || 'U').trim().charAt(0).toUpperCase()}
                   </span>
                   <span className="hidden lg:inline whitespace-nowrap">
-                    {sessionUser.role === 'Super Admin' || sessionUser.role === 'Branch Head' ? 'Admin Desk' : 'Student Dashboard'}
+                    {sessionUser.role === 'Super Admin' || sessionUser.role === 'Branch Head' ? 'Admin Desk' :
+                     sessionUser.role === 'Staff' ? 'Staff Desk' :
+                     sessionUser.role === 'School' ? 'School Portal' :
+                     sessionUser.role === 'Franchise' ? 'Franchise Portal' :
+                     'Student Dashboard'}
                   </span>
                 </button>
               ) : (
@@ -223,9 +238,14 @@ export default function Navbar({ activePage, setActivePage, sessionUser }) {
             <div className="pt-2 space-y-2.5 border-t border-white/15">
               <button
                 type="button"
-                onClick={() => handleNavClick((sessionUser?.role === 'Super Admin' || sessionUser?.role === 'Branch Head') ? 'admin' : 'login')}
+                onClick={() => handleNavClick(
+                  (sessionUser?.role === 'Super Admin' || sessionUser?.role === 'Branch Head') ? 'admin' :
+                  (sessionUser?.role === 'Staff') ? 'staff' :
+                  (sessionUser?.role === 'Franchise' || sessionUser?.role === 'School') ? 'franchise_portal' :
+                  'login'
+                )}
                 className={`w-full py-3 px-4 rounded-xl text-sm font-black flex items-center justify-center gap-2 transition cursor-pointer shadow-md active:scale-[0.99] ${
-                  activePage === 'login' || activePage === 'admin'
+                  activePage === 'login' || activePage === 'admin' || activePage === 'franchise_portal' || activePage === 'staff'
                     ? 'bg-amber-400 text-slate-950 font-black'
                     : 'bg-sky-600 hover:bg-sky-500 text-white'
                 }`}
@@ -233,7 +253,11 @@ export default function Navbar({ activePage, setActivePage, sessionUser }) {
                 <User className="w-4 h-4" />
                 <span>
                   {sessionUser
-                    ? (sessionUser.role === 'Super Admin' || sessionUser.role === 'Branch Head' ? 'Return to Admin Desk' : 'Return to Student Dashboard')
+                    ? (sessionUser.role === 'Super Admin' || sessionUser.role === 'Branch Head' ? 'Return to Admin Desk' :
+                       sessionUser.role === 'Staff' ? 'Return to Staff Desk' :
+                       sessionUser.role === 'School' ? 'Return to School Portal' :
+                       sessionUser.role === 'Franchise' ? 'Return to Franchise Portal' :
+                       'Return to Student Dashboard')
                     : 'Student & Coordinator Login'}
                 </span>
               </button>
