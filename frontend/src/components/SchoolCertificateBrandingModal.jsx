@@ -229,18 +229,18 @@ export default function SchoolCertificateBrandingModal({
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="text-[11px] font-bold text-slate-700">
-                  Line 1: School / Branch Name <span className="text-amber-700 font-bold">(Max 16)</span>
+                  Line 1: School / Branch Name <span className="text-amber-700 font-bold">(Max 12)</span>
                 </label>
                 <span className="text-[10px] text-slate-500 font-mono">
-                  {headerName.length}/16
+                  {headerName.length}/12
                 </span>
               </div>
               <input
                 type="text"
-                maxLength={16}
+                maxLength={12}
                 value={headerName}
                 onChange={(e) => {
-                  setHeaderName(e.target.value.slice(0, 16).toUpperCase());
+                  setHeaderName(e.target.value.slice(0, 12).toUpperCase());
                   setIsSaved(false);
                 }}
                 placeholder="e.g. ST. JOSEPH'S"

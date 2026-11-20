@@ -12,6 +12,7 @@ import {
   saveStudentCustomHeader,
   readStudentCustomSignature,
   saveStudentCustomSignature,
+  SAMPLE_STUDENT_PHOTOS,
 } from '../utils/studentDataHelpers';
 
 import shieldLogo from '../assets/bsel-shield-logo.png';
@@ -46,7 +47,35 @@ export const formatSimpleGrade = (val) => {
   return cleaned || 'A';
 };
 
-export const getStudentVerificationMeta = (studentName = '', registrationNo = '', certificateNo = '', student = null, rawGrade = 'A') => {
+export const derivePhotoKey = (photoInput, studentName = '', regNo = '') => {
+  const pStr = String(photoInput || '');
+  if (pStr.includes('student1')) return 'student1';
+  if (pStr.includes('student2')) return 'student2';
+  if (pStr.includes('student3')) return 'student3';
+  if (pStr.includes('student4')) return 'student4';
+  if (pStr.includes('student5')) return 'student5';
+  if (pStr.includes('student6')) return 'student6';
+
+  if (pStr.startsWith('http://') || pStr.startsWith('https://') || pStr.startsWith('/uploads/')) {
+    return pStr;
+  }
+
+  const sLow = String(studentName || '').toLowerCase();
+  if (sLow.includes('alwin')) return 'student1';
+  if (sLow.includes('priya')) return 'student2';
+  if (sLow.includes('hema')) return 'student4';
+  if (sLow.includes('bob')) return 'student6';
+
+  const digits = String(regNo || '').replace(/\D/g, '');
+  if (digits) {
+    const idx = parseInt(digits, 10) % 6;
+    return `student${idx + 1}`;
+  }
+
+  return 'student1';
+};
+
+export const getStudentVerificationMeta = (studentName = '', registrationNo = '', certificateNo = '', student = null, rawGrade = 'A', photoInput = null) => {
   // Verification ID
   let digits = '';
   if (registrationNo) digits = String(registrationNo).replace(/\D/g, '');
@@ -110,12 +139,9 @@ export const getStudentVerificationMeta = (studentName = '', registrationNo = ''
     gradeText = 'ADMITTED';
   }
 
-  // Photo Key
-  let photoKey = '';
-  if (sLow.includes('alwin')) photoKey = 'alwin';
-  else if (sLow.includes('priya')) photoKey = 'priya';
-  else if (sLow.includes('hema')) photoKey = 'hema';
-  else if (sLow.includes('bob')) photoKey = 'bob';
+  // Photo Key (Strict 1-to-1 matching with certificate display)
+  const resolvedPhoto = photoInput || student?.studentPhoto || student?.photo || student?.photo_url || null;
+  const photoKey = derivePhotoKey(resolvedPhoto, studentName, registrationNo);
 
   return { vid, sec, parent, score, gradeText, photoKey };
 };
@@ -532,13 +558,32 @@ export default function Certificate({
 
   const displayGrade = formatSimpleGrade(grade || student?.grade || 'A');
 
+  // Resolve consistent student photo
+  const displayPhoto = React.useMemo(() => {
+    if (studentPhoto) return studentPhoto;
+    if (student?.photo_url || student?.photoUrl || student?.studentPhoto || student?.photo) {
+      return student.photo_url || student.photoUrl || student.studentPhoto || student.photo;
+    }
+    const sLow = String(studentName || '').toLowerCase();
+    if (sLow.includes('alwin')) return SAMPLE_STUDENT_PHOTOS[0];
+    if (sLow.includes('priya')) return SAMPLE_STUDENT_PHOTOS[1];
+    if (sLow.includes('hema')) return SAMPLE_STUDENT_PHOTOS[3];
+    if (sLow.includes('bob')) return SAMPLE_STUDENT_PHOTOS[5];
+    const digits = String(registrationNo || '').replace(/\D/g, '');
+    if (digits) {
+      const idx = parseInt(digits, 10) % SAMPLE_STUDENT_PHOTOS.length;
+      return SAMPLE_STUDENT_PHOTOS[idx];
+    }
+    return SAMPLE_STUDENT_PHOTOS[0];
+  }, [studentPhoto, student, studentName, registrationNo]);
+
   const addrLines = buildStudentAddressLines(student, centreAddress, registrationNo, studentName, studentId);
 
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState('');
 
   useEffect(() => {
     let isMounted = true;
-    const meta = getStudentVerificationMeta(studentName, registrationNo, displayCertNo, student, displayGrade);
+    const meta = getStudentVerificationMeta(studentName, registrationNo, displayCertNo, student, displayGrade, displayPhoto);
 
     const url = buildVerificationUrl({
       certificateNo: displayCertNo,
@@ -846,13 +891,17 @@ export default function Certificate({
 
               <label className="flex flex-col gap-1">
 
-                <span className="text-[11px] font-semibold text-slate-300">Line 1: School / Branch Name <span className="text-amber-400 font-bold">(Max 15)</span></span>
+                <span className="text-[11px] font-semibold text-slate-300">Line 1: School / Branch Name <span className="text-amber-400 font-bold">(Max 12)</span></span>
                 <input
                   type="text"
                   value={headerName}
-                  maxLength={15}
+                  maxLength={12}
 
-                  onChange={(e) => { setHeaderName(e.target.value); saveHeader({ name: e.target.value }); }}
+                  onChange={(e) => {
+                    const val = e.target.value.slice(0, 12);
+                    setHeaderName(val);
+                    saveHeader({ name: val });
+                  }}
 
                   className="px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white uppercase font-bold focus:outline-none focus:border-amber-400"
 
@@ -1140,7 +1189,7 @@ export default function Certificate({
             style={{ cursor: isEditable ? 'pointer' : 'default' }}
             title={isEditable ? "Click to customize School Details & Logo" : undefined}
           >
-            {/* School / Branch Name (Line 1: reduced to 28px for comfortable proportion) */}
+            {/* School / Branch Name (Line 1: fontSize 31) */}
             {headerName && (
               <text
                 x={headerLogo ? "722" : "740"}
@@ -1148,11 +1197,11 @@ export default function Certificate({
                 textAnchor="middle"
                 fontFamily="'Cinzel', 'Outfit', 'Plus Jakarta Sans', Georgia, 'Times New Roman', serif"
                 fontWeight="900"
-                fontSize="28"
+                fontSize="31"
                 fill={NAVY}
                 letterSpacing="2"
               >
-                {(headerName || '').slice(0, 15).toUpperCase()}
+                {(headerName || '').slice(0, 12).toUpperCase()}
               </text>
             )}
 
@@ -1327,10 +1376,10 @@ export default function Certificate({
 
             <rect x="46" y="246" width="102" height="116" fill="#fbf9f2" stroke={NAVY} strokeWidth="2.5" />
 
-            {studentPhoto && (
+            {displayPhoto && (
               <image
-                href={studentPhoto}
-                xlinkHref={studentPhoto}
+                href={displayPhoto}
+                xlinkHref={displayPhoto}
                 x="46"
                 y="246"
                 width="102"
@@ -1376,7 +1425,7 @@ export default function Certificate({
             onClick={(e) => {
               e.stopPropagation();
               if (typeof window !== 'undefined') {
-                const meta = getStudentVerificationMeta(studentName, registrationNo, displayCertNo, student, displayGrade);
+                const meta = getStudentVerificationMeta(studentName, registrationNo, displayCertNo, student, displayGrade, displayPhoto);
                 const targetUrl = buildVerificationUrl({
                   certificateNo: displayCertNo,
                   studentName,

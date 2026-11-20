@@ -29,29 +29,78 @@ const SAMPLE_PHOTOS = [
   student6Img,
 ];
 
+const PHOTO_MAP = {
+  student1: student1Img,
+  student2: student2Img,
+  student3: student3Img,
+  student4: student4Img,
+  student5: student5Img,
+  student6: student6Img,
+  alwin: student1Img,
+  priya: student2Img,
+  hema: student4Img,
+  bob: student6Img,
+};
+
 // Helper to determine the photo for a student
 const resolveStudentPhoto = (name = '', reg = '', photoParam = null, photoKey = '') => {
-  if (photoParam && typeof photoParam === 'string' && photoParam.length > 5) {
-    if (photoParam.startsWith('http') || photoParam.startsWith('data:') || photoParam.startsWith('/')) {
-      return photoParam;
-    }
+  const pKey = String(photoKey || photoParam || '').trim();
+
+  // If local storage reference
+  if (pKey.startsWith('local:') && typeof window !== 'undefined') {
+    const cleanReg = pKey.replace('local:', '');
+    try {
+      const saved = localStorage.getItem(`bsel_photo_${cleanReg}`);
+      if (saved) return saved;
+    } catch {}
   }
 
+  // If direct URL or data URL
+  if (pKey.startsWith('http') || pKey.startsWith('data:') || pKey.startsWith('/uploads')) {
+    return pKey;
+  }
+
+  const kLow = pKey.toLowerCase();
+  if (PHOTO_MAP[kLow]) {
+    return PHOTO_MAP[kLow];
+  }
+
+  // Search by student name
   const sLow = String(name || '').toLowerCase();
-  const kLow = String(photoKey || '').toLowerCase();
+  if (sLow.includes('alwin')) return student1Img;
+  if (sLow.includes('priya')) return student2Img;
+  if (sLow.includes('hema')) return student4Img;
+  if (sLow.includes('bob')) return student6Img;
 
-  if (kLow === 'alwin' || sLow.includes('alwin')) return adminImg;
-  if (kLow === 'priya' || sLow.includes('priya')) return student2Img;
-  if (kLow === 'hema' || sLow.includes('hema')) return student4Img;
-  if (kLow === 'bob' || sLow.includes('bob')) return student6Img;
+  // Search in localStorage registered users
+  if (typeof window !== 'undefined') {
+    try {
+      const rawUsers = localStorage.getItem('bsel_registered_users');
+      if (rawUsers) {
+        const users = JSON.parse(rawUsers);
+        const match = users.find(
+          (u) =>
+            (reg && (u.registerNumber === reg || u.admissionNo === reg || u.userId === reg)) ||
+            (name && (u.studentName?.toLowerCase() === sLow || u.name?.toLowerCase() === sLow))
+        );
+        if (match) {
+          const uPhoto = match.photo_url || match.photoUrl || match.studentPhoto || match.photo;
+          if (uPhoto && (uPhoto.startsWith('http') || uPhoto.startsWith('data:') || uPhoto.startsWith('/'))) {
+            return uPhoto;
+          }
+        }
+      }
+    } catch {}
+  }
 
+  // Consistent index by registration number
   const digits = String(reg || '').replace(/\D/g, '');
   if (digits) {
     const idx = parseInt(digits, 10) % SAMPLE_PHOTOS.length;
     return SAMPLE_PHOTOS[idx];
   }
 
-  return adminImg;
+  return student1Img;
 };
 
 // Helper for Parent/Guardian

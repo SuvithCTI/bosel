@@ -235,7 +235,7 @@ export default function CertificateModal({
               type="button"
               onClick={() => {
                 if (typeof window !== 'undefined') {
-                  const meta = getStudentVerificationMeta(studentName, registrationNo, certificateNo, data?.student || data, grade);
+                  const meta = getStudentVerificationMeta(studentName, registrationNo, certificateNo, data?.student || data, grade, studentPhoto);
                   const targetUrl = buildVerificationUrl({
                     certificateNo,
                     studentName,
