@@ -17,19 +17,32 @@ import {
   ChevronDown,
   Layers,
   Pencil,
-  UserPlus
+  UserPlus,
+  Ticket,
+  FileSpreadsheet,
+  Edit3,
+  School,
+  Paperclip
 } from 'lucide-react';
 
 import { exportPdfFromElement } from '../../utils/pdfExport';
 import { getStoredCourses } from '../../data/coursesData';
 import MergedStudentPdfModal from '../../components/MergedStudentPdfModal';
 import AdmissionModal from '../../components/AdmissionModal';
+import StudentAvatar from '../../components/StudentAvatar';
+import EventRegisterModal from '../../components/EventRegisterModal';
+import StudentQuestionPaperView from '../../components/StudentQuestionPaperView';
 import { getCoursePrefix, getRegisteredUsers, getActiveSession } from '../../utils/authStorage';
 import { isStudentUser } from '../../utils/studentValidator';
 import { getCourseSubjectModules } from '../../components/OfficialMarksheetView';
-import { getStudentPhotoUrl, getStudentRegisterNumber } from '../../utils/studentDataHelpers';
+import {
+  getStudentPhotoUrl,
+  getStudentRegisterNumber,
+  getStudentScopeKey,
+  readStudentUploadedQuestions
+} from '../../utils/studentDataHelpers';
 import CompactSelect from '../../components/CompactSelect';
-import { ACADEMIC_STAGES } from '../../utils/academicStages';
+import { ACADEMIC_STAGES, getAcademicStageFromAge } from '../../utils/academicStages';
 
 // Initial default enquiries matching the official portal screenshot
 export const DEFAULT_STUDENT_ENQUIRIES = [
@@ -326,6 +339,8 @@ export default function StaffStudentDetailsPage({
   setViewingAdmissionStudent,
   handleOpenMarksheet,
   handleOpenCertForStudent,
+  handleOpenEventRegForStudent,
+  handleOpenQuestionPaperForStudent,
   setViewingMergedPdfStudent,
   showToast = () => {},
   schoolsList = []
@@ -338,6 +353,143 @@ export default function StaffStudentDetailsPage({
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [localMergedPdfData, setLocalMergedPdfData] = useState(null);
   const [showAdmissionModal, setShowAdmissionModal] = useState(false);
+  const [internalEventRegStudent, setInternalEventRegStudent] = useState(null);
+  const [internalQuestionPaperStudent, setInternalQuestionPaperStudent] = useState(null);
+
+  const handleOpenEvent = (student) => {
+    if (handleOpenEventRegForStudent) {
+      handleOpenEventRegForStudent(student);
+    } else {
+      setInternalEventRegStudent(student);
+    }
+  };
+
+  const handleOpenQuestionPaper = (student) => {
+    if (handleOpenQuestionPaperForStudent) {
+      handleOpenQuestionPaperForStudent(student);
+    } else {
+      setInternalQuestionPaperStudent(student);
+    }
+  };
+
+  // Category determination
+  const getStudentCategory = (student) => {
+    const cat = (student.admissionCategory || student.category || student.channel || '').toLowerCase();
+    const inst = (student.institution || student.schoolName || student.franchiseName || '').toLowerCase();
+
+    if (cat.includes('school') || inst.includes('school') || inst.includes('matric') || inst.includes('vidyalaya') || inst.includes('cbse')) {
+      return 'School';
+    }
+    if (cat.includes('academy') || cat.includes('franchise') || inst.includes('academy') || inst.includes('studio') || inst.includes('tuition') || inst.includes('institute')) {
+      return 'Academy';
+    }
+    return 'Branch';
+  };
+
+  const getCategoryBadge = (student) => {
+    const category = getStudentCategory(student);
+    if (category === 'School') {
+      return { label: 'School', bg: 'bg-emerald-50 text-emerald-700 border-emerald-200' };
+    }
+    if (category === 'Academy') {
+      return { label: 'Academy', bg: 'bg-amber-50 text-amber-700 border-amber-200' };
+    }
+    return { label: 'Branch', bg: 'bg-sky-50 text-sky-700 border-sky-200' };
+  };
+
+  // Determine Class and Level Academic Category for any student
+  const getStudentAcademicCategory = (student) => {
+    if (!student) {
+      return {
+        className: 'Class 1',
+        stage: 'SUB-JUNIOR (Class 1)',
+        level: 'Level 1',
+        levelNum: 1,
+        classBadgeClass: 'bg-amber-50 text-amber-900 border-amber-300'
+      };
+    }
+
+    const gradeStr = String(student.grade || student.level || '').trim();
+
+    // 1. Detect Level from grade, level, or selectedCourses
+    let level = '';
+    let levelNum = null;
+    const levelMatch = gradeStr.match(/Level\s*(\d+)/i) || String(student.level || '').match(/Level\s*(\d+)/i);
+    if (levelMatch) {
+      levelNum = parseInt(levelMatch[1], 10);
+      level = `Level ${levelNum}`;
+    } else {
+      level = 'Level 1';
+      levelNum = 1;
+    }
+
+    // 2. Match exact Academic Stage from ACADEMIC_STAGES
+    let matchedStage = null;
+
+    if (student.studentStage) {
+      matchedStage = ACADEMIC_STAGES.find(s => s.stage === student.studentStage || s.label?.toLowerCase() === student.studentStage?.toLowerCase());
+    }
+
+    if (!matchedStage && (student.studentClass || student.standard || student.className)) {
+      const cls = (student.studentClass || student.standard || student.className).toLowerCase();
+      matchedStage = ACADEMIC_STAGES.find(s => s.className?.toLowerCase() === cls || s.stage?.toLowerCase().includes(cls));
+    }
+
+    if (!matchedStage && gradeStr) {
+      const gLower = gradeStr.toLowerCase();
+      if (gLower.includes('11') || gLower.includes('12')) {
+        matchedStage = ACADEMIC_STAGES.find(s => s.stage.includes('Class 11 & 12'));
+      } else if (gLower.includes('8') || gLower.includes('9') || gLower.includes('10')) {
+        matchedStage = ACADEMIC_STAGES.find(s => s.stage.includes('Class 8 to 10'));
+      } else if (gLower.includes('6') || gLower.includes('7')) {
+        matchedStage = ACADEMIC_STAGES.find(s => s.stage.includes('Class 6 & 7'));
+      } else if (gLower.includes('4') || gLower.includes('5')) {
+        matchedStage = ACADEMIC_STAGES.find(s => s.stage.includes('Class 4 & 5'));
+      } else if (gLower.includes('class 3') || gLower.includes('3rd')) {
+        matchedStage = ACADEMIC_STAGES.find(s => s.stage.includes('Class 3'));
+      } else if (gLower.includes('class 2') || gLower.includes('2nd')) {
+        matchedStage = ACADEMIC_STAGES.find(s => s.stage.includes('Class 2'));
+      } else if (gLower.includes('class 1') || gLower.includes('1st')) {
+        matchedStage = ACADEMIC_STAGES.find(s => s.stage.includes('Class 1'));
+      }
+    }
+
+    if (!matchedStage && student.age) {
+      const ageStage = getAcademicStageFromAge(student.age);
+      if (ageStage?.stage) {
+        matchedStage = ACADEMIC_STAGES.find(s => s.stage === ageStage.stage);
+      }
+    }
+
+    if (!matchedStage) {
+      matchedStage = ACADEMIC_STAGES[0];
+    }
+
+    const className = matchedStage?.className || 'Class 1';
+    const stage = matchedStage?.stage || '';
+
+    // 3. Class Badge Color Style
+    let classBadgeClass = 'bg-blue-50 text-blue-900 border-blue-200';
+    if (stage.includes('MASTER')) {
+      classBadgeClass = 'bg-purple-100 text-purple-900 border-purple-300';
+    } else if (stage.includes('SUPER SENIOR')) {
+      classBadgeClass = 'bg-rose-50 text-rose-800 border-rose-300';
+    } else if (stage.includes('SENIOR')) {
+      classBadgeClass = 'bg-teal-50 text-teal-800 border-teal-300';
+    } else if (stage.includes('JUNIOR') && !stage.includes('SUB')) {
+      classBadgeClass = 'bg-blue-50 text-blue-800 border-blue-300';
+    } else {
+      classBadgeClass = 'bg-amber-50 text-amber-900 border-amber-300';
+    }
+
+    return {
+      className,
+      stage,
+      level,
+      levelNum,
+      classBadgeClass
+    };
+  };
 
   // Live synchronization with Master Courses Repository
   useEffect(() => {
@@ -1149,10 +1301,10 @@ export default function StaffStudentDetailsPage({
           {/* Mobile Horizontal Scroll Cue */}
           <div className="lg:hidden flex items-center justify-between px-3.5 py-2 bg-gradient-to-r from-sky-50 to-indigo-50/50 border-b border-sky-100 text-[11px] text-sky-900 font-medium">
             <span className="flex items-center gap-1.5">
-              <span className="text-sky-600 font-bold">⇄</span> Swipe to view Branch, Course & Level Documents
+              <span className="text-sky-600 font-bold">⇄</span> Swipe to view Event Registration & Question Paper
             </span>
             <span className="text-[10px] font-bold bg-white text-sky-700 px-2 py-0.5 rounded-full border border-sky-200 shrink-0">
-              {filteredRecords.length} Records
+              {filteredRecords.length} Students
             </span>
           </div>
 
@@ -1162,30 +1314,31 @@ export default function StaffStudentDetailsPage({
           >
             <table className="w-full text-left border-collapse text-xs min-w-[720px]">
 
-              {/* Header */}
-              <thead className="bg-[#f8fafc] text-slate-500 border-b border-slate-200 text-[10px] font-black uppercase tracking-wider select-none">
+              {/* Header: Exact 7 columns matching Portal Standard */}
+              <thead className="bg-[#081d3d] text-white border-b border-slate-200 text-[10px] font-black uppercase tracking-wider select-none">
                 <tr>
                   {isSelectionMode && (
                     <th className="py-3 px-3.5 w-10 text-center">
                       <button
                         type="button"
                         onClick={handleToggleSelectAll}
-                        className="cursor-pointer text-slate-400 hover:text-slate-700"
+                        className="cursor-pointer text-slate-300 hover:text-white"
                       >
                         {isAllSelected ? (
-                          <CheckSquare className="w-4 h-4 text-[#0c234b]" />
+                          <CheckSquare className="w-4 h-4 text-amber-400" />
                         ) : (
                           <Square className="w-4 h-4" />
                         )}
                       </button>
                     </th>
                   )}
-                  <th className="py-3 px-3">STUDENT DETAILS</th>
-                  <th className="py-3 px-3">
-                    {effectivePortalType === 'school' ? 'SCHOOL NAME' : effectivePortalType === 'franchise' ? 'FRANCHISE NAME' : 'BRANCH NAME'}
-                  </th>
-                  <th className="py-3 px-3">COURSE NAME</th>
-                  <th className="py-3 px-3 text-center">LEVEL DOCUMENTS</th>
+                  <th className="py-3 px-4">STUDENT DETAILS</th>
+                  <th className="py-3 px-3">PARENT & CONTACT</th>
+                  <th className="py-3 px-3">CATEGORY</th>
+                  <th className="py-3 px-3">CLASS</th>
+                  <th className="py-3 px-3">COURSE & LEVEL</th>
+                  <th className="py-3 px-3 text-center">EVENT REGISTRATION</th>
+                  <th className="py-3 px-3 text-center">QUESTION PAPER</th>
                 </tr>
               </thead>
 
@@ -1193,27 +1346,35 @@ export default function StaffStudentDetailsPage({
               <tbody className="divide-y divide-slate-100 font-medium">
                 {paginatedRecords.length === 0 ? (
                   <tr>
-                    <td colSpan={isSelectionMode ? 5 : 4} className="py-12 text-center text-slate-400">
+                    <td colSpan={isSelectionMode ? 8 : 7} className="py-12 text-center text-slate-400">
                       <div className="flex flex-col items-center justify-center gap-2">
                         <Users className="w-8 h-8 text-slate-300" />
                         <p className="text-sm font-bold text-slate-600">No student enquiries found</p>
-                        <p className="text-xs text-slate-400">Try adjusting your branch or date filters</p>
+                        <p className="text-xs text-slate-400">Try adjusting your filters</p>
                       </div>
                     </td>
                   </tr>
                 ) : (
-                  paginatedRecords.map((item) => {
-                    const rowId = item.id || item.admissionNo;
+                  paginatedRecords.map((item, idx) => {
+                    const rowId = item.id || item.admissionNo || item.userId;
                     const isSelected = selectedIds.includes(rowId);
-                    const photoSrc = getStudentPhotoSrc(item);
                     const displayName = item.studentName || item.name || 'Student';
                     const phoneNo = item.mobile || item.phone || '';
+                    const parentName = item.parentName || item.fatherName || 'Guardian';
+                    const categoryBadge = getCategoryBadge(item);
+                    const academicCat = getStudentAcademicCategory(item);
+                    const institutionName = (item.schoolName || item.franchiseName || item.institution || '').trim();
+                    const hasInstitutionName = institutionName &&
+                      !institutionName.toLowerCase().includes('regional branch') &&
+                      !institutionName.toLowerCase().endsWith(' branch') &&
+                      institutionName.toLowerCase() !== (item.branch || '').toLowerCase();
+                    const hasUploadedQ = Boolean(readStudentUploadedQuestions(getStudentScopeKey(item)));
 
                     return (
                       <tr
                         key={rowId}
                         className={`transition-colors hover:bg-slate-50/80 ${
-                          isSelected ? 'bg-sky-50/50' : 'bg-white'
+                          isSelected ? 'bg-amber-50/60 hover:bg-amber-50' : 'bg-white'
                         }`}
                       >
                         {/* 1. Checkbox (Only shown when selection mode is enabled) */}
@@ -1225,7 +1386,7 @@ export default function StaffStudentDetailsPage({
                               className="cursor-pointer text-slate-400 hover:text-slate-700"
                             >
                               {isSelected ? (
-                                <CheckSquare className="w-4 h-4 text-[#0c234b]" />
+                                <CheckSquare className="w-4 h-4 text-amber-500" />
                               ) : (
                                 <Square className="w-4 h-4" />
                               )}
@@ -1233,128 +1394,140 @@ export default function StaffStudentDetailsPage({
                           </td>
                         )}
 
-                        {/* 2. Student Details: photo, name, edit/delete, admission no, phone */}
-                        <td className="py-3 px-3 whitespace-nowrap">
+                        {/* 2. STUDENT DETAILS */}
+                        <td className="py-3 px-4 whitespace-nowrap">
                           <div className="flex items-center gap-3">
-
-                            <div className="relative w-10 h-10 rounded-lg overflow-hidden bg-slate-100 border border-slate-200 shrink-0 flex items-center justify-center">
-                              {/* Initials sit behind the photo, so they show if the photo is missing or fails */}
-                              <span className="text-[11px] font-black text-slate-500">
-                                {getInitials(displayName)}
-                              </span>
-                              {photoSrc && (
-                                <img
-                                  src={photoSrc}
-                                  alt={displayName}
-                                  className="absolute inset-0 w-full h-full object-cover object-top"
-                                  onError={(e) => {
-                                    e.currentTarget.style.display = 'none';
-                                  }}
-                                />
-                              )}
-                            </div>
-
-                            <div className="min-w-0">
+                            <StudentAvatar
+                              student={item}
+                              index={idx}
+                              className="w-9 h-9"
+                              onClick={() => {
+                                if (setViewingAdmissionStudent) {
+                                  setViewingAdmissionStudent(item);
+                                } else {
+                                  handleEditStudent(item);
+                                }
+                              }}
+                              title={`View Admission Form for ${displayName}`}
+                            />
+                            <div>
                               <div className="flex items-center gap-1.5">
-                                <span className="font-black text-slate-950 capitalize">
+                                <span className="font-bold text-slate-900 capitalize text-xs">
                                   {displayName}
                                 </span>
-                              </div>
-
-                              <span className="block text-[11px] font-bold text-sky-600 tracking-tight">
-                                {item.admissionNo || item.registerNumber}
-                              </span>
-
-                              {phoneNo && (
-                                <a
-                                  href={`tel:${phoneNo}`}
-                                  className="mt-0.5 text-[11px] text-[#e11d48] font-black hover:underline tracking-tight inline-flex items-center gap-1"
+                                <button
+                                  type="button"
+                                  onClick={() => handleEditStudent(item)}
+                                  className="text-slate-400 hover:text-sky-700 transition cursor-pointer"
+                                  title="Edit student"
                                 >
-                                  <Phone className="w-3 h-3 text-rose-400" />
-                                  <span>{phoneNo}</span>
-                                </a>
-                              )}
+                                  <Edit3 className="w-3 h-3" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteSingle(item)}
+                                  className="text-slate-400 hover:text-rose-600 transition cursor-pointer"
+                                  title="Delete record"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </button>
+                              </div>
+                              <div className="text-[11px] text-slate-500 flex items-center gap-1.5 mt-0.5">
+                                <span className="font-bold text-sky-700">
+                                  {item.admissionNo || item.registerNumber || item.userId}
+                                </span>
+                              </div>
                             </div>
-
                           </div>
                         </td>
 
-                        {/* 3. Branch / School / Franchise Name */}
-                        <td className="py-3 px-3 text-slate-700 font-semibold whitespace-nowrap">
-                          {effectivePortalType === 'franchise'
-                            ? (item.franchiseName || item.institution || entityName || 'Tenkasi City Franchise')
-                            : effectivePortalType === 'school'
-                            ? (item.schoolName || item.institution || entityName || "St. Joseph's Matric Higher Secondary School")
-                            : (item.branchName || item.branch || item.institution || activeBranch || 'Tenkasi Branch')}
+                        {/* 3. PARENT & CONTACT */}
+                        <td className="py-3 px-3 whitespace-nowrap">
+                          <div className="text-slate-800 font-semibold">{parentName}</div>
+                          <div className="text-[11px] text-slate-500 mt-0.5 flex items-center gap-1">
+                            <Phone className="w-3 h-3 text-emerald-600" />
+                            <span>{phoneNo || '98400 00000'}</span>
+                          </div>
                         </td>
 
-                        {/* 4. Course Name */}
-                        <td className="py-3 px-3 text-slate-800 font-bold whitespace-nowrap">
-                          {item.courseName || item.program}
+                        {/* 4. CATEGORY */}
+                        <td className="py-3 px-3 whitespace-nowrap">
+                          <div className="flex flex-col gap-1 items-start">
+                            <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase border shadow-2xs ${categoryBadge.bg}`}>
+                              {categoryBadge.label}
+                            </span>
+                            {hasInstitutionName && (
+                              <div className="text-[10px] font-bold text-slate-600 truncate max-w-[150px] flex items-center gap-1 mt-0.5" title={institutionName}>
+                                <School className="w-3 h-3 text-sky-600 shrink-0" />
+                                <span className="truncate">{institutionName}</span>
+                              </div>
+                            )}
+                          </div>
                         </td>
 
-                        {/* 5. Level Documents (Level Selector + Marksheet + Certificate) */}
-                        <td className="py-3 px-3 text-center whitespace-nowrap">
-                          <div className="inline-flex items-center gap-1.5">
+                        {/* 5. CLASS */}
+                        <td className="py-3 px-3 whitespace-nowrap">
+                          <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase border shadow-2xs ${academicCat.classBadgeClass}`}>
+                            {academicCat.className}
+                          </span>
+                        </td>
 
-                            {/* Dynamic program-specific level selector */}
-                            {(() => {
-                              const progName = item.courseName || item.program || '';
-                              const availableLevels = getLevelsForProgram(progName);
-                              const activeLvl = getStudentCurrentLevel(item);
-                              return (
-                                <select
-                                  value={activeLvl}
-                                  onChange={(e) => handleLevelChange(rowId, e.target.value)}
-                                  className="px-2 py-1 text-xs font-bold text-slate-800 bg-white border border-slate-300 rounded-lg outline-none cursor-pointer hover:border-slate-400 transition"
-                                  title={`${progName} (${availableLevels.length} total levels)`}
+                        {/* 6. COURSE & LEVEL */}
+                        <td className="py-3 px-3 whitespace-nowrap">
+                          <div>
+                            <div className="font-bold text-slate-900">{item.courseName || item.program || 'Course'}</div>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <span className="text-[10px] font-black text-amber-700 uppercase tracking-wide">
+                                {academicCat.level}
+                              </span>
+                              {handleOpenMarksheet && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenMarksheet(item)}
+                                  className="text-[10px] font-bold text-sky-700 hover:underline cursor-pointer"
+                                  title="View Marksheet"
                                 >
-                                  {availableLevels.map((lvl) => (
-                                    <option key={lvl.value} value={lvl.value} title={lvl.label}>
-                                      {lvl.shortLabel || lvl.value}
-                                    </option>
-                                  ))}
-                                </select>
-                              );
-                            })()}
+                                  Marksheet
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </td>
 
-                            {/* Marksheet button */}
+                        {/* 7. EVENT REGISTRATION */}
+                        <td className="py-3 px-3 text-center whitespace-nowrap">
+                          <button
+                            type="button"
+                            onClick={() => handleOpenEvent(item)}
+                            className="px-3 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-800 border border-purple-200 hover:border-purple-300 font-bold rounded-lg text-xs transition cursor-pointer inline-flex items-center justify-center gap-1.5 shadow-xs whitespace-nowrap active:scale-95"
+                            title="View Event Registration"
+                          >
+                            <Ticket className="w-3.5 h-3.5 text-purple-600 shrink-0" />
+                            <span>Event</span>
+                          </button>
+                        </td>
+
+                        {/* 8. QUESTION PAPER */}
+                        <td className="py-3 px-3 text-center whitespace-nowrap">
+                          <div className="flex flex-col items-center gap-1">
                             <button
                               type="button"
-                              onClick={() => {
-                                const activeLvl = getStudentCurrentLevel(item);
-                                const enriched = { ...item, grade: activeLvl, level: activeLvl };
-                                if (handleOpenMarksheet) {
-                                  handleOpenMarksheet(enriched);
-                                } else {
-                                  showToast(`Opening marksheet for ${item.studentName} (${activeLvl})`);
-                                }
-                              }}
-                              className="px-2.5 py-1 bg-[#0c234b] hover:bg-[#081d3d] active:scale-95 text-white text-[11px] font-black rounded-lg transition shadow-2xs inline-flex items-center gap-1 cursor-pointer"
-                              title="View official marksheet"
+                              onClick={() => handleOpenQuestionPaper(item)}
+                              className={`px-3 py-1.5 font-bold rounded-lg text-xs transition cursor-pointer inline-flex items-center justify-center gap-1.5 shadow-xs whitespace-nowrap active:scale-95 ${
+                                hasUploadedQ
+                                  ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-950 border border-emerald-300'
+                                  : 'bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 hover:border-amber-300'
+                              }`}
+                              title="View Question Paper (Page 1) and Uploaded Questions"
                             >
-                              <FileText className="w-3 h-3 text-amber-300" />
-                              <span>Marksheet</span>
+                              <FileSpreadsheet className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                              <span>Qn Paper</span>
                             </button>
-
-                            {/* Certificate button */}
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const activeLvl = getStudentCurrentLevel(item);
-                                const enriched = { ...item, grade: activeLvl, level: activeLvl };
-                                if (handleOpenCertForStudent) {
-                                  handleOpenCertForStudent(enriched);
-                                } else {
-                                  showToast(`Opening certificate for ${item.studentName} (${activeLvl})`);
-                                }
-                              }}
-                              className="px-2.5 py-1 bg-[#0c234b] hover:bg-[#081d3d] active:scale-95 text-white text-[11px] font-black rounded-lg transition shadow-2xs inline-flex items-center gap-1 cursor-pointer"
-                              title="View official certificate"
-                            >
-                              <Award className="w-3 h-3 text-sky-400" />
-                              <span>Certificate</span>
-                            </button>
+                            {hasUploadedQ && (
+                              <span className="inline-flex items-center gap-0.5 text-[9.5px] font-black text-emerald-700 bg-emerald-100/80 px-1.5 py-0.5 rounded-full">
+                                <Paperclip className="w-2.5 h-2.5" /> Questions File
+                              </span>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -1452,6 +1625,22 @@ export default function StaffStudentDetailsPage({
             setEnquiries(getStoredStudentEnquiries());
             showToast('Student registered successfully!');
           }}
+        />
+      )}
+
+      {/* Modal: Official Event Registration Slip */}
+      {internalEventRegStudent && (
+        <EventRegisterModal
+          student={internalEventRegStudent}
+          onClose={() => setInternalEventRegStudent(null)}
+        />
+      )}
+
+      {/* Modal: Official Examination Question Paper */}
+      {internalQuestionPaperStudent && (
+        <StudentQuestionPaperView
+          student={internalQuestionPaperStudent}
+          onClose={() => setInternalQuestionPaperStudent(null)}
         />
       )}
 

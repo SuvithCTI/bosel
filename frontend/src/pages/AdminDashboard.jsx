@@ -1984,6 +1984,8 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
               setViewingAdmissionStudent={setViewingAdmissionStudent}
               handleOpenMarksheet={handleOpenMarksheet}
               handleOpenCertForStudent={handleOpenCertForStudent}
+              handleOpenEventRegForStudent={handleOpenEventRegForStudent}
+              handleOpenQuestionPaperForStudent={handleOpenQuestionPaperForStudent}
               setViewingMergedPdfStudent={setViewingMergedPdfStudent}
               showToast={showToast}
               schoolsList={schoolsList}
