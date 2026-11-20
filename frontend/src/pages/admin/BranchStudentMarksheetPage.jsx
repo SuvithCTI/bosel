@@ -22,15 +22,6 @@ import {
 
 import OfficialMarksheetView, {
   getCourseSubjectModules,
-  computeResult,
-  rowPercent,
-  SUBJECT_COUNT,
-  SUBJECT_MAX,
-  REVISION_COUNT,
-  REVISION_MAX,
-  ASSESSMENT_MAX,
-  EXAM_CONVERTED_MAX,
-  TOTAL_MAX,
 } from '../../components/OfficialMarksheetView';
 import {
   normalize,
@@ -44,23 +35,46 @@ import {
 import { exportPdfFromElement } from '../../utils/pdfExport';
 
 const PLACEHOLDER_ROWS = 3;
+const MIN_SUBJECT_COLS = 5;
 const NAVY = '#0b2a55';
-const GOLD = '#b8892f';
 const PRINT_ROOT_ID = 'bsel-print-root';
-const SESSION_PREFIX = 'bsel_marks_session_v3';
 
-// Entry rows: Sub1..Sub5 then Rev1..Rev4
-const ENTRY_ROW_COUNT = SUBJECT_COUNT + REVISION_COUNT;
+// ------------------------------------------------
+// ASSESSMENT RULES
+// Each subject: 4 weekly revision tests (avg = Assessment, out of 40)
+// + final exam out of 100, converted to 60.
+// Subject total = Assessment + converted exam = out of 100.
+// ------------------------------------------------
 
-// Entered Students table: S.No, Name, Sub1..Sub5, Rev1..Rev4, Total, Actions
-const SUB_INDEXES = Array.from({ length: SUBJECT_COUNT }, (_, i) => i);
-const REV_INDEXES = Array.from({ length: REVISION_COUNT }, (_, i) => i);
+const REVISION_COUNT = 4;
+const REVISION_MAX = 40;        // each weekly revision test is out of 40
+const ASSESSMENT_MAX = 40;      // average of the 4 revisions
+const EXAM_MAX = 100;           // final exam is marked out of 100
+const EXAM_CONVERTED_MAX = 60;  // final exam is converted to 60
+const SUBJECT_MAX = ASSESSMENT_MAX + EXAM_CONVERTED_MAX; // 100
+
+const STAGES = [
+  { key: 'rev1', type: 'revision', index: 0, tab: 'Rev 1', short: 'Rev 1', label: 'Week 1 - Revision 1' },
+  { key: 'rev2', type: 'revision', index: 1, tab: 'Rev 2', short: 'Rev 2', label: 'Week 2 - Revision 2' },
+  { key: 'rev3', type: 'revision', index: 2, tab: 'Rev 3', short: 'Rev 3', label: 'Week 3 - Revision 3' },
+  { key: 'rev4', type: 'revision', index: 3, tab: 'Rev 4', short: 'Rev 4', label: 'Week 4 - Revision 4' },
+  { key: 'exam', type: 'exam', index: null, tab: 'Exam', short: 'Exam', label: 'Week 5 - Final Exam' },
+];
+
+const REV_STAGES = STAGES.filter((s) => s.type === 'revision');
+const EXAM_STAGE = STAGES.find((s) => s.type === 'exam');
+const DEFAULT_STAGE = 'rev1';
+
+// Columns shown for each subject in the Entered Students table
+const SUB_SUB_HEADS = ['R1', 'R2', 'R3', 'R4', 'Avg /40', 'Total /100'];
+const SUB_COLS = SUB_SUB_HEADS.length;
 
 // ------------------------------------------------
 // SESSION LIST STORAGE (survives page switches, cleared by Reset)
 // ------------------------------------------------
 
-const sessionKeyFor = (branch) => `${SESSION_PREFIX}_${branch || 'default'}`;
+const sessionKeyFor = (branch) => `bsel_marks_session_${branch || 'default'}`;
+const stageKeyFor = (branch) => `bsel_marks_stage_${branch || 'default'}`;
 
 const readSession = (branch) => {
   try {
@@ -77,6 +91,23 @@ const writeSession = (branch, records) => {
     sessionStorage.setItem(sessionKeyFor(branch), JSON.stringify(records));
   } catch (err) {
     console.error('Unable to store session list:', err);
+  }
+};
+
+const readStage = (branch) => {
+  try {
+    const value = sessionStorage.getItem(stageKeyFor(branch));
+    return STAGES.some((s) => s.key === value) ? value : DEFAULT_STAGE;
+  } catch {
+    return DEFAULT_STAGE;
+  }
+};
+
+const writeStage = (branch, key) => {
+  try {
+    sessionStorage.setItem(stageKeyFor(branch), key);
+  } catch {
+    // ignore storage errors
   }
 };
 
@@ -122,6 +153,14 @@ const todayStamp = () => new Date().toISOString().slice(0, 10);
 const safeBranchName = (branch) =>
   String(branch || 'Branch').replace(/[^a-zA-Z0-9]/g, '_');
 
+const round2 = (n) => Math.round(n * 100) / 100;
+
+const toNumberOrNull = (v) => {
+  if (v === '' || v === null || v === undefined) return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+};
+
 // Input text for an entry field ('' when empty)
 const toInput = (v) => (v === null || v === undefined ? '' : String(v));
 
@@ -129,49 +168,92 @@ const toInput = (v) => (v === null || v === undefined ? '' : String(v));
 const dv = (v, suffix = '') =>
   v === null || v === undefined || v === '' ? '-' : `${v}${suffix}`;
 
-const pctText = (value) =>
-  value === null || value === undefined ? '-' : `${Number(value).toFixed(2)}%`;
-
-// Total as shown in the table: the saved total, or '-' until the result is complete
-const totalValue = (saved) => (saved?.complete ? saved.totalMarks : null);
-
-const pctCell = (saved) => (saved?.complete ? `${saved.percentage}%` : '-');
-
 const totalCell = (saved) =>
   saved?.complete ? `${saved.totalMarks}/${saved.totalMaximum}` : '-';
 
-// The 9 mark values for one saved record: Sub1..Sub5, then Rev1..Rev4
-const scoreCells = (saved) => [
-  ...SUB_INDEXES.map((i) => saved?.subjects?.[i]?.marks ?? null),
-  ...REV_INDEXES.map((i) => saved?.revisions?.[i] ?? null),
-];
+const pctCell = (saved) => (saved?.complete ? `${saved.percentage}%` : '-');
 
-const courseOf = (rec) => getStudentCourse(rec.student) || rec.saved?.course || '-';
-
-// Subject name for column i, taken from the first saved record that has it
-const subjectNameAt = (records, i) =>
-  records.find((r) => r.saved?.subjects?.[i]?.name)?.saved.subjects[i].name || '';
-
-// Entry fields: 5 subject strings and 4 revision strings
-const emptyEntries = () => ({
-  subjects: Array(SUBJECT_COUNT).fill(''),
-  revisions: Array(REVISION_COUNT).fill(''),
-});
-
-const entriesFromSaved = (saved) => ({
-  subjects: Array.from({ length: SUBJECT_COUNT }, (_, i) =>
-    toInput(saved?.subjects?.[i]?.marks)
-  ),
-  revisions: Array.from({ length: REVISION_COUNT }, (_, i) =>
-    toInput(saved?.revisions?.[i])
-  ),
-});
-
-const describeProgress = (result) => {
-  if (result.complete) return 'Complete';
-  const missing = result.total - result.filled;
-  return `Pending: ${missing} mark${missing === 1 ? '' : 's'} missing`;
+// The 6 values shown for one subject in the Entered Students table:
+// R1, R2, R3, R4, Avg (out of 40), Total (out of 100)
+const subjectCells = (saved, i) => {
+  const s = saved?.subjects?.[i];
+  return [
+    ...Array.from({ length: REVISION_COUNT }, (_, k) => s?.revisions?.[k] ?? null),
+    s?.assessment ?? null,
+    s?.marks ?? null,
+  ];
 };
+
+const getStage = (key) => STAGES.find((s) => s.key === key) || STAGES[0];
+const stageMax = (stage) => (stage.type === 'exam' ? EXAM_MAX : REVISION_MAX);
+const stageValue = (entry, stage) =>
+  stage.type === 'exam' ? entry?.exam : entry?.revisions?.[stage.index];
+
+const emptyEntry = () => ({
+  revisions: Array(REVISION_COUNT).fill(''),
+  exam: '',
+});
+
+// Builds one subject's result from its revision and exam entries
+const computeSubjectResult = (meta, entry) => {
+  const revisions = (entry?.revisions || []).map(toNumberOrNull);
+  while (revisions.length < REVISION_COUNT) revisions.push(null);
+
+  const assessment = revisions.every((r) => r !== null)
+    ? round2(revisions.reduce((t, r) => t + r, 0) / REVISION_COUNT)
+    : null;
+
+  const exam = toNumberOrNull(entry?.exam);
+  const examConverted =
+    exam !== null ? round2((exam * EXAM_CONVERTED_MAX) / EXAM_MAX) : null;
+
+  const marks =
+    assessment !== null && examConverted !== null
+      ? round2(assessment + examConverted)
+      : null;
+
+  return {
+    id: meta.id,
+    name: meta.name,
+    max: SUBJECT_MAX,
+    assessment,
+    assessmentMax: ASSESSMENT_MAX,
+    revisions,
+    exam,
+    examMax: EXAM_MAX,
+    examConverted,
+    examConvertedMax: EXAM_CONVERTED_MAX,
+    marks,
+  };
+};
+
+// Plain-language progress for a list row
+const describeProgress = (results) => {
+  if (results.length && results.every((r) => r.marks !== null)) return 'Complete';
+  for (let i = 0; i < REVISION_COUNT; i++) {
+    if (!results.every((r) => r.revisions[i] !== null)) {
+      return `Pending: Week ${i + 1} revision`;
+    }
+  }
+  return 'Pending: Week 5 final exam';
+};
+
+// Entry fields rebuilt from a saved marksheet
+const entriesFromSaved = (saved, metas) =>
+  Object.fromEntries(
+    metas.map((meta) => {
+      const s = saved?.subjects?.find((x) => String(x.id) === String(meta.id));
+      return [
+        meta.id,
+        {
+          revisions: Array.from({ length: REVISION_COUNT }, (_, i) =>
+            toInput(s?.revisions?.[i])
+          ),
+          exam: toInput(s?.exam),
+        },
+      ];
+    })
+  );
 
 const getSubjectMetas = (student) =>
   getCourseSubjectModules(getStudentCourse(student) || '').map((subject, index) => ({
@@ -179,16 +261,8 @@ const getSubjectMetas = (student) =>
     name: subject.name || `Subject ${index + 1}`,
   }));
 
-// Placeholder metas for the empty table before a student is loaded
-const PLACEHOLDER_METAS = Array.from({ length: SUBJECT_COUNT }, (_, i) => ({
-  id: `ph${i}`,
-  name: `Subject ${i + 1}`,
-}));
-
 // ------------------------------------------------
 // WORD EXPORT (single marksheet)
-// Mirrors the printed sheet: 5 subject rows, with the
-// Assessment cell merged across all of them.
 // ------------------------------------------------
 
 const buildSheetBody = (student, sheet) => {
@@ -203,26 +277,19 @@ const buildSheetBody = (student, sheet) => {
   const address = student.address || student.centreAddress || student.district || '-';
   const issue = formatDate(student.enrolmentDate || student.issueDate || sheet.updatedAt);
 
-  const subs = sheet.subjects || [];
-  const subCount = Math.max(subs.length, 1);
-
-  const rowsHtml = subs
+  const subjectRows = (sheet.subjects || [])
     .map((s, i) => {
-      const max = Number(s.max) || SUBJECT_MAX;
-      const pct = rowPercent({ marks: s.marks, max });
-      // Assessment is one merged cell that spans all subject rows
-      const assessCell =
-        i === 0
-          ? `<td class="c" rowspan="${subCount}"><b>${escapeHtml(dv(sheet.assessment))}</b></td>`
-          : '';
+      const grade = s.marks === null || s.marks === undefined ? '-' : getGrade(s.marks);
       return `
         <tr>
           <td class="c">${i + 1}</td>
           <td>${escapeHtml(s.name)}</td>
-          <td class="c">${escapeHtml(dv(max))}</td>
-          ${assessCell}
+          <td class="c">${escapeHtml(dv(s.max))}</td>
+          <td class="c">${escapeHtml(dv(s.assessment))} / ${ASSESSMENT_MAX}</td>
+          <td class="c">${escapeHtml(dv(s.examConverted))} / ${EXAM_CONVERTED_MAX}</td>
           <td class="c">${escapeHtml(dv(s.marks))}</td>
-          <td class="c">${escapeHtml(pct === null ? '-' : pctText(pct))}</td>
+          <td class="c">${dv(s.marks, '%')}</td>
+          <td class="c">${escapeHtml(grade)}</td>
         </tr>`;
     })
     .join('');
@@ -254,16 +321,17 @@ const buildSheetBody = (student, sheet) => {
   <table>
     <tr>
       <th>S.No.</th><th>Subject / Module</th><th>Max Marks</th>
-      <th>Assessment (/${ASSESSMENT_MAX})</th>
-      <th>Marks Obtained</th><th>Percentage</th>
+      <th>Assessment (/40)</th><th>Exam (/60)</th>
+      <th>Marks Obtained</th><th>Percentage</th><th>Grade</th>
     </tr>
-    ${rowsHtml}
+    ${subjectRows}
     <tr class="total">
       <td colspan="2" class="c">TOTAL</td>
       <td class="c">${escapeHtml(dv(sheet.totalMaximum))}</td>
-      <td class="c">-</td>
+      <td class="c" colspan="2">-</td>
       <td class="c">${escapeHtml(dv(sheet.totalMarks))}</td>
       <td class="c">${escapeHtml(sheet.complete ? `${pctValue.toFixed(2)}%` : '-')}</td>
+      <td class="c">${escapeHtml(dv(sheet.overallGrade))}</td>
     </tr>
   </table>
 
@@ -271,7 +339,6 @@ const buildSheetBody = (student, sheet) => {
 
   <table>
     <tr>
-      <td class="label">Overall Grade</td><td>${escapeHtml(dv(sheet.overallGrade))}</td>
       <td class="label">Date of Issue</td><td>${escapeHtml(issue)}</td>
     </tr>
   </table>
@@ -298,7 +365,7 @@ const wordDocShell = (title, orientation, bodyHtml) => `<!DOCTYPE html>
     th { background: ${NAVY}; color: #ffffff; }
     tr.zebra td { background: #f4f8fc; }
     .c { text-align: center; }
-    .label { width: 22%; font-weight: bold; }
+    .label { width: 28%; font-weight: bold; }
     .total td { font-weight: bold; background: #d4eefa; }
     .remark { margin-top: 10px; font-style: italic; font-weight: bold; }
     .sign { margin-top: 40px; }
@@ -317,16 +384,23 @@ const buildWordHtml = (student, sheet) =>
   );
 
 // Table Word file (matches the Entered Students table)
-const buildTableWordHtml = (records, branch) => {
-  const subHeads = SUB_INDEXES.map(
-    (i) => `<th>Sub ${i + 1}<br/><span style="font-size:7pt;font-weight:normal">${escapeHtml(subjectNameAt(records, i))}</span></th>`
-  ).join('');
-  const revHeads = REV_INDEXES.map((i) => `<th>Rev ${i + 1}</th>`).join('');
+const buildTableWordHtml = (records, subjectColCount, branch) => {
+  const subHead1 = Array.from({ length: subjectColCount })
+    .map((_, i) => `<th colspan="${SUB_COLS}">Sub ${i + 1}</th>`)
+    .join('');
+
+  const subHead2 = Array.from({ length: subjectColCount })
+    .map(() => SUB_SUB_HEADS.map((h) => `<th>${escapeHtml(h)}</th>`).join(''))
+    .join('');
 
   const rows = records
     .map((rec, idx) => {
-      const scores = scoreCells(rec.saved)
-        .map((v) => `<td class="c">${escapeHtml(dv(v))}</td>`)
+      const subCells = Array.from({ length: subjectColCount })
+        .map((_, i) =>
+          subjectCells(rec.saved, i)
+            .map((v) => `<td class="c">${escapeHtml(dv(v))}</td>`)
+            .join('')
+        )
         .join('');
       const zebra = idx % 2 === 1 ? ' class="zebra"' : '';
       return `
@@ -334,10 +408,11 @@ const buildTableWordHtml = (records, branch) => {
           <td class="c">${idx + 1}</td>
           <td>${escapeHtml(rec.student.studentName || '-')}</td>
           <td class="c">${escapeHtml(rec.student.userId || '-')}</td>
-          ${scores}
-          <td class="c"><b>${escapeHtml(dv(totalValue(rec.saved)))}</b></td>
+          ${subCells}
+          <td class="c"><b>${escapeHtml(totalCell(rec.saved))}</b></td>
           <td class="c">${escapeHtml(pctCell(rec.saved))}</td>
           <td class="c">${escapeHtml(dv(rec.saved.overallGrade))}</td>
+          <td class="c">${escapeHtml(rec.saved.status || '-')}</td>
         </tr>`;
     })
     .join('');
@@ -351,11 +426,11 @@ const buildTableWordHtml = (records, branch) => {
     <div class="band">STUDENT MARKS &amp; REVISION TEST DASHBOARD</div>
     <table>
       <tr>
-        <th>S.No</th><th>Student Name</th><th>Student ID</th>
-        ${subHeads}
-        ${revHeads}
-        <th>Total /${TOTAL_MAX}</th><th>%</th><th>Grade</th>
+        <th rowspan="2">S.No</th><th rowspan="2">Student Name</th><th rowspan="2">Student ID</th>
+        ${subHead1}
+        <th rowspan="2">Total</th><th rowspan="2">%</th><th rowspan="2">Grade</th><th rowspan="2">Status</th>
       </tr>
+      <tr>${subHead2}</tr>
       ${rows}
     </table>
     <p style="margin-top:8px;font-size:9pt;">Generated on ${escapeHtml(formatDate(new Date().toISOString()))}</p>`;
@@ -371,19 +446,25 @@ const buildTableWordHtml = (records, branch) => {
 const EXPORT_WIDTH = 1060;
 const FRAME_BORDER = 3;
 const FRAME_PAD = 4;
+const GOLD = '#b8892f';
 const GOLD_BORDER = 1;
 const INNER_PAD = 16;
 
+// Usable width inside the frames and padding
 const TABLE_INNER_WIDTH =
   EXPORT_WIDTH - 2 * (FRAME_BORDER + FRAME_PAD + GOLD_BORDER + INNER_PAD);
 
+// Line weights: thin for cells, heavier for subject groups and the outer edge
 const CELL_LINE = `1px solid ${NAVY}`;
 const GROUP_LINE = `2px solid ${NAVY}`;
 const OUTER_LINE = `2.5px solid ${NAVY}`;
 
-// Fixed columns in px; the 9 mark columns share the remaining width
-const FIXED_COLS = { sno: 30, name: 130, id: 80, total: 70, pct: 50, grade: 44 };
-const MARK_COL_COUNT = SUBJECT_COUNT + REVISION_COUNT;
+// Column widths in px for the fixed columns
+const FIXED_COLS = { sno: 26, name: 118, id: 74, total: 58, pct: 46, grade: 40 };
+
+// Column widths in px for each subject: R1..R4, Avg, Tot
+const SUB_WIDTHS = [20, 20, 20, 20, 25, 25];
+const EXPORT_SUB_HEADS = ['R1', 'R2', 'R3', 'R4', 'Avg', 'Tot'];
 
 const cellStyle = (extra = {}) => ({
   border: CELL_LINE,
@@ -408,15 +489,20 @@ const headStyle = (extra = {}) => ({
   color: '#ffffff',
   verticalAlign: 'middle',
   overflow: 'hidden',
-  whiteSpace: 'normal',
-  wordBreak: 'break-word',
+  whiteSpace: 'nowrap',
   ...extra,
 });
 
-const TableExportView = ({ records, branch }) => {
+const TableExportView = ({ records, subjectColCount, branch }) => {
   const todayText = formatDate(new Date().toISOString());
+  const subs = Math.max(subjectColCount, 1);
+
+  // Shrink subject columns only if there are more subjects than fit
   const fixedSum = Object.values(FIXED_COLS).reduce((a, b) => a + b, 0);
-  const markW = Math.floor((TABLE_INNER_WIDTH - fixedSum) / MARK_COL_COUNT);
+  const subBase = SUB_WIDTHS.reduce((a, b) => a + b, 0);
+  const available = TABLE_INNER_WIDTH - fixedSum;
+  const scale = Math.min(1, available / (subs * subBase));
+  const subWidths = SUB_WIDTHS.map((w) => w * scale);
 
   return (
     <div
@@ -428,6 +514,7 @@ const TableExportView = ({ records, branch }) => {
         color: NAVY,
       }}
     >
+      {/* Outer navy frame */}
       <div
         style={{
           border: `${FRAME_BORDER}px solid ${NAVY}`,
@@ -435,6 +522,7 @@ const TableExportView = ({ records, branch }) => {
           boxSizing: 'border-box',
         }}
       >
+        {/* Inner gold frame */}
         <div
           style={{
             border: `${GOLD_BORDER}px solid ${GOLD}`,
@@ -483,9 +571,11 @@ const TableExportView = ({ records, branch }) => {
               <col style={{ width: `${FIXED_COLS.sno}px` }} />
               <col style={{ width: `${FIXED_COLS.name}px` }} />
               <col style={{ width: `${FIXED_COLS.id}px` }} />
-              {Array.from({ length: MARK_COL_COUNT }).map((_, i) => (
-                <col key={i} style={{ width: `${markW}px` }} />
-              ))}
+              {Array.from({ length: subs }).map((_, i) =>
+                subWidths.map((w, k) => (
+                  <col key={`${i}-${k}`} style={{ width: `${w}px` }} />
+                ))
+              )}
               <col style={{ width: `${FIXED_COLS.total}px` }} />
               <col style={{ width: `${FIXED_COLS.pct}px` }} />
               <col style={{ width: `${FIXED_COLS.grade}px` }} />
@@ -493,41 +583,46 @@ const TableExportView = ({ records, branch }) => {
 
             <thead>
               <tr>
-                <th style={headStyle()}>S.No</th>
-                <th style={headStyle({ textAlign: 'left', paddingLeft: '4px' })}>Student Name</th>
-                <th style={headStyle()}>Student ID</th>
-                {SUB_INDEXES.map((i) => (
+                <th rowSpan={2} style={headStyle()}>S.No</th>
+                <th rowSpan={2} style={headStyle({ textAlign: 'left', paddingLeft: '4px' })}>
+                  Student Name
+                </th>
+                <th rowSpan={2} style={headStyle()}>Student ID</th>
+                {Array.from({ length: subs }).map((_, i) => (
                   <th
-                    key={`s${i}`}
-                    style={headStyle({ borderLeft: i === 0 ? GROUP_LINE : CELL_LINE })}
+                    key={i}
+                    colSpan={EXPORT_SUB_HEADS.length}
+                    style={headStyle({ borderLeft: GROUP_LINE, borderRight: GROUP_LINE, fontSize: '9px' })}
                   >
-                    <div>Sub {i + 1}</div>
-                    <div style={{ fontSize: '6.5px', fontWeight: 400 }}>
-                      {subjectNameAt(records, i)}
-                    </div>
+                    Sub {i + 1}
                   </th>
                 ))}
-                {REV_INDEXES.map((i) => (
-                  <th
-                    key={`r${i}`}
-                    style={headStyle({
-                      background: '#163e7c',
-                      borderLeft: i === 0 ? GROUP_LINE : CELL_LINE,
-                    })}
-                  >
-                    Rev {i + 1}
-                  </th>
-                ))}
-                <th style={headStyle({ borderLeft: GROUP_LINE })}>Total /{TOTAL_MAX}</th>
-                <th style={headStyle()}>%</th>
-                <th style={headStyle()}>Grade</th>
+                <th rowSpan={2} style={headStyle({ borderLeft: GROUP_LINE })}>Total</th>
+                <th rowSpan={2} style={headStyle()}>%</th>
+                <th rowSpan={2} style={headStyle()}>Grade</th>
+              </tr>
+              <tr>
+                {Array.from({ length: subs }).map((_, i) =>
+                  EXPORT_SUB_HEADS.map((h, k) => (
+                    <th
+                      key={`${i}-${k}`}
+                      style={headStyle({
+                        fontSize: '7.5px',
+                        borderLeft: k === 0 ? GROUP_LINE : CELL_LINE,
+                        borderRight: k === EXPORT_SUB_HEADS.length - 1 ? GROUP_LINE : CELL_LINE,
+                        background: k >= 4 ? '#163e7c' : NAVY,
+                      })}
+                    >
+                      {h}
+                    </th>
+                  ))
+                )}
               </tr>
             </thead>
 
             <tbody>
               {records.map((rec, idx) => {
                 const rowBg = idx % 2 === 1 ? '#f4f8fc' : '#ffffff';
-                const values = scoreCells(rec.saved);
                 return (
                   <tr key={rec.key} style={{ background: rowBg, pageBreakInside: 'avoid' }}>
                     <td style={cellStyle()}>{idx + 1}</td>
@@ -545,20 +640,24 @@ const TableExportView = ({ records, branch }) => {
                       {rec.student.studentName}
                     </td>
                     <td style={cellStyle({ wordBreak: 'break-all' })}>{rec.student.userId}</td>
-                    {values.map((v, k) => (
-                      <td
-                        key={k}
-                        style={cellStyle({
-                          fontWeight: k >= SUBJECT_COUNT ? 700 : 400,
-                          borderLeft:
-                            k === 0 || k === SUBJECT_COUNT ? GROUP_LINE : CELL_LINE,
-                        })}
-                      >
-                        {dv(v)}
-                      </td>
-                    ))}
+
+                    {Array.from({ length: subs }).map((_, i) =>
+                      subjectCells(rec.saved, i).map((v, k) => (
+                        <td
+                          key={`${i}-${k}`}
+                          style={cellStyle({
+                            fontWeight: k >= 4 ? 700 : 400,
+                            borderLeft: k === 0 ? GROUP_LINE : CELL_LINE,
+                            borderRight: k === EXPORT_SUB_HEADS.length - 1 ? GROUP_LINE : CELL_LINE,
+                          })}
+                        >
+                          {dv(v)}
+                        </td>
+                      ))
+                    )}
+
                     <td style={cellStyle({ fontWeight: 700, borderLeft: GROUP_LINE })}>
-                      {dv(totalValue(rec.saved))}
+                      {totalCell(rec.saved)}
                     </td>
                     <td style={cellStyle()}>{pctCell(rec.saved)}</td>
                     <td style={cellStyle({ fontWeight: 700 })}>{dv(rec.saved.overallGrade)}</td>
@@ -568,9 +667,10 @@ const TableExportView = ({ records, branch }) => {
             </tbody>
           </table>
 
+          {/* Legend and signature */}
           <div style={{ marginTop: '6px', fontSize: '9px', color: NAVY }}>
-            Sub1–Sub5 = subject marks (/100) · Rev1–Rev4 = revision tests (/40) · Total = Assessment
-            (average of revisions, /40) + Main Exam (average of subjects converted to /60)
+            R1–R4 = weekly revision tests (/40 each) · Avg = average of the four revisions (/40) ·
+            Tot = Avg + final exam converted to /60 (/100)
           </div>
 
           <div
@@ -614,8 +714,11 @@ export default function BranchStudentMarksheetPage({
   const [student, setStudent] = useState(null);
 
   const [subjects, setSubjects] = useState([]);
-  const [entries, setEntries] = useState(emptyEntries());
+  const [entries, setEntries] = useState({});
   const [savedData, setSavedData] = useState(null);
+
+  // Which weekly test is being entered right now
+  const [activeStage, setActiveStage] = useState(() => readStage(activeBranch));
 
   const [isEditing, setIsEditing] = useState(false);
   const [error, setError] = useState('');
@@ -637,12 +740,22 @@ export default function BranchStudentMarksheetPage({
     writeSession(activeBranch, sessionRecords);
   }, [sessionRecords, activeBranch]);
 
+  useEffect(() => {
+    writeStage(activeBranch, activeStage);
+  }, [activeStage, activeBranch]);
+
   // ------------------------------------------------
   // CURRENT RESULTS (live, from the entry fields)
   // ------------------------------------------------
 
-  const displayMetas = subjects.length ? subjects : PLACEHOLDER_METAS;
-  const live = computeResult(entries.subjects, entries.revisions);
+  const results = subjects.map((meta) =>
+    computeSubjectResult(meta, entries[meta.id] || emptyEntry())
+  );
+  const completedSubjects = results.filter((r) => r.marks !== null).length;
+  const allComplete = results.length > 0 && completedSubjects === results.length;
+  const totalMaximum = results.reduce((t, r) => t + r.max, 0);
+  const totalMarks = round2(results.reduce((t, r) => t + (r.marks ?? 0), 0));
+  const percentage = totalMaximum > 0 ? round2((totalMarks / totalMaximum) * 100) : 0;
 
   // ------------------------------------------------
   // LOAD / CLEAR CURRENT STUDENT
@@ -651,7 +764,7 @@ export default function BranchStudentMarksheetPage({
   const clearCurrent = () => {
     setStudent(null);
     setSubjects([]);
-    setEntries(emptyEntries());
+    setEntries({});
     setSavedData(null);
     setIsEditing(false);
     setExportError('');
@@ -661,7 +774,7 @@ export default function BranchStudentMarksheetPage({
     const metas = getSubjectMetas(studentData);
     setStudent(studentData);
     setSubjects(metas);
-    setEntries(entriesFromSaved(existing));
+    setEntries(entriesFromSaved(existing, metas));
     setSavedData(existing || null);
     setIsEditing(false);
     setExportError('');
@@ -709,6 +822,24 @@ export default function BranchStudentMarksheetPage({
   };
 
   // ------------------------------------------------
+  // STAGE SELECTION
+  // ------------------------------------------------
+
+  const handleStageChange = (key) => {
+    if (key === activeStage) return;
+
+    // Switching weeks while editing discards unsaved typing
+    if (isEditing) {
+      setEntries(entriesFromSaved(savedData, subjects));
+      setIsEditing(false);
+    }
+
+    setActiveStage(key);
+    setError('');
+    setSuccess('');
+  };
+
+  // ------------------------------------------------
   // EDIT / ENTRY CHANGE
   // ------------------------------------------------
 
@@ -719,27 +850,50 @@ export default function BranchStudentMarksheetPage({
     setSuccess('');
   };
 
-  // rowIndex 0..4 = subjects, 5..8 = revision tests
-  const handleEntryChange = (rowIndex, value) => {
+  const handleEntryChange = (subjectId, stage, value) => {
     if (value !== '' && !/^\d+$/.test(value)) return;
 
     setEntries((prev) => {
-      if (rowIndex < SUBJECT_COUNT) {
-        return {
-          ...prev,
-          subjects: prev.subjects.map((v, i) => (i === rowIndex ? value : v)),
-        };
-      }
-      const revIndex = rowIndex - SUBJECT_COUNT;
-      return {
-        ...prev,
-        revisions: prev.revisions.map((v, i) => (i === revIndex ? value : v)),
-      };
+      const current = prev[subjectId] || emptyEntry();
+      const next =
+        stage.type === 'exam'
+          ? { ...current, exam: value }
+          : {
+              ...current,
+              revisions: current.revisions.map((v, i) => (i === stage.index ? value : v)),
+            };
+      return { ...prev, [subjectId]: next };
     });
   };
 
+  // Cell for one subject and one test: input for the active test while editing, otherwise the value
+  const renderStageCell = (meta, r, stage, wide = false) => {
+    if (isEditing && stage.key === activeStage) {
+      const entry = entries[meta.id] || emptyEntry();
+      return (
+        <input
+          type="text"
+          inputMode="numeric"
+          value={toInput(stageValue(entry, stage))}
+          onChange={(e) => handleEntryChange(meta.id, stage, e.target.value)}
+          placeholder="0"
+          className={`${wide ? 'w-full min-w-0' : 'w-16'} px-1.5 py-1 rounded-lg border border-slate-200 text-xs font-bold text-center outline-none focus:ring-2 focus:ring-sky-500`}
+        />
+      );
+    }
+
+    const value = stage.type === 'exam' ? r.exam : r.revisions[stage.index];
+    return <span className="text-xs font-black text-slate-900">{dv(value)}</span>;
+  };
+
+  const renderGradeBadge = (r) => (
+    <span className="px-1.5 sm:px-2 py-0.5 rounded-lg bg-sky-50 text-sky-800 text-[10px] font-black">
+      {r.marks !== null ? getGrade(r.marks) : '-'}
+    </span>
+  );
+
   // ------------------------------------------------
-  // SAVE MARKS (saves all nine entries together)
+  // SAVE MARKS (saves only the selected weekly test)
   // ------------------------------------------------
 
   const handleSaveMarks = () => {
@@ -748,28 +902,51 @@ export default function BranchStudentMarksheetPage({
 
     if (!student) return;
 
-    const result = computeResult(entries.subjects, entries.revisions);
+    const stage = getStage(activeStage);
+    const max = stageMax(stage);
 
-    if (result.filled === 0) {
-      setError('Please enter at least one mark before saving.');
+    const missing = subjects.find((meta) => {
+      const value = stageValue(entries[meta.id] || emptyEntry(), stage);
+      return value === '' || value === undefined || value === null;
+    });
+
+    if (missing) {
+      setError(`Please enter ${stage.label} marks for ${missing.name}.`);
       return;
     }
 
-    const badSubject = result.subjects.findIndex(
-      (v) => v !== null && (!Number.isFinite(v) || v < 0 || v > SUBJECT_MAX)
-    );
-    if (badSubject !== -1) {
-      setError(`${displayMetas[badSubject].name}: marks must be between 0 and ${SUBJECT_MAX}.`);
+    const invalid = subjects.find((meta) => {
+      const n = Number(stageValue(entries[meta.id], stage));
+      return !Number.isFinite(n) || n < 0 || n > max;
+    });
+
+    if (invalid) {
+      setError(`${invalid.name}: ${stage.label} marks must be between 0 and ${max}.`);
       return;
     }
 
-    const badRevision = result.revisions.findIndex(
-      (v) => v !== null && (!Number.isFinite(v) || v < 0 || v > REVISION_MAX)
-    );
-    if (badRevision !== -1) {
-      setError(`Revision Test ${badRevision + 1}: marks must be between 0 and ${REVISION_MAX}.`);
-      return;
-    }
+    // Keep the other weeks' saved values, replace only the selected test
+    const baseEntries = entriesFromSaved(savedData, subjects);
+    const merged = {};
+    subjects.forEach((meta) => {
+      const base = baseEntries[meta.id];
+      const current = entries[meta.id] || emptyEntry();
+      merged[meta.id] =
+        stage.type === 'exam'
+          ? { revisions: base.revisions, exam: current.exam }
+          : {
+              revisions: base.revisions.map((v, i) =>
+                i === stage.index ? current.revisions[i] : v
+              ),
+              exam: base.exam,
+            };
+    });
+
+    const newResults = subjects.map((meta) => computeSubjectResult(meta, merged[meta.id]));
+    const complete = newResults.every((r) => r.marks !== null);
+    const maxTotal = newResults.reduce((t, r) => t + r.max, 0);
+    const marksTotal = complete ? round2(newResults.reduce((t, r) => t + r.marks, 0)) : null;
+    const pct = complete ? round2((marksTotal / maxTotal) * 100) : null;
 
     const key = getStudentKey(student);
 
@@ -780,22 +957,14 @@ export default function BranchStudentMarksheetPage({
       branch: activeBranch,
       course: getStudentCourse(student),
       grade: student.grade || '',
-      subjects: subjects.map((meta, i) => ({
-        id: meta.id,
-        name: meta.name,
-        max: SUBJECT_MAX,
-        marks: result.subjects[i],
-      })),
-      revisions: result.revisions,
-      examAverage: result.examAverage,
-      examConverted: result.examConverted,
-      assessment: result.assessment,
-      complete: result.complete,
-      status: describeProgress(result),
-      totalMarks: result.totalMarks,
-      totalMaximum: TOTAL_MAX,
-      percentage: result.percentage !== null ? result.percentage.toFixed(2) : null,
-      overallGrade: result.percentage !== null ? getGrade(result.percentage) : null,
+      subjects: newResults,
+      complete,
+      status: describeProgress(newResults),
+      lastStage: stage.key,
+      totalMarks: marksTotal,
+      totalMaximum: maxTotal,
+      percentage: pct !== null ? pct.toFixed(2) : null,
+      overallGrade: pct !== null ? getGrade(pct) : null,
       updatedAt: new Date().toISOString(),
     };
 
@@ -805,7 +974,7 @@ export default function BranchStudentMarksheetPage({
       writeMarksheets(allMarksheets);
 
       setSavedData(marksheet);
-      setEntries(entriesFromSaved(marksheet));
+      setEntries(entriesFromSaved(marksheet, subjects));
       setIsEditing(false);
 
       setSessionRecords((prev) => {
@@ -817,9 +986,9 @@ export default function BranchStudentMarksheetPage({
       });
 
       setSuccess(
-        result.complete
-          ? `Marks completed and saved for ${student.studentName}.`
-          : `Marks saved for ${student.studentName}. ${describeProgress(result)}.`
+        complete
+          ? `Final result completed and saved for ${student.studentName}.`
+          : `${stage.label} marks saved for ${student.studentName}.`
       );
     } catch (saveError) {
       console.error('Unable to save student marks:', saveError);
@@ -834,7 +1003,7 @@ export default function BranchStudentMarksheetPage({
   const handleCancelEditing = () => {
     setIsEditing(false);
     setError('');
-    setEntries(entriesFromSaved(savedData));
+    setEntries(entriesFromSaved(savedData, subjects));
   };
 
   // ------------------------------------------------
@@ -999,7 +1168,7 @@ export default function BranchStudentMarksheetPage({
     if (sessionRecords.length === 0) return;
 
     try {
-      const html = buildTableWordHtml(sessionRecords, activeBranch);
+      const html = buildTableWordHtml(sessionRecords, subjectColCount, activeBranch);
       downloadBlob(html, `${tableFileBase()}.doc`);
       setBulkError('');
     } catch (err) {
@@ -1078,10 +1247,22 @@ export default function BranchStudentMarksheetPage({
   const dash = '—';
   const canPreviewCurrent = Boolean(student && savedData?.complete && !isEditing);
   const hasList = sessionRecords.length > 0;
+  const currentStage = getStage(activeStage);
+
+  const subjectColCount = Math.max(
+    MIN_SUBJECT_COLS,
+    ...sessionRecords.map((r) => r.saved?.subjects?.length || 0)
+  );
+
+  // Fixed columns before and after the subject groups (S.No, Name, ID, Total, %, Grade, Status, Actions)
+  const LIST_FIXED_COLS = 8;
+  const listColCount = LIST_FIXED_COLS + subjectColCount * SUB_COLS;
 
   const thCls =
     'px-2 sm:px-3 py-1.5 border border-slate-300 text-[10px] uppercase tracking-wider font-black text-slate-500 text-center whitespace-nowrap';
   const tdCls = 'px-2 sm:px-3 py-1.5 border border-slate-200 text-center';
+  const stageHeadCls = (key) => (activeStage === key ? ' bg-amber-100 text-amber-900' : '');
+  const stageCellCls = (key) => (activeStage === key ? ' bg-amber-50/70' : '');
 
   const printTableNode = hasList ? (
     <div
@@ -1096,7 +1277,11 @@ export default function BranchStudentMarksheetPage({
         background: '#ffffff',
       }}
     >
-      <TableExportView records={sessionRecords} branch={activeBranch} />
+      <TableExportView
+        records={sessionRecords}
+        subjectColCount={subjectColCount}
+        branch={activeBranch}
+      />
     </div>
   ) : null;
 
@@ -1148,7 +1333,6 @@ export default function BranchStudentMarksheetPage({
     .no-print { display: none !important; }
   }
 `}</style>
-
       {/* TOP BAR */}
       <div className="flex items-center justify-between gap-2 sm:gap-3">
         <div className="min-w-0">
@@ -1156,7 +1340,7 @@ export default function BranchStudentMarksheetPage({
             Student Marksheet
           </h1>
           <p className="text-[10px] sm:text-[11px] text-slate-500 leading-tight truncate">
-            Five subjects (/100) and four revision tests (/40)
+            Weekly revision tests and final exam
           </p>
         </div>
 
@@ -1280,11 +1464,11 @@ export default function BranchStudentMarksheetPage({
             </div>
             <div className="min-w-0">
               <h2 className="text-xs sm:text-sm font-black text-slate-950 leading-tight">
-                Subject &amp; Revision Marks
+                Subject-wise Marks
               </h2>
               <p className="text-[9px] sm:text-[11px] text-slate-500 leading-tight truncate">
                 {student
-                  ? `${subjects.length} subjects in ${getStudentCourse(student) || 'this course'} + 4 revision tests`
+                  ? `${subjects.length} subjects in ${getStudentCourse(student) || 'this course'}`
                   : 'Search a student to load their course subjects'}
               </p>
             </div>
@@ -1297,7 +1481,7 @@ export default function BranchStudentMarksheetPage({
               disabled={!canPreviewCurrent}
               title={
                 !savedData?.complete
-                  ? 'Complete all marks to preview'
+                  ? 'Complete all weeks and the final exam to preview'
                   : isEditing
                     ? 'Save or cancel editing to preview'
                     : 'Preview official marksheet'
@@ -1316,75 +1500,150 @@ export default function BranchStudentMarksheetPage({
                 className="px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-lg bg-[#0c234b] hover:bg-[#173d70] text-white text-[10px] sm:text-xs font-black flex items-center gap-1 sm:gap-1.5 transition disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <Pencil className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                {savedData ? 'Edit Marks' : 'Enter Marks'}
+                {savedData ? `Enter ${currentStage.short}` : 'Add Marks'}
               </button>
             ) : (
               <div className="px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-sky-50 border border-sky-100 text-sky-800 text-[10px] sm:text-xs font-bold flex items-center gap-1 sm:gap-1.5">
                 <Pencil className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                Entering marks
+                Editing {currentStage.short}
               </div>
             )}
           </div>
         </div>
 
-        {/* MARK ENTRY TABLE */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[520px]">
+        {/* WEEK / TEST SELECTOR */}
+        <div className="px-2 sm:px-3 py-2 border-b border-slate-100 flex flex-wrap items-center gap-1.5">
+          <span className="text-[10px] font-black uppercase text-slate-500 mr-1">Entering:</span>
+          {STAGES.map((stage) => {
+            const active = stage.key === activeStage;
+            return (
+              <button
+                key={stage.key}
+                type="button"
+                onClick={() => handleStageChange(stage.key)}
+                className={`px-2 py-1 rounded-lg text-[10px] sm:text-xs font-black border transition ${
+                  active
+                    ? 'bg-amber-400 border-amber-500 text-[#0c234b]'
+                    : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                {stage.tab}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* MOBILE: SUBJECT CARDS */}
+        <div className="sm:hidden p-2 space-y-2">
+          {subjects.length === 0 &&
+            Array.from({ length: PLACEHOLDER_ROWS }).map((_, index) => (
+              <div key={`ph-m-${index}`} className="p-2 rounded-xl border border-slate-100 text-slate-300 text-xs font-bold">
+                {index + 1}. {dash}
+              </div>
+            ))}
+
+          {subjects.map((meta, index) => {
+            const r = results[index];
+            return (
+              <div key={meta.id} className="p-2 rounded-xl border border-slate-200 bg-white">
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-[11px] font-black text-slate-900 leading-snug">
+                    {index + 1}. {meta.name}
+                  </p>
+                  {renderGradeBadge(r)}
+                </div>
+
+                <div className="grid grid-cols-5 gap-1 mt-2">
+                  {STAGES.map((stage) => (
+                    <div
+                      key={stage.key}
+                      className={`rounded-lg p-1 ${
+                        activeStage === stage.key ? 'bg-amber-50 border border-amber-200' : 'bg-slate-50'
+                      }`}
+                    >
+                      <span className="block text-[8px] font-bold uppercase text-slate-400 leading-tight">
+                        {stage.short}
+                      </span>
+                      {renderStageCell(meta, r, stage, true)}
+                    </div>
+                  ))}
+                </div>
+
+                <div className="grid grid-cols-4 gap-1.5 mt-2 text-[10px] font-bold">
+                  <div>
+                    <span className="block text-[8px] uppercase text-slate-400">Avg /40</span>
+                    <span className="text-slate-900">{dv(r.assessment)}</span>
+                  </div>
+                  <div>
+                    <span className="block text-[8px] uppercase text-slate-400">Exam /60</span>
+                    <span className="text-slate-900">{dv(r.examConverted)}</span>
+                  </div>
+                  <div>
+                    <span className="block text-[8px] uppercase text-slate-400">Total /100</span>
+                    <span className="text-slate-900">{dv(r.marks)}</span>
+                  </div>
+                  <div>
+                    <span className="block text-[8px] uppercase text-slate-400">%</span>
+                    <span className="text-sky-800">{dv(r.marks, '%')}</span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* DESKTOP / TABLET: SUBJECT TABLE */}
+        <div className="hidden sm:block overflow-x-auto">
+          <table className="w-full text-left border-collapse min-w-[860px]">
             <thead className="bg-slate-50">
               <tr>
                 <th className={thCls}>S.No</th>
-                <th className={`${thCls} text-left`}>Subject / Revision Test</th>
-                <th className={thCls}>Max Marks</th>
-                <th className={thCls}>Marks Obtained</th>
-                <th className={thCls}>Percentage</th>
+                <th className={`${thCls} text-left`}>Subject</th>
+                {REV_STAGES.map((stage) => (
+                  <th key={stage.key} className={`${thCls}${stageHeadCls(stage.key)}`}>
+                    {stage.short} /40
+                  </th>
+                ))}
+                <th className={thCls}>Avg /40</th>
+                <th className={`${thCls}${stageHeadCls(EXAM_STAGE.key)}`}>Exam /100</th>
+                <th className={thCls}>Exam /60</th>
+                <th className={thCls}>Total /100</th>
+                <th className={thCls}>%</th>
+                <th className={thCls}>Grade</th>
               </tr>
             </thead>
 
             <tbody>
-              {Array.from({ length: ENTRY_ROW_COUNT }).map((_, index) => {
-                const isRevision = index >= SUBJECT_COUNT;
-                const label = isRevision
-                  ? `Revision Test ${index - SUBJECT_COUNT + 1}`
-                  : displayMetas[index]?.name || `Subject ${index + 1}`;
-                const max = isRevision ? REVISION_MAX : SUBJECT_MAX;
-                const value = isRevision
-                  ? live.revisions[index - SUBJECT_COUNT]
-                  : live.subjects[index];
-                const pct = value !== null && value !== undefined ? (value / max) * 100 : null;
+              {subjects.length === 0 &&
+                Array.from({ length: PLACEHOLDER_ROWS }).map((_, index) => (
+                  <tr key={`placeholder-${index}`} className="text-slate-300">
+                    {Array.from({ length: 11 }).map((__, i) => (
+                      <td key={i} className={tdCls + ' text-xs font-bold'}>
+                        {i === 0 ? index + 1 : dash}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
 
+              {subjects.map((meta, index) => {
+                const r = results[index];
                 return (
-                  <tr
-                    key={index}
-                    className={`hover:bg-slate-50/70 ${isRevision ? 'bg-sky-50/40' : ''} ${
-                      index === SUBJECT_COUNT ? 'border-t-2 border-t-slate-400' : ''
-                    }`}
-                  >
+                  <tr key={meta.id} className="hover:bg-slate-50/70">
                     <td className={`${tdCls} text-xs font-bold text-slate-500`}>{index + 1}</td>
-                    <td className={`${tdCls} text-left text-xs font-bold text-slate-900`}>
-                      {student || index >= SUBJECT_COUNT ? label : dash}
+                    <td className={`${tdCls} text-left text-xs font-bold text-slate-900`}>{meta.name}</td>
+                    {REV_STAGES.map((stage) => (
+                      <td key={stage.key} className={`${tdCls}${stageCellCls(stage.key)}`}>
+                        {renderStageCell(meta, r, stage)}
+                      </td>
+                    ))}
+                    <td className={`${tdCls} text-xs font-bold text-slate-900`}>{dv(r.assessment)}</td>
+                    <td className={`${tdCls}${stageCellCls(EXAM_STAGE.key)}`}>
+                      {renderStageCell(meta, r, EXAM_STAGE)}
                     </td>
-                    <td className={`${tdCls} text-xs font-bold text-slate-900`}>{max}</td>
-                    <td className={tdCls}>
-                      {isEditing ? (
-                        <input
-                          type="text"
-                          inputMode="numeric"
-                          value={
-                            isRevision
-                              ? toInput(entries.revisions[index - SUBJECT_COUNT])
-                              : toInput(entries.subjects[index])
-                          }
-                          onChange={(e) => handleEntryChange(index, e.target.value)}
-                          placeholder="0"
-                          className="w-20 px-1.5 py-1 rounded-lg border border-slate-200 text-xs font-bold text-center outline-none focus:ring-2 focus:ring-sky-500"
-                        />
-                      ) : (
-                        <span className="text-xs font-black text-slate-900">{dv(value)}</span>
-                      )}
-                    </td>
-                    <td className={`${tdCls} text-xs font-bold text-sky-800`}>
-                      {pct !== null ? `${pct.toFixed(2)}%` : dash}
-                    </td>
+                    <td className={`${tdCls} text-xs font-bold text-slate-900`}>{dv(r.examConverted)}</td>
+                    <td className={`${tdCls} text-xs font-black text-slate-950`}>{dv(r.marks)}</td>
+                    <td className={`${tdCls} text-xs font-bold text-sky-800`}>{dv(r.marks, '%')}</td>
+                    <td className={tdCls}>{renderGradeBadge(r)}</td>
                   </tr>
                 );
               })}
@@ -1392,40 +1651,39 @@ export default function BranchStudentMarksheetPage({
           </table>
         </div>
 
-        {/* RESULT SUMMARY + ACTIONS */}
+        {/* TOTALS + ACTIONS */}
         <div className="p-2 sm:p-3 border-t border-slate-100 bg-slate-50/70 flex flex-col lg:flex-row lg:items-center justify-between gap-2">
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5 sm:gap-2 flex-1">
-            <SummaryBox
-              label={`Assessment /${ASSESSMENT_MAX}`}
-              value={student && live.assessment !== null ? live.assessment : dash}
-              tone="text-slate-950"
-            />
-            <SummaryBox
-              label={`Main Exam /${EXAM_CONVERTED_MAX}`}
-              value={student && live.examConverted !== null ? live.examConverted : dash}
-              tone="text-slate-950"
-            />
-            <SummaryBox
-              label={`Total /${TOTAL_MAX}`}
-              value={
-                !student
+          <div className="grid grid-cols-3 gap-1.5 sm:gap-2 flex-1">
+            <div className="bg-white rounded-lg border border-slate-200 px-2 sm:px-3 py-1 sm:py-1.5 min-w-0">
+              <span className="block text-[8px] sm:text-[10px] text-slate-500 font-bold uppercase truncate">
+                Total Marks
+              </span>
+              <div className="text-xs sm:text-sm font-black text-slate-950 leading-tight truncate">
+                {!student
                   ? dash
-                  : live.complete
-                    ? live.totalMarks
-                    : `${live.filled}/${live.total} entered`
-              }
-              tone="text-slate-950"
-            />
-            <SummaryBox
-              label="Percentage"
-              value={student && live.complete ? `${live.percentage.toFixed(2)}%` : dash}
-              tone="text-sky-800"
-            />
-            <SummaryBox
-              label="Overall Grade"
-              value={student && live.complete ? getGrade(live.percentage) : dash}
-              tone="text-amber-600"
-            />
+                  : allComplete
+                    ? <>{totalMarks}<span className="text-[10px] sm:text-xs text-slate-400"> / {totalMaximum}</span></>
+                    : <span className="text-[10px] sm:text-xs text-slate-500">{completedSubjects}/{subjects.length} subjects done</span>}
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg border border-slate-200 px-2 sm:px-3 py-1 sm:py-1.5 min-w-0">
+              <span className="block text-[8px] sm:text-[10px] text-slate-500 font-bold uppercase truncate">
+                Percentage
+              </span>
+              <div className="text-xs sm:text-sm font-black text-sky-800 leading-tight truncate">
+                {student && allComplete ? `${percentage.toFixed(2)}%` : dash}
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg border border-slate-200 px-2 sm:px-3 py-1 sm:py-1.5 min-w-0">
+              <span className="block text-[8px] sm:text-[10px] text-slate-500 font-bold uppercase truncate">
+                Overall Grade
+              </span>
+              <div className="text-xs sm:text-sm font-black text-amber-600 leading-tight">
+                {student && allComplete ? getGrade(percentage) : dash}
+              </div>
+            </div>
           </div>
 
           {isEditing && (
@@ -1445,7 +1703,7 @@ export default function BranchStudentMarksheetPage({
                 className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-amber-400 hover:bg-amber-500 text-[#0c234b] text-[10px] sm:text-xs font-black flex items-center justify-center gap-1.5 sm:gap-2"
               >
                 <Save className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                Save Marks
+                Save {currentStage.short}
               </button>
             </div>
           )}
@@ -1557,21 +1815,6 @@ export default function BranchStudentMarksheetPage({
                     </span>
                   )}
                 </div>
-
-                <div className="grid grid-cols-5 gap-1 mt-2">
-                  {scoreCells(rec.saved).map((v, k) => (
-                    <div
-                      key={k}
-                      className={`rounded-lg p-1 text-center ${k >= SUBJECT_COUNT ? 'bg-sky-50' : 'bg-slate-50'}`}
-                    >
-                      <span className="block text-[7px] font-bold uppercase text-slate-400 leading-tight">
-                        {k < SUBJECT_COUNT ? `Sub${k + 1}` : `Rev${k - SUBJECT_COUNT + 1}`}
-                      </span>
-                      <span className="text-[10px] font-black text-slate-900">{dv(v)}</span>
-                    </div>
-                  ))}
-                </div>
-
                 <div className="flex justify-between mt-2 text-[10px] font-bold">
                   <span className="text-slate-500">
                     Total: <strong className="text-slate-900">{totalCell(rec.saved)}</strong>
@@ -1606,35 +1849,43 @@ export default function BranchStudentMarksheetPage({
           ))}
         </div>
 
-        {/* DESKTOP / TABLET: TABLE (matches the reference layout) */}
+        {/* DESKTOP / TABLET: TABLE (scrolls sideways; revision columns per subject) */}
         <div className="hidden sm:block overflow-x-auto p-2">
-          <table className="w-full text-center min-w-[1000px] border-collapse border border-slate-300">
+          <table className="w-full text-center min-w-[1100px] border-collapse border border-slate-300">
             <thead className="bg-[#0b2a55] text-white">
               <tr>
-                <th className="px-2 py-2 border border-slate-600 text-[10px] font-black uppercase tracking-wider">S.No</th>
-                <th className="px-2 py-2 border border-slate-600 text-[10px] font-black uppercase tracking-wider text-left">Student Name</th>
-                {SUB_INDEXES.map((i) => (
+                <th rowSpan={2} className="px-2 py-2 border border-slate-600 text-[10px] font-black uppercase tracking-wider">S.No</th>
+                <th rowSpan={2} className="px-2 py-2 border border-slate-600 text-[10px] font-black uppercase tracking-wider text-left">Student Name</th>
+                <th rowSpan={2} className="px-2 py-2 border border-slate-600 text-[10px] font-black uppercase tracking-wider">Student ID</th>
+                {Array.from({ length: subjectColCount }).map((_, i) => (
                   <th
-                    key={`sh${i}`}
+                    key={i}
+                    colSpan={SUB_COLS}
                     className="px-2 py-2 border border-slate-600 text-[10px] font-black uppercase tracking-wider"
-                    title={subjectNameAt(sessionRecords, i)}
+                    title={sessionRecords.find((r) => r.saved?.subjects?.[i])?.saved.subjects[i].name || ''}
                   >
-                    <div>Sub {i + 1}</div>
-                    <div className="text-[8px] font-medium normal-case tracking-normal opacity-80 max-w-[110px] truncate mx-auto">
-                      {subjectNameAt(sessionRecords, i)}
-                    </div>
+                    Sub {i + 1}
                   </th>
                 ))}
-                {REV_INDEXES.map((i) => (
-                  <th
-                    key={`rh${i}`}
-                    className="px-2 py-2 border border-slate-600 text-[10px] font-black uppercase tracking-wider bg-[#163e7c]"
-                  >
-                    Rev {i + 1}
-                  </th>
-                ))}
-                <th className="px-2 py-2 border border-slate-600 text-[10px] font-black uppercase tracking-wider">Total /{TOTAL_MAX}</th>
-                <th className="px-2 py-2 border border-slate-600 text-[10px] font-black uppercase tracking-wider">Actions</th>
+                <th rowSpan={2} className="px-2 py-2 border border-slate-600 text-[10px] font-black uppercase tracking-wider">Total</th>
+                <th rowSpan={2} className="px-2 py-2 border border-slate-600 text-[10px] font-black uppercase tracking-wider">%</th>
+                <th rowSpan={2} className="px-2 py-2 border border-slate-600 text-[10px] font-black uppercase tracking-wider">Grade</th>
+                <th rowSpan={2} className="px-2 py-2 border border-slate-600 text-[10px] font-black uppercase tracking-wider">Status</th>
+                <th rowSpan={2} className="px-2 py-2 border border-slate-600 text-[10px] font-black uppercase tracking-wider">Actions</th>
+              </tr>
+              <tr>
+                {Array.from({ length: subjectColCount }).map((_, i) =>
+                  SUB_SUB_HEADS.map((h, k) => (
+                    <th
+                      key={`${i}-${k}`}
+                      className={`px-1.5 py-1.5 border border-slate-600 text-[9px] font-black uppercase tracking-wider ${
+                        k >= 4 ? 'bg-[#163e7c]' : ''
+                      }`}
+                    >
+                      {h}
+                    </th>
+                  ))
+                )}
               </tr>
             </thead>
 
@@ -1642,7 +1893,7 @@ export default function BranchStudentMarksheetPage({
               {sessionRecords.length === 0 &&
                 Array.from({ length: PLACEHOLDER_ROWS }).map((_, index) => (
                   <tr key={`ph-${index}`} className="text-slate-300 text-xs font-bold">
-                    {Array.from({ length: 2 + MARK_COL_COUNT + 2 }).map((__, i) => (
+                    {Array.from({ length: listColCount }).map((__, i) => (
                       <td key={i} className="px-2 py-1.5 border border-slate-200">
                         {i === 0 ? index + 1 : dash}
                       </td>
@@ -1660,18 +1911,36 @@ export default function BranchStudentMarksheetPage({
                   <td className="px-2 py-1.5 border border-slate-300 text-left capitalize text-slate-900 max-w-[180px] break-words">
                     {rec.student.studentName}
                   </td>
-                  {scoreCells(rec.saved).map((v, k) => (
-                    <td
-                      key={k}
-                      className={`px-2 py-1.5 border border-slate-300 ${
-                        k >= SUBJECT_COUNT ? 'bg-sky-50/40 font-black text-slate-950' : ''
-                      }`}
-                    >
-                      {dv(v)}
-                    </td>
-                  ))}
+                  <td className="px-2 py-1.5 border border-slate-300">{rec.student.userId}</td>
+                  {Array.from({ length: subjectColCount }).map((_, i) =>
+                    subjectCells(rec.saved, i).map((v, k) => (
+                      <td
+                        key={`${i}-${k}`}
+                        className={`px-1.5 py-1.5 border border-slate-300 ${
+                          k >= 4 ? 'font-black text-slate-950' : ''
+                        }`}
+                      >
+                        {dv(v)}
+                      </td>
+                    ))
+                  )}
                   <td className="px-2 py-1.5 border border-slate-300 font-black whitespace-nowrap">
-                    {dv(totalValue(rec.saved))}
+                    {totalCell(rec.saved)}
+                  </td>
+                  <td className="px-2 py-1.5 border border-slate-300 text-sky-800">{pctCell(rec.saved)}</td>
+                  <td className="px-2 py-1.5 border border-slate-300">
+                    {rec.saved.complete ? (
+                      <span className="px-1.5 py-0.5 rounded-lg bg-emerald-50 text-emerald-700 font-black">
+                        {rec.saved.overallGrade}
+                      </span>
+                    ) : (
+                      '-'
+                    )}
+                  </td>
+                  <td className="px-2 py-1.5 border border-slate-300 text-[10px] font-black">
+                    <span className={rec.saved.complete ? 'text-emerald-700' : 'text-amber-700'}>
+                      {rec.saved.complete ? 'Complete' : rec.saved.status || 'Pending'}
+                    </span>
                   </td>
                   <td className="px-2 py-1.5 border border-slate-300">
                     <div className="flex items-center justify-center gap-1">
@@ -1800,23 +2069,6 @@ export default function BranchStudentMarksheetPage({
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-// ------------------------------------------------
-// REUSABLE SUMMARY BOX
-// ------------------------------------------------
-
-function SummaryBox({ label, value, tone }) {
-  return (
-    <div className="bg-white rounded-lg border border-slate-200 px-2 sm:px-3 py-1 sm:py-1.5 min-w-0">
-      <span className="block text-[8px] sm:text-[10px] text-slate-500 font-bold uppercase truncate">
-        {label}
-      </span>
-      <div className={`text-xs sm:text-sm font-black leading-tight truncate ${tone}`}>
-        {value}
-      </div>
     </div>
   );
 }
