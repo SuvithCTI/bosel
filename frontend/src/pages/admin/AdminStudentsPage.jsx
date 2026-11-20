@@ -14,8 +14,7 @@ import {
   GraduationCap,
   FileText,
   Award,
-  Receipt,
-  FileSpreadsheet
+  Receipt
 } from 'lucide-react';
 import StudentAvatar from '../../components/StudentAvatar';
 import { updateUserProfile } from '../../utils/authStorage';
@@ -38,7 +37,6 @@ export default function AdminStudentsPage({
   handleOpenCertForStudent,
   handleOpenReceiptForStudent,
   handleOpenEventRegForStudent,
-  handleOpenQuestionPaperForStudent,
   setViewingAdmissionStudent,
   studentSearch,
   setStudentSearch,
@@ -537,16 +535,6 @@ export default function AdminStudentsPage({
                               >
                                 <GraduationCap className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                                 <span>Admission</span>
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() => handleOpenQuestionPaperForStudent?.(student)}
-                                className="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 hover:border-amber-300 font-bold rounded-lg text-xs transition cursor-pointer flex items-center justify-center gap-1.5 shadow-xs whitespace-nowrap"
-                                title="View Question Paper / Upload Questions"
-                              >
-                                <FileSpreadsheet className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                                <span>Qn Paper</span>
                               </button>
                             </div>
                           </td>

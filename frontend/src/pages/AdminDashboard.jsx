@@ -1865,7 +1865,6 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
               handleOpenCertForStudent={handleOpenCertForStudent}
               handleOpenReceiptForStudent={handleOpenReceiptForStudent}
               handleOpenEventRegForStudent={handleOpenEventRegForStudent}
-              handleOpenQuestionPaperForStudent={handleOpenQuestionPaperForStudent}
               setViewingAdmissionStudent={setViewingAdmissionStudent}
               studentSearch={studentSearch}
               setStudentSearch={setStudentSearch}
