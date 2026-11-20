@@ -31,7 +31,6 @@ const DETAIL_ROWS = [
   { field: 'courseLevel', label: 'Course & Level' },
   { field: 'duration', label: 'Duration' },
   { field: 'school', label: 'School / Exam Centre' },
-  { field: 'aadhaarPhone', label: 'Contact & ID' },
 ];
 
 export default function QuestionPaperCoverPage({
@@ -223,17 +222,6 @@ export default function QuestionPaperCoverPage({
     student?.institution ||
     'Tenkasi';
 
-  // 10. Contact & Aadhaar
-  const phoneDisplay = details.phone || student?.phone || student?.mobile || '';
-  const aadhaarDisplay = details.aadhaar || student?.aadhaar || student?.aadharNumber || student?.aadhaarNumber || '';
-  const aadhaarPhoneDisplay = (phoneDisplay && aadhaarDisplay)
-    ? `Aadhaar: ${aadhaarDisplay} | Ph: ${phoneDisplay}`
-    : phoneDisplay
-    ? `Ph: ${phoneDisplay}`
-    : aadhaarDisplay
-    ? `Aadhaar: ${aadhaarDisplay}`
-    : 'Not provided';
-
   // Branch Name, Subtitle, Tagline and Logo for right header
   const branchNameDisplay =
     details.branchName ||
@@ -329,31 +317,6 @@ export default function QuestionPaperCoverPage({
         );
       }
       return <span className="font-bold text-slate-950 tracking-tight">{genderClassDisplay}</span>;
-    }
-
-    if (field === 'aadhaarPhone') {
-      if (editMode) {
-        return (
-          <div className="flex items-center gap-1 w-full">
-            <input
-              type="text"
-              value={details.phone ?? phoneDisplay}
-              onChange={(e) => onDetailChange('phone', e.target.value)}
-              className="w-1/2 border-b border-sky-400 bg-sky-50 px-1 py-0.5 text-[11px] sm:text-[12px] font-bold text-slate-900 outline-none"
-              placeholder="Mobile Phone"
-            />
-            <span>|</span>
-            <input
-              type="text"
-              value={details.aadhaar ?? aadhaarDisplay}
-              onChange={(e) => onDetailChange('aadhaar', e.target.value)}
-              className="w-1/2 border-b border-sky-400 bg-sky-50 px-1 py-0.5 text-[11px] sm:text-[12px] font-bold text-slate-900 outline-none"
-              placeholder="Aadhaar No."
-            />
-          </div>
-        );
-      }
-      return <span className="font-bold text-slate-950 tracking-tight">{aadhaarPhoneDisplay}</span>;
     }
 
     const fieldMap = {
