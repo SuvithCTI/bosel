@@ -467,7 +467,6 @@ export const saveStudentCustomSignature = (scopeKey, dataUrl) => {
   }
 };
 
-<<<<<<< HEAD
 /**
  * Manages custom question paper file uploads (PDF, DOCX, Images, etc.)
  * scoped per student so questions can easily be uploaded for respective students.
@@ -503,7 +502,9 @@ export const saveStudentUploadedQuestions = (scopeKey, fileData) => {
   } catch (e) {
     console.warn('Failed to save student uploaded questions:', e);
     throw e;
-=======
+  }
+};
+
 export const getBranchScopeKey = (branchName) => {
   if (!branchName) return 'default';
   return String(branchName).trim().toLowerCase().replace(/[^a-z0-9_-]/g, '_') || 'default';
@@ -580,6 +581,5 @@ export const saveBranchCustomSignature = (branchName, dataUrl) => {
     }
   } catch (e) {
     console.warn('Failed to save branch custom signature:', e);
->>>>>>> a6e71d6e34d9978eaed501fa9fd19c1c6e30a9e4
   }
 };
