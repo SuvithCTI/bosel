@@ -34,6 +34,13 @@ const DETAIL_ROWS = [
   { field: 'phone', label: 'Contact Number' },
 ];
 
+// Clean, professional typography for numbers, registration details, codes and tables
+const NUMBER_FONT_STYLE = {
+  fontFamily: "Arial, 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif",
+  fontVariantNumeric: 'tabular-nums lining-nums',
+  letterSpacing: '0.015em',
+};
+
 export default function QuestionPaperCoverPage({
   student,
   details = {},
@@ -251,12 +258,13 @@ export default function QuestionPaperCoverPage({
     if (field === 'courseLevel') {
       if (editMode) {
         return (
-          <div className="flex items-center gap-1 w-full">
+          <div className="flex items-center gap-1 w-full" style={NUMBER_FONT_STYLE}>
             <input
               type="text"
               value={details.course ?? courseDisplay}
               onChange={(e) => onDetailChange('course', e.target.value)}
               className="w-2/3 border-b border-sky-400 bg-sky-50 px-1 py-0.5 text-[11px] sm:text-[12px] font-bold text-slate-900 outline-none"
+              style={NUMBER_FONT_STYLE}
               placeholder="Course"
             />
             <span>-</span>
@@ -265,23 +273,25 @@ export default function QuestionPaperCoverPage({
               value={details.level ?? levelDisplay}
               onChange={(e) => onDetailChange('level', e.target.value)}
               className="w-1/3 border-b border-sky-400 bg-sky-50 px-1 py-0.5 text-[11px] sm:text-[12px] font-bold text-slate-900 outline-none"
+              style={NUMBER_FONT_STYLE}
               placeholder="Level"
             />
           </div>
         );
       }
-      return <span className="font-bold text-slate-950 tracking-tight">{courseLevelDisplay}</span>;
+      return <span className="font-bold text-slate-950 tracking-normal font-sans" style={NUMBER_FONT_STYLE}>{courseLevelDisplay}</span>;
     }
 
     if (field === 'dob') {
       if (editMode) {
         return (
-          <div className="flex items-center gap-1 w-full">
+          <div className="flex items-center gap-1 w-full" style={NUMBER_FONT_STYLE}>
             <input
               type="text"
               value={details.dob ?? dobDisplay}
               onChange={(e) => onDetailChange('dob', e.target.value)}
               className="w-2/3 border-b border-sky-400 bg-sky-50 px-1 py-0.5 text-[11px] sm:text-[12px] font-bold text-slate-900 outline-none"
+              style={NUMBER_FONT_STYLE}
               placeholder="YYYY-MM-DD"
             />
             <span>Age:</span>
@@ -290,23 +300,25 @@ export default function QuestionPaperCoverPage({
               value={details.age ?? ageDisplay}
               onChange={(e) => onDetailChange('age', e.target.value)}
               className="w-1/3 border-b border-sky-400 bg-sky-50 px-1 py-0.5 text-[11px] sm:text-[12px] font-bold text-slate-900 outline-none"
+              style={NUMBER_FONT_STYLE}
               placeholder="Age"
             />
           </div>
         );
       }
-      return <span className="font-bold text-slate-950 tracking-tight">{dobAgeDisplay}</span>;
+      return <span className="font-bold text-slate-950 tracking-normal font-sans" style={NUMBER_FONT_STYLE}>{dobAgeDisplay}</span>;
     }
 
     if (field === 'genderClass') {
       if (editMode) {
         return (
-          <div className="flex items-center gap-1 w-full">
+          <div className="flex items-center gap-1 w-full" style={NUMBER_FONT_STYLE}>
             <input
               type="text"
               value={details.gender ?? genderDisplay}
               onChange={(e) => onDetailChange('gender', e.target.value)}
               className="w-1/3 border-b border-sky-400 bg-sky-50 px-1 py-0.5 text-[11px] sm:text-[12px] font-bold text-slate-900 outline-none"
+              style={NUMBER_FONT_STYLE}
               placeholder="Gender"
             />
             <span>|</span>
@@ -315,12 +327,13 @@ export default function QuestionPaperCoverPage({
               value={details.studentClass ?? classDisplay}
               onChange={(e) => onDetailChange('studentClass', e.target.value)}
               className="w-2/3 border-b border-sky-400 bg-sky-50 px-1 py-0.5 text-[11px] sm:text-[12px] font-bold text-slate-900 outline-none"
+              style={NUMBER_FONT_STYLE}
               placeholder="Class / Grade (Stage)"
             />
           </div>
         );
       }
-      return <span className="font-bold text-slate-950 tracking-tight">{genderClassDisplay}</span>;
+      return <span className="font-bold text-slate-950 tracking-normal font-sans" style={NUMBER_FONT_STYLE}>{genderClassDisplay}</span>;
     }
 
     const fieldMap = {
@@ -340,12 +353,13 @@ export default function QuestionPaperCoverPage({
           value={details[field] ?? fieldMap[field] ?? ''}
           onChange={(e) => onDetailChange(field, e.target.value)}
           className="w-full border-b border-sky-400 bg-sky-50 px-1 py-0.5 text-[11px] sm:text-[12px] font-bold text-slate-900 outline-none"
+          style={NUMBER_FONT_STYLE}
         />
       );
     }
 
     return (
-      <span className="font-bold text-slate-950 tracking-tight">
+      <span className="font-bold text-slate-950 tracking-normal font-sans" style={NUMBER_FONT_STYLE}>
         {fieldMap[field]}
       </span>
     );
@@ -662,10 +676,10 @@ export default function QuestionPaperCoverPage({
               ========================================================================= */}
           <div className="mt-2 flex items-start justify-between gap-3 px-1 py-1">
             {/* Left: 10 Admission Data Rows */}
-            <div className="flex-1 space-y-1 sm:space-y-1.5 text-xs sm:text-[12px]">
+            <div className="flex-1 space-y-1 sm:space-y-1.5 text-xs sm:text-[12px] font-sans" style={NUMBER_FONT_STYLE}>
               {DETAIL_ROWS.map(({ field, label }) => (
                 <div key={field} className="grid grid-cols-[145px_10px_1fr] sm:grid-cols-[170px_12px_1fr] items-center">
-                  <span className="font-bold text-slate-900">{label}</span>
+                  <span className="font-bold text-slate-900" style={NUMBER_FONT_STYLE}>{label}</span>
                   <span className="font-bold text-slate-900 text-center">:</span>
                   <div className="min-w-0 pr-1">
                     {renderFieldValue(field)}
@@ -732,7 +746,7 @@ export default function QuestionPaperCoverPage({
               <tbody>
                 {[1, 2, 3, 4, 5].map((rowNum) => (
                   <tr key={rowNum} className="border-b border-[#0c2d58] h-6 sm:h-7 text-[11px]">
-                    <td className="border-r border-[#0c2d58] font-bold text-slate-900 bg-white">
+                    <td className="border-r border-[#0c2d58] font-bold text-slate-900 bg-white" style={NUMBER_FONT_STYLE}>
                       {rowNum}
                     </td>
                     <td className="border-r border-[#0c2d58] px-2 text-left bg-white"></td>
@@ -786,7 +800,7 @@ export default function QuestionPaperCoverPage({
                 <h3 className="text-[10px] sm:text-[10.5px] font-black text-[#0c2d58] uppercase tracking-wide border-b border-slate-200 pb-0.5 font-sans">
                   GEN. INSTRUCTIONS
                 </h3>
-                <ol className="list-decimal list-inside text-[8px] sm:text-[9px] text-slate-800 font-semibold space-y-0.5 mt-1 leading-snug">
+                <ol className="list-decimal list-inside text-[8.5px] sm:text-[9.5px] text-slate-800 font-medium space-y-0.5 mt-1 leading-snug" style={NUMBER_FONT_STYLE}>
                   <li>Rule points must be observed strictly during several exam actions.</li>
                   <li>Answers must be written clearly on the provided paper.</li>
                   <li>Do not overwrite or make double markings on test sums.</li>
