@@ -260,14 +260,14 @@ function Hero() {
         {/* Left Content - After Image on Mobile */}
         <div className="lg:col-start-1 lg:row-start-1">
           <h1
-            className="max-w-3xl text-5xl font-bold italic leading-[1.05] tracking-tight text-blue-950 sm:text-6xl lg:text-6xl xl:text-7xl"
+            className="max-w-3xl text-[1.95rem] min-[380px]:text-[2.25rem] sm:text-5xl md:text-6xl lg:text-6xl xl:text-7xl font-bold italic leading-[1.1] tracking-tight text-blue-950"
             style={{
               fontFamily: "Georgia, serif",
               fontWeight: 700,
               fontStyle: "italic",
             }}
           >
-            Every Achievement
+            <span className="block whitespace-nowrap">Every Achievement</span>
             <span className="mt-1 block text-amber-500">
               Tells a story
             </span>
