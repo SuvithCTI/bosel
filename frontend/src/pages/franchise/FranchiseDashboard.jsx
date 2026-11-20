@@ -13,8 +13,7 @@ import {
   CheckCircle2,
   ArrowRight,
   Award,
-  Sparkles,
-  ArrowLeft
+  Sparkles
 } from 'lucide-react';
 
 import StaffStudentDetailsPage from '../staff/StaffStudentDetailsPage';
@@ -460,44 +459,6 @@ export default function FranchiseDashboard({
 
           {/* Controls */}
           <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
-            {/* Quick Switch to Branch Admin Button (if user came from branch admin or has admin privileges) */}
-            <button
-              onClick={() => {
-                let returnSession = null;
-                try {
-                  const raw = sessionStorage.getItem('bsel_admin_return_session');
-                  if (raw) returnSession = JSON.parse(raw);
-                } catch (_) {}
-
-                const targetBranch = returnSession?.branch || currentFranchise.branch || 'Tenkasi Branch';
-                const targetRole = returnSession?.role || 'Branch Head';
-
-                if (returnSession) {
-                  setActiveSession(returnSession);
-                } else {
-                  // Fallback branch admin session for this branch
-                  const isTirunelveli = targetBranch.toLowerCase().includes('tirunelveli');
-                  const fallbackAdmin = {
-                    userId: isTirunelveli ? 'bseltirunelveli@bsel.org' : 'bseltenkasi@bsel.org',
-                    studentName: isTirunelveli ? 'Dr. M. Arumugam' : 'Mrs. Thangam Sivaji',
-                    name: isTirunelveli ? 'Dr. M. Arumugam' : 'Mrs. Thangam Sivaji',
-                    role: 'Branch Head',
-                    branch: isTirunelveli ? 'Tirunelveli Branch' : 'Tenkasi Branch'
-                  };
-                  setActiveSession(fallbackAdmin);
-                }
-
-                sessionStorage.setItem('bsel_active_admin_role', targetRole);
-                sessionStorage.setItem('bsel_active_branch', targetBranch);
-                setActivePage('admin');
-              }}
-              className="text-xs font-black bg-amber-400/20 hover:bg-amber-400/30 text-amber-300 border border-amber-400/40 p-1.5 sm:px-3 sm:py-1.5 rounded-xl transition shadow-sm cursor-pointer flex items-center gap-1.5 active:scale-95 whitespace-nowrap shrink-0"
-              title="Return to Branch Admin"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Branch Admin</span>
-            </button>
-
             {/* View Live Website Button */}
             <button
               onClick={() => setActivePage('home')}
