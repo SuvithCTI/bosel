@@ -37,8 +37,12 @@ const TILE_ROWS = 48;
 const TILE_FONT_SIZE = 11;
 const TILE_OPACITY = 0.08;
 
-const CENTER_LOGO_WIDTH = '50%';
-const CENTER_OPACITY =0.09;
+const CENTER_OPACITY = 0.09;
+
+// Default header values (right-side block of the marksheet)
+const DEFAULT_SCHOOL_SUBTITLE = 'VISION FOUNDATION';
+const DEFAULT_SCHOOL_MOTTO = 'EDUCATION · EMPOWERMENT · EXCELLENCE';
+
 // ============================================================
 // REMARK SETTINGS (based on overall percentage)
 // ============================================================
@@ -197,13 +201,26 @@ export const getCourseSubjectModules = (courseName = '') => {
 };
 
 // ============================================================
+// HELPERS
+// ============================================================
+
+// Returns the first value that is a non-empty string
+const firstText = (...values) =>
+  values.find((v) => typeof v === 'string' && v.trim()) || '';
+
+// Formats any number to exactly 2 decimals; returns '-' for empty values
+const fmt2 = (v) => {
+  if (v === null || v === undefined || v === '') return '-';
+  const n = Number(v);
+  return Number.isFinite(n) ? n.toFixed(2) : String(v);
+};
+
+// ============================================================
 // WATERMARK LAYER
 // ============================================================
 
 const FRAME_CLIP = { x: 24, y: 24, width: 676, height: 976 };
 
-// Background layer: tiled text only (sent to the back)
-// Tiled watermark (behind the template) plus the centre emblem (drawn last, so it is on top)
 // Tiled watermark (behind the template) plus the centre emblem.
 // The tiles are masked out around the emblem with a soft fade, so the emblem sits on a clean background.
 function BselWatermark() {
@@ -304,32 +321,6 @@ function BselWatermark() {
   );
 }
 
-// Center emblem: SVG layer on the 724 x 1024 grid, above the watermark and template
-function CenterLogo() {
-  const SIZE = 362;            // 50% of the 724 page width
-  const CX = 362;              // page centre X
-  const CY = 512;              // page centre Y
-
-  return (
-    <svg
-      viewBox="0 0 724 1024"
-      preserveAspectRatio="xMidYMid meet"
-      className="absolute inset-0 w-full h-full pointer-events-none"
-      style={{ zIndex: 3 }}
-      aria-hidden="true"
-    >
-      <image
-        href={WATERMARK_LOGO_SRC}
-        x={CX - SIZE / 2}
-        y={CY - SIZE / 2}
-        width={SIZE}
-        height={SIZE}
-        opacity={CENTER_OPACITY}
-        preserveAspectRatio="xMidYMid meet"
-      />
-    </svg>
-  );
-}
 // ============================================================
 // OFFICIAL MARKSHEET COMPONENT
 // ============================================================
@@ -367,73 +358,48 @@ export default function OfficialMarksheetView({
 
   const defaultBranchName = String(defaultBranch).toUpperCase();
 
-  const [customDirectorSign, setCustomDirectorSign] = useState(() => {
-    return (student?.directorSignature !== undefined && student?.directorSignature !== null)
-      ? student.directorSignature
-      : (student?.signature || readStudentCustomSignature(scopeKey) || null);
-  });
+  // Resolves branding: student-level values first, then saved per-student values, then defaults
+  const readBranding = () => {
+    const saved = readStudentCustomHeader(scopeKey) || {};
+    return {
+      name: firstText(student?.schoolName, saved.name) || defaultBranchName,
+      subtitle: firstText(student?.schoolSubtitle, saved.subtitle) || DEFAULT_SCHOOL_SUBTITLE,
+      motto: firstText(student?.schoolMotto, saved.motto) || DEFAULT_SCHOOL_MOTTO,
+      logo: student?.schoolLogo ?? saved.logo ?? null,
+      sign:
+        student?.directorSignature ??
+        student?.signature ??
+        readStudentCustomSignature(scopeKey) ??
+        null,
+    };
+  };
 
-  const [customSchoolName, setCustomSchoolName] = useState(() => {
-    const saved = readStudentCustomHeader(scopeKey);
-    return (student?.schoolName && student.schoolName.trim())
-      ? student.schoolName
-      : (saved?.name || defaultBranchName);
-  });
-
-  const [customSchoolSubtitle, setCustomSchoolSubtitle] = useState(() => {
-    const saved = readStudentCustomHeader(scopeKey);
-    return (student?.schoolSubtitle && student.schoolSubtitle.trim())
-      ? student.schoolSubtitle
-      : (saved?.subtitle || 'VISION FOUNDATION');
-  });
-
-  const [customSchoolMotto, setCustomSchoolMotto] = useState(() => {
-    const saved = readStudentCustomHeader(scopeKey);
-    return (student?.schoolMotto && student.schoolMotto.trim())
-      ? student.schoolMotto
-      : (saved?.motto || 'EDUCATION • EMPOWERMENT • EXCELLENCE');
-  });
-
-  const [customSchoolLogo, setCustomSchoolLogo] = useState(() => {
-    const saved = readStudentCustomHeader(scopeKey);
-    return (student?.schoolLogo !== undefined && student?.schoolLogo !== null)
-      ? student.schoolLogo
-      : (saved?.logo || null);
-  });
+  const [customDirectorSign, setCustomDirectorSign] = useState(() => readBranding().sign);
+  const [customSchoolName, setCustomSchoolName] = useState(() => readBranding().name);
+  const [customSchoolSubtitle, setCustomSchoolSubtitle] = useState(() => readBranding().subtitle);
+  const [customSchoolMotto, setCustomSchoolMotto] = useState(() => readBranding().motto);
+  const [customSchoolLogo, setCustomSchoolLogo] = useState(() => readBranding().logo);
 
   // Re-sync whenever student / scopeKey changes (prevent cross-student leakage)
   useEffect(() => {
-    const customH = readStudentCustomHeader(scopeKey);
-    const customSign = readStudentCustomSignature(scopeKey);
+    const b = readBranding();
+    setCustomSchoolName(b.name);
+    setCustomSchoolSubtitle(b.subtitle);
+    setCustomSchoolMotto(b.motto);
+    setCustomSchoolLogo(b.logo);
+    setCustomDirectorSign(b.sign);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    scopeKey,
+    defaultBranchName,
+    student?.schoolName,
+    student?.schoolSubtitle,
+    student?.schoolMotto,
+    student?.schoolLogo,
+    student?.directorSignature,
+  ]);
 
-    setCustomSchoolName(
-      (student?.schoolName && student.schoolName.trim())
-        ? student.schoolName
-        : (customH?.name !== undefined ? customH.name : defaultBranchName)
-    );
-    setCustomSchoolSubtitle(
-      (student?.schoolSubtitle && student.schoolSubtitle.trim())
-        ? student.schoolSubtitle
-        : (customH?.subtitle !== undefined ? customH.subtitle : 'VISION FOUNDATION')
-    );
-    setCustomSchoolMotto(
-      (student?.schoolMotto && student.schoolMotto.trim())
-        ? student.schoolMotto
-        : (customH?.motto !== undefined ? customH.motto : 'EDUCATION • EMPOWERMENT • EXCELLENCE')
-    );
-    setCustomSchoolLogo(
-      (student?.schoolLogo !== undefined && student?.schoolLogo !== null)
-        ? student.schoolLogo
-        : (customH?.logo !== undefined ? customH.logo : null)
-    );
-    setCustomDirectorSign(
-      (student?.directorSignature !== undefined && student?.directorSignature !== null)
-        ? student.directorSignature
-        : (customSign !== null ? customSign : null)
-    );
-  }, [scopeKey, defaultBranchName, student?.schoolName, student?.schoolSubtitle, student?.schoolMotto, student?.schoolLogo, student?.directorSignature]);
-
-  // Real-time synchronization across Certificate and Marksheet for the same student or franchise
+  // Live updates: franchise/school branding (shared) and per-student header/signature
   useEffect(() => {
     const handleFranchiseBrandingUpdate = (e) => {
       const fb = e.detail?.branding || e.detail?.franchise;
@@ -445,16 +411,7 @@ export default function OfficialMarksheetView({
         if (fb.signature !== undefined) setCustomDirectorSign(fb.signature);
       }
     };
-    window.addEventListener('bsel_franchise_branding_updated', handleFranchiseBrandingUpdate);
-    window.addEventListener('bsel_school_branding_updated', handleFranchiseBrandingUpdate);
-    return () => {
-      window.removeEventListener('bsel_franchise_branding_updated', handleFranchiseBrandingUpdate);
-      window.removeEventListener('bsel_school_branding_updated', handleFranchiseBrandingUpdate);
-    };
-  }, []);
 
-  // Real-time synchronization across Certificate and Marksheet for the same student
-  useEffect(() => {
     const handleHeaderUpdate = (e) => {
       if (e.detail?.scopeKey === scopeKey) {
         const d = e.detail.data;
@@ -464,14 +421,20 @@ export default function OfficialMarksheetView({
         if (d?.logo !== undefined) setCustomSchoolLogo(d.logo);
       }
     };
+
     const handleSignUpdate = (e) => {
       if (e.detail?.scopeKey === scopeKey) {
         setCustomDirectorSign(e.detail.signature || null);
       }
     };
+
+    window.addEventListener('bsel_franchise_branding_updated', handleFranchiseBrandingUpdate);
+    window.addEventListener('bsel_school_branding_updated', handleFranchiseBrandingUpdate);
     window.addEventListener('bsel_student_custom_header_updated', handleHeaderUpdate);
     window.addEventListener('bsel_student_custom_signature_updated', handleSignUpdate);
     return () => {
+      window.removeEventListener('bsel_franchise_branding_updated', handleFranchiseBrandingUpdate);
+      window.removeEventListener('bsel_school_branding_updated', handleFranchiseBrandingUpdate);
       window.removeEventListener('bsel_student_custom_header_updated', handleHeaderUpdate);
       window.removeEventListener('bsel_student_custom_signature_updated', handleSignUpdate);
     };
@@ -512,30 +475,6 @@ export default function OfficialMarksheetView({
     saveStudentCustomSignature(scopeKey, null);
   };
 
-  const getSchoolNameFontSize = (text) => {
-    const len = (text || '').trim().length;
-    if (len <= 7) return 'clamp(17px, 3.6vw, 28px)';
-    if (len <= 10) return 'clamp(15px, 3.15vw, 24px)';
-    if (len <= 13) return 'clamp(13px, 2.7vw, 20.5px)';
-    if (len <= 16) return 'clamp(11px, 2.35vw, 17.5px)';
-    if (len <= 20) return 'clamp(9.8px, 2.05vw, 15.3px)';
-    return 'clamp(8.5px, 1.8vw, 13px)';
-  };
-
-  const getSchoolSubtitleFontSize = (text) => {
-    const len = (text || '').trim().length;
-    if (len <= 12) return 'clamp(8.5px, 1.7vw, 13px)';
-    if (len <= 18) return 'clamp(7.7px, 1.5vw, 11.5px)';
-    return 'clamp(6.8px, 1.28vw, 9.8px)';
-  };
-
-  const getSchoolMottoFontSize = (text) => {
-    const len = (text || '').trim().length;
-    if (len <= 16) return 'clamp(6px, 1.15vw, 9px)';
-    if (len <= 22) return 'clamp(5.5px, 1.02vw, 8.1px)';
-    return 'clamp(5.1px, 0.9vw, 7.2px)';
-  };
-
   if (!student) return null;
 
   // ----------------------------------------------------------
@@ -550,10 +489,7 @@ export default function OfficialMarksheetView({
   const showMarks = !hideMarks && (showMarksFlag || Boolean(savedSheet?.complete));
 
   const subjects = savedSheet?.subjects?.length
-    ? savedSheet.subjects.map((s) => ({
-        ...s,
-        pct: s.marks === null || s.marks === undefined ? '-' : `${s.marks}%`,
-      }))
+    ? savedSheet.subjects
     : getCourseSubjectModules(courseName);
 
   const totalMax = subjects.reduce(
@@ -567,8 +503,8 @@ export default function OfficialMarksheetView({
   );
 
   const percentage = totalMax
-    ? ((totalMarks / totalMax) * 100).toFixed(1)
-    : '0.0';
+    ? ((totalMarks / totalMax) * 100).toFixed(2)
+    : '0.00';
 
   const overallGrade = getGrade(Number(percentage));
 
@@ -743,8 +679,15 @@ export default function OfficialMarksheetView({
       }}
     >
 
-      {/* Vector template (zIndex 1 inside the template) */}
-      <MarksheetTemplate remark={showMarks ? remarkText : null} />
+      {/* Vector template (zIndex 1 inside the template); draws the header text from the customised values */}
+      <MarksheetTemplate
+        remark={showMarks ? remarkText : null}
+        rightHeading={{
+          title: customSchoolName,
+          subtitle: customSchoolSubtitle,
+          tagline: customSchoolMotto,
+        }}
+      />
 
       {/* Full-page BSEL watermark (zIndex 0, under the template) */}
       <BselWatermark />
@@ -777,10 +720,10 @@ export default function OfficialMarksheetView({
         </div>
       )}
 
-      {/* 0. TOP-RIGHT SCHOOL HEADER & SCHOOL LOGO */}
+      {/* 0. TOP-RIGHT HEADER CLICK AREA (text is drawn by the template) */}
       <div
         onClick={() => !standalone && setIsFormModalOpen(true)}
-        className={`absolute flex flex-col items-center justify-center text-center select-none px-0.5 ${
+        className={`absolute select-none ${
           standalone ? '' : 'cursor-pointer hover:ring-1 hover:ring-amber-400/50 rounded-md transition'
         }`}
         style={{
@@ -791,56 +734,7 @@ export default function OfficialMarksheetView({
           zIndex: 1,
         }}
         title={standalone ? '' : 'Click to customize School Name, Logo & Principal Signature'}
-      >
-        {customSchoolName && (
-          <div
-            className="tracking-normal uppercase text-center w-full whitespace-nowrap"
-            style={{
-              color: '#0b2a55',
-              fontFamily: "'Cinzel', 'Outfit', 'Plus Jakarta Sans', sans-serif",
-              fontWeight: 900,
-              fontSize: getSchoolNameFontSize(customSchoolName),
-              letterSpacing: (customSchoolName || '').trim().length > 13 ? '-0.02em' : '0.02em',
-              lineHeight: 1.02,
-              textShadow: '0 0.5px 1px rgba(19, 66, 122, 0.2)',
-            }}
-          >
-            {customSchoolName}
-          </div>
-        )}
-
-        {customSchoolSubtitle && (
-          <div
-            className="uppercase mt-0.5 text-center w-full whitespace-nowrap"
-            style={{
-              color: '#0b2a55',
-              fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif",
-              fontWeight: 800,
-              fontSize: getSchoolSubtitleFontSize(customSchoolSubtitle),
-              letterSpacing: (customSchoolSubtitle || '').trim().length > 18 ? '0.05em' : '0.09em',
-              lineHeight: 1.05,
-            }}
-          >
-            {customSchoolSubtitle}
-          </div>
-        )}
-
-        {customSchoolMotto && (
-          <div
-            className="uppercase mt-0.5 text-center w-full whitespace-nowrap"
-            style={{
-              color: '#0b2a55',
-              fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif",
-              fontWeight: 700,
-              fontSize: getSchoolMottoFontSize(customSchoolMotto),
-              letterSpacing: '0.07em',
-              lineHeight: 1.05,
-            }}
-          >
-            {customSchoolMotto}
-          </div>
-        )}
-      </div>
+      />
 
       {/* School Logo Container */}
       <div
@@ -1078,7 +972,7 @@ export default function OfficialMarksheetView({
                   zIndex: 1,
                 }}
               >
-                {sub.max}
+                {fmt2(sub.max)}
               </div>
 
               <div
@@ -1091,7 +985,7 @@ export default function OfficialMarksheetView({
                   zIndex: 1,
                 }}
               >
-                {sub.assessment ?? '-'}
+                {fmt2(sub.assessment)}
               </div>
 
               <div
@@ -1104,7 +998,7 @@ export default function OfficialMarksheetView({
                   zIndex: 1,
                 }}
               >
-                {sub.exam ?? '-'}
+                {fmt2(sub.exam)}
               </div>
 
               <div
@@ -1117,7 +1011,7 @@ export default function OfficialMarksheetView({
                   zIndex: 1,
                 }}
               >
-                {sub.pct ?? '-'}
+                {sub.marks !== null && sub.marks !== undefined ? `${fmt2(sub.marks)}%` : '-'}
               </div>
             </React.Fragment>
           );
@@ -1136,7 +1030,7 @@ export default function OfficialMarksheetView({
               zIndex: 1,
             }}
           >
-            {totalMax}
+            {fmt2(totalMax)}
           </div>
 
           <div
@@ -1149,7 +1043,7 @@ export default function OfficialMarksheetView({
               zIndex: 1,
             }}
           >
-            {totalMarks}
+            {fmt2(totalMarks)}
           </div>
 
           <div
@@ -1647,7 +1541,7 @@ export default function OfficialMarksheetView({
                   type="text"
                   value={customSchoolMotto}
                   maxLength={30}
-                  placeholder="e.g. EDUCATION • EMPOWERMENT • EXCELLENCE"
+                  placeholder="e.g. EDUCATION · EMPOWERMENT · EXCELLENCE"
                   onChange={(e) => {
                     const v = e.target.value;
                     setCustomSchoolMotto(v);

@@ -13,13 +13,18 @@ import {
   Edit3,
   Trash2,
   FileDown,
-  School
+  School,
+  Paperclip
 } from 'lucide-react';
 import CompactSelect from '../../components/CompactSelect';
 import StudentAvatar from '../../components/StudentAvatar';
 import { updateUserProfile } from '../../utils/authStorage';
 import { isStudentUser } from '../../utils/studentValidator';
 import { ACADEMIC_STAGES, getAcademicStageFromAge } from '../../utils/academicStages';
+import {
+  getStudentScopeKey,
+  readStudentUploadedQuestions,
+} from '../../utils/studentDataHelpers';
 
 export default function AdminBranchStudentsPage({
   activeBranch = 'Concern Branch',
@@ -657,15 +662,31 @@ export default function AdminBranchStudentsPage({
 
                       {/* Question Paper Column */}
                       <td className="py-3 px-3 text-center whitespace-nowrap">
-                        <button
-                          type="button"
-                          onClick={() => handleOpenQuestionPaperForStudent?.(student)}
-                          className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 hover:border-amber-300 font-bold rounded-lg text-xs transition cursor-pointer inline-flex items-center justify-center gap-1.5 shadow-xs whitespace-nowrap active:scale-95"
-                          title="View Question Paper"
-                        >
-                          <FileSpreadsheet className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                          <span>Qn Paper</span>
-                        </button>
+                        {(() => {
+                          const hasUploadedQ = Boolean(readStudentUploadedQuestions(getStudentScopeKey(student)));
+                          return (
+                            <div className="flex flex-col items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => handleOpenQuestionPaperForStudent?.(student)}
+                                className={`px-3 py-1.5 font-bold rounded-lg text-xs transition cursor-pointer inline-flex items-center justify-center gap-1.5 shadow-xs whitespace-nowrap active:scale-95 ${
+                                  hasUploadedQ
+                                    ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-950 border border-emerald-300'
+                                    : 'bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 hover:border-amber-300'
+                                }`}
+                                title="View Question Paper (Page 1) and Uploaded Questions"
+                              >
+                                <FileSpreadsheet className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                                <span>Qn Paper</span>
+                              </button>
+                              {hasUploadedQ && (
+                                <span className="inline-flex items-center gap-0.5 text-[9.5px] font-black text-emerald-700 bg-emerald-100/80 px-1.5 py-0.5 rounded-full">
+                                  <Paperclip className="w-2.5 h-2.5" /> Questions File
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </td>
                     </tr>
                   );

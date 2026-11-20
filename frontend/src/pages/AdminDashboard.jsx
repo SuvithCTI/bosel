@@ -1392,9 +1392,16 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
     <div className="admin-mobile min-h-screen bg-slate-100 font-sans text-slate-900 pb-20 lg:pb-12">
       
       <style>{`
-        /* Smooth touch scrolling for wide data tables */
+        /* Smooth touch scrolling for wide data tables with hidden scrollbars */
         .admin-table-container {
           -webkit-overflow-scrolling: touch;
+          scrollbar-width: none !important;
+          -ms-overflow-style: none !important;
+        }
+        .admin-table-container::-webkit-scrollbar {
+          display: none !important;
+          width: 0 !important;
+          height: 0 !important;
         }
 
         @media (max-width: 640px) {
@@ -1744,7 +1751,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                     }`}
                   >
                     <Users className={`w-4 h-4 shrink-0 ${activeTab === 'branch_students' ? 'text-sky-400' : 'text-slate-500'}`} />
-                    <span className="truncate">Concern Branch Students</span>
+                    <span className="truncate">Student Registration</span>
                   </button>
 
                   <button
@@ -1866,7 +1873,6 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
               handleOpenCertForStudent={handleOpenCertForStudent}
               handleOpenReceiptForStudent={handleOpenReceiptForStudent}
               handleOpenEventRegForStudent={handleOpenEventRegForStudent}
-              handleOpenQuestionPaperForStudent={handleOpenQuestionPaperForStudent}
               setViewingAdmissionStudent={setViewingAdmissionStudent}
               studentSearch={studentSearch}
               setStudentSearch={setStudentSearch}
@@ -2092,7 +2098,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                 }`}
               >
                 <Users className="w-4 h-4" />
-                <span>Students</span>
+                <span>Student Reg</span>
               </button>
 
               {/* Branch Tab 3: Enquiries / Student Details */}

@@ -54,6 +54,54 @@ export const getStudentRegisterNumber = (student) => {
   return `${prefix}26-${digits}`;
 };
 
+export const generateCertificateNo = (student, courseName, level) => {
+  if (student?.certificateNo && !student.certificateNo.includes('BSEL/AB/11/0001') && !student.certificateNo.includes('BSEL/ABACUS/L1/0007')) {
+    return student.certificateNo;
+  }
+  if (student?.results?.[0]?.certificateNo) {
+    return student.results[0].certificateNo;
+  }
+  const course = (courseName || student?.program || student?.courseName || 'Abacus').toLowerCase();
+  const prefix = course.includes('abacus') ? 'AB' :
+                 course.includes('handwriting') ? 'HW' :
+                 course.includes('phonics') ? 'PH' :
+                 course.includes('vedic') ? 'VM' :
+                 course.includes('calligraphy') ? 'CG' :
+                 course.includes('art') || course.includes('draw') ? 'DR' :
+                 course.includes('html') ? 'HT' :
+                 course.includes('css') ? 'CS' :
+                 course.includes('python') ? 'PY' :
+                 course.includes('office') || course.includes('ms') ? 'MS' :
+                 course.includes('canva') ? 'CV' :
+                 course.includes('photo') ? 'PS' :
+                 course.includes('dance') || course.includes('bharatanatyam') ? 'BN' :
+                 course.includes('memory') ? 'MM' :
+                 course.includes('comput') ? 'CM' :
+                 course.includes('ai') ? 'AI' : 'AB';
+  const rawLvl = String(level || student?.grade || student?.level || '1');
+  const lvlNum = rawLvl.replace(/\D/g, '') || '1';
+  const regNo = getStudentRegisterNumber(student);
+  const regDigits = String(regNo || student?.userId || '').replace(/\D/g, '');
+  const seqDigits = regDigits ? String(parseInt(regDigits.slice(-3), 10) || 1).padStart(4, '0') : '0001';
+  return `BSEL/${prefix}/L${lvlNum}/${seqDigits}`;
+};
+
+export const getCourseSubjectTitle = (courseName) => {
+  if (!courseName) return 'ABACUS';
+  const c = String(courseName).toUpperCase();
+  if (c.includes('HANDWRITING')) return 'HANDWRITING';
+  if (c.includes('CALLIGRAPHY')) return 'CALLIGRAPHY';
+  if (c.includes('PHONICS')) return 'PHONICS';
+  if (c.includes('VEDIC')) return 'VEDIC MATHS';
+  if (c.includes('DRAWING') || c.includes('ART')) return 'DRAWING';
+  if (c.includes('PYTHON') || c.includes('CODING')) return 'PYTHON CODING';
+  if (c.includes('OFFICE') || c.includes('EXCEL')) return 'MS OFFICE';
+  if (c.includes('HTML')) return 'HTML5';
+  if (c.includes('CSS')) return 'CSS3';
+  if (c.includes('ABACUS')) return 'ABACUS';
+  return c.split(' ')[0] || 'ABACUS';
+};
+
 export const getMarksheetSubjects = (student) => {
   const saved = getSavedMarksheet(student);
   if (saved && Array.isArray(saved.subjects) && saved.subjects.length > 0) {
@@ -416,6 +464,50 @@ export const saveStudentCustomSignature = (scopeKey, dataUrl) => {
     }
   } catch (e) {
     console.warn('Failed to save student custom signature:', e);
+  }
+};
+
+/**
+ * Manages custom question paper file uploads (PDF, DOCX, Images, etc.)
+ * scoped per student so questions can easily be uploaded for respective students.
+ */
+export const readStudentUploadedQuestions = (scopeKey) => {
+  if (!scopeKey) return null;
+  try {
+    const key = `bsel_student_questions_file_${scopeKey}`;
+    const saved = localStorage.getItem(key);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed)) {
+        return parsed.length > 0 ? parsed : null;
+      }
+      if (parsed && typeof parsed === 'object') {
+        return [parsed];
+      }
+    }
+  } catch (e) {
+    console.warn('Failed to read student uploaded questions:', e);
+  }
+  return null;
+};
+
+export const saveStudentUploadedQuestions = (scopeKey, fileData) => {
+  if (!scopeKey) return;
+  try {
+    const key = `bsel_student_questions_file_${scopeKey}`;
+    if (fileData && (Array.isArray(fileData) ? fileData.length > 0 : true)) {
+      localStorage.setItem(key, JSON.stringify(fileData));
+    } else {
+      localStorage.removeItem(key);
+    }
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('bsel_student_questions_updated', {
+        detail: { scopeKey, fileData }
+      }));
+    }
+  } catch (e) {
+    console.warn('Failed to save student uploaded questions:', e);
+    throw e;
   }
 };
 
