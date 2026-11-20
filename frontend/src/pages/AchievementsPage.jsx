@@ -1,7 +1,7 @@
 import { getStoredSchools, getStoredSchoolsSectionHeader } from "../data/schoolsData";
 import { getStoredCompetitionAchievements } from "../data/competitionAchievementsData";
 import { useState, useEffect } from "react";
-import { Trophy, Sparkles, Award, ArrowRight } from "lucide-react";
+import { Trophy, Sparkles, Award, ArrowRight, School } from "lucide-react";
 import { getStoredAchievements, resolveStudentPhoto } from "../data/achievementsData";
 
 import apj from "../assets/programs/apj.jpg";
@@ -221,6 +221,41 @@ const schools = [
   },
 ];
 
+const ACHIEVEMENT_NAV_BUTTONS = [
+  {
+    title: 'Our Participations',
+    desc: 'State, National & International level events.',
+    targetId: 'competitions',
+    icon: Trophy,
+    iconBg: 'bg-blue-100 text-blue-900',
+    hoverBorder: 'hover:border-blue-500',
+  },
+  {
+    title: 'Partner School Events',
+    desc: 'Competitions hosted with our partner schools.',
+    targetId: 'partner-school-events',
+    icon: School,
+    iconBg: 'bg-amber-100 text-amber-700',
+    hoverBorder: 'hover:border-amber-500',
+  },
+  {
+    title: 'Annual Day',
+    desc: 'Celebrating our yearly achievements and talents.',
+    targetId: 'annual-day',
+    icon: Sparkles,
+    iconBg: 'bg-purple-100 text-purple-700',
+    hoverBorder: 'hover:border-purple-500',
+  },
+  {
+    title: 'Our Achievers',
+    desc: "Honoring our students' outstanding successes.",
+    targetId: 'student-achievers',
+    icon: Award,
+    iconBg: 'bg-emerald-100 text-emerald-700',
+    hoverBorder: 'hover:border-emerald-500',
+  },
+];
+
 function SectionLabel({ children }) {
   return (
     <span className="inline-flex items-center gap-3 text-xs font-bold uppercase tracking-[0.22em] text-amber-600">
@@ -285,21 +320,39 @@ function Hero() {
             through structured training and national-level competitions.
           </p>
 
-          {/* Buttons */}
-          <div className="mt-5 sm:mt-8 flex w-full flex-col gap-3 sm:gap-4 sm:w-auto sm:flex-row sm:flex-wrap">
-            <a
-              href="#competitions"
-              className="inline-flex w-full items-center justify-center gap-3 rounded-full bg-blue-900 px-7 py-4 text-sm font-extrabold text-white shadow-md transition duration-300 hover:-translate-y-1 hover:bg-blue-950 sm:w-auto sm:text-base"
-            >
-              Explore Achievements
-            </a>
-
-            <a
-              href="#schools"
-              className="inline-flex w-full items-center justify-center rounded-full border-2 border-amber-400 bg-amber-400 px-7 py-4 text-sm font-extrabold text-blue-950 shadow-sm transition duration-300 hover:-translate-y-1 hover:bg-amber-300 sm:w-auto sm:text-base"
-            >
-              Participating Schools
-            </a>
+          {/* 4 Interactive Quick Navigation Buttons */}
+          <div className="mt-5 sm:mt-8 grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3.5 w-full max-w-2xl">
+            {ACHIEVEMENT_NAV_BUTTONS.map((btn) => {
+              const Icon = btn.icon;
+              return (
+                <button
+                  key={btn.title}
+                  type="button"
+                  onClick={() => {
+                    const el = document.getElementById(btn.targetId);
+                    if (el) {
+                      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                  }}
+                  className={`group relative flex items-center justify-between p-3 sm:p-3.5 rounded-xl sm:rounded-2xl border border-slate-200/90 bg-white hover:bg-slate-50/80 shadow-xs hover:shadow-md ${btn.hoverBorder} transition-all duration-200 text-left cursor-pointer active:scale-[0.98]`}
+                >
+                  <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 pr-1">
+                    <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl ${btn.iconBg} flex items-center justify-center shrink-0 transition-transform group-hover:scale-105`}>
+                      <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-xs sm:text-sm font-extrabold text-[#0F2B5C] group-hover:text-blue-700 leading-tight truncate">
+                        {btn.title}
+                      </div>
+                      <div className="text-[10px] sm:text-xs text-slate-500 font-medium leading-tight mt-0.5 line-clamp-1 sm:line-clamp-none">
+                        {btn.desc}
+                      </div>
+                    </div>
+                  </div>
+                  <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-300 group-hover:text-[#0F2B5C] group-hover:translate-x-0.5 transition-all shrink-0" />
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -398,7 +451,7 @@ function Competitions() {
   return (
     <section
       id="competitions"
-      className="bg-white py-6 sm:py-10 lg:py-14"
+      className="bg-white py-6 sm:py-10 lg:py-14 scroll-mt-16 sm:scroll-mt-20"
     >
       <div className="mx-auto max-w-[1440px] px-3 sm:px-4 lg:px-5">
         <div className="mx-auto max-w-2xl text-center">
@@ -473,7 +526,7 @@ function Competitions() {
 
 function Championships() {
   return (
-    <section className="bg-blue-950 py-8 sm:py-10 lg:py-14">
+    <section id="partner-school-events" className="bg-blue-950 py-8 sm:py-10 lg:py-14 scroll-mt-16 sm:scroll-mt-20">
       <div className="mx-auto max-w-[1440px] px-3 sm:px-4 lg:px-5">
         <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
           <div>
@@ -624,7 +677,7 @@ function ParticipatingSchools() {
 
 function AnnualDay() {
   return (
-    <section className="bg-white py-8 sm:py-10 lg:py-14">
+    <section id="annual-day" className="bg-white py-8 sm:py-10 lg:py-14 scroll-mt-16 sm:scroll-mt-20">
       <div className="mx-auto grid max-w-[1440px] items-center gap-8 px-4 sm:gap-10 sm:px-5 lg:grid-cols-2 lg:gap-10 lg:px-5">
         <div className="relative">
           <div className="grid grid-cols-2 gap-4">
