@@ -248,14 +248,11 @@ function Hero() {
 
         {/* Right Image - First on Mobile */}
         <div className="relative mx-auto order-first w-full max-w-lg lg:order-none lg:col-start-2 lg:row-start-1 lg:max-w-none">
-          <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full border-2 border-amber-400/50" />
-          <div className="absolute -bottom-4 -left-4 h-28 w-28 rounded-full border-2 border-blue-200" />
-
-          <div className="relative overflow-hidden rounded-[2rem] border border-blue-100 bg-white p-3 shadow-xl">
+          <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl">
             <img
               src={achievement}
               alt="Students learning and developing their skills"
-              className="h-[280px] w-full rounded-[1.5rem] object-cover sm:h-[380px] lg:h-[440px]"
+              className="h-[280px] w-full rounded-2xl sm:rounded-3xl object-cover sm:h-[380px] lg:h-[440px]"
             />
           </div>
         </div>
