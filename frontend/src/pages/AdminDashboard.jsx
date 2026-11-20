@@ -1389,16 +1389,18 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
   const branchRevenueFormatted = `₹${branchRevenueNumber.toLocaleString('en-IN')}`;
 
   return (
-    <div className="admin-mobile min-h-screen bg-slate-100 font-sans text-slate-900 pb-20 lg:pb-12">
+    <div className="admin-mobile min-h-screen bg-slate-100 font-sans text-slate-900 pb-20 lg:pb-12 overflow-x-hidden">
       
       <style>{`
         /* Smooth touch scrolling for wide data tables with hidden scrollbars */
-        .admin-table-container {
+        .admin-table-container,
+        .overflow-x-auto {
           -webkit-overflow-scrolling: touch;
           scrollbar-width: none !important;
           -ms-overflow-style: none !important;
         }
-        .admin-table-container::-webkit-scrollbar {
+        .admin-table-container::-webkit-scrollbar,
+        .overflow-x-auto::-webkit-scrollbar {
           display: none !important;
           width: 0 !important;
           height: 0 !important;

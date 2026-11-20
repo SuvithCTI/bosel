@@ -153,7 +153,10 @@ export default function AdminEventsPage({
         </div>
 
         {/* DESKTOP VIEW (hidden lg:block): Full Event Table */}
-        <div className="hidden lg:block overflow-x-auto">
+        <div 
+          className="hidden lg:block overflow-x-auto no-scrollbar admin-table-container"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
           <table className="w-full text-left text-xs">
             <thead className="bg-[#081d3d] text-white uppercase text-[10px] tracking-wider font-black">
               <tr>

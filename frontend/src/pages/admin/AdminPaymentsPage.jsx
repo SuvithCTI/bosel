@@ -263,7 +263,10 @@ export default function AdminPaymentsPage({
 
       {/* Payment Transactions Table */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="w-full overflow-x-auto">
+        <div 
+          className="w-full overflow-x-auto no-scrollbar admin-table-container"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
           <table className="w-full min-w-[850px] text-left text-xs">
             <thead className="bg-[#081d3d] text-white uppercase text-[10px] tracking-wider font-black">
               <tr>

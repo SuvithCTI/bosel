@@ -732,7 +732,10 @@ export default function AdminAchievementsModule({ showToast = () => {} }) {
 
           {/* School Community Table Card */}
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
+            <div 
+              className="overflow-x-auto no-scrollbar admin-table-container"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
                   <tr className="border-b border-slate-200 bg-slate-50 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
@@ -878,7 +881,10 @@ export default function AdminAchievementsModule({ showToast = () => {} }) {
           </div>
 
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
+            <div 
+              className="overflow-x-auto no-scrollbar admin-table-container"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
                   <tr className="border-b border-slate-200 bg-slate-50 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
@@ -1021,7 +1027,10 @@ export default function AdminAchievementsModule({ showToast = () => {} }) {
           </div>
 
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
+            <div 
+              className="overflow-x-auto no-scrollbar admin-table-container"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
                   <tr className="border-b border-slate-200 bg-slate-50 text-[11px] font-bold text-slate-500 uppercase tracking-wider">

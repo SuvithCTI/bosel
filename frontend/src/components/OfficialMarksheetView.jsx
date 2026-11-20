@@ -263,7 +263,6 @@ export const computeResult = (subjectsInput = [], revisionsInput = []) => {
   };
 };
 
-// Each subject: Max 100 = Assessment 40 (average of 4 revision tests) + Exam 60 (final exam converted)
 export const getCourseSubjectModules = (courseName = '') => {
   const c = String(courseName).toLowerCase();
   const rule = COURSE_RULES.find(([keys]) => keys.some((k) => c.includes(k)));
