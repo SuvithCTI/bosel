@@ -82,12 +82,8 @@ import {
   clearActiveSession,
   getCoursePrefix
 } from '../utils/authStorage';
-<<<<<<< HEAD
 import { isStudentUser, getStudentFeeStatus } from '../utils/studentValidator';
-=======
-import { isStudentUser } from '../utils/studentValidator';
 import { isStudentInBranch } from '../utils/branchAuthStorage';
->>>>>>> 0b0671a92de4c22703afa5ca6d1ce6d629b70dee
 
 import { 
   getStoredEvents, 
