@@ -146,6 +146,15 @@ export default function AdminBranchStudentsPage({
 
     if (student.studentStage) {
       matchedStage = ACADEMIC_STAGES.find(s => s.stage === student.studentStage || s.label.toLowerCase() === student.studentStage.toLowerCase());
+      if (!matchedStage) {
+        const stLower = student.studentStage.toLowerCase();
+        for (let i = 12; i >= 1; i--) {
+          if (stLower.includes(`class ${i}`)) {
+            matchedStage = ACADEMIC_STAGES.find(s => s.className === `Class ${i}`);
+            if (matchedStage) break;
+          }
+        }
+      }
     }
 
     if (!matchedStage && student.studentClass) {
@@ -154,20 +163,30 @@ export default function AdminBranchStudentsPage({
 
     if (!matchedStage && gradeStr) {
       const gLower = gradeStr.toLowerCase();
-      if (gLower.includes('11') || gLower.includes('12')) {
-        matchedStage = ACADEMIC_STAGES.find(s => s.stage.includes('Class 11 & 12'));
-      } else if (gLower.includes('8') || gLower.includes('9') || gLower.includes('10')) {
-        matchedStage = ACADEMIC_STAGES.find(s => s.stage.includes('Class 8 to 10'));
-      } else if (gLower.includes('6') || gLower.includes('7')) {
-        matchedStage = ACADEMIC_STAGES.find(s => s.stage.includes('Class 6 & 7'));
-      } else if (gLower.includes('4') || gLower.includes('5')) {
-        matchedStage = ACADEMIC_STAGES.find(s => s.stage.includes('Class 4 & 5'));
-      } else if (gLower.includes('class 3') || gLower.includes('3rd')) {
-        matchedStage = ACADEMIC_STAGES.find(s => s.stage.includes('Class 3'));
-      } else if (gLower.includes('class 2') || gLower.includes('2nd')) {
-        matchedStage = ACADEMIC_STAGES.find(s => s.stage.includes('Class 2'));
-      } else if (gLower.includes('class 1') || gLower.includes('1st')) {
-        matchedStage = ACADEMIC_STAGES.find(s => s.stage.includes('Class 1'));
+      if (gLower.includes('12') || gLower.includes('12th')) {
+        matchedStage = ACADEMIC_STAGES.find(s => s.className === 'Class 12');
+      } else if (gLower.includes('11') || gLower.includes('11th')) {
+        matchedStage = ACADEMIC_STAGES.find(s => s.className === 'Class 11');
+      } else if (gLower.includes('10') || gLower.includes('10th')) {
+        matchedStage = ACADEMIC_STAGES.find(s => s.className === 'Class 10');
+      } else if (gLower.includes('9') || gLower.includes('9th')) {
+        matchedStage = ACADEMIC_STAGES.find(s => s.className === 'Class 9');
+      } else if (gLower.includes('8') || gLower.includes('8th')) {
+        matchedStage = ACADEMIC_STAGES.find(s => s.className === 'Class 8');
+      } else if (gLower.includes('7') || gLower.includes('7th')) {
+        matchedStage = ACADEMIC_STAGES.find(s => s.className === 'Class 7');
+      } else if (gLower.includes('6') || gLower.includes('6th')) {
+        matchedStage = ACADEMIC_STAGES.find(s => s.className === 'Class 6');
+      } else if (gLower.includes('5') || gLower.includes('5th')) {
+        matchedStage = ACADEMIC_STAGES.find(s => s.className === 'Class 5');
+      } else if (gLower.includes('4') || gLower.includes('4th')) {
+        matchedStage = ACADEMIC_STAGES.find(s => s.className === 'Class 4');
+      } else if (gLower.includes('3') || gLower.includes('3rd')) {
+        matchedStage = ACADEMIC_STAGES.find(s => s.className === 'Class 3');
+      } else if (gLower.includes('2') || gLower.includes('2nd')) {
+        matchedStage = ACADEMIC_STAGES.find(s => s.className === 'Class 2');
+      } else if (gLower.includes('1') || gLower.includes('1st')) {
+        matchedStage = ACADEMIC_STAGES.find(s => s.className === 'Class 1');
       }
     }
 
@@ -218,15 +237,65 @@ export default function AdminBranchStudentsPage({
   };
 
   const getStudentCategory = (student) => {
-    const cat = (student.admissionCategory || student.category || student.channel || '').toLowerCase();
-    const inst = (student.institution || student.schoolName || student.franchiseName || '').toLowerCase();
+    if (!student) return 'Branch';
 
-    if (cat.includes('school') || inst.includes('school') || inst.includes('matric') || inst.includes('vidyalaya') || inst.includes('cbse')) {
-      return 'School';
-    }
-    if (cat.includes('academy') || cat.includes('franchise') || inst.includes('academy') || inst.includes('studio') || inst.includes('tuition') || inst.includes('institute')) {
+    const cat = String(student.admissionCategory || student.category || student.channel || '').trim().toLowerCase();
+
+    // 1. Direct explicit category check (highest priority)
+    if (cat === 'school') return 'School';
+    if (cat === 'academy' || cat === 'franchise') return 'Academy';
+    if (cat === 'branch' || cat === 'individual' || cat === 'direct') return 'Branch';
+
+    // 2. ID-based check
+    if (student.schoolId) return 'School';
+    if (student.franchiseId) return 'Academy';
+
+    // 3. Names and Institution checks
+    const fName = String(student.franchiseName || '').trim().toLowerCase();
+    if (fName && !fName.includes('regional branch') && !fName.endsWith(' branch')) {
       return 'Academy';
     }
+
+    const sName = String(student.schoolName || '').trim().toLowerCase();
+    const bName = String(student.branch || student.branchName || '').trim().toLowerCase();
+
+    // If schoolName is just the branch name (e.g. "Tenkasi Branch" or "Tenkasi"), it's NOT a school
+    const isSchoolNameJustBranch = sName && (
+      sName === bName || 
+      sName.includes('regional branch') || 
+      sName.endsWith(' branch') ||
+      (bName && (bName.includes(sName) || sName.includes(bName)))
+    );
+
+    if (sName && !isSchoolNameJustBranch) {
+      if (sName.includes('school') || sName.includes('matric') || sName.includes('vidyalaya') || sName.includes('cbse') || sName.includes('higher secondary')) {
+        return 'School';
+      }
+      if (sName.includes('academy') || sName.includes('studio') || sName.includes('tuition') || sName.includes('institute')) {
+        return 'Academy';
+      }
+    }
+
+    const inst = String(student.institution || '').trim().toLowerCase();
+    const isInstJustBranch = inst && (
+      inst === bName ||
+      inst.includes('regional branch') ||
+      inst.endsWith(' branch') ||
+      (bName && (bName.includes(inst) || inst.includes(bName)))
+    );
+
+    if (inst && !isInstJustBranch) {
+      if (inst.includes('school') || inst.includes('matric') || inst.includes('vidyalaya') || inst.includes('cbse') || inst.includes('higher secondary')) {
+        return 'School';
+      }
+      if (inst.includes('academy') || inst.includes('franchise') || inst.includes('studio') || inst.includes('tuition') || inst.includes('institute') || inst.includes('center') || inst.includes('centre')) {
+        return 'Academy';
+      }
+    }
+
+    if (cat.includes('school')) return 'School';
+    if (cat.includes('franchise') || cat.includes('academy')) return 'Academy';
+
     return 'Branch';
   };
 
@@ -263,6 +332,8 @@ export default function AdminBranchStudentsPage({
         const targetCat = branchCategoryFilter.toLowerCase();
         if (targetCat === 'branch' || targetCat === 'individual') {
           if (studentCat !== 'branch' && studentCat !== 'individual') return false;
+        } else if (targetCat === 'academy' || targetCat === 'franchise') {
+          if (studentCat !== 'academy' && studentCat !== 'franchise') return false;
         } else if (studentCat !== targetCat) {
           return false;
         }
@@ -404,14 +475,32 @@ export default function AdminBranchStudentsPage({
           </div>
 
           {/* Course Filter */}
-          <div className="col-span-1 md:col-span-2 xl:col-span-1">
-            <CompactSelect
-              value={branchCourseFilter}
-              onChange={setBranchCourseFilter}
-              options={allCourses}
-              placeholder="All Courses"
-              maxHeight="max-h-56"
-            />
+          <div className="col-span-1 md:col-span-2 xl:col-span-1 flex items-center gap-1.5">
+            <div className="flex-1 min-w-0">
+              <CompactSelect
+                value={branchCourseFilter}
+                onChange={setBranchCourseFilter}
+                options={allCourses}
+                placeholder="All Courses"
+                maxHeight="max-h-56"
+              />
+            </div>
+            {(branchCategoryFilter !== 'All' || branchClassFilter !== 'All' || branchLevelFilter !== 'All' || branchCourseFilter !== 'All' || branchStudentSearch) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setBranchStudentSearch('');
+                  setBranchCategoryFilter('All');
+                  setBranchClassFilter('All');
+                  setBranchLevelFilter('All');
+                  setBranchCourseFilter('All');
+                }}
+                className="px-2 py-2 text-xs font-bold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-lg transition flex items-center justify-center gap-1 cursor-pointer shrink-0"
+                title="Reset all filters"
+              >
+                ✕ Clear
+              </button>
+            )}
           </div>
         </div>
       </div>

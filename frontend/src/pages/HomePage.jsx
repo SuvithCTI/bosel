@@ -320,7 +320,7 @@ export default function HomePage({ setActivePage, onSelectProgram }) {
                   }}
                 >
                   {/* Card Inner Content */}
-                  <div className="relative bg-white rounded-[13px] sm:rounded-[21px] overflow-hidden flex flex-col text-left h-full group-hover:bg-slate-50/70 transition-colors">
+                  <div className="relative bg-white text-slate-900 rounded-[13px] sm:rounded-[21px] overflow-hidden flex flex-col text-left h-full group-hover:bg-slate-50/70 transition-colors">
                     {/* Course Photography Container */}
                     <div className="relative aspect-[3/2] w-full overflow-hidden bg-slate-100">
                       <img
@@ -346,7 +346,7 @@ export default function HomePage({ setActivePage, onSelectProgram }) {
                     <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-2 sm:space-y-3">
                       <div>
                         <div className="flex items-center justify-between gap-1">
-                          <h3 className="font-black text-base sm:text-xl text-black font-heading group-hover:text-sky-700 transition truncate">
+                          <h3 className="font-black text-base sm:text-xl text-slate-950 font-heading group-hover:text-sky-700 transition truncate">
                             {prog.name}
                           </h3>
                           <span className="text-xs font-black text-sky-800 shrink-0 group-hover:translate-x-1 transition-transform">
@@ -413,7 +413,7 @@ export default function HomePage({ setActivePage, onSelectProgram }) {
                     }}
                   >
                     {/* Card Inner Content */}
-                    <div className="relative bg-white rounded-[13px] sm:rounded-[21px] overflow-hidden flex flex-col text-left h-full group-hover:bg-slate-50/70 transition-colors">
+                    <div className="relative bg-white text-slate-900 rounded-[13px] sm:rounded-[21px] overflow-hidden flex flex-col text-left h-full group-hover:bg-slate-50/70 transition-colors">
                       {/* Course Photography Container */}
                       <div className="relative aspect-[3/2] w-full overflow-hidden bg-slate-100">
                         <img
@@ -439,7 +439,7 @@ export default function HomePage({ setActivePage, onSelectProgram }) {
                       <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-2 sm:space-y-3">
                         <div>
                           <div className="flex items-center justify-between gap-1">
-                            <h3 className="font-black text-base sm:text-xl text-black font-heading group-hover:text-sky-700 transition truncate">
+                            <h3 className="font-black text-base sm:text-xl text-slate-950 font-heading group-hover:text-sky-700 transition truncate">
                               {prog.name}
                             </h3>
                             <span className="text-xs font-black text-sky-800 shrink-0 group-hover:translate-x-1 transition-transform">

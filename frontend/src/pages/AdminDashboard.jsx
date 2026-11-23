@@ -82,7 +82,7 @@ import {
   clearActiveSession,
   getCoursePrefix
 } from '../utils/authStorage';
-import { isStudentUser } from '../utils/studentValidator';
+import { isStudentUser, getStudentFeeStatus } from '../utils/studentValidator';
 import { isStudentInBranch } from '../utils/branchAuthStorage';
 
 import { 
@@ -358,7 +358,11 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
               }
             });
 
-            localStorage.setItem('bsel_registered_users', JSON.stringify(merged));
+            try {
+              localStorage.setItem('bsel_registered_users', JSON.stringify(merged));
+            } catch (storageErr) {
+              console.warn('[AdminDashboard] Storage quota exceeded caching remote users:', storageErr);
+            }
             setUsersList(merged);
           }
         }
@@ -984,9 +988,9 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
 
   // 6B. Student Action Handlers (Receipt, Event Registration, Question Paper)
   const handleOpenReceiptForStudent = (student) => {
-    const isApproved = student.feePaymentType === 'Paid' || student.feePaymentType === 'Pay Now' || student.feePaymentType === 'Approved';
+    const isApproved = getStudentFeeStatus(student) === 'Approved';
     if (!isApproved) {
-      alert(`Fee Receipt is available only after fee payment is Approved. Please approve the pending fee payment first.`);
+      alert(`Fee Receipt is available only after fee payment is Approved. Current status: ${getStudentFeeStatus(student)}. Please approve the fee payment first.`);
       return;
     }
     setSelectedReceiptForPrint({
@@ -1200,7 +1204,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
 
     const studentsToMerge = documentType === 'receipt'
       ? selectedStudents.filter(student =>
-          ['Paid', 'Pay Now', 'Approved'].includes(student.feePaymentType)
+          getStudentFeeStatus(student) === 'Approved'
         )
       : selectedStudents;
 
@@ -1313,8 +1317,14 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
         return p.includes(target) || target.includes(p);
       })();
 
-      const isPaidUser = u.feePaymentType === 'Paid' || u.feePaymentType === 'Pay Now' || u.feePaymentType === 'Approved';
-      const matchPayment = studentPaymentFilter === 'All' || (studentPaymentFilter === 'Paid' ? isPaidUser : !isPaidUser);
+      const feeStatus = getStudentFeeStatus(u);
+      const matchPayment = studentPaymentFilter === 'All' || (() => {
+        const target = studentPaymentFilter.toLowerCase();
+        if (target === 'approved' || target === 'paid') return feeStatus === 'Approved';
+        if (target === 'pending') return feeStatus === 'Pending';
+        if (target === 'rejected') return feeStatus === 'Rejected';
+        return feeStatus.toLowerCase() === target;
+      })();
 
       return matchSearch && matchBranch && matchCourse && matchPayment;
     });
@@ -1932,6 +1942,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
               schoolsList={schoolsList}
               coursesList={coursesList}
               usersList={usersList}
+              showToast={showToast}
             />
           )}
 

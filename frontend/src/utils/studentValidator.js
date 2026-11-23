@@ -67,3 +67,42 @@ export const isStudentUser = (u) => {
 
   return true;
 };
+
+/**
+ * Resolves canonical fee status for any student: 'Approved' | 'Pending' | 'Rejected'
+ * When a user prefers "Pay Later", the status is strictly 'Pending'.
+ */
+export const getStudentFeeStatus = (student) => {
+  if (!student) return 'Pending';
+
+  // 1. Explicit feeStatus takes highest priority
+  const rawStatus = String(student.feeStatus || '').trim().toLowerCase();
+  if (rawStatus === 'rejected') return 'Rejected';
+  if (rawStatus === 'approved') return 'Approved';
+  if (rawStatus === 'pending') return 'Pending';
+
+  // 2. Fee payment type resolution
+  const rawType = String(student.feePaymentType || '').trim().toLowerCase();
+  if (rawType === 'rejected' || rawType === 'declined' || rawType === 'failed') {
+    return 'Rejected';
+  }
+
+  // When user prefers pay later option, it should be strictly pending
+  if (rawType === 'pay later' || rawType === 'pending' || rawType === 'unpaid' || rawType === 'due') {
+    return 'Pending';
+  }
+
+  // Online / Paid / Approved / Pay Now
+  if (
+    rawType === 'approved' ||
+    rawType === 'paid' ||
+    rawType === 'paid online' ||
+    rawType === 'pay now' ||
+    rawType === 'paid at branch' ||
+    rawType === 'verified'
+  ) {
+    return 'Approved';
+  }
+
+  return 'Pending';
+};

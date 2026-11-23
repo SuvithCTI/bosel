@@ -32,26 +32,19 @@
   }
 
   h1, h2, h3, h4, h5, h6 {
-    color: #000000;
+    color: inherit;
     font-weight: 900;
     letter-spacing: -0.01em;
   }
 
-  /* Any heading inside text-white or dark containers must be crisp white */
-  .text-white,
-  .text-white h1,
-  .text-white h2,
-  .text-white h3,
-  .text-white h4,
-  .text-white h5,
-  .text-white h6,
-  [class*="text-white"] h1,
-  [class*="text-white"] h2,
-  [class*="text-white"] h3,
-  [class*="text-white"] h4,
-  [class*="text-white"] h5,
-  [class*="text-white"] h6 {
-    color: #ffffff !important;
+  /* Any heading inside light cards or containers must always be deep solid dark */
+  :is(.bg-white, .bg-slate-50, .bg-slate-100, .bg-gray-50, .bg-amber-50, [class*="bg-white"]) h1,
+  :is(.bg-white, .bg-slate-50, .bg-slate-100, .bg-gray-50, .bg-amber-50, [class*="bg-white"]) h2,
+  :is(.bg-white, .bg-slate-50, .bg-slate-100, .bg-gray-50, .bg-amber-50, [class*="bg-white"]) h3,
+  :is(.bg-white, .bg-slate-50, .bg-slate-100, .bg-gray-50, .bg-amber-50, [class*="bg-white"]) h4,
+  :is(.bg-white, .bg-slate-50, .bg-slate-100, .bg-gray-50, .bg-amber-50, [class*="bg-white"]) h5,
+  :is(.bg-white, .bg-slate-50, .bg-slate-100, .bg-gray-50, .bg-amber-50, [class*="bg-white"]) h6 {
+    color: #0f172a;
   }
 
   label {
