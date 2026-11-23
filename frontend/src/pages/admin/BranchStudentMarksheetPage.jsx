@@ -47,6 +47,7 @@ const PRINT_ROOT_ID = 'bsel-print-root';
 // Each subject: 4 weekly revision tests (avg = Assessment, out of 40)
 // + final exam out of 100, converted to 60.
 // Subject total = Assessment + converted exam = out of 100.
+// All calculated values are rounded to whole numbers.
 // ------------------------------------------------
 
 const REVISION_COUNT = 4;
@@ -156,7 +157,8 @@ const todayStamp = () => new Date().toISOString().slice(0, 10);
 const safeBranchName = (branch) =>
   String(branch || 'Branch').replace(/[^a-zA-Z0-9]/g, '_');
 
-const round2 = (n) => Math.round(n * 100) / 100;
+// Rounds to a whole number (no decimals anywhere)
+const round2 = (n) => Math.round(n);
 
 const toNumberOrNull = (v) => {
   if (v === '' || v === null || v === undefined) return null;
@@ -167,14 +169,26 @@ const toNumberOrNull = (v) => {
 // Input text for an entry field ('' when empty)
 const toInput = (v) => (v === null || v === undefined ? '' : String(v));
 
-// Display value ('-' when empty)
-const dv = (v, suffix = '') =>
-  v === null || v === undefined || v === '' ? '-' : `${v}${suffix}`;
+// Display value ('-' when empty). Numbers are shown as whole numbers.
+const dv = (v, suffix = '') => {
+  if (v === null || v === undefined || v === '') return '-';
+  const n = Number(v);
+  return `${Number.isFinite(n) ? Math.round(n) : v}${suffix}`;
+};
+
+// Whole-number percentage ('-' when empty)
+const pctText = (v) => {
+  if (v === null || v === undefined || v === '') return '-';
+  const n = Number(v);
+  return Number.isFinite(n) ? `${Math.round(n)}%` : '-';
+};
 
 const totalCell = (saved) =>
-  saved?.complete ? `${saved.totalMarks}/${saved.totalMaximum}` : '-';
+  saved?.complete
+    ? `${Math.round(Number(saved.totalMarks))}/${saved.totalMaximum}`
+    : '-';
 
-const pctCell = (saved) => (saved?.complete ? `${saved.percentage}%` : '-');
+const pctCell = (saved) => (saved?.complete ? pctText(saved.percentage) : '-');
 
 // The 6 values shown for one subject in the Entered Students table:
 // R1, R2, R3, R4, Avg (out of 40), Total (out of 100)
@@ -291,7 +305,7 @@ const buildSheetBody = (student, sheet) => {
           <td class="c">${escapeHtml(dv(s.assessment))} / ${ASSESSMENT_MAX}</td>
           <td class="c">${escapeHtml(dv(s.examConverted))} / ${EXAM_CONVERTED_MAX}</td>
           <td class="c">${escapeHtml(dv(s.marks))}</td>
-          <td class="c">${dv(s.marks, '%')}</td>
+          <td class="c">${escapeHtml(pctText(s.marks))}</td>
           <td class="c">${escapeHtml(grade)}</td>
         </tr>`;
     })
@@ -333,7 +347,7 @@ const buildSheetBody = (student, sheet) => {
       <td class="c">${escapeHtml(dv(sheet.totalMaximum))}</td>
       <td class="c" colspan="2">-</td>
       <td class="c">${escapeHtml(dv(sheet.totalMarks))}</td>
-      <td class="c">${escapeHtml(sheet.complete ? `${pctValue.toFixed(2)}%` : '-')}</td>
+      <td class="c">${escapeHtml(sheet.complete ? pctText(pctValue) : '-')}</td>
       <td class="c">${escapeHtml(dv(sheet.overallGrade))}</td>
     </tr>
   </table>
@@ -989,7 +1003,7 @@ export default function BranchStudentMarksheetPage({
       lastStage: stage.key,
       totalMarks: marksTotal,
       totalMaximum: maxTotal,
-      percentage: pct !== null ? pct.toFixed(2) : null,
+      percentage: pct !== null ? String(pct) : null,
       overallGrade: pct !== null ? getGrade(pct) : null,
       updatedAt: new Date().toISOString(),
     };
@@ -1625,7 +1639,7 @@ export default function BranchStudentMarksheetPage({
                   </div>
                   <div>
                     <span className="block text-[8px] uppercase text-slate-400">%</span>
-                    <span className="text-sky-800">{dv(r.marks, '%')}</span>
+                    <span className="text-sky-800">{pctText(r.marks)}</span>
                   </div>
                 </div>
               </div>
@@ -1686,7 +1700,7 @@ export default function BranchStudentMarksheetPage({
                     </td>
                     <td className={`${tdCls} text-xs font-bold text-slate-900`}>{dv(r.examConverted)}</td>
                     <td className={`${tdCls} text-xs font-black text-slate-950`}>{dv(r.marks)}</td>
-                    <td className={`${tdCls} text-xs font-bold text-sky-800`}>{dv(r.marks, '%')}</td>
+                    <td className={`${tdCls} text-xs font-bold text-sky-800`}>{pctText(r.marks)}</td>
                     <td className={tdCls}>{renderGradeBadge(r)}</td>
                   </tr>
                 );
@@ -1716,7 +1730,7 @@ export default function BranchStudentMarksheetPage({
                 Percentage
               </span>
               <div className="text-xs sm:text-sm font-black text-sky-800 leading-tight truncate">
-                {student && allComplete ? `${percentage.toFixed(2)}%` : dash}
+                {student && allComplete ? pctText(percentage) : dash}
               </div>
             </div>
 
@@ -2044,7 +2058,7 @@ export default function BranchStudentMarksheetPage({
               <div className="min-w-0">
                 <h2 className="text-xs sm:text-sm font-black text-slate-950">Marksheet Preview</h2>
                 <p className="text-[9px] sm:text-[11px] text-slate-500 truncate capitalize">
-                  {previewRecord.student.studentName} · ID {previewRecord.student.userId} · {previewRecord.saved.percentage}% · Grade {previewRecord.saved.overallGrade}
+                  {previewRecord.student.studentName} · ID {previewRecord.student.userId} · {pctText(previewRecord.saved.percentage)} · Grade {previewRecord.saved.overallGrade}
                 </p>
               </div>
 

@@ -224,17 +224,17 @@ export default function FranchiseCertificateBrandingModal({
           {/* LEFT: FORM CONTROLS */}
           <div className="lg:col-span-5 bg-slate-50 border border-slate-200 p-5 rounded-2xl shadow-xs flex flex-col gap-4 text-xs">
             
-            {/* Line 1: School / Branch Name (Max 16) */}
+            {/* Line 1: School / Branch Name (Max 12) */}
             <label className="flex flex-col gap-1.5">
               <span className="text-[11px] font-bold text-slate-700">
-                Line 1: School / Branch Name <span className="text-amber-700 font-bold">(Max 16)</span>
+                Line 1: School / Branch Name <span className="text-amber-700 font-bold">(Max 12)</span>
               </span>
               <input
                 type="text"
                 value={headerName}
-                maxLength={16}
+                maxLength={12}
                 onChange={(e) => {
-                  setHeaderName(e.target.value.toUpperCase());
+                  setHeaderName(e.target.value.slice(0, 12).toUpperCase());
                   setIsSaved(false);
                 }}
                 placeholder="e.g. TENKASI BRANCH"
@@ -242,8 +242,8 @@ export default function FranchiseCertificateBrandingModal({
               />
               <div className="flex justify-between items-center text-[10px] text-slate-500">
                 <span>Primary title on certificate</span>
-                <span className={headerName.length >= 16 ? 'text-amber-700 font-bold' : ''}>
-                  {headerName.length}/16
+                <span className={headerName.length >= 12 ? 'text-amber-700 font-bold' : ''}>
+                  {headerName.length}/12
                 </span>
               </div>
             </label>

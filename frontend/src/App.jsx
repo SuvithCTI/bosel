@@ -12,6 +12,7 @@ import FranchisePage from './pages/FranchisePage';
 import ContactPage from './pages/ContactPage';
 import LoginPage from './pages/LoginPage';
 import CertificatePage from './pages/CertificatePage';
+import CertificateVerificationPage from './pages/CertificateVerificationPage';
 import AdminDashboard from './pages/AdminDashboard';
 import StaffDashboard from './pages/staff/StaffDashboard';
 import FranchiseDashboard from './pages/franchise/FranchiseDashboard';
@@ -44,11 +45,34 @@ export default function App() {
   const [activePage, setActivePageState] = useState(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
-      const urlPage = params.get('page');
+      const cleanHash = window.location.hash ? window.location.hash.replace(/^#\/?/, '').split('?')[0] : '';
 
-      // 1. Explicit ?page=... URL parameter always takes highest precedence
+      // HIGHEST PRIORITY: Public Student Certificate Verification
+      // Must take precedence over any logged-in admin session or saved page!
+      if (
+        window.location.pathname.startsWith('/verify') ||
+        cleanHash.startsWith('verify') ||
+        params.get('page') === 'verify' ||
+        params.get('cert')
+      ) {
+        return 'verify';
+      }
+
+      // Explicit ?page=... URL parameter
+      const urlPage = params.get('page');
       if (urlPage) {
         return urlPage;
+      }
+
+      // Direct URL pathname routes
+      if (window.location.pathname.startsWith('/admin')) {
+        return 'admin';
+      }
+      if (window.location.pathname.startsWith('/staff')) {
+        return 'staff';
+      }
+      if (window.location.pathname.startsWith('/franchise')) {
+        return 'franchise_portal';
       }
 
       // If user directly opened or reloaded the root URL '/', default to 'home'
@@ -72,27 +96,15 @@ export default function App() {
       }
 
       const savedPage = sessionStorage.getItem('bsel_current_page');
-      if (savedPage && savedPage !== 'login') {
+      if (savedPage && savedPage !== 'login' && savedPage !== 'verify') {
         return savedPage;
       }
 
-      if (window.location.pathname.startsWith('/admin')) {
-        return (session?.role === 'Super Admin' || session?.role === 'Branch Head') ? 'admin' : 'login';
-      }
-
-      if (window.location.pathname.startsWith('/staff')) {
-        return session?.role === 'Staff' ? 'staff' : 'login';
-      }
-
-      if (window.location.pathname.startsWith('/franchise')) {
-        return (session?.role === 'Franchise' || session?.role === 'School') ? 'franchise_portal' : 'login';
-      }
-
-      if (window.location.hash) {
-        const cleanHash = window.location.hash.replace(/^#\/?/, '');
+      if (cleanHash) {
         if (cleanHash.startsWith('admin')) return (session?.role === 'Super Admin' || session?.role === 'Branch Head') ? 'admin' : 'login';
         if (cleanHash.startsWith('staff')) return session?.role === 'Staff' ? 'staff' : 'login';
         if (cleanHash.startsWith('franchise') || cleanHash.startsWith('school')) return (session?.role === 'Franchise' || session?.role === 'School') ? 'franchise_portal' : 'login';
+        if (cleanHash.startsWith('verify')) return 'verify';
         return cleanHash;
       }
     }
@@ -205,7 +217,7 @@ export default function App() {
     window.scrollTo(0, 0);
   }, []);
 
-  // Synchronize browser forward/back buttons (popstate)
+  // Synchronize browser forward/back buttons (popstate) and URL hash/verify changes
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
@@ -221,8 +233,19 @@ export default function App() {
     window.history.replaceState({ page: currentPage }, '', url.toString());
 
     const handlePopState = (event) => {
-      const pageFromState = event.state?.page;
       const searchParams = new URLSearchParams(window.location.search);
+      const cleanHash = window.location.hash ? window.location.hash.replace(/^#\/?/, '').split('?')[0] : '';
+      if (
+        window.location.pathname.startsWith('/verify') ||
+        cleanHash.startsWith('verify') ||
+        searchParams.get('page') === 'verify' ||
+        searchParams.get('cert')
+      ) {
+        setActivePageState('verify');
+        return;
+      }
+
+      const pageFromState = event.state?.page;
       const pageFromUrl = searchParams.get('page');
       const targetPage = pageFromState || pageFromUrl || 'home';
 
@@ -237,7 +260,11 @@ export default function App() {
     };
 
     window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
+    window.addEventListener('hashchange', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('hashchange', handlePopState);
+    };
   }, []);
 
   useLayoutEffect(() => {
@@ -276,7 +303,8 @@ export default function App() {
     activePage === 'admin' ||
     activePage === 'staff' ||
     activePage === 'franchise_portal' ||
-    activePage === 'login';
+    activePage === 'login' ||
+    activePage === 'verify';
 
   // -------------------------------------------------------
   // Modal states
@@ -507,6 +535,10 @@ export default function App() {
 
         {activePage === 'certificate' && (
           <CertificatePage />
+        )}
+
+        {activePage === 'verify' && (
+          <CertificateVerificationPage setActivePage={setActivePage} />
         )}
 
         {activePage === 'contact' && (

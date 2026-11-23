@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { X, Award } from 'lucide-react';
-import Certificate from './Certificate';
+import { X, Award, ExternalLink } from 'lucide-react';
+import Certificate, { buildVerificationUrl, getStudentVerificationMeta } from './Certificate';
 import { getCoursePrefix, getActiveSession } from '../utils/authStorage';
 
 export default function CertificateModal({
@@ -230,13 +230,47 @@ export default function CertificateModal({
             </span>
           </div>
 
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-full rounded-lg bg-slate-800 px-4 py-1.5 font-bold text-white transition hover:bg-slate-700 sm:w-auto"
-          >
-            Close Preview
-          </button>
+          <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+            <button
+              type="button"
+              onClick={() => {
+                if (typeof window !== 'undefined') {
+                  const meta = getStudentVerificationMeta(studentName, registrationNo, certificateNo, data?.student || data, grade, studentPhoto);
+                  const targetUrl = buildVerificationUrl({
+                    certificateNo,
+                    studentName,
+                    courseName,
+                    level,
+                    grade,
+                    registrationNo,
+                    centreName,
+                    centreCode,
+                    issueDate,
+                    duration,
+                    centreAddress,
+                    parentName: meta.parent,
+                    score: meta.score,
+                    vid: meta.vid,
+                    sec: meta.sec,
+                    photoKey: meta.photoKey,
+                  }, true);
+                  window.open(targetUrl, '_blank');
+                }
+              }}
+              className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 px-3 py-1.5 font-bold text-slate-950 text-xs shadow transition active:scale-95 cursor-pointer"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+              <span>Open Mobile Verification</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-lg bg-slate-800 px-4 py-1.5 font-bold text-white transition hover:bg-slate-700 text-xs cursor-pointer"
+            >
+              Close Preview
+            </button>
+          </div>
         </div>
       </div>
     </div>

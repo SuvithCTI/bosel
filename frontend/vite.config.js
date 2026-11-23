@@ -28,6 +28,7 @@ export default defineConfig({
     react(),
   ],
   server: {
+    host: true,
     proxy: {
       '/api': {
         target: 'http://localhost:5000',
@@ -36,7 +37,9 @@ export default defineConfig({
       '/uploads': {
         target: 'http://localhost:5000',
         changeOrigin: true
-      }
+      },
+      
+      server: { host: true },
     }
   }
 })
