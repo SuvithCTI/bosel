@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Certificate, { formatSimpleGrade } from '../components/Certificate';
 import { exportPdfFromElement } from '../utils/pdfExport';
+import { resolveBranchDetails } from '../utils/branchAuthStorage';
 import {
   CheckCircle2,
   Download,
@@ -135,9 +136,9 @@ const resolveParentName = (name = '', reg = '', parentParam = null) => {
   return 'S. Ramanathan';
 };
 
-// Helper for Scores & Grades (clean simple grade: A, A+, B, B+, ADMITTED - no text like outstanding, excellent)
+// Helper for Scores & Grades (clean simple grade: A, A+, B, B+ strictly from marksheet)
 const resolveScoreAndGrade = (name = '', gradeParam = '', scoreParam = '') => {
-  const cleanGrade = formatSimpleGrade(gradeParam || 'A');
+  const cleanGrade = formatSimpleGrade(gradeParam);
 
   const sLow = String(name || '').toLowerCase();
   if (sLow.includes('alwin')) {
@@ -150,10 +151,10 @@ const resolveScoreAndGrade = (name = '', gradeParam = '', scoreParam = '') => {
     return { score: scoreParam || '468 / 500 (93.6%)', grade: cleanGrade || 'A' };
   }
   if (sLow.includes('bob')) {
-    return { score: scoreParam || '459 / 500 (91.8%)', grade: 'ADMITTED' };
+    return { score: scoreParam || '', grade: cleanGrade || '' };
   }
 
-  return { score: scoreParam || '459 / 500 (91.8%)', grade: cleanGrade };
+  return { score: scoreParam || (cleanGrade ? '459 / 500 (91.8%)' : ''), grade: cleanGrade || '' };
 };
 
 // Helper for Verification ID & Security Code
@@ -218,19 +219,24 @@ export default function CertificateVerificationPage({ setActivePage }) {
     const photo = params.get('photo');
 
     // If student parameters exist in URL, use them directly!
+    const resolvedBranch = resolveBranchDetails(
+      { branch: centre, code, address: addr },
+      { centreName: centre, centreCode: code, centreAddress: addr }
+    );
+
     if (name || reg || certNo) {
       return {
         certificateNo: certNo || 'BSEL-2026-8942',
         studentName: name || 'M. A. ALWIN RAJ',
         courseName: course || 'Advanced Abacus & Mental Arithmetic',
         level: level || 'Level 1',
-        grade: formatSimpleGrade(grade || 'A'),
+        grade: formatSimpleGrade(grade),
         registrationNo: reg || 'BSEL-2026-8942',
-        centreName: centre || 'Chennai',
-        centreCode: code || '545454',
+        centreName: resolvedBranch.centreName,
+        centreCode: resolvedBranch.centreCode,
         issueDate: date || '05-10-2026',
         duration: duration || '6 Months',
-        centreAddress: addr || 'Chennai, Tamil Nadu',
+        centreAddress: resolvedBranch.centreAddress,
         schoolName: school || 'Apex Academy, Chennai',
         schoolSubtitle: sub || '',
         schoolMotto: motto || '',
@@ -243,6 +249,7 @@ export default function CertificateVerificationPage({ setActivePage }) {
     }
 
     // Default student matching reference
+    const defaultBranch = resolveBranchDetails('Tenkasi');
     return {
       certificateNo: 'BSEL-2026-8942',
       studentName: 'M. A. ALWIN RAJ',
@@ -250,11 +257,11 @@ export default function CertificateVerificationPage({ setActivePage }) {
       level: 'Level 1',
       grade: 'A+',
       registrationNo: 'BSEL-2026-8942',
-      centreName: 'Chennai',
-      centreCode: '545454',
+      centreName: defaultBranch.centreName,
+      centreCode: defaultBranch.centreCode,
       issueDate: '05-10-2026',
       duration: '6 Months',
-      centreAddress: 'Chennai, Tamil Nadu',
+      centreAddress: defaultBranch.centreAddress,
       schoolName: 'Apex Academy, Chennai',
       schoolSubtitle: '',
       schoolMotto: '',

@@ -3,6 +3,7 @@ import Certificate from '../components/Certificate';
 import OfficialMarksheetView from '../components/OfficialMarksheetView';
 import { Award, FileText } from 'lucide-react';
 import { getCoursePrefix } from '../utils/authStorage';
+import { resolveBranchDetails } from '../utils/branchAuthStorage';
 
 export default function CertificatePage() {
   const [activeTab, setActiveTab] = useState('certificate'); // 'certificate' | 'marksheet'
@@ -25,6 +26,7 @@ export default function CertificatePage() {
             resolvedCertNo = `BSEL/${prefix}/L${cleanLvl}/${seq}`;
           }
 
+          const branch = resolveBranchDetails(parsed);
           return {
             studentName: parsed.studentName || '',
             courseName: cName,
@@ -34,9 +36,9 @@ export default function CertificatePage() {
             duration: parsed.duration || '6 Months',
             registrationNo: parsed.registrationNo || `${prefix}26-${seq.slice(-3)}`,
             certificateNo: resolvedCertNo,
-            centreName: parsed.centreName || 'Tenkasi Branch',
-            centreCode: parsed.centreCode || '546454',
-            centreAddress: parsed.centreAddress || 'second street, surandai,keelasurandai,tenkasi',
+            centreName: branch.centreName,
+            centreCode: branch.centreCode,
+            centreAddress: branch.centreAddress,
             issueDate: parsed.issueDate || '05-10-2026',
             certificateType: parsed.certificateType || 'COMPLETION',
             studentPhoto: parsed.studentPhoto || null
@@ -47,6 +49,7 @@ export default function CertificatePage() {
       }
     }
 
+    const defaultBranch = resolveBranchDetails('Tenkasi');
     return {
       studentName: '',
       courseName: 'Abacus',
@@ -56,9 +59,9 @@ export default function CertificatePage() {
       duration: '6 Months',
       registrationNo: 'AB27-001',
       certificateNo: 'BSEL/AB/L1/0001',
-      centreName: 'Tenkasi Branch',
-      centreCode: '546454',
-      centreAddress: 'second street, surandai,keelasurandai,tenkasi',
+      centreName: defaultBranch.centreName,
+      centreCode: defaultBranch.centreCode,
+      centreAddress: defaultBranch.centreAddress,
       issueDate: '05-10-2026',
       certificateType: 'COMPLETION',
       studentPhoto: null

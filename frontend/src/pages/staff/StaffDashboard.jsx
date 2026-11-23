@@ -34,13 +34,16 @@ import {
 } from '../../utils/authStorage';
 import { getStoredStaff } from '../../utils/staffStorage';
 import { isStudentUser } from '../../utils/studentValidator';
+import { isStudentInBranch } from '../../utils/branchAuthStorage';
 import { getStoredBatches } from '../../data/batchesData';
 import { getStoredSchools } from '../../data/schoolsData';
 import { getStoredPayments } from '../../data/paymentsData';
 import {
   getStudentPhotoUrl,
   getStudentRegisterNumber,
-  getMarksheetSubjects
+  getMarksheetSubjects,
+  resolveBranchDetails,
+  resolveStudentGrade
 } from '../../utils/studentDataHelpers';
 
 export default function StaffDashboard({
@@ -195,17 +198,7 @@ export default function StaffDashboard({
   // Filter branch students for activeBranch (matches Branch Admin logic)
   const branchStudents = usersList
     .filter(isStudentUser)
-    .filter(u => {
-      const studentBranch = (u.branch || u.institution || '').toLowerCase();
-      const targetBranch = (activeBranch || '').toLowerCase();
-      const cleanKey = targetBranch.replace(/b★sel|regional|central|branch|academy/gi, '').trim();
-      const matchKey = cleanKey || targetBranch;
-      return (
-        studentBranch.includes(matchKey) ||
-        targetBranch.includes(studentBranch) ||
-        studentBranch.includes(targetBranch)
-      );
-    });
+    .filter(u => isStudentInBranch(u, activeBranch));
 
   // Filter branch batches for activeBranch
   const branchBatches = batchesList.filter(b => {
@@ -245,6 +238,10 @@ export default function StaffDashboard({
       ? student.certificateNo
       : `BSEL/${coursePrefix}/L${cleanLevel}/${seqDigits}`;
 
+    const branchDetails = resolveBranchDetails(student, {
+      centreName: student.branch || student.institution || activeBranch
+    });
+
     const studentCertData = {
       studentId: student.id || student._id || student.admissionNo || regNo,
       admissionNo: student.admissionNo || regNo,
@@ -252,13 +249,13 @@ export default function StaffDashboard({
       courseName: courseName,
       programPrefix: 'MINDSPARC',
       level: student.grade || student.level || 'Level 1',
-      grade: student.results?.[0]?.rank || 'A',
+      grade: resolveStudentGrade(student) || '',
       duration: student.duration || '6 Months',
       registrationNo: regNo,
       certificateNo: certNo,
-      centreName: student.branch || student.institution || activeBranch || 'Tenkasi Branch',
-      centreCode: '545454',
-      centreAddress: student.address || 'second street, surandai,keelasurandai,tenkasi',
+      centreName: branchDetails.centreName,
+      centreCode: branchDetails.centreCode,
+      centreAddress: branchDetails.centreAddress,
       issueDate: student.enrolmentDate || '05-10-2026',
       certificateType: 'COMPLETION',
       studentPhoto: getStudentPhotoUrl(student) || student.studentPhoto || null,

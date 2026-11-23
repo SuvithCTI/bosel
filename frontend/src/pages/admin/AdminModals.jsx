@@ -297,8 +297,8 @@ export default function AdminModals({
         setActivePage={setActivePage}
         initialBranch={currentAdminRole === 'Branch Head' ? (activeBranch ? activeBranch.replace(/\s+Branch$/i, '') : 'Tenkasi') : 'Tenkasi'}
         lockBranch={currentAdminRole === 'Branch Head'}
-        lockAdmissionCategory={currentAdminRole === 'Branch Head'}
-        initialAdmissionCategory={currentAdminRole === 'Branch Head' ? 'Branch' : null}
+        lockAdmissionCategory={false}
+        initialAdmissionCategory={null}
         initialInstitution={currentAdminRole === 'Branch Head' ? activeBranch : null}
         skipPayment={false}
         onSuccess={(account) => {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { Menu, X, User, Phone, ArrowRight } from 'lucide-react';
-import Logo from './Logo';
+import bselLogo from '../assets/bsel_logo.png';
 
 export default function Navbar({ activePage, setActivePage, sessionUser }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -64,10 +64,28 @@ export default function Navbar({ activePage, setActivePage, sessionUser }) {
           <div className="w-full max-w-[1700px] mx-auto flex items-center justify-between gap-2">
             {/* Logo */}
             <div className="shrink-0 max-w-[65%] sm:max-w-none">
-              <Logo
-                lightText={true}
+              <button
+                type="button"
                 onClick={() => handleNavClick('home')}
-              />
+                aria-label="B★SEL Home"
+                className="flex items-center gap-3 text-left cursor-pointer"
+              >
+                <span className="h-12 w-12 sm:h-14 sm:w-14 shrink-0 flex items-center justify-center rounded-xl bg-white border border-amber-300 shadow-sm p-1.5">
+                  <img
+                    src={bselLogo}
+                    alt="B★SEL Crest"
+                    className="h-full w-full object-contain"
+                  />
+                </span>
+                <span className="flex flex-col leading-tight">
+                  <span className="text-base sm:text-xl font-extrabold tracking-[0.12em] whitespace-nowrap">
+                    B <span className="text-amber-400">★</span> SEL
+                  </span>
+                  <span className="hidden sm:block mt-1 text-[11px] lg:text-xs font-medium text-slate-200 whitespace-nowrap">
+                    Board of Skills and Educational Learning
+                  </span>
+                </span>
+              </button>
             </div>
 
             {/* Desktop Navigation Links */}
@@ -206,7 +224,28 @@ export default function Navbar({ activePage, setActivePage, sessionUser }) {
           <div className="relative w-full max-h-[88vh] overflow-y-auto overscroll-contain bg-[#0A1D3D] text-white border-b-4 border-amber-400 shadow-2xl z-10 px-4 pt-4 pb-6 space-y-4 animate-in slide-in-from-top duration-200">
             {/* Top Close bar */}
             <div className="flex items-center justify-between pb-3 border-b border-white/15">
-              <Logo size="small" lightText={true} onClick={() => handleNavClick('home')} />
+              <button
+                type="button"
+                onClick={() => handleNavClick('home')}
+                aria-label="B★SEL Home"
+                className="flex items-center gap-3 text-left cursor-pointer"
+              >
+                <span className="h-11 w-11 shrink-0 flex items-center justify-center rounded-lg bg-white border border-amber-300 shadow-sm p-1.5">
+                  <img
+                    src={bselLogo}
+                    alt="B★SEL Crest"
+                    className="h-full w-full object-contain"
+                  />
+                </span>
+                <span className="flex flex-col leading-tight">
+                  <span className="text-lg font-extrabold tracking-[0.12em]">
+                    B <span className="text-amber-400">★</span> SEL
+                  </span>
+                  <span className="text-[10px] sm:text-xs font-medium text-slate-300">
+                    Board of Skills and Educational Learning
+                  </span>
+                </span>
+              </button>
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen(false)}
