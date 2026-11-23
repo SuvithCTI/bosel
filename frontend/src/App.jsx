@@ -471,10 +471,10 @@ export default function App() {
         duration: '6 Months',
         registrationNo: 'AB27-001',
         certificateNo: 'BSEL/ABACUS/L1/0007',
-        centreName: 'Tenkasi Branch',
-        centreCode: '546454',
+        centreName: 'Tenkasi',
+        centreCode: 'BSEL-BR-101',
         centreAddress:
-          'second street, surandai,keelasurandai,tenkasi',
+          'Second Street, Surandai, Keelasurandai, Tenkasi - 627859',
         issueDate: '05-10-2026',
         certificateType: 'COMPETITION',
       }

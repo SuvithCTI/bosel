@@ -82,7 +82,12 @@ import {
   clearActiveSession,
   getCoursePrefix
 } from '../utils/authStorage';
+<<<<<<< HEAD
 import { isStudentUser, getStudentFeeStatus } from '../utils/studentValidator';
+=======
+import { isStudentUser } from '../utils/studentValidator';
+import { isStudentInBranch } from '../utils/branchAuthStorage';
+>>>>>>> 0b0671a92de4c22703afa5ca6d1ce6d629b70dee
 
 import { 
   getStoredEvents, 
@@ -132,7 +137,9 @@ import {
   SAMPLE_STUDENT_PHOTOS,
   getStudentPhotoUrl,
   getStudentRegisterNumber,
-  getMarksheetSubjects
+  getMarksheetSubjects,
+  resolveBranchDetails,
+  resolveStudentGrade
 } from '../utils/studentDataHelpers';
 
 export {
@@ -261,6 +268,16 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
     window.addEventListener('bsel_payments_updated', handlePaymentsUpdate);
     window.addEventListener('bsel_schools_updated', handleSchoolsUpdate);
     window.addEventListener('bsel_batches_updated', handleBatchesUpdate);
+    window.addEventListener('bsel_branch_credentials_updated', () => {
+      handleSchoolsUpdate();
+      handleUsersUpdate();
+    });
+    const handleStorage = () => {
+      handleUsersUpdate();
+      handleSchoolsUpdate();
+      handlePaymentsUpdate();
+    };
+    window.addEventListener('storage', handleStorage);
 
     // Initial fetch from Neon PostgreSQL to ensure all online registrations & profile updates appear
     (async () => {
@@ -345,7 +362,11 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
               }
             });
 
-            localStorage.setItem('bsel_registered_users', JSON.stringify(merged));
+            try {
+              localStorage.setItem('bsel_registered_users', JSON.stringify(merged));
+            } catch (storageErr) {
+              console.warn('[AdminDashboard] Storage quota exceeded caching remote users:', storageErr);
+            }
             setUsersList(merged);
           }
         }
@@ -362,6 +383,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
       window.removeEventListener('bsel_payments_updated', handlePaymentsUpdate);
       window.removeEventListener('bsel_schools_updated', handleSchoolsUpdate);
       window.removeEventListener('bsel_batches_updated', handleBatchesUpdate);
+      window.removeEventListener('storage', handleStorage);
     };
   }, []);
 
@@ -939,6 +961,10 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
       ? student.certificateNo
       : `BSEL/${coursePrefix}/L${cleanLevel}/${seqDigits}`;
 
+    const branchDetails = resolveBranchDetails(student, {
+      centreName: student.branch || student.institution || activeBranch
+    });
+
     const studentCertData = {
       studentId: student.id || student._id || student.admissionNo || regNo,
       admissionNo: student.admissionNo || regNo,
@@ -946,13 +972,13 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
       courseName: courseName,
       programPrefix: 'MINDSPARC',
       level: student.grade || 'Level 1',
-      grade: student.results?.[0]?.rank || 'A',
+      grade: resolveStudentGrade(student) || '',
       duration: student.duration || '6 Months',
       registrationNo: regNo,
       certificateNo: certNo,
-      centreName: student.branch || student.institution || activeBranch || 'Tenkasi Branch',
-      centreCode: '545454',
-      centreAddress: student.address || 'second street, surandai,keelasurandai,tenkasi',
+      centreName: branchDetails.centreName,
+      centreCode: branchDetails.centreCode,
+      centreAddress: branchDetails.centreAddress,
       issueDate: student.enrolmentDate || '05-10-2026',
       certificateType: 'COMPLETION',
       studentPhoto: getStudentPhotoUrl(student) || student.studentPhoto || null,
@@ -1105,6 +1131,10 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
         ? student.certificateNo
         : `BSEL/${coursePrefix}/L${cleanLevel}/${seqDigits}`;
 
+      const branchDetails = resolveBranchDetails(student, {
+        centreName: student.branch || student.institution || activeBranch
+      });
+
       const certData = {
         studentId: student.id || student._id || student.admissionNo || regNo,
         admissionNo: student.admissionNo || regNo,
@@ -1112,13 +1142,13 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
         courseName: courseName,
         programPrefix: 'MINDSPARC',
         level: student.grade || 'Level 1',
-        grade: student.results?.[0]?.rank || 'A',
+        grade: resolveStudentGrade(student) || '',
         duration: student.duration || '6 Months',
         registrationNo: regNo,
         certificateNo: certNo,
-        centreName: student.branch || student.institution || activeBranch || 'Tenkasi Branch',
-        centreCode: '545454',
-        centreAddress: student.address || 'second street, surandai,keelasurandai,tenkasi',
+        centreName: branchDetails.centreName,
+        centreCode: branchDetails.centreCode,
+        centreAddress: branchDetails.centreAddress,
         issueDate: student.enrolmentDate || '05-10-2026',
         certificateType: 'COMPLETION',
         studentPhoto: photo,
@@ -1306,17 +1336,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
   // Branch Head: Scoped strictly to activeBranch
   const branchStudents = usersList
     .filter(isStudentUser)
-    .filter(u => {
-      const studentBranch = (u.branch || u.institution || '').toLowerCase();
-      const targetBranch = (activeBranch || '').toLowerCase();
-      const cleanKey = targetBranch.replace(/b★sel|regional|central|branch|academy/gi, '').trim();
-      const matchKey = cleanKey || targetBranch;
-      return (
-        studentBranch.includes(matchKey) ||
-        targetBranch.includes(studentBranch) ||
-        studentBranch.includes(targetBranch)
-      );
-    })
+    .filter(u => isStudentInBranch(u, activeBranch))
     .filter(u => {
       if (!branchStudentSearch.trim()) return true;
       const term = branchStudentSearch.toLowerCase();

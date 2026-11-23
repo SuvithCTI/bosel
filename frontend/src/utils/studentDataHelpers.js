@@ -4,7 +4,86 @@ import student3Img from '../assets/programs/student3.jpg';
 import student4Img from '../assets/programs/student4.jpg';
 import student5Img from '../assets/programs/student5.jpg';
 import student6Img from '../assets/programs/student6.jpg';
-import { getSavedMarksheet } from './marksheetStorage';
+import { getSavedMarksheet, getGrade } from './marksheetStorage';
+export { resolveBranchDetails } from './branchAuthStorage';
+
+export const isValidGrade = (val) => {
+  if (!val) return false;
+  const s = String(val).trim().toUpperCase();
+  if (s === 'ADMITTED' || s.includes('ADMIT')) return false;
+  if (s.startsWith('LEVEL') || s.startsWith('GRADE ') || s.startsWith('CLASS') || s.startsWith('STANDARD')) return false;
+  if (s.includes('PASS') || s.includes('FAIL') || s.includes('PENDING')) return false;
+  return /^(A\+|A|B\+|B|C\+|C|D|O)$/i.test(s) || s.includes('OUTSTANDING') || s.includes('EXCELLENT');
+};
+
+export const cleanGrade = (val) => {
+  if (!val) return '';
+  const s = String(val).trim().toUpperCase();
+  if (s.includes('A+')) return 'A+';
+  if (s.includes('B+')) return 'B+';
+  if (s.includes('C+')) return 'C+';
+  if (s === 'A' || s.includes('EXCELLENT')) return 'A';
+  if (s === 'B') return 'B';
+  if (s === 'C') return 'C';
+  if (s === 'D') return 'D';
+  if (s === 'O' || s.includes('OUTSTANDING')) return 'A+';
+  const match = s.match(/[A-D]\+?/);
+  return match ? match[0] : '';
+};
+
+/**
+ * Resolves the academic letter grade (A+, A, B+, B, C, D) strictly from the student's marksheet.
+ * If marks have not been updated or the student is only admitted, returns null (no grade).
+ */
+export const resolveStudentGrade = (student, explicitGrade = '') => {
+  if (student) {
+    try {
+      const savedSheet = getSavedMarksheet(student);
+      if (savedSheet) {
+        if (savedSheet.overallGrade && isValidGrade(savedSheet.overallGrade)) {
+          return cleanGrade(savedSheet.overallGrade);
+        }
+        if (savedSheet.percentage !== undefined && savedSheet.percentage !== null && savedSheet.percentage !== '') {
+          const pct = Number(savedSheet.percentage);
+          if (!isNaN(pct) && pct > 0) {
+            return getGrade(pct);
+          }
+        }
+        if (Array.isArray(savedSheet.subjects) && savedSheet.subjects.length > 0) {
+          const validMarks = savedSheet.subjects.filter((s) => typeof s.marks === 'number' && !isNaN(s.marks));
+          if (validMarks.length > 0) {
+            const total = validMarks.reduce((sum, s) => sum + s.marks, 0);
+            const max = validMarks.reduce((sum, s) => sum + (s.max || 100), 0);
+            if (max > 0) {
+              return getGrade((total / max) * 100);
+            }
+          }
+        }
+      }
+    } catch {}
+
+    // Check student's own results array if present
+    if (Array.isArray(student.results) && student.results.length > 0) {
+      const res = student.results[0];
+      const g = res.grade || res.rank;
+      if (g && isValidGrade(g)) {
+        return cleanGrade(g);
+      }
+    }
+
+    // Check student.marksheet or student.marksheetGrade
+    if (student.marksheet?.overallGrade && isValidGrade(student.marksheet.overallGrade)) {
+      return cleanGrade(student.marksheet.overallGrade);
+    }
+  }
+
+  // Explicit grade passed in (if valid letter grade and not dummy/admitted)
+  if (explicitGrade && isValidGrade(explicitGrade)) {
+    return cleanGrade(explicitGrade);
+  }
+
+  return null;
+};
 
 export const SAMPLE_STUDENT_PHOTOS = [
   student1Img,

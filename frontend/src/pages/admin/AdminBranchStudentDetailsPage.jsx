@@ -474,6 +474,15 @@ export default function AdminBranchStudentDetailsPage({
 
     if (student.studentStage) {
       matchedStage = ACADEMIC_STAGES.find(s => s.stage === student.studentStage || s.label?.toLowerCase() === student.studentStage?.toLowerCase());
+      if (!matchedStage) {
+        const stLower = student.studentStage.toLowerCase();
+        for (let i = 12; i >= 1; i--) {
+          if (stLower.includes(`class ${i}`)) {
+            matchedStage = ACADEMIC_STAGES.find(s => s.className === `Class ${i}`);
+            if (matchedStage) break;
+          }
+        }
+      }
     }
 
     if (!matchedStage && (student.studentClass || student.standard || student.className)) {
@@ -483,20 +492,30 @@ export default function AdminBranchStudentDetailsPage({
 
     if (!matchedStage && gradeStr) {
       const gLower = gradeStr.toLowerCase();
-      if (gLower.includes('11') || gLower.includes('12')) {
-        matchedStage = ACADEMIC_STAGES.find(s => s.stage.includes('Class 11 & 12'));
-      } else if (gLower.includes('8') || gLower.includes('9') || gLower.includes('10')) {
-        matchedStage = ACADEMIC_STAGES.find(s => s.stage.includes('Class 8 to 10'));
-      } else if (gLower.includes('6') || gLower.includes('7')) {
-        matchedStage = ACADEMIC_STAGES.find(s => s.stage.includes('Class 6 & 7'));
-      } else if (gLower.includes('4') || gLower.includes('5')) {
-        matchedStage = ACADEMIC_STAGES.find(s => s.stage.includes('Class 4 & 5'));
-      } else if (gLower.includes('class 3') || gLower.includes('3rd')) {
-        matchedStage = ACADEMIC_STAGES.find(s => s.stage.includes('Class 3'));
-      } else if (gLower.includes('class 2') || gLower.includes('2nd')) {
-        matchedStage = ACADEMIC_STAGES.find(s => s.stage.includes('Class 2'));
-      } else if (gLower.includes('class 1') || gLower.includes('1st')) {
-        matchedStage = ACADEMIC_STAGES.find(s => s.stage.includes('Class 1'));
+      if (gLower.includes('12') || gLower.includes('12th')) {
+        matchedStage = ACADEMIC_STAGES.find(s => s.className === 'Class 12');
+      } else if (gLower.includes('11') || gLower.includes('11th')) {
+        matchedStage = ACADEMIC_STAGES.find(s => s.className === 'Class 11');
+      } else if (gLower.includes('10') || gLower.includes('10th')) {
+        matchedStage = ACADEMIC_STAGES.find(s => s.className === 'Class 10');
+      } else if (gLower.includes('9') || gLower.includes('9th')) {
+        matchedStage = ACADEMIC_STAGES.find(s => s.className === 'Class 9');
+      } else if (gLower.includes('8') || gLower.includes('8th')) {
+        matchedStage = ACADEMIC_STAGES.find(s => s.className === 'Class 8');
+      } else if (gLower.includes('7') || gLower.includes('7th')) {
+        matchedStage = ACADEMIC_STAGES.find(s => s.className === 'Class 7');
+      } else if (gLower.includes('6') || gLower.includes('6th')) {
+        matchedStage = ACADEMIC_STAGES.find(s => s.className === 'Class 6');
+      } else if (gLower.includes('5') || gLower.includes('5th')) {
+        matchedStage = ACADEMIC_STAGES.find(s => s.className === 'Class 5');
+      } else if (gLower.includes('4') || gLower.includes('4th')) {
+        matchedStage = ACADEMIC_STAGES.find(s => s.className === 'Class 4');
+      } else if (gLower.includes('3') || gLower.includes('3rd')) {
+        matchedStage = ACADEMIC_STAGES.find(s => s.className === 'Class 3');
+      } else if (gLower.includes('2') || gLower.includes('2nd')) {
+        matchedStage = ACADEMIC_STAGES.find(s => s.className === 'Class 2');
+      } else if (gLower.includes('1') || gLower.includes('1st')) {
+        matchedStage = ACADEMIC_STAGES.find(s => s.className === 'Class 1');
       }
     }
 

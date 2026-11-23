@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { X, Award, ExternalLink } from 'lucide-react';
 import Certificate, { buildVerificationUrl, getStudentVerificationMeta } from './Certificate';
 import { getCoursePrefix, getActiveSession } from '../utils/authStorage';
+import { resolveBranchDetails } from '../utils/branchAuthStorage';
+import { resolveStudentGrade } from '../utils/studentDataHelpers';
 
 export default function CertificateModal({
   isOpen = true,
@@ -42,9 +44,9 @@ export default function CertificateModal({
     data.level || 'Level 1'
   );
 
-  const [grade, setGrade] = useState(
-    data.grade || 'A'
-  );
+  const [grade, setGrade] = useState(() => {
+    return resolveStudentGrade(data?.student || data, data?.grade) || '';
+  });
 
   const duration = data.duration || '6 Months';
 
@@ -81,15 +83,23 @@ export default function CertificateModal({
       ? data.certificateNo
       : `BSEL/${coursePrefix}/L${cleanLvlDigits}/${seqDigits}`;
 
+  const initialBranch = resolveBranchDetails(data?.student || data, {
+    centreName: data?.centreName,
+    centreCode: data?.centreCode,
+    centreAddress: data?.centreAddress
+  });
+
   const [centreName, setCentreName] = useState(
-    data.centreName || 'Tenkasi Branch'
+    data.centreName && data.centreName !== 'Tenkasi Branch' ? data.centreName : initialBranch.centreName
   );
 
-  const centreCode = data.centreCode || '546454';
+  const centreCode = (data.centreCode && data.centreCode !== '545454' && data.centreCode !== '546454')
+    ? data.centreCode
+    : initialBranch.centreCode;
 
-  const centreAddress =
-    data.centreAddress ||
-    'second street, surandai,keelasurandai,tenkasi';
+  const centreAddress = (data.centreAddress && data.centreAddress !== 'Podanur' && !data.centreAddress.includes('Coimbatore / 641023'))
+    ? data.centreAddress
+    : initialBranch.centreAddress;
 
   const [issueDate, setIssueDate] = useState(
     data.issueDate || '05-10-2026'
@@ -109,12 +119,28 @@ export default function CertificateModal({
     if (d.studentName) setStudentName(d.studentName);
     if (d.courseName) setCourseName(d.courseName);
     if (d.level) setLevel(d.level);
-    if (d.grade) setGrade(d.grade);
+    const resolvedG = resolveStudentGrade(d?.student || d, d?.grade);
+    setGrade(resolvedG || '');
     if (d.registrationNo) setRegistrationNo(d.registrationNo);
     if (d.centreName) setCentreName(d.centreName);
     if (d.issueDate) setIssueDate(d.issueDate);
     if (d.studentPhoto !== undefined) setStudentPhoto(d.studentPhoto);
     if (d.certificateType) setCertificateType(d.certificateType);
+  }, [certData, initialData]);
+
+  // Listen for real-time marksheet updates
+  useEffect(() => {
+    const handleMarksUpdate = () => {
+      const d = certData || initialData || {};
+      const resolvedG = resolveStudentGrade(d?.student || d, d?.grade);
+      setGrade(resolvedG || '');
+    };
+    window.addEventListener('bsel_marksheets_updated', handleMarksUpdate);
+    window.addEventListener('bsel_users_updated', handleMarksUpdate);
+    return () => {
+      window.removeEventListener('bsel_marksheets_updated', handleMarksUpdate);
+      window.removeEventListener('bsel_users_updated', handleMarksUpdate);
+    };
   }, [certData, initialData]);
 
   // Lock background scrolling while the modal is open.

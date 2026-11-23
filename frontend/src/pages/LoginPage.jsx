@@ -736,7 +736,7 @@ export default function LoginPage({
               {/* Header */}
               <div className="space-y-0.5">
                 <h1 className="text-base sm:text-xl font-bold text-white tracking-tight">
-                  Student Login Portal
+                  Login Portal
                 </h1>
                 <p className="text-[11px] sm:text-xs text-blue-100/85 font-normal leading-snug">
                   Sign in to access your course, student profile, and notifications.

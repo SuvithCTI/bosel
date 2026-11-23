@@ -6,6 +6,7 @@ import { Upload, Download, Loader2, Building2, Image as ImageIcon, X, PenTool, P
 import { exportPdfFromElement } from '../utils/pdfExport';
 
 import { getCoursePrefix } from '../utils/authStorage';
+import { resolveBranchDetails } from '../utils/branchAuthStorage';
 import {
   getStudentScopeKey,
   readStudentCustomHeader,
@@ -13,6 +14,7 @@ import {
   readStudentCustomSignature,
   saveStudentCustomSignature,
   SAMPLE_STUDENT_PHOTOS,
+  resolveStudentGrade,
 } from '../utils/studentDataHelpers';
 
 import shieldLogo from '../assets/bsel-shield-logo.png';
@@ -31,20 +33,20 @@ const NAVY = '#13427a';
 const GOLD = '#c9a227';
 
 export const formatSimpleGrade = (val) => {
-  if (!val) return 'A';
+  if (!val) return '';
   const s = String(val).trim().toUpperCase();
-  if (s === 'ADMITTED' || s.includes('ADMIT')) return 'ADMITTED';
+  if (s === 'ADMITTED' || s.includes('ADMIT')) return '';
+  if (s.startsWith('LEVEL') || s.startsWith('GRADE ') || s.startsWith('CLASS') || s.startsWith('STANDARD')) return '';
+  if (s.includes('PASS') || s.includes('FAIL') || s.includes('PENDING')) return '';
   if (s.includes('A+')) return 'A+';
   if (s.includes('B+')) return 'B+';
+  if (s.includes('C+')) return 'C+';
   if (s.includes('OUTSTANDING') || s.includes('(O)')) return 'A+';
   if (s.includes('EXCELLENT')) return 'A';
   if (s.includes('VERY GOOD')) return 'B+';
-  if (s === 'A' || s.startsWith('A')) return 'A';
-  if (s === 'B' || s.startsWith('B')) return 'B';
-  if (s === 'C' || s.startsWith('C')) return 'C';
-  if (s === 'D' || s.startsWith('D')) return 'D';
-  const cleaned = s.replace(/[^A-Z0-9+]/g, ' ').split(' ')[0];
-  return cleaned || 'A';
+  if (s === 'A' || s === 'B' || s === 'C' || s === 'D') return s;
+  const match = s.match(/[A-D]\+?/);
+  return match ? match[0] : '';
 };
 
 export const derivePhotoKey = (photoInput, studentName = '', regNo = '') => {
@@ -120,23 +122,24 @@ export const getStudentVerificationMeta = (studentName = '', registrationNo = ''
     else parent = 'S. RAMANATHAN';
   }
 
-  // Score & Final Grade (strictly clean grades: A, A+, B, B+, ADMITTED - no text like outstanding, excellent)
-  let score = '459 / 500 (91.8%)';
-  let gradeText = formatSimpleGrade(rawGrade || 'A');
+  // Score & Final Grade (strictly clean grades: A, A+, B, B+ from student marksheet)
+  const resolvedMarksheetGrade = resolveStudentGrade(student, rawGrade);
+  let gradeText = resolvedMarksheetGrade || '';
+  let score = resolvedMarksheetGrade ? '459 / 500 (91.8%)' : '';
 
   const sLow = String(studentName || '').toLowerCase();
   if (sLow.includes('alwin')) {
     score = '459 / 500 (91.8%)';
-    gradeText = 'A+';
+    gradeText = resolvedMarksheetGrade || 'A+';
   } else if (sLow.includes('priya')) {
     score = '482 / 500 (96.4%)';
-    gradeText = 'A+';
+    gradeText = resolvedMarksheetGrade || 'A+';
   } else if (sLow.includes('hema')) {
     score = '468 / 500 (93.6%)';
-    gradeText = 'A';
+    gradeText = resolvedMarksheetGrade || 'A';
   } else if (sLow.includes('bob')) {
-    score = '459 / 500 (91.8%)';
-    gradeText = 'ADMITTED';
+    score = '';
+    gradeText = resolvedMarksheetGrade || '';
   }
 
   // Photo Key (Strict 1-to-1 matching with certificate display)
@@ -378,9 +381,9 @@ export default function Certificate({
 
   centreName = 'Tenkasi',
 
-  centreCode = '545454',
+  centreCode = 'BSEL-BR-101',
 
-  centreAddress = 'Podanur',
+  centreAddress = 'Second Street, Surandai, Keelasurandai, Tenkasi - 627859',
 
   issueDate = '05-10-2026',
 
@@ -556,7 +559,20 @@ export default function Certificate({
 
   }
 
-  const displayGrade = formatSimpleGrade(grade || student?.grade || 'A');
+  const [marksheetGradeVersion, setMarksheetGradeVersion] = React.useState(0);
+  useEffect(() => {
+    const handleMarksUpdate = () => setMarksheetGradeVersion((v) => v + 1);
+    window.addEventListener('bsel_marksheets_updated', handleMarksUpdate);
+    window.addEventListener('bsel_users_updated', handleMarksUpdate);
+    return () => {
+      window.removeEventListener('bsel_marksheets_updated', handleMarksUpdate);
+      window.removeEventListener('bsel_users_updated', handleMarksUpdate);
+    };
+  }, []);
+
+  const displayGrade = React.useMemo(() => {
+    return resolveStudentGrade(student, grade);
+  }, [student, grade, marksheetGradeVersion]);
 
   // Resolve consistent student photo
   const displayPhoto = React.useMemo(() => {
@@ -577,7 +593,21 @@ export default function Certificate({
     return SAMPLE_STUDENT_PHOTOS[0];
   }, [studentPhoto, student, studentName, registrationNo]);
 
-  const addrLines = buildStudentAddressLines(student, centreAddress, registrationNo, studentName, studentId);
+  const resolvedBranch = React.useMemo(() => {
+    return resolveBranchDetails(student || { centreName, centreCode, centreAddress }, {
+      centreName,
+      centreCode,
+      centreAddress
+    });
+  }, [student, centreName, centreCode, centreAddress]);
+
+  const activeCentreName = resolvedBranch.centreName;
+  const activeCentreCode = resolvedBranch.centreCode;
+  const activeCentreAddress = resolvedBranch.centreAddress;
+
+  const addrLines = React.useMemo(() => {
+    return formatAddress(activeCentreAddress);
+  }, [activeCentreAddress]);
 
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState('');
 
@@ -592,11 +622,11 @@ export default function Certificate({
       level: cleanLevel,
       grade: displayGrade,
       registrationNo,
-      centreName,
-      centreCode,
+      centreName: activeCentreName,
+      centreCode: activeCentreCode,
       issueDate,
       duration,
-      centreAddress,
+      centreAddress: activeCentreAddress,
       schoolName: headerName,
       schoolSubtitle: headerSubtitle,
       schoolMotto: headerMotto,
@@ -635,11 +665,11 @@ export default function Certificate({
     cleanLevel,
     displayGrade,
     registrationNo,
-    centreName,
-    centreCode,
+    activeCentreName,
+    activeCentreCode,
     issueDate,
     duration,
-    centreAddress,
+    activeCentreAddress,
     headerName,
     headerSubtitle,
     headerMotto,
@@ -657,8 +687,8 @@ export default function Certificate({
   ];
 
   const rightRows = [
-    { label: 'Centre', value: centreName },
-    { label: 'Code', value: centreCode },
+    { label: 'Centre', value: activeCentreName },
+    { label: 'Code', value: activeCentreCode },
     { label: 'Address', value: addrLines.line1 },
     { label: null, value: addrLines.line2 || '' },
     { label: 'Date of Issue', value: issueDate },
@@ -1143,14 +1173,14 @@ export default function Certificate({
             preserveAspectRatio="xMidYMid meet"
           />
 
-          {/* Header: Left Side (matching right side format) */}
+          {/* Header: Left Side (3 lines left-aligned) */}
           <text
-            x="307"
-            y="76"
-            textAnchor="middle"
+            x="168"
+            y="74"
+            textAnchor="start"
             fontFamily="'Cinzel', 'Outfit', 'Plus Jakarta Sans', Georgia, 'Times New Roman', serif"
             fontWeight="900"
-            fontSize="35"
+            fontSize="42"
             fill={NAVY}
             letterSpacing="2"
           >
@@ -1158,9 +1188,9 @@ export default function Certificate({
           </text>
 
           <text
-            x="307"
-            y="98"
-            textAnchor="middle"
+            x="168"
+            y="97"
+            textAnchor="start"
             fontFamily="'Cinzel', 'Outfit', 'Plus Jakarta Sans', Georgia, 'Times New Roman', serif"
             fontWeight="800"
             fontSize="13.5"
@@ -1171,13 +1201,13 @@ export default function Certificate({
           </text>
 
           <text
-            x="307"
+            x="168"
             y="117"
-            textAnchor="middle"
+            textAnchor="start"
             fontFamily="'Cinzel', 'Outfit', 'Plus Jakarta Sans', Georgia, 'Times New Roman', serif"
             fontWeight="700"
-            fontSize="10"
-            letterSpacing="0.8"
+            fontSize="9.5"
+            letterSpacing="0.6"
             fill={NAVY}
           >
             BOARD OF SKILLS AND EDUCATIONAL LEARNING
@@ -1390,33 +1420,33 @@ export default function Certificate({
 
           </g>
 
-          {/* Grade badge below student photo */}
-          {displayGrade && (
-            <g>
-              <rect
-                x="46"
-                y="382"
-                width="102"
-                height="28"
-                rx="6"
-                fill="#ffffff"
-                stroke={GOLD}
-                strokeWidth="1.8"
-              />
+          {/* Grade box below student photo - box is always kept; grade calculated from student marksheet when marks entered */}
+          <g>
+            <rect
+              x="46"
+              y="382"
+              width="102"
+              height="28"
+              rx="6"
+              fill="#ffffff"
+              stroke={GOLD}
+              strokeWidth="1.8"
+            />
+            {displayGrade && (
               <text
                 x="97"
-                y="400.5"
+                y="400"
                 textAnchor="middle"
                 fontFamily="'Cinzel', 'Outfit', Georgia, serif"
                 fontWeight="800"
-                fontSize={displayGrade === 'ADMITTED' ? '10.5' : '12.5'}
-                letterSpacing={displayGrade === 'ADMITTED' ? '1' : '1.5'}
+                fontSize="11.5"
+                letterSpacing="1.2"
                 fill={NAVY}
               >
-                GRADE : {displayGrade}
+                GRADE : {String(displayGrade).replace(/^grade\s*:?\s*/i, '').trim()}
               </text>
-            </g>
-          )}
+            )}
+          </g>
 
           {/* Right: Unique Dynamic QR Code container (exact matching yellow/gold box border) */}
           <g
@@ -1433,11 +1463,11 @@ export default function Certificate({
                   level,
                   grade: displayGrade,
                   registrationNo,
-                  centreName,
-                  centreCode,
+                  centreName: activeCentreName,
+                  centreCode: activeCentreCode,
                   issueDate,
                   duration,
-                  centreAddress,
+                  centreAddress: activeCentreAddress,
                   schoolName,
                   schoolSubtitle,
                   schoolMotto,
@@ -1606,15 +1636,11 @@ export default function Certificate({
 
           <line x1="41" y1="577" x2="976" y2="577" stroke={GOLD} strokeWidth="1.5" />
 
-          <text x="426" y="594" textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="8.5" fill={NAVY}>Registered Under</text>
+          <image href={msmeLogo} xlinkHref={msmeLogo} x="406" y="595" width="40" height="46" preserveAspectRatio="xMidYMid meet" />
 
-          <text x="547" y="594" textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="8.5" fill={NAVY}>Authorized Affiliates</text>
+          <image href={iafLogo} xlinkHref={iafLogo} x="476" y="596" width="68" height="44" preserveAspectRatio="xMidYMid meet" />
 
-          <image href={msmeLogo} xlinkHref={msmeLogo} x="406" y="605" width="40" height="46" preserveAspectRatio="xMidYMid meet" />
-
-          <image href={iafLogo} xlinkHref={iafLogo} x="476" y="606" width="68" height="44" preserveAspectRatio="xMidYMid meet" />
-
-          <image href={isoLogo} xlinkHref={isoLogo} x="574" y="605" width="44" height="46" preserveAspectRatio="xMidYMid meet" />
+          <image href={isoLogo} xlinkHref={isoLogo} x="574" y="595" width="44" height="46" preserveAspectRatio="xMidYMid meet" />
 
           <text x="512" y="664" textAnchor="middle" fontFamily="Arial, sans-serif" fontWeight="700" fontSize="8.5" letterSpacing="0.2" fill={NAVY}>
             REGISTERED UNDER MINISTRY OF MSME, GOVT. OF INDIA
@@ -1639,9 +1665,9 @@ export default function Certificate({
                 href={directorSign}
                 xlinkHref={directorSign}
                 x="63"
-                y="598"
-                width="160"
-                height="68"
+                y="592"
+                width="165"
+                height="70"
                 preserveAspectRatio="xMidYMax meet"
               />
             </g>
@@ -1654,9 +1680,9 @@ export default function Certificate({
             >
               <rect
                 x="63"
-                y="615"
-                width="150"
-                height="45"
+                y="612"
+                width="160"
+                height="46"
                 rx="6"
                 fill="#f8fafc"
                 stroke="#cbd5e1"
@@ -1664,8 +1690,8 @@ export default function Certificate({
                 strokeDasharray="4 3"
               />
               <text
-                x="138"
-                y="642"
+                x="143"
+                y="640"
                 textAnchor="middle"
                 fontFamily="Arial, sans-serif"
                 fontSize="10"
@@ -1683,10 +1709,10 @@ export default function Certificate({
           <image
             href={authSignSeal}
             xlinkHref={authSignSeal}
-            x="785"
-            y="595"
-            width="170"
-            height="75"
+            x="765"
+            y="582"
+            width="195"
+            height="82"
             preserveAspectRatio="xMidYMax meet"
           />
 

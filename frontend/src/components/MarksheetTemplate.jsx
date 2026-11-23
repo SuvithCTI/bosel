@@ -51,12 +51,12 @@ const LABELS = [
 
 const TABLE_COLS = [37, 88, 443, 504, 565, 626, 687];
 const TABLE_HEADERS = [
-  ['S.No.'],
-  ['Subject / Module'],
-  ['Max', 'Marks'],
-  ['Assessment'],
-  ['Marks', 'Obtained'],
-  ['Percentage'],
+  ['S.', 'No.'],
+  ['Subject '],
+  ['Max', 'Marks [60]'],
+  ['Assessment', '[40]'],
+  ['Marks', 'Obtained '],
+  ['Percentage', '%'],
 ];
 
 const ROW_LINES = [541, 577, 613, 650, 686, 722];
@@ -241,19 +241,19 @@ export default function MarksheetTemplate({ remark = null, rightHeading = null }
       {/* ---------- Header ---------- */}
       {/* Left: B★SEL crest */}
       <image
-        href="/bsel_logo.png"
-        x="44"
-        y="36"
-        width="76"
-        height="76"
-        preserveAspectRatio="xMidYMid meet"
-      />
+  href="/src/assets/bsel_logo.png"
+  x="44"
+  y="36"
+  width="76"
+  height="76"
+  preserveAspectRatio="xMidYMid meet"
+/>
 
       {/* Left block: three-line wordmark, centred between the crest and the centre seal */}
-      <text
-        x={LEFT_HEADER_CENTER_X}
+            <text
+        x="128"
         y="62"
-        textAnchor="middle"
+        textAnchor="start"
         fontFamily={HEADER_FONT}
         fontWeight="bold"
         fontSize="30"
@@ -262,9 +262,9 @@ export default function MarksheetTemplate({ remark = null, rightHeading = null }
         B<tspan fill={GOLD}>★</tspan>SEL
       </text>
       <text
-        x={LEFT_HEADER_CENTER_X}
+        x="128"
         y="78"
-        textAnchor="middle"
+        textAnchor="start"
         fontFamily={HEADER_FONT}
         fontWeight="bold"
         fontSize="11"
@@ -274,9 +274,9 @@ export default function MarksheetTemplate({ remark = null, rightHeading = null }
         Learn · Grow · Achieve
       </text>
       <text
-        x={LEFT_HEADER_CENTER_X}
+        x="128"
         y="94"
-        textAnchor="middle"
+        textAnchor="start"
         fontFamily={HEADER_FONT}
         fontWeight="bold"
         fontSize="7"
@@ -290,9 +290,9 @@ export default function MarksheetTemplate({ remark = null, rightHeading = null }
       <image
         href={centerSeal}
         x={PAGE_CENTER_X - 30}
-        y="34"
-        width="90"
-        height="90"
+        y="24"
+        width="100"
+        height="100"
         preserveAspectRatio="xMidYMid meet"
       />
 
@@ -384,7 +384,8 @@ export default function MarksheetTemplate({ remark = null, rightHeading = null }
       {/* Photo frame (photo overlay sits inside this) */}
       <rect x="551" y="228" width="113" height="130" fill="none" stroke={GOLD} strokeWidth="3" />
       <rect x="556" y="233" width="103" height="120" fill="none" stroke={NAVY} strokeWidth="2" />
-
+      {/* ---------- Heading above the subjects table ---------- */}
+      <SectionTitle x={197} y={440} w={331} h={22} fill={GOLD} text="GRADE CARD & RESULT" />
       {/* ---------- Subjects & Marks table ---------- */}
       <rect
         x="37"
@@ -395,6 +396,8 @@ export default function MarksheetTemplate({ remark = null, rightHeading = null }
         stroke={NAVY}
         strokeWidth={TABLE_OUTER_STROKE}
       />
+
+      <SectionTitle x={197} y={142} w={331} h={22} fill={GOLD} text="STUDENT & COURSE DETAILS" />
 
       {/* Title bar */}
       <NavyBand {...SUBJECT_BAND} />
@@ -423,7 +426,7 @@ export default function MarksheetTemplate({ remark = null, rightHeading = null }
       />
       {TABLE_HEADERS.map((lines, i) => {
         const cx = colCenters[i];
-        const startY = lines.length === 1 ? 527 : 519;
+        const startY = 519;
 
         return (
           <text
@@ -551,13 +554,7 @@ export default function MarksheetTemplate({ remark = null, rightHeading = null }
 
       {/* ---------- Footer ---------- */}
       {/* Footer headings (centred over their logo groups, clear of the Remarks box) */}
-      <text x="292" y="916" textAnchor="middle" fontFamily="Arial, sans-serif" fontWeight="bold" fontSize="7.5" fill={NAVY}>
-        REGISTERED UNDER
-      </text>
-      <text x="397" y="916" textAnchor="middle" fontFamily="Arial, sans-serif" fontWeight="bold" fontSize="7.5" fill={NAVY}>
-        AUTHORIZED AFFILIATES
-      </text>
-
+      
       {/* Footer row 1: three logos, bottom-aligned on y = 966 */}
       <image
         href={msmeLogo}
@@ -598,20 +595,20 @@ export default function MarksheetTemplate({ remark = null, rightHeading = null }
       </text>
 
       {/* Principal / signature area */}
-      <text x="60" y="972" fontFamily={SERIF} fontWeight="bold" fontSize="12" fill={NAVY}>
+      <text x="60" y="989" fontFamily={SERIF} fontWeight="bold" fontSize="12" fill={NAVY}>
         Center Director / Principal
       </text>
 
       {/* Authorized signature image: wider, centred over the label */}
       <image
         href={signImage}
-        x="523"
-        y="890"
-        width="200"
-        height="100"
+        x="495"
+        y="880"
+        width="230"
+        height="130"
         preserveAspectRatio="xMidYMid meet"
       />
-      <text x="618" y="972" textAnchor="middle" fontFamily={SERIF} fontStyle="italic" fontWeight="bold" fontSize="12" fill={NAVY}>
+      <text x="618" y="989" textAnchor="middle" fontFamily={SERIF} fontStyle="italic" fontWeight="bold" fontSize="12" fill={NAVY}>
         Authorized Signature
       </text>
     </svg>

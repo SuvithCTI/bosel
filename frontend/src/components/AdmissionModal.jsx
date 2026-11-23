@@ -27,12 +27,17 @@ import {
   BookOpen,
   Camera,
   RotateCcw,
+  RotateCw,
   Crop,
+  ZoomIn,
+  ZoomOut,
+  Move,
   Trash2,
   AlertCircle,
   Clock
 } from 'lucide-react';
 import { registerStudentAccount, generateRegisterNumber, isPhoneNumberRegistered } from '../utils/authStorage';
+import { getAvailableBranchNames, cleanBranchName } from '../utils/branchAuthStorage';
 import { getStoredCourses } from '../data/coursesData';
 import { replacePhotoBackground } from '../utils/photoSegmentation';
 import { ACADEMIC_STAGES, getAcademicStageFromAge } from '../utils/academicStages';
@@ -329,11 +334,32 @@ export default function AdmissionModal({
   const dynamicProgramNames = coursesList.map(c => c.fullName || c.name);
   const availablePrograms = dynamicProgramNames.length > 0 ? dynamicProgramNames : BSEL_PROGRAMS;
 
-  // 2. Branch: strictly Tenkasi and Tirunelveli branches
-  const cleanInitBranch = initialBranch ? String(initialBranch).replace(/\s*(regional\s*)?branch\s*/gi, '').trim() : null;
-  const availableBranches = cleanInitBranch && !['Tenkasi', 'Tirunelveli'].includes(cleanInitBranch)
-    ? [cleanInitBranch, 'Tenkasi', 'Tirunelveli']
-    : ['Tenkasi', 'Tirunelveli'];
+  // 2. Branch: dynamic branches from official network & custom branches
+  const cleanInitBranch = initialBranch ? cleanBranchName(initialBranch) : null;
+  const [availableBranches, setAvailableBranches] = useState(() => {
+    const list = getAvailableBranchNames();
+    if (cleanInitBranch && !list.some(b => b.toLowerCase() === cleanInitBranch.toLowerCase())) {
+      return [cleanInitBranch, ...list];
+    }
+    return list;
+  });
+
+  useEffect(() => {
+    const handleBranchesUpdate = () => {
+      const list = getAvailableBranchNames();
+      if (cleanInitBranch && !list.some(b => b.toLowerCase() === cleanInitBranch.toLowerCase())) {
+        setAvailableBranches([cleanInitBranch, ...list]);
+      } else {
+        setAvailableBranches(list);
+      }
+    };
+    window.addEventListener('bsel_branch_credentials_updated', handleBranchesUpdate);
+    window.addEventListener('bsel_schools_updated', handleBranchesUpdate);
+    return () => {
+      window.removeEventListener('bsel_branch_credentials_updated', handleBranchesUpdate);
+      window.removeEventListener('bsel_schools_updated', handleBranchesUpdate);
+    };
+  }, [cleanInitBranch]);
 
   const initialCourse = initialProgram || availablePrograms[0] || 'Abacus Speed Arithmetic';
   const defaultBranch = cleanInitBranch || 'Tenkasi';
@@ -474,6 +500,12 @@ export default function AdmissionModal({
   const [editorPreviewUrl, setEditorPreviewUrl] = useState(null);
   const [isProcessingBg, setIsProcessingBg] = useState(false);
   const editorImageRef = useRef(null);
+  const cropContainerRef = useRef(null);
+  const [cropZoom, setCropZoom] = useState(1);
+  const [cropPan, setCropPan] = useState({ x: 0, y: 0 });
+  const [cropRotation, setCropRotation] = useState(0);
+  const [isDraggingCrop, setIsDraggingCrop] = useState(false);
+  const dragStartRef = useRef({ startX: 0, startY: 0, panX: 0, panY: 0 });
   const [paymentGatewayStatus, setPaymentGatewayStatus] = useState('idle'); // 'idle' | 'processing' | 'success'
   const [copiedUpi, setCopiedUpi] = useState(false);
   const [selectedBank, setSelectedBank] = useState('HDFC Bank');
@@ -606,6 +638,29 @@ export default function AdmissionModal({
       setIsCameraOpen(false);
     }
   }, [isOpen]);
+
+  // Global mousemove/mouseup listener while dragging
+  useEffect(() => {
+    if (!isDraggingCrop) return;
+    const handleGlobalMouseMove = (e) => {
+      const dx = e.clientX - dragStartRef.current.startX;
+      const dy = e.clientY - dragStartRef.current.startY;
+      setCropPan({
+        x: Math.round(dragStartRef.current.panX + dx),
+        y: Math.round(dragStartRef.current.panY + dy)
+      });
+    };
+    const handleGlobalMouseUp = () => {
+      setIsDraggingCrop(false);
+    };
+
+    window.addEventListener('mousemove', handleGlobalMouseMove);
+    window.addEventListener('mouseup', handleGlobalMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', handleGlobalMouseMove);
+      window.removeEventListener('mouseup', handleGlobalMouseUp);
+    };
+  }, [isDraggingCrop]);
 
   if (!isOpen) return null;
 
@@ -776,21 +831,70 @@ export default function AdmissionModal({
     setCameraError('');
   };
 
-  const handleOpenPhotoEditor = async () => {
+  const handleOpenPhotoEditor = () => {
     if (!formData.photoPreview) return;
     setOriginalPhotoSrc(formData.photoPreview);
     setEditorPreviewUrl(formData.photoPreview);
     setEditorBgColor('original');
+    setCropZoom(1);
+    setCropPan({ x: 0, y: 0 });
+    setCropRotation(0);
     setIsPhotoEditorOpen(true);
+  };
 
-    try {
-      const framed = await replacePhotoBackground(formData.photoPreview, 'original');
-      if (framed) {
-        setEditorPreviewUrl(framed);
-      }
-    } catch (e) {
-      console.warn('Initial passport framing notice:', e);
+  const handleCropMouseDown = (e) => {
+    e.preventDefault();
+    setIsDraggingCrop(true);
+    dragStartRef.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      panX: cropPan.x,
+      panY: cropPan.y
+    };
+  };
+
+  const handleCropTouchStart = (e) => {
+    if (e.touches.length === 1) {
+      const touch = e.touches[0];
+      setIsDraggingCrop(true);
+      dragStartRef.current = {
+        startX: touch.clientX,
+        startY: touch.clientY,
+        panX: cropPan.x,
+        panY: cropPan.y
+      };
     }
+  };
+
+  const handleCropTouchMove = (e) => {
+    if (!isDraggingCrop || e.touches.length !== 1) return;
+    const touch = e.touches[0];
+    const dx = touch.clientX - dragStartRef.current.startX;
+    const dy = touch.clientY - dragStartRef.current.startY;
+    setCropPan({
+      x: Math.round(dragStartRef.current.panX + dx),
+      y: Math.round(dragStartRef.current.panY + dy)
+    });
+  };
+
+  const handleCropTouchEnd = () => {
+    setIsDraggingCrop(false);
+  };
+
+  const handleCropWheel = (e) => {
+    e.preventDefault();
+    const delta = e.deltaY < 0 ? 0.1 : -0.1;
+    setCropZoom((prev) => Math.min(3.0, Math.max(0.8, Number((prev + delta).toFixed(2)))));
+  };
+
+  const handleResetCrop = () => {
+    setCropZoom(1);
+    setCropPan({ x: 0, y: 0 });
+    setCropRotation(0);
+  };
+
+  const handleRotate90 = () => {
+    setCropRotation((prev) => (prev + 90) % 360);
   };
 
   const handleSelectBgColor = async (colorVal) => {
@@ -798,6 +902,11 @@ export default function AdmissionModal({
 
     const sourceImage = originalPhotoSrc || formData.photoPreview;
     if (!sourceImage) return;
+
+    if (colorVal === 'original') {
+      setEditorPreviewUrl(sourceImage);
+      return;
+    }
 
     setIsProcessingBg(true);
     try {
@@ -813,16 +922,84 @@ export default function AdmissionModal({
   };
 
   const handleApplyPhotoEdits = () => {
-    const finalPhoto = editorPreviewUrl || formData.photoPreview;
-    if (finalPhoto) {
+    const currentSrc = editorPreviewUrl || originalPhotoSrc || formData.photoPreview;
+    if (!currentSrc) {
+      setIsPhotoEditorOpen(false);
+      return;
+    }
+
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      try {
+        const outW = 420;
+        const outH = 540;
+        const canvas = document.createElement('canvas');
+        canvas.width = outW;
+        canvas.height = outH;
+        const ctx = canvas.getContext('2d');
+
+        // Fill background color
+        if (editorBgColor && editorBgColor !== 'original') {
+          ctx.fillStyle = editorBgColor;
+          ctx.fillRect(0, 0, outW, outH);
+        } else {
+          ctx.fillStyle = '#0f172a';
+          ctx.fillRect(0, 0, outW, outH);
+        }
+
+        const container = cropContainerRef.current;
+        const boxW = container ? container.clientWidth : 240;
+        const scaleRatio = outW / boxW;
+
+        ctx.save();
+        ctx.translate(
+          outW / 2 + cropPan.x * scaleRatio,
+          outH / 2 + cropPan.y * scaleRatio
+        );
+        ctx.rotate((cropRotation * Math.PI) / 180);
+        ctx.scale(cropZoom, cropZoom);
+
+        const imgW = img.naturalWidth || img.width || outW;
+        const imgH = img.naturalHeight || img.height || outH;
+        const coverScale = Math.max(outW / imgW, outH / imgH);
+        const drawW = imgW * coverScale;
+        const drawH = imgH * coverScale;
+
+        ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
+        ctx.restore();
+
+        const finalPhoto = canvas.toDataURL('image/jpeg', 0.95);
+        setFormData(prev => ({
+          ...prev,
+          studentPhoto: finalPhoto,
+          photoPreview: finalPhoto
+        }));
+        setPhotoError(false);
+        setIsPhotoEditorOpen(false);
+      } catch (err) {
+        console.error('Failed to export cropped canvas:', err);
+        const fallback = editorPreviewUrl || formData.photoPreview;
+        setFormData(prev => ({
+          ...prev,
+          studentPhoto: fallback,
+          photoPreview: fallback
+        }));
+        setPhotoError(false);
+        setIsPhotoEditorOpen(false);
+      }
+    };
+    img.onerror = () => {
+      const fallback = editorPreviewUrl || formData.photoPreview;
       setFormData(prev => ({
         ...prev,
-        studentPhoto: finalPhoto,
-        photoPreview: finalPhoto
+        studentPhoto: fallback,
+        photoPreview: fallback
       }));
       setPhotoError(false);
-    }
-    setIsPhotoEditorOpen(false);
+      setIsPhotoEditorOpen(false);
+    };
+    img.src = currentSrc;
   };
 
   // Student Photo Upload (Field 10 - Compulsory)
@@ -1164,7 +1341,7 @@ export default function AdmissionModal({
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e?.preventDefault();
 
     if (!validateStep1()) {
@@ -1187,7 +1364,7 @@ export default function AdmissionModal({
       const activeReceiptRef = `BRANCH-${formData.branch || 'ADMIN'}-${Math.floor(100000 + Math.random() * 900000)}`;
 
       try {
-        const account = registerStudentAccount({
+        const account = await registerStudentAccount({
           ...formData,
           feePaymentType: 'Paid at Branch',
           paymentMode: 'Direct Branch Registration',
@@ -1239,7 +1416,7 @@ export default function AdmissionModal({
       : `TXN-${Math.floor(10000000 + Math.random() * 90000000)}`);
 
     try {
-      const account = registerStudentAccount({
+      const account = await registerStudentAccount({
         ...formData,
         receiptRefNo: activeReceiptRef,
         name: formData.studentName,
@@ -1335,6 +1512,7 @@ export default function AdmissionModal({
       >
         {/* Header Banner */}
         <div className="bg-gradient-to-r from-[#0F2B5C] via-[#143B7A] to-[#1E4D99] text-white p-3.5 sm:p-5 relative shrink-0">
+          {/* Close Button */}
           <button
             type="button"
             onClick={onClose}
@@ -1344,21 +1522,40 @@ export default function AdmissionModal({
             <X className="w-5 h-5" />
           </button>
 
-          <div className="flex items-center gap-2 mb-1 pr-8">
-            <span className="w-6 h-6 rounded-lg bg-amber-400 text-slate-950 flex items-center justify-center font-bold shrink-0 shadow-xs">
-              <GraduationCap className="w-4 h-4 text-slate-950" />
-            </span>
-            <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-amber-300">
-              Board of Skills & Educational Learning (B★SEL)
-            </span>
-          </div>
+          {/* Header Content with Right-side Logo */}
+          <div className="flex items-center justify-between gap-3 sm:gap-4 pr-10 sm:pr-12">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="w-6 h-6 rounded-lg bg-amber-400 text-slate-950 flex items-center justify-center font-bold shrink-0 shadow-xs">
+                  <GraduationCap className="w-4 h-4 text-slate-950" />
+                </span>
+                <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-amber-300">
+                  Board of Skills & Educational Learning (B★SEL)
+                </span>
+              </div>
 
-          <h3 className="text-lg sm:text-2xl font-black font-heading text-white leading-tight">
-            Student Admission Form
-          </h3>
-          <p className="text-[11px] sm:text-xs text-sky-200 mt-0.5 leading-relaxed font-semibold">
-            Official candidate enrollment and course admission registry.
-          </p>
+              <h3 className="text-lg sm:text-2xl font-black font-heading text-white leading-tight">
+                Student Admission Form
+              </h3>
+              <p className="text-[11px] sm:text-xs text-sky-200 mt-0.5 leading-relaxed font-semibold">
+                Official candidate enrollment and course admission registry.
+              </p>
+            </div>
+
+            {/* B★SEL Official Logo */}
+            <div className="w-14 h-14 sm:w-18 sm:h-18 md:w-20 md:h-20 rounded-2xl bg-white p-1.5 sm:p-2 shadow-md border-2 border-amber-300/60 flex items-center justify-center shrink-0">
+              <img
+                src="/bsel_logo.png"
+                onError={(e) => {
+                  if (e.currentTarget.src.indexOf('bsel_logo.jpg') === -1) {
+                    e.currentTarget.src = '/bsel_logo.jpg';
+                  }
+                }}
+                alt="B★SEL Official Logo"
+                className="w-full h-full object-contain"
+              />
+            </div>
+          </div>
 
           {/* Form Step Progress Bar (hidden once admission is confirmed or if skipPayment is active) */}
           {!submitted && !skipPayment && (
@@ -1855,6 +2052,7 @@ export default function AdmissionModal({
                                     }));
                                   } else if (id === 'School') {
                                     const defaultSch = filteredSchoolsByBranch[0];
+                                    const schBranch = defaultSch?.branch ? cleanBranchName(defaultSch.branch) : (defaultSch?.city ? cleanBranchName(defaultSch.city) : '');
                                     setFormData(prev => ({
                                       ...prev,
                                       admissionCategory: 'School',
@@ -1862,10 +2060,12 @@ export default function AdmissionModal({
                                       schoolName: defaultSch?.name || '',
                                       institution: defaultSch?.name || '',
                                       franchiseId: null,
-                                      franchiseName: ''
+                                      franchiseName: '',
+                                      ...(schBranch && !lockBranch ? { branch: schBranch } : {})
                                     }));
                                   } else if (id === 'Franchise') {
                                     const defaultFc = filteredFranchisesByBranch[0];
+                                    const fcBranch = defaultFc?.branch ? cleanBranchName(defaultFc.branch) : (defaultFc?.city ? cleanBranchName(defaultFc.city) : '');
                                     setFormData(prev => ({
                                       ...prev,
                                       admissionCategory: 'Franchise',
@@ -1873,7 +2073,8 @@ export default function AdmissionModal({
                                       franchiseName: defaultFc?.name || '',
                                       institution: defaultFc?.name || '',
                                       schoolName: defaultFc?.schoolName || defaultFc?.name || '',
-                                      schoolId: null
+                                      schoolId: null,
+                                      ...(fcBranch && !lockBranch ? { branch: fcBranch } : {})
                                     }));
                                   }
                                 }}
@@ -1922,11 +2123,13 @@ export default function AdmissionModal({
                               } else {
                                 const sch = filteredSchoolsByBranch.find(s => s.id === val);
                                 if (sch) {
+                                  const schBranch = sch.branch ? cleanBranchName(sch.branch) : (sch.city ? cleanBranchName(sch.city) : '');
                                   setFormData(prev => ({
                                     ...prev,
                                     schoolId: sch.id,
                                     schoolName: sch.name,
-                                    institution: sch.name
+                                    institution: sch.name,
+                                    ...(schBranch && !lockBranch ? { branch: schBranch } : {})
                                   }));
                                 }
                               }
@@ -1998,12 +2201,14 @@ export default function AdmissionModal({
                               } else {
                                 const fc = filteredFranchisesByBranch.find(f => f.id === val);
                                 if (fc) {
+                                  const fcBranch = fc.branch ? cleanBranchName(fc.branch) : (fc.city ? cleanBranchName(fc.city) : '');
                                   setFormData(prev => ({
                                     ...prev,
                                     franchiseId: fc.id,
                                     franchiseName: fc.name,
                                     institution: fc.name,
-                                    schoolName: fc.schoolName || fc.name
+                                    schoolName: fc.schoolName || fc.name,
+                                    ...(fcBranch && !lockBranch ? { branch: fcBranch } : {})
                                   }));
                                 }
                               }
@@ -3314,7 +3519,7 @@ export default function AdmissionModal({
       )}
 
       {/* =========================================================================
-          PHOTO EDITOR POPUP MODAL (BACKGROUND COLOUR CHANGE)
+          PHOTO EDITOR POPUP MODAL (BACKGROUND COLOUR CHANGE & CROP/ZOOM)
           ========================================================================= */}
       {isPhotoEditorOpen && formData.photoPreview && (
         <div 
@@ -3322,18 +3527,18 @@ export default function AdmissionModal({
           onClick={() => setIsPhotoEditorOpen(false)}
         >
           <div 
-            className="bg-slate-900 border-2 border-slate-700 w-full max-w-md rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-150"
+            className="bg-slate-900 border-2 border-slate-700 w-full max-w-lg rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-150"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
             <div className="bg-[#081d3d] text-white px-4 py-3 flex items-center justify-between border-b border-slate-700">
               <div className="flex items-center gap-2">
-                <span className="w-7 h-7 rounded-lg bg-sky-500 text-white flex items-center justify-center font-bold">
+                <span className="w-8 h-8 rounded-lg bg-sky-500 text-white flex items-center justify-center font-bold shadow-sm">
                   <Crop className="w-4 h-4" />
                 </span>
                 <div>
-                  <h4 className="text-xs sm:text-sm font-black text-white">Change Photo Background</h4>
-                  <p className="text-[10px] text-slate-400">Select standard passport background colour</p>
+                  <h4 className="text-xs sm:text-sm font-black text-white">Crop & Adjust Passport Photo</h4>
+                  <p className="text-[10px] text-slate-400">Zoom, position face and choose background color</p>
                 </div>
               </div>
               <button
@@ -3345,27 +3550,66 @@ export default function AdmissionModal({
               </button>
             </div>
 
-            {/* Preview Workspace (Correct 3.5 : 4.5 Passport Proportion) */}
+            {/* Preview Workspace (Passport Proportion 3.5 : 4.5) */}
             <div className="p-4 space-y-3.5">
-              <div className="flex justify-center">
+              <div className="flex flex-col items-center">
                 <div 
-                  className="relative w-48 sm:w-56 aspect-[3.5/4.5] rounded-2xl overflow-hidden flex items-center justify-center border-2 border-slate-700 shadow-xl transition-colors duration-200"
+                  ref={cropContainerRef}
+                  onMouseDown={handleCropMouseDown}
+                  onTouchStart={handleCropTouchStart}
+                  onTouchMove={handleCropTouchMove}
+                  onTouchEnd={handleCropTouchEnd}
+                  onWheel={handleCropWheel}
+                  className={`relative w-48 sm:w-56 aspect-[3.5/4.5] rounded-2xl overflow-hidden flex items-center justify-center border-2 border-amber-400/80 shadow-2xl select-none transition-colors duration-200 ${
+                    isDraggingCrop ? 'cursor-grabbing' : 'cursor-grab'
+                  }`}
                   style={{
-                    backgroundColor: editorBgColor === 'original' ? '#020617' : editorBgColor
+                    backgroundColor: editorBgColor === 'original' ? '#020617' : editorBgColor,
+                    touchAction: 'none'
                   }}
+                  title="Click & drag to reposition face. Scroll to zoom."
                 >
-                  {/* Photo Element (Passport Fit: Consistent size & scale) */}
-                  <img
-                    ref={editorImageRef}
-                    src={editorPreviewUrl || originalPhotoSrc || formData.photoPreview}
-                    alt="Passport photo preview"
-                    crossOrigin="anonymous"
-                    className="w-full h-full object-cover transition-all duration-200"
-                  />
+                  {/* Photo Container with Transform */}
+                  <div
+                    className="w-full h-full flex items-center justify-center pointer-events-none will-change-transform"
+                    style={{
+                      transform: `translate(${cropPan.x}px, ${cropPan.y}px) rotate(${cropRotation}deg) scale(${cropZoom})`,
+                      transformOrigin: 'center center',
+                      transition: isDraggingCrop ? 'none' : 'transform 0.1s ease-out'
+                    }}
+                  >
+                    <img
+                      ref={editorImageRef}
+                      src={editorPreviewUrl || originalPhotoSrc || formData.photoPreview}
+                      alt="Passport photo preview"
+                      crossOrigin="anonymous"
+                      draggable={false}
+                      className="w-full h-full object-cover select-none pointer-events-none"
+                    />
+                  </div>
+
+                  {/* Passport Guideline Overlay */}
+                  <div className="absolute inset-0 pointer-events-none border border-white/20 rounded-2xl">
+                    {/* Head/Face Oval Guide (Passport Standard) */}
+                    <div className="absolute inset-x-8 inset-y-6 border border-dashed border-white/35 rounded-full" />
+                    
+                    {/* Subtle corner marks */}
+                    <div className="absolute top-2 left-2 w-3 h-3 border-t-2 border-l-2 border-amber-400/70" />
+                    <div className="absolute top-2 right-2 w-3 h-3 border-t-2 border-r-2 border-amber-400/70" />
+                    <div className="absolute bottom-2 left-2 w-3 h-3 border-b-2 border-l-2 border-amber-400/70" />
+                    <div className="absolute bottom-2 right-2 w-3 h-3 border-b-2 border-r-2 border-amber-400/70" />
+
+                    {/* Hint overlay pill */}
+                    <div className="absolute bottom-1.5 inset-x-2 flex justify-center">
+                      <span className="bg-slate-950/75 backdrop-blur-xs text-[9px] text-amber-200/90 px-2 py-0.5 rounded-full font-medium flex items-center gap-1 shadow-sm">
+                        <Move className="w-2.5 h-2.5" /> Drag to position | Scroll to zoom
+                      </span>
+                    </div>
+                  </div>
 
                   {/* Processing Overlay */}
                   {isProcessingBg && (
-                    <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-xs flex flex-col items-center justify-center gap-2 text-white z-10 animate-fade-in">
+                    <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-xs flex flex-col items-center justify-center gap-2 text-white z-20 animate-fade-in">
                       <Loader2 className="w-8 h-8 text-amber-400 animate-spin" />
                       <span className="text-xs font-bold tracking-wide">
                         Replacing background with {editorBgColor === '#ffffff' ? 'White' : editorBgColor === '#38bdf8' ? 'Blue' : 'Grey'}...
@@ -3375,8 +3619,61 @@ export default function AdmissionModal({
                 </div>
               </div>
 
+              {/* Crop & Zoom Controls Toolbar */}
+              <div className="bg-slate-800/90 p-3 rounded-xl border border-slate-700 space-y-2.5">
+                <div className="flex items-center justify-between text-xs text-slate-300 font-semibold">
+                  <span className="flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-slate-400">
+                    <Crop className="w-3.5 h-3.5 text-amber-400" /> Zoom & Position
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-mono font-bold text-amber-300 bg-slate-900/80 px-2 py-0.5 rounded-md border border-slate-700">
+                      {Math.round(cropZoom * 100)}%
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleResetCrop}
+                      className="px-2 py-1 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg text-[10px] font-bold flex items-center gap-1 transition cursor-pointer"
+                      title="Reset zoom and position"
+                    >
+                      <RotateCcw className="w-3 h-3 text-amber-400" /> Reset
+                    </button>
+                  </div>
+                </div>
+
+                {/* Zoom Controls: Zoom Out button, Range Slider, Zoom In button */}
+                <div className="flex items-center gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setCropZoom((prev) => Math.max(0.8, Number((prev - 0.1).toFixed(2))))}
+                    className="p-1.5 bg-slate-700 hover:bg-slate-600 active:scale-95 text-slate-200 rounded-lg transition cursor-pointer"
+                    title="Zoom Out"
+                  >
+                    <ZoomOut className="w-4 h-4" />
+                  </button>
+
+                  <input
+                    type="range"
+                    min="0.8"
+                    max="3.0"
+                    step="0.05"
+                    value={cropZoom}
+                    onChange={(e) => setCropZoom(parseFloat(e.target.value))}
+                    className="flex-1 h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-amber-400 focus:outline-hidden"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => setCropZoom((prev) => Math.min(3.0, Number((prev + 0.1).toFixed(2))))}
+                    className="p-1.5 bg-slate-700 hover:bg-slate-600 active:scale-95 text-slate-200 rounded-lg transition cursor-pointer"
+                    title="Zoom In"
+                  >
+                    <ZoomIn className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
               {/* Background Color Selector: Only Blue, White, Grey */}
-              <div className="space-y-2.5 bg-slate-800/80 p-3.5 rounded-xl border border-slate-700 text-white text-xs">
+              <div className="space-y-2 bg-slate-800/80 p-3 rounded-xl border border-slate-700 text-white text-xs">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-black uppercase tracking-wider text-slate-300">
                     Choose Background Colour:
@@ -3387,7 +3684,7 @@ export default function AdmissionModal({
                 </div>
 
                 {/* Swatches: Only Original, White, Blue, Grey */}
-                <div className="grid grid-cols-4 gap-2 pt-1">
+                <div className="grid grid-cols-4 gap-2 pt-0.5">
                   {[
                     { label: 'Original', value: 'original', bgClass: 'bg-slate-700 text-slate-200 border-slate-500' },
                     { label: 'White', value: '#ffffff', bgClass: 'bg-white border-slate-300 text-slate-900 font-black' },
@@ -3399,7 +3696,7 @@ export default function AdmissionModal({
                       type="button"
                       disabled={isProcessingBg}
                       onClick={() => handleSelectBgColor(swatch.value)}
-                      className={`h-11 rounded-xl border-2 flex flex-col items-center justify-center transition cursor-pointer relative ${swatch.bgClass} ${
+                      className={`h-9 rounded-xl border-2 flex flex-col items-center justify-center transition cursor-pointer relative ${swatch.bgClass} ${
                         editorBgColor === swatch.value 
                           ? 'ring-2 ring-amber-400 scale-105 shadow-md border-amber-400 font-black' 
                           : 'hover:scale-100 opacity-90'
@@ -3426,7 +3723,7 @@ export default function AdmissionModal({
                   className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-black text-xs rounded-xl transition flex items-center justify-center gap-1.5 shadow-md cursor-pointer disabled:opacity-50"
                 >
                   <Check className="w-4 h-4 text-emerald-200" />
-                  <span>Apply Background Colour</span>
+                  <span>Apply & Crop Photo</span>
                 </button>
 
                 <button

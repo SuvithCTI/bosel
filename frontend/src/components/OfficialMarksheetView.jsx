@@ -186,16 +186,16 @@ const ABACUS_SUBJECTS = [
 
 // ============================================================
 // ASSESSMENT & MARKSHEET METRICS / EXPORTS
+// Each subject: Assessment (out of 40) + Final Exam (out of 60) = Total (out of 100)
 // All values are rounded to whole numbers (no decimals).
 // ============================================================
 
 export const SUBJECT_COUNT = 5;
-export const SUBJECT_MAX = 100;
 export const REVISION_COUNT = 4;
-export const REVISION_MAX = 40;
-export const ASSESSMENT_MAX = 40;
-export const EXAM_MAX = 100;
-export const EXAM_CONVERTED_MAX = 60;
+export const REVISION_MAX = 40;   // each weekly revision test is out of 40
+export const ASSESSMENT_MAX = 40; // assessment (average of the 4 revisions) is out of 40
+export const EXAM_MAX = 60;       // final exam is marked directly out of 60
+export const SUBJECT_MAX = ASSESSMENT_MAX + EXAM_MAX; // 100 per subject
 export const TOTAL_MAX = SUBJECT_COUNT * SUBJECT_MAX; // 500
 
 export const rowPercent = (sub) => {
@@ -223,22 +223,17 @@ export const computeResult = (subjectsInput = [], revisionsInput = []) => {
   const total = SUBJECT_COUNT + REVISION_COUNT;
   const complete = validSubjects.length === SUBJECT_COUNT && validRevisions.length === REVISION_COUNT;
 
-  // Assessment = average of 4 revision tests (out of ASSESSMENT_MAX = 40)
+  // Assessment = average of 4 revision tests (out of 40)
   const assessment = validRevisions.length > 0
     ? Math.round(validRevisions.reduce((a, b) => a + b, 0) / validRevisions.length)
     : null;
 
-  // Exam average (out of 100)
+  // Exam average (out of 60)
   const examAverage = validSubjects.length > 0
     ? Math.round(validSubjects.reduce((a, b) => a + b, 0) / validSubjects.length)
     : null;
 
-  // Exam converted to 60
-  const examConverted = examAverage !== null
-    ? Math.round((examAverage * EXAM_CONVERTED_MAX) / EXAM_MAX)
-    : null;
-
-  // Total marks: sum of all subjects
+  // Total marks: sum of all subjects (out of 500)
   const totalMarks = validSubjects.length > 0
     ? Math.round(validSubjects.reduce((a, b) => a + b, 0))
     : null;
@@ -259,7 +254,6 @@ export const computeResult = (subjectsInput = [], revisionsInput = []) => {
     complete,
     assessment,
     examAverage,
-    examConverted,
     totalMarks,
     totalMaximum: TOTAL_MAX,
     percentage,
@@ -274,9 +268,10 @@ export const getCourseSubjectModules = (courseName = '') => {
   return names.map((name, i) => ({
     id: i + 1,
     name,
-    max: 100,
-    assessment: 40,
-    marks: DEMO_MARKS[i],
+    max: EXAM_MAX,                          // Max Marks column shows 60
+    assessment: ASSESSMENT_MAX,             // 40
+    exam: DEMO_MARKS[i] - ASSESSMENT_MAX,   // obtained out of 60
+    marks: DEMO_MARKS[i],                   // total out of 100
     pct: `${DEMO_MARKS[i]}%`,
   }));
 };
@@ -573,26 +568,16 @@ export default function OfficialMarksheetView({
     ? savedSheet.subjects
     : getCourseSubjectModules(courseName);
 
-  const totalMax = subjects.reduce(
-    (sum, s) => sum + (Number(s.max) || 100),
-    0
-  );
+  // Total maximum = number of subjects × 100 (each subject is 40 assessment + 60 exam)
+  const totalMax = subjects.length * SUBJECT_MAX;
 
+  // Total obtained = sum of each subject's total (assessment + exam)
   const totalMarks = subjects.reduce(
     (sum, s) => sum + (Number(s.marks) || 0),
     0
   );
 
-  // Total obtained = sum of the "Marks Obtained" column shown in the table
-  // (falls back to the subject total when a subject has no exam mark)
-  const totalObtained = subjects.reduce((sum, s) => {
-    const examMark = Number(s.exam);
-    const value =
-      s.exam !== null && s.exam !== undefined && s.exam !== '' && Number.isFinite(examMark)
-        ? examMark
-        : Number(s.marks) || 0;
-    return sum + value;
-  }, 0);
+  const totalObtained = totalMarks;
 
   // Whole-number percentage
   const percentage = totalMax
@@ -1055,6 +1040,7 @@ export default function OfficialMarksheetView({
                 {sub.name}
               </div>
 
+              {/* Max Marks (exam out of 60) */}
               <div
                 className="absolute font-bold text-[#081d3d] text-[10px] sm:text-[12.5px] -translate-x-1/2 -translate-y-1/2 text-center"
                 style={{
@@ -1065,9 +1051,10 @@ export default function OfficialMarksheetView({
                   zIndex: 1,
                 }}
               >
-                {fmt2(sub.max)}
+                {fmt2(EXAM_MAX)}
               </div>
 
+              {/* Assessment (out of 40) */}
               <div
                 className="absolute font-bold text-[#081d3d] text-[10px] sm:text-[12.5px] -translate-x-1/2 -translate-y-1/2 text-center"
                 style={{
@@ -1081,6 +1068,7 @@ export default function OfficialMarksheetView({
                 {fmt2(sub.assessment)}
               </div>
 
+              {/* Marks obtained (exam out of 60) */}
               <div
                 className="absolute font-black text-[#081d3d] text-[10.5px] sm:text-[13px] -translate-x-1/2 -translate-y-1/2 text-center"
                 style={{
@@ -1094,6 +1082,7 @@ export default function OfficialMarksheetView({
                 {fmt2(sub.exam)}
               </div>
 
+              {/* Percentage (total out of 100) */}
               <div
                 className="absolute font-bold text-[#081d3d] text-[10px] sm:text-[12.5px] -translate-x-1/2 -translate-y-1/2 text-center"
                 style={{
