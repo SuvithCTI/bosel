@@ -75,7 +75,7 @@ router.post('/', async (req, res) => {
     const rawDigits = (data.phone || '').replace(/\D/g, '');
     const cleanMobile = rawDigits.length >= 10 ? rawDigits.slice(-10) : '9840123456';
     const userId = data.userId || `BSEL-${cleanMobile}`;
-    const regNo = data.registerNumber || data.registrationNo || `REG-${Date.now().toString().slice(-6)}`;
+    let regNo = data.registerNumber || data.registrationNo || `REG-${Date.now().toString().slice(-6)}`;
 
     // Upload base64 photos to Amazon S3 if provided
     let photoUrl = data.photoUrl || data.studentPhoto || null;
@@ -89,6 +89,16 @@ router.post('/', async (req, res) => {
     }
 
     if (db.isDbConnected()) {
+      // Ensure register number does not violate unique constraint
+      try {
+        const regCheck = await db.query('SELECT user_id FROM students WHERE register_number = $1 AND user_id != $2', [regNo, userId]);
+        if (regCheck.rows && regCheck.rows.length > 0) {
+          regNo = `${regNo}-${Date.now().toString().slice(-4)}`;
+        }
+      } catch (checkErr) {
+        console.warn('[regCheck warning]:', checkErr.message);
+      }
+
       // 1. Insert into students table
       const result = await db.query(`
         INSERT INTO students (

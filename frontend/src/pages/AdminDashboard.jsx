@@ -345,7 +345,11 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
               }
             });
 
-            localStorage.setItem('bsel_registered_users', JSON.stringify(merged));
+            try {
+              localStorage.setItem('bsel_registered_users', JSON.stringify(merged));
+            } catch (storageErr) {
+              console.warn('[AdminDashboard] Storage quota exceeded caching remote users:', storageErr);
+            }
             setUsersList(merged);
           }
         }

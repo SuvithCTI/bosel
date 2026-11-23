@@ -717,7 +717,7 @@ export const getStudentByPhone = (phoneNumber) => {
   }) || null;
 };
 
-export const registerStudentAccount = (formData) => {
+export const registerStudentAccount = async (formData) => {
   const users = getRegisteredUsers();
 
   // The branch selected in Field 2 is the student's official branch
@@ -905,8 +905,31 @@ export const registerStudentAccount = (formData) => {
     (user.accountUserId || '').toUpperCase() !== newUserId.toUpperCase()
   );
   const updatedUsers = [...admissionEntries, ...otherUsers];
+  // Helper to safely write to localStorage without quota crashes
+  const safeSaveUsersToLocalStorage = (userList) => {
+    try {
+      localStorage.setItem('bsel_registered_users', JSON.stringify(userList));
+      return true;
+    } catch (quotaErr) {
+      console.warn('[authStorage] Quota exceeded in localStorage, trimming base64 photos from older accounts:', quotaErr);
+      try {
+        const lean = userList.map((u, i) => {
+          if (i > 1 && u.studentPhoto && typeof u.studentPhoto === 'string' && u.studentPhoto.startsWith('data:')) {
+            return { ...u, studentPhoto: null, photoUrl: null };
+          }
+          return u;
+        });
+        localStorage.setItem('bsel_registered_users', JSON.stringify(lean));
+        return true;
+      } catch (fallbackErr) {
+        console.error('[authStorage] Critical storage quota error:', fallbackErr);
+        return false;
+      }
+    }
+  };
+
   try {
-    localStorage.setItem('bsel_registered_users', JSON.stringify(updatedUsers));
+    safeSaveUsersToLocalStorage(updatedUsers);
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new Event('bsel_users_updated'));
     }
@@ -919,10 +942,15 @@ export const registerStudentAccount = (formData) => {
       })
     );
     // Directly seed student profile so it is immediately populated upon login
-    localStorage.setItem(`bsel_student_profile_${newUserId.toLowerCase()}`, JSON.stringify(newUser));
-    if (cleanMobile) {
-      localStorage.setItem(`bsel_student_profile_${cleanMobile}`, JSON.stringify(newUser));
+    try {
+      localStorage.setItem(`bsel_student_profile_${newUserId.toLowerCase()}`, JSON.stringify(newUser));
+      if (cleanMobile) {
+        localStorage.setItem(`bsel_student_profile_${cleanMobile}`, JSON.stringify(newUser));
+      }
+    } catch (eProfile) {
+      console.warn('[authStorage] Could not cache individual profile due to quota:', eProfile.message);
     }
+
     const currentActive = getActiveSession();
     if (currentActive && (currentActive.userId === newUserId || (currentActive.phone && currentActive.phone.replace(/\D/g, '').endsWith(cleanMobile)))) {
       setActiveSession(newUser);
@@ -943,56 +971,77 @@ export const registerStudentAccount = (formData) => {
       issueDate: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-'),
       certificateType: 'COURSE'
     };
-    localStorage.setItem('bsel_registered_student', JSON.stringify(certificateStudent));
+    try {
+      localStorage.setItem('bsel_registered_student', JSON.stringify(certificateStudent));
+    } catch (eCert) {
+      console.warn('[authStorage] Certificate preview cache skipped:', eCert.message);
+    }
   } catch (err) {
     console.error('Error saving user to localStorage:', err);
   }
 
-  // Asynchronous background sync to Neon PostgreSQL and Amazon S3
+  // Direct sync to Neon PostgreSQL and Amazon S3
   if (typeof window !== 'undefined') {
-    (async () => {
-      try {
-        let s3PhotoUrl = newUser.studentPhoto;
-        // If photo is base64, attempt upload to Amazon S3
-        if (s3PhotoUrl && typeof s3PhotoUrl === 'string' && s3PhotoUrl.startsWith('data:')) {
-          try {
-            const fetchRes = await fetch(s3PhotoUrl);
-            const blob = await fetchRes.blob();
-            const fd = new FormData();
-            fd.append('file', blob, `student_${newUser.userId}.jpg`);
-            fd.append('folder', 'students');
-            const upRes = await fetch('/api/upload', { method: 'POST', body: fd });
-            if (upRes.ok) {
-              const upData = await upRes.json();
-              if (upData && upData.url) {
-                s3PhotoUrl = upData.url;
-                newUser.studentPhoto = upData.url;
-              }
+    try {
+      let s3PhotoUrl = newUser.studentPhoto;
+      // If photo is base64, upload to Amazon S3
+      if (s3PhotoUrl && typeof s3PhotoUrl === 'string' && s3PhotoUrl.startsWith('data:')) {
+        try {
+          const fetchRes = await fetch(s3PhotoUrl);
+          const blob = await fetchRes.blob();
+          const fd = new FormData();
+          fd.append('file', blob, `student_${newUser.userId}.jpg`);
+          fd.append('folder', 'students');
+          const upRes = await fetch('/api/upload', { method: 'POST', body: fd });
+          if (upRes.ok) {
+            const upData = await upRes.json();
+            if (upData && upData.url) {
+              s3PhotoUrl = upData.url;
+              newUser.studentPhoto = upData.url;
+              newUser.photoUrl = upData.url;
             }
-          } catch (upErr) {
-            console.debug('[S3 Photo Sync]:', upErr.message);
           }
+        } catch (upErr) {
+          console.debug('[S3 Photo Sync]:', upErr.message);
         }
-
-        for (const [index, admission] of admissionEntries.entries()) {
-          const response = await fetch('/api/students', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              ...admission,
-              syncUserAccount: index === 0,
-              photoUrl: s3PhotoUrl,
-              studentPhoto: s3PhotoUrl
-            })
-          });
-          if (!response.ok) {
-            throw new Error(`Could not save admission for ${admission.courseName}: ${response.status}`);
-          }
-        }
-      } catch (syncErr) {
-        console.error('[Neon student admission sync error]:', syncErr);
       }
-    })();
+
+      for (const [index, admission] of admissionEntries.entries()) {
+        const payload = {
+          ...admission,
+          syncUserAccount: index === 0,
+          photoUrl: s3PhotoUrl,
+          studentPhoto: s3PhotoUrl
+        };
+        const response = await fetch('/api/students', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (response.ok) {
+          const resJson = await response.json();
+          if (resJson?.student) {
+            // Update the user record in localStorage with the clean DB returned student
+            const currentUsers = getRegisteredUsers();
+            const idx = currentUsers.findIndex(u => (u.userId || '').toLowerCase() === newUser.userId.toLowerCase());
+            if (idx !== -1) {
+              currentUsers[idx] = {
+                ...currentUsers[idx],
+                photoUrl: resJson.student.photo_url || s3PhotoUrl,
+                studentPhoto: resJson.student.photo_url || s3PhotoUrl,
+                registerNumber: resJson.student.register_number || currentUsers[idx].registerNumber
+              };
+              safeSaveUsersToLocalStorage(currentUsers);
+              window.dispatchEvent(new Event('bsel_users_updated'));
+            }
+          }
+        } else {
+          console.warn(`[Neon student admission sync warning] Status: ${response.status}`);
+        }
+      }
+    } catch (syncErr) {
+      console.warn('[Neon student admission sync network error]:', syncErr.message);
+    }
   }
 
   return {

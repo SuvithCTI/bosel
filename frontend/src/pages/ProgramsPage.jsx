@@ -108,7 +108,7 @@ export default function ProgramsPage() {
       title={`Click to view ${prog.name} syllabus & details`}
     >
       {/* Card Inner Content */}
-      <div className="relative bg-white rounded-[10px] sm:rounded-[21px] overflow-hidden flex flex-col text-left h-full group-hover:bg-slate-50/70 transition-colors">
+      <div className="relative bg-white text-slate-900 rounded-[10px] sm:rounded-[21px] overflow-hidden flex flex-col text-left h-full group-hover:bg-slate-50/70 transition-colors">
         {/* Course Photography Container */}
         <div className="relative aspect-[3/2] w-full overflow-hidden bg-slate-100">
           <img
@@ -139,7 +139,7 @@ export default function ProgramsPage() {
           <div>
             <div className="flex items-start justify-between gap-1">
               <h3 
-                className="font-black text-xs sm:text-lg md:text-xl text-black font-heading group-hover:text-sky-700 transition leading-tight line-clamp-1"
+                className="font-black text-xs sm:text-lg md:text-xl text-slate-950 font-heading group-hover:text-sky-700 transition leading-tight line-clamp-1"
               >
                 {prog.name}
               </h3>
