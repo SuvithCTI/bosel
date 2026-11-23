@@ -12,6 +12,7 @@ export const DEFAULT_PARTNER_SCHOOLS = [
     name: 'B★SEL Tenkasi Branch',
     branchName: 'Tenkasi Branch',
     city: 'Tenkasi, Tamil Nadu',
+    address: 'Second Street, Surandai, Keelasurandai, Tenkasi - 627859',
     principal: 'Mrs. Thangam Sivaji',
     coordinator: 'Mr. S. Sivakumar',
     phone: '+91 98652 19131',
@@ -23,6 +24,7 @@ export const DEFAULT_PARTNER_SCHOOLS = [
     name: 'B★SEL Tirunelveli Branch',
     branchName: 'Tirunelveli Branch',
     city: 'Tirunelveli, Tamil Nadu',
+    address: 'Tirunelveli Junction, Tirunelveli - 627001',
     principal: 'Dr. M. Arumugam',
     coordinator: 'Mrs. P. Vasanthi',
     phone: '+91 94431 88201',
@@ -71,11 +73,8 @@ export const getStoredSchools = () => {
         localStorage.setItem('bsel_partner_schools', JSON.stringify(DEFAULT_PARTNER_SCHOOLS));
         return DEFAULT_PARTNER_SCHOOLS;
       }
-      // Ensure only Tenkasi and Tirunelveli branches are present as per official structure
-      let list = parsed.filter(s => {
-        const text = `${s.name || ''} ${s.branchName || ''} ${s.city || ''} ${s.code || ''}`.toLowerCase();
-        return text.includes('tenkasi') || text.includes('tirunelveli');
-      });
+      // Ensure Tenkasi and Tirunelveli branches are present as default base branches
+      let list = [...parsed];
 
       if (!list.some(s => (s.branchName || s.name || '').toLowerCase().includes('tenkasi'))) {
         list.unshift(DEFAULT_PARTNER_SCHOOLS[0]);
@@ -86,14 +85,20 @@ export const getStoredSchools = () => {
 
       let modified = false;
       const cleaned = list.map(s => {
-        if (s.city && s.city.toLowerCase().includes('surandai')) {
+        const item = { ...s };
+        const bName = `${item.branchName || ''} ${item.name || ''}`.toLowerCase();
+        if (bName.includes('tenkasi') && (!item.address || item.address.includes('Podanur'))) {
+          item.address = 'Second Street, Surandai, Keelasurandai, Tenkasi - 627859';
           modified = true;
-          return {
-            ...s,
-            city: s.city.replace(/\bSurandai,?\s*/gi, '').trim() || 'Tenkasi, Tamil Nadu'
-          };
+        } else if (bName.includes('tirunelveli') && (!item.address || item.address.includes('Podanur'))) {
+          item.address = 'Tirunelveli Junction, Tirunelveli - 627001';
+          modified = true;
         }
-        return s;
+        if (item.city && item.city.toLowerCase().includes('surandai')) {
+          modified = true;
+          item.city = item.city.replace(/\bSurandai,?\s*/gi, '').trim() || 'Tenkasi, Tamil Nadu';
+        }
+        return item;
       });
 
       localStorage.setItem('bsel_partner_schools', JSON.stringify(cleaned));

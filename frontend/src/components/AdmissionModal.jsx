@@ -33,6 +33,7 @@ import {
   Clock
 } from 'lucide-react';
 import { registerStudentAccount, generateRegisterNumber, isPhoneNumberRegistered } from '../utils/authStorage';
+import { getAvailableBranchNames, cleanBranchName } from '../utils/branchAuthStorage';
 import { getStoredCourses } from '../data/coursesData';
 import { replacePhotoBackground } from '../utils/photoSegmentation';
 import { ACADEMIC_STAGES, getAcademicStageFromAge } from '../utils/academicStages';
@@ -329,11 +330,32 @@ export default function AdmissionModal({
   const dynamicProgramNames = coursesList.map(c => c.fullName || c.name);
   const availablePrograms = dynamicProgramNames.length > 0 ? dynamicProgramNames : BSEL_PROGRAMS;
 
-  // 2. Branch: strictly Tenkasi and Tirunelveli branches
-  const cleanInitBranch = initialBranch ? String(initialBranch).replace(/\s*(regional\s*)?branch\s*/gi, '').trim() : null;
-  const availableBranches = cleanInitBranch && !['Tenkasi', 'Tirunelveli'].includes(cleanInitBranch)
-    ? [cleanInitBranch, 'Tenkasi', 'Tirunelveli']
-    : ['Tenkasi', 'Tirunelveli'];
+  // 2. Branch: dynamic branches from official network & custom branches
+  const cleanInitBranch = initialBranch ? cleanBranchName(initialBranch) : null;
+  const [availableBranches, setAvailableBranches] = useState(() => {
+    const list = getAvailableBranchNames();
+    if (cleanInitBranch && !list.some(b => b.toLowerCase() === cleanInitBranch.toLowerCase())) {
+      return [cleanInitBranch, ...list];
+    }
+    return list;
+  });
+
+  useEffect(() => {
+    const handleBranchesUpdate = () => {
+      const list = getAvailableBranchNames();
+      if (cleanInitBranch && !list.some(b => b.toLowerCase() === cleanInitBranch.toLowerCase())) {
+        setAvailableBranches([cleanInitBranch, ...list]);
+      } else {
+        setAvailableBranches(list);
+      }
+    };
+    window.addEventListener('bsel_branch_credentials_updated', handleBranchesUpdate);
+    window.addEventListener('bsel_schools_updated', handleBranchesUpdate);
+    return () => {
+      window.removeEventListener('bsel_branch_credentials_updated', handleBranchesUpdate);
+      window.removeEventListener('bsel_schools_updated', handleBranchesUpdate);
+    };
+  }, [cleanInitBranch]);
 
   const initialCourse = initialProgram || availablePrograms[0] || 'Abacus Speed Arithmetic';
   const defaultBranch = cleanInitBranch || 'Tenkasi';
@@ -1855,6 +1877,7 @@ export default function AdmissionModal({
                                     }));
                                   } else if (id === 'School') {
                                     const defaultSch = filteredSchoolsByBranch[0];
+                                    const schBranch = defaultSch?.branch ? cleanBranchName(defaultSch.branch) : (defaultSch?.city ? cleanBranchName(defaultSch.city) : '');
                                     setFormData(prev => ({
                                       ...prev,
                                       admissionCategory: 'School',
@@ -1862,10 +1885,12 @@ export default function AdmissionModal({
                                       schoolName: defaultSch?.name || '',
                                       institution: defaultSch?.name || '',
                                       franchiseId: null,
-                                      franchiseName: ''
+                                      franchiseName: '',
+                                      ...(schBranch && !lockBranch ? { branch: schBranch } : {})
                                     }));
                                   } else if (id === 'Franchise') {
                                     const defaultFc = filteredFranchisesByBranch[0];
+                                    const fcBranch = defaultFc?.branch ? cleanBranchName(defaultFc.branch) : (defaultFc?.city ? cleanBranchName(defaultFc.city) : '');
                                     setFormData(prev => ({
                                       ...prev,
                                       admissionCategory: 'Franchise',
@@ -1873,7 +1898,8 @@ export default function AdmissionModal({
                                       franchiseName: defaultFc?.name || '',
                                       institution: defaultFc?.name || '',
                                       schoolName: defaultFc?.schoolName || defaultFc?.name || '',
-                                      schoolId: null
+                                      schoolId: null,
+                                      ...(fcBranch && !lockBranch ? { branch: fcBranch } : {})
                                     }));
                                   }
                                 }}
@@ -1922,11 +1948,13 @@ export default function AdmissionModal({
                               } else {
                                 const sch = filteredSchoolsByBranch.find(s => s.id === val);
                                 if (sch) {
+                                  const schBranch = sch.branch ? cleanBranchName(sch.branch) : (sch.city ? cleanBranchName(sch.city) : '');
                                   setFormData(prev => ({
                                     ...prev,
                                     schoolId: sch.id,
                                     schoolName: sch.name,
-                                    institution: sch.name
+                                    institution: sch.name,
+                                    ...(schBranch && !lockBranch ? { branch: schBranch } : {})
                                   }));
                                 }
                               }
@@ -1998,12 +2026,14 @@ export default function AdmissionModal({
                               } else {
                                 const fc = filteredFranchisesByBranch.find(f => f.id === val);
                                 if (fc) {
+                                  const fcBranch = fc.branch ? cleanBranchName(fc.branch) : (fc.city ? cleanBranchName(fc.city) : '');
                                   setFormData(prev => ({
                                     ...prev,
                                     franchiseId: fc.id,
                                     franchiseName: fc.name,
                                     institution: fc.name,
-                                    schoolName: fc.schoolName || fc.name
+                                    schoolName: fc.schoolName || fc.name,
+                                    ...(fcBranch && !lockBranch ? { branch: fcBranch } : {})
                                   }));
                                 }
                               }

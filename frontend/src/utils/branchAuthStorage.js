@@ -116,6 +116,7 @@ export const DEFAULT_TENKASI_BRANCH = {
   password: 'tenkasibsel',
   code: 'BSEL-BR-101',
   branchCode: 'BSEL-BR-101',
+  address: 'Second Street, Surandai, Keelasurandai, Tenkasi - 627859',
   isCustomBranch: true,
   principal: 'Mrs. Thangam Sivaji',
   coordinator: 'Mr. S. Sivakumar',
@@ -131,6 +132,7 @@ export const DEFAULT_TIRUNELVELI_BRANCH = {
   password: 'tirunelvelibsel',
   code: 'BSEL-BR-102',
   branchCode: 'BSEL-BR-102',
+  address: 'Tirunelveli Junction, Tirunelveli - 627001',
   isCustomBranch: true,
   principal: 'Dr. M. Arumugam',
   coordinator: 'Mrs. P. Vasanthi',
@@ -577,4 +579,307 @@ export const verifyBranchLogin = (inputIdentifier, inputPassword) => {
   }
 
   return null;
+};
+
+/**
+ * Resolves the official branch details (centreName, centreCode, centreAddress)
+ * for a student, branch name, or certificate request.
+ * Strictly sources centreCode and centreAddress from the branch record,
+ * never confusing personal student home addresses or placeholder codes (545454/546454).
+ */
+export const resolveBranchDetails = (branchOrStudent, explicitDetails = {}) => {
+  let targetBranch = '';
+  let targetCode = '';
+  let targetAddress = '';
+
+  if (typeof branchOrStudent === 'string') {
+    targetBranch = branchOrStudent;
+  } else if (branchOrStudent && typeof branchOrStudent === 'object') {
+    targetBranch =
+      branchOrStudent.branch ||
+      branchOrStudent.branchName ||
+      branchOrStudent.institution ||
+      branchOrStudent.studyCenter ||
+      branchOrStudent.centreName ||
+      branchOrStudent.city ||
+      branchOrStudent.district ||
+      '';
+    targetCode =
+      branchOrStudent.branchCode ||
+      branchOrStudent.code ||
+      branchOrStudent.centreCode ||
+      '';
+    targetAddress =
+      branchOrStudent.centreAddress ||
+      branchOrStudent.branchAddress ||
+      '';
+  }
+
+  // Explicit overrides if provided
+  if (explicitDetails.centreName) targetBranch = explicitDetails.centreName;
+  if (explicitDetails.centreCode && explicitDetails.centreCode !== '545454' && explicitDetails.centreCode !== '546454') {
+    targetCode = explicitDetails.centreCode;
+  }
+  if (explicitDetails.centreAddress && explicitDetails.centreAddress !== 'Podanur' && !explicitDetails.centreAddress.includes('Coimbatore / 641023')) {
+    targetAddress = explicitDetails.centreAddress;
+  }
+
+  // Clean out dummy codes
+  if (targetCode === '545454' || targetCode === '546454') {
+    targetCode = '';
+  }
+
+  // Determine branch slug
+  const slug = getDistrictSlug(targetBranch || targetAddress || 'Tenkasi');
+
+  // Check stored branch credentials first
+  const storedCreds = getStoredBranchCredentials();
+  const branchCreds = storedCreds[slug] || Object.values(storedCreds).find((b) =>
+    (targetCode && (b.code === targetCode || b.branchCode === targetCode)) ||
+    (b.branchName && targetBranch && b.branchName.toLowerCase().includes(targetBranch.toLowerCase())) ||
+    (b.district && targetBranch && b.district.toLowerCase() === targetBranch.toLowerCase())
+  );
+
+  // Check stored partner schools
+  let partnerSchool = null;
+  try {
+    const rawSchools = typeof window !== 'undefined' ? localStorage.getItem('bsel_partner_schools') : null;
+    const schools = rawSchools ? JSON.parse(rawSchools) : null;
+    if (Array.isArray(schools)) {
+      partnerSchool = schools.find((s) =>
+        (targetCode && (s.code === targetCode || s.branchCode === targetCode)) ||
+        (s.code && branchCreds && s.code === (branchCreds.code || branchCreds.branchCode)) ||
+        (s.branchName && targetBranch && s.branchName.toLowerCase().includes(targetBranch.toLowerCase())) ||
+        (s.name && targetBranch && s.name.toLowerCase().includes(targetBranch.toLowerCase())) ||
+        (s.city && targetBranch && s.city.toLowerCase().includes(targetBranch.toLowerCase()))
+      );
+    }
+  } catch {}
+
+  // Check registered users (for Branch Head / Branch Admin)
+  let branchUser = null;
+  try {
+    const rawUsers = typeof window !== 'undefined' ? localStorage.getItem('bsel_registered_users') : null;
+    const users = rawUsers ? JSON.parse(rawUsers) : [];
+    if (Array.isArray(users)) {
+      branchUser = users.find((u) =>
+        (u.role === 'Branch Head' || u.role === 'Branch Admin') &&
+        ((targetCode && (u.branchCode === targetCode || u.code === targetCode)) ||
+         (branchCreds && u.branchCode === (branchCreds.code || branchCreds.branchCode)) ||
+         (u.branch && targetBranch && u.branch.toLowerCase().includes(targetBranch.toLowerCase())) ||
+         (u.district && targetBranch && u.district.toLowerCase() === targetBranch.toLowerCase()))
+      );
+    }
+  } catch {}
+
+  let resolvedDistrict = 'Tenkasi';
+  let resolvedCode = 'BSEL-BR-101';
+  let resolvedAddress = 'Second Street, Surandai, Keelasurandai, Tenkasi - 627859';
+
+  if (slug === 'tenkasi') {
+    resolvedDistrict = 'Tenkasi';
+    resolvedCode = 'BSEL-BR-101';
+    resolvedAddress = 'Second Street, Surandai, Keelasurandai, Tenkasi - 627859';
+  } else if (slug === 'tirunelveli') {
+    resolvedDistrict = 'Tirunelveli';
+    resolvedCode = 'BSEL-BR-102';
+    resolvedAddress = 'Tirunelveli Junction, Tirunelveli - 627001';
+  } else {
+    const pretty = TAMIL_NADU_DISTRICTS.find((d) => getDistrictSlug(d) === slug) ||
+      (targetBranch ? targetBranch.replace(/\s*Branch\s*$/i, '').trim() : 'Tenkasi');
+    resolvedDistrict = pretty;
+    resolvedCode = targetCode || branchCreds?.code || branchCreds?.branchCode || partnerSchool?.code || branchUser?.branchCode || `BSEL-BR-${slug.toUpperCase().slice(0, 3)}`;
+    resolvedAddress = targetAddress || branchCreds?.address || partnerSchool?.address || branchUser?.address || `${pretty}, Tamil Nadu`;
+  }
+
+  // If specific branch record has code or address, use it
+  if (branchCreds?.code || branchCreds?.branchCode) {
+    resolvedCode = branchCreds.code || branchCreds.branchCode;
+  } else if (partnerSchool?.code) {
+    resolvedCode = partnerSchool.code;
+  } else if (branchUser?.branchCode) {
+    resolvedCode = branchUser.branchCode;
+  } else if (targetCode && targetCode !== '545454' && targetCode !== '546454') {
+    resolvedCode = targetCode;
+  }
+
+  if (branchCreds?.address) {
+    resolvedAddress = branchCreds.address;
+  } else if (partnerSchool?.address) {
+    resolvedAddress = partnerSchool.address;
+  } else if (branchUser?.address) {
+    resolvedAddress = branchUser.address;
+  } else if (targetAddress && targetAddress !== 'Podanur' && !targetAddress.includes('Coimbatore / 641023')) {
+    resolvedAddress = targetAddress;
+  }
+
+  return {
+    centreName: resolvedDistrict,
+    centreCode: resolvedCode,
+    centreAddress: resolvedAddress,
+    district: resolvedDistrict,
+    branchCode: resolvedCode,
+    branchName: `${resolvedDistrict} Branch`
+  };
+};
+
+export const cleanBranchName = (name) => {
+  if (!name) return '';
+  return String(name)
+    .replace(/^b★sel\s*/gi, '')
+    .replace(/\s*(regional\s*)?branch\s*$/gi, '')
+    .replace(/,\s*tamil\s*nadu/gi, '')
+    .trim();
+};
+
+export const getAvailableBranchNames = () => {
+  const branches = ['Tenkasi', 'Tirunelveli'];
+  const seen = new Set(branches.map(b => b.toLowerCase()));
+
+  const addBranch = (raw) => {
+    const cleaned = cleanBranchName(raw);
+    if (cleaned && cleaned.length > 1 && !seen.has(cleaned.toLowerCase()) && !['tamil nadu', 'headquarters', 'all', 'default'].includes(cleaned.toLowerCase())) {
+      seen.add(cleaned.toLowerCase());
+      branches.push(cleaned);
+    }
+  };
+
+  // 1. From stored credentials
+  try {
+    const creds = getStoredBranchCredentials();
+    Object.values(creds).forEach(c => {
+      addBranch(c.branchName);
+      addBranch(c.district);
+    });
+  } catch {}
+
+  // 2. From stored partner schools (which hold all authorized branches)
+  try {
+    const raw = typeof window !== 'undefined' ? localStorage.getItem('bsel_partner_schools') : null;
+    const schools = raw ? JSON.parse(raw) : null;
+    if (Array.isArray(schools)) {
+      schools.forEach(s => {
+        addBranch(s.branchName);
+        addBranch(s.name);
+        addBranch(s.city);
+      });
+    }
+  } catch {}
+
+  // 3. From registered users (Branch Head / Branch Admin roles)
+  try {
+    const rawUsers = typeof window !== 'undefined' ? localStorage.getItem('bsel_registered_users') : null;
+    const users = rawUsers ? JSON.parse(rawUsers) : null;
+    if (Array.isArray(users)) {
+      users.forEach(u => {
+        if (u.role === 'Branch Head' || u.role === 'Branch Admin') {
+          addBranch(u.branch);
+          addBranch(u.district);
+        }
+      });
+    }
+  } catch {}
+
+  return branches;
+};
+
+export const isStudentInBranch = (student, activeBranch) => {
+  if (!student || !activeBranch) return false;
+
+  const normalize = (val) =>
+    String(val || '')
+      .toLowerCase()
+      .replace(/b★sel|regional|central|branch|academy/gi, '')
+      .trim();
+
+  const targetKey = normalize(activeBranch);
+  const targetSlug = getDistrictSlug(activeBranch);
+
+  // 1. Direct branch field check
+  const studentBranch = normalize(student.branch);
+  const studentBranchSlug = getDistrictSlug(student.branch || student.district);
+
+  if (targetSlug && studentBranchSlug && targetSlug === studentBranchSlug) {
+    return true;
+  }
+  if (targetKey && studentBranch && (studentBranch.includes(targetKey) || targetKey.includes(studentBranch))) {
+    return true;
+  }
+
+  // 2. Direct district check
+  if (student.district) {
+    const studentDistrictSlug = getDistrictSlug(student.district);
+    if (targetSlug && studentDistrictSlug && targetSlug === studentDistrictSlug) {
+      return true;
+    }
+    const dNorm = normalize(student.district);
+    if (targetKey && dNorm && (dNorm.includes(targetKey) || targetKey.includes(dNorm))) {
+      return true;
+    }
+  }
+
+  // 3. Institution or studyCenter direct match
+  const instKey = normalize(student.institution || student.studyCenter);
+  if (targetKey && instKey && (instKey.includes(targetKey) || targetKey.includes(instKey))) {
+    return true;
+  }
+
+  // 4. Check if student was admitted through a school that belongs to this branch
+  const schoolId = student.schoolId;
+  const schoolName = student.schoolName || (student.admissionCategory === 'School' ? student.institution : '');
+  if (schoolId || schoolName) {
+    try {
+      const rawSchools = typeof window !== 'undefined' ? (localStorage.getItem('bsel_schools_list') || localStorage.getItem('bsel_partner_schools')) : null;
+      const schools = rawSchools ? JSON.parse(rawSchools) : [];
+      if (Array.isArray(schools)) {
+        const matchedSchool = schools.find(s =>
+          (schoolId && s.id === schoolId) ||
+          (schoolName && s.name && s.name.toLowerCase() === schoolName.toLowerCase())
+        );
+        if (matchedSchool) {
+          const schBranchKey = normalize(matchedSchool.branch || matchedSchool.city);
+          const schSlug = getDistrictSlug(matchedSchool.branch || matchedSchool.city);
+          if (targetSlug && schSlug && targetSlug === schSlug) return true;
+          if (targetKey && schBranchKey && (schBranchKey.includes(targetKey) || targetKey.includes(schBranchKey))) return true;
+        }
+      }
+    } catch {}
+  }
+
+  // 5. Check if student was admitted through an academy / franchise that belongs to this branch
+  const franchiseId = student.franchiseId;
+  const franchiseName = student.franchiseName || (student.admissionCategory === 'Franchise' || student.admissionCategory === 'Academy' ? student.institution : '');
+  if (franchiseId || franchiseName) {
+    try {
+      const rawFranchises = typeof window !== 'undefined' ? localStorage.getItem('bsel_franchises_list') : null;
+      const franchises = rawFranchises ? JSON.parse(rawFranchises) : [];
+      if (Array.isArray(franchises)) {
+        const matchedFranchise = franchises.find(f =>
+          (franchiseId && f.id === franchiseId) ||
+          (franchiseName && f.name && f.name.toLowerCase() === franchiseName.toLowerCase())
+        );
+        if (matchedFranchise) {
+          const fcBranchKey = normalize(matchedFranchise.branch || matchedFranchise.city);
+          const fcSlug = getDistrictSlug(matchedFranchise.branch || matchedFranchise.city);
+          if (targetSlug && fcSlug && targetSlug === fcSlug) return true;
+          if (targetKey && fcBranchKey && (fcBranchKey.includes(targetKey) || targetKey.includes(fcBranchKey))) return true;
+        }
+      }
+    } catch {}
+  }
+
+  // 6. Branch Code check
+  if (student.branchCode) {
+    try {
+      const storedCreds = getStoredBranchCredentials();
+      const cred = storedCreds[targetSlug] || Object.values(storedCreds).find(c =>
+        c.branchName && targetKey && normalize(c.branchName) === targetKey
+      );
+      if (cred && (cred.code === student.branchCode || cred.branchCode === student.branchCode)) {
+        return true;
+      }
+    } catch {}
+  }
+
+  return false;
 };
