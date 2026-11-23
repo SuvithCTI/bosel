@@ -1335,30 +1335,50 @@ export default function AdmissionModal({
       >
         {/* Header Banner */}
         <div className="bg-gradient-to-r from-[#0F2B5C] via-[#143B7A] to-[#1E4D99] text-white p-3.5 sm:p-5 relative shrink-0">
-          <button
-            type="button"
-            onClick={onClose}
-            className="absolute top-3 right-3 sm:top-4 sm:right-4 bg-white/10 hover:bg-white/20 text-white rounded-full p-1.5 transition cursor-pointer z-10 active:scale-95"
-            aria-label="Close"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          {/* Right Header Area: Small BSEL Logo & Close Button */}
+          <div className="absolute top-3 right-3 sm:top-4 sm:right-4 flex items-center gap-2 sm:gap-2.5 z-10">
+            {/* Small BSEL Logo */}
+            <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-white p-1 shadow-sm border border-amber-300/50 flex items-center justify-center shrink-0">
+              <img
+                src="/bsel_logo.png"
+                onError={(e) => {
+                  if (e.currentTarget.src.indexOf('bsel_logo.jpg') === -1) {
+                    e.currentTarget.src = '/bsel_logo.jpg';
+                  }
+                }}
+                alt="B★SEL Official Logo"
+                className="w-full h-full object-contain"
+              />
+            </div>
 
-          <div className="flex items-center gap-2 mb-1 pr-8">
-            <span className="w-6 h-6 rounded-lg bg-amber-400 text-slate-950 flex items-center justify-center font-bold shrink-0 shadow-xs">
-              <GraduationCap className="w-4 h-4 text-slate-950" />
-            </span>
-            <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-amber-300">
-              Board of Skills & Educational Learning (B★SEL)
-            </span>
+            {/* Close Button */}
+            <button
+              type="button"
+              onClick={onClose}
+              className="bg-white/10 hover:bg-white/20 text-white rounded-full p-1.5 transition cursor-pointer active:scale-95"
+              aria-label="Close"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
 
-          <h3 className="text-lg sm:text-2xl font-black font-heading text-white leading-tight">
-            Student Admission Form
-          </h3>
-          <p className="text-[11px] sm:text-xs text-sky-200 mt-0.5 leading-relaxed font-semibold">
-            Official candidate enrollment and course admission registry.
-          </p>
+          <div className="pr-20 sm:pr-24">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="w-6 h-6 rounded-lg bg-amber-400 text-slate-950 flex items-center justify-center font-bold shrink-0 shadow-xs">
+                <GraduationCap className="w-4 h-4 text-slate-950" />
+              </span>
+              <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-amber-300">
+                Board of Skills & Educational Learning (B★SEL)
+              </span>
+            </div>
+
+            <h3 className="text-lg sm:text-2xl font-black font-heading text-white leading-tight">
+              Student Admission Form
+            </h3>
+            <p className="text-[11px] sm:text-xs text-sky-200 mt-0.5 leading-relaxed font-semibold">
+              Official candidate enrollment and course admission registry.
+            </p>
+          </div>
 
           {/* Form Step Progress Bar (hidden once admission is confirmed or if skipPayment is active) */}
           {!submitted && !skipPayment && (
