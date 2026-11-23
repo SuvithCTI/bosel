@@ -205,7 +205,7 @@ export default function Footer({ setActivePage, handleNav, onOpenLegal }) {
               <li className="flex items-center gap-2">
                 <Mail className="h-3.5 w-3.5 shrink-0 text-emerald-400" />
                 <a
-                  href="mailto:contact@besellearning.org"
+                  href="mailto:bsel.support@gmail.com"
                   className="break-all transition-colors hover:text-amber-300"
                 >
                   bsel.support@gmail.com
