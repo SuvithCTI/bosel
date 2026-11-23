@@ -345,20 +345,28 @@ export default function MarksheetTemplate({ remark = null, rightHeading = null }
         stroke={STRIP_BORDER}
         strokeWidth="1"
       />
-      <g clipPath="url(#strip-clip)">
-        <text
-          x="28"
-          y="131"
-          fontFamily="Georgia, serif"
-          fontWeight="bold"
-          fontSize="9"
-          fill={STRIP_TEXT}
-          opacity="0.85"
-          xmlSpace="preserve"
-        >
-          {Array(40).fill("B★SEL").join("\u00A0\u00A0\u00A0\u00A0")}
-        </text>
-      </g>
+            {/* Thin repeating watermark strip: whole words only, centred on the strip */}
+      {(() => {
+        const count = 16;      // number of full words across the strip
+        const spacing = 42;    // distance between word centres
+        const centerX = 362;   // centre of the 724-wide page
+
+        return Array.from({ length: count }, (_, i) => (
+          <text
+            key={`strip-${i}`}
+            x={centerX + (i - (count - 1) / 2) * spacing}
+            y="131"
+            textAnchor="middle"
+            fontFamily="Georgia, serif"
+            fontWeight="bold"
+            fontSize="9"
+            fill={STRIP_TEXT}
+            opacity="0.85"
+          >
+            B★SEL
+          </text>
+        ));
+      })()}
 
       {/* ---------- Section: Student & Course Details ---------- */}
       <SectionTitle x={197} y={142} w={331} h={22} fill={GOLD} text="STUDENT & COURSE DETAILS" />
