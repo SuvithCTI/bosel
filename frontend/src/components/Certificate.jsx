@@ -1665,7 +1665,7 @@ export default function Certificate({
                 href={directorSign}
                 xlinkHref={directorSign}
                 x="63"
-                y="592"
+                y="604"
                 width="165"
                 height="70"
                 preserveAspectRatio="xMidYMax meet"
@@ -1680,7 +1680,7 @@ export default function Certificate({
             >
               <rect
                 x="63"
-                y="612"
+                y="624"
                 width="160"
                 height="46"
                 rx="6"
@@ -1691,7 +1691,7 @@ export default function Certificate({
               />
               <text
                 x="143"
-                y="640"
+                y="652"
                 textAnchor="middle"
                 fontFamily="Arial, sans-serif"
                 fontSize="10"
@@ -1703,20 +1703,20 @@ export default function Certificate({
             </g>
           ) : null}
 
-          <text x="63" y="675" fontFamily="Georgia, serif" fontSize="17" fill={NAVY}>Center Director / Principal</text>
+          <text x="63" y="687" fontFamily="Georgia, serif" fontSize="17" fill={NAVY}>Center Director / Principal</text>
 
           {/* Official Authorized Signature & Watermark Stamp */}
           <image
             href={authSignSeal}
             xlinkHref={authSignSeal}
             x="765"
-            y="582"
+            y="594"
             width="195"
             height="82"
             preserveAspectRatio="xMidYMax meet"
           />
 
-          <text x="955" y="675" textAnchor="end" fontFamily="Georgia, serif" fontSize="17" fill={NAVY}>Authorized Signature</text>
+          <text x="955" y="687" textAnchor="end" fontFamily="Georgia, serif" fontSize="17" fill={NAVY}>Authorized Signature</text>
 
         </svg>
 
