@@ -244,9 +244,15 @@ export const getStoredStudentEnquiries = () => {
         admissionNo: regNo,
         registerNumber: regNo,
         registerNumbers: Array.isArray(u.registerNumbers) ? u.registerNumbers : (regNo ? regNo.split(',').map(s => s.trim()) : []),
-        branchName: u.branch || u.institution || 'Tenkasi Regional Branch',
+        branchName: u.schoolName || u.franchiseName || u.branch || u.institution || 'Tenkasi Regional Branch',
         branch: u.branch || u.institution || 'Tenkasi Regional Branch',
-        institution: u.institution || u.branch || 'Tenkasi Regional Branch',
+        institution: u.institution || u.schoolName || u.franchiseName || u.branch || 'Tenkasi Regional Branch',
+        schoolName: u.schoolName || '',
+        franchiseName: u.franchiseName || '',
+        schoolId: u.schoolId || null,
+        franchiseId: u.franchiseId || null,
+        admissionCategory: u.admissionCategory || u.category || 'Branch',
+        category: u.category || u.admissionCategory || 'Branch',
         studentName: u.studentName || u.name || 'Student',
         name: u.studentName || u.name || 'Student',
         parentName: parent,
@@ -268,8 +274,8 @@ export const getStoredStudentEnquiries = () => {
         date: u.date || u.enrolmentDate || new Date().toISOString().split('T')[0],
         enrolmentDate: u.enrolmentDate || u.date || '',
         status: u.status || 'Confirmed',
-        feeStatus: (u.feePaymentType === 'Paid' || u.feePaymentType === 'Pay Now') ? 'Paid' : 'Pending',
-        feePaymentType: u.feePaymentType || 'Pay Now',
+        feeStatus: u.feeStatus || (u.feePaymentType === 'Pay Later' ? 'Pending' : (u.feePaymentType === 'Rejected' ? 'Rejected' : (['Paid', 'Pay Now', 'Approved', 'Paid Online'].includes(u.feePaymentType) ? 'Paid' : 'Pending'))),
+        feePaymentType: u.feePaymentType || (u.feePaymentType === 'Pay Later' ? 'Pay Later' : 'Pay Now'),
         feeAmount: u.feeAmount || '₹450',
         paymentMode: u.paymentMode || 'UPI / QR Code',
         receiptRefNo: u.receiptRefNo || '',
@@ -364,15 +370,65 @@ export default function AdminBranchStudentDetailsPage({
 
   // Category determination
   const getStudentCategory = (student) => {
-    const cat = (student.admissionCategory || student.category || student.channel || '').toLowerCase();
-    const inst = (student.institution || student.schoolName || student.franchiseName || '').toLowerCase();
+    if (!student) return 'Branch';
 
-    if (cat.includes('school') || inst.includes('school') || inst.includes('matric') || inst.includes('vidyalaya') || inst.includes('cbse')) {
-      return 'School';
-    }
-    if (cat.includes('academy') || cat.includes('franchise') || inst.includes('academy') || inst.includes('studio') || inst.includes('tuition') || inst.includes('institute')) {
+    const cat = String(student.admissionCategory || student.category || student.channel || '').trim().toLowerCase();
+
+    // 1. Direct explicit category check (highest priority)
+    if (cat === 'school') return 'School';
+    if (cat === 'academy' || cat === 'franchise') return 'Academy';
+    if (cat === 'branch' || cat === 'individual' || cat === 'direct') return 'Branch';
+
+    // 2. ID-based check
+    if (student.schoolId) return 'School';
+    if (student.franchiseId) return 'Academy';
+
+    // 3. Names and Institution checks
+    const fName = String(student.franchiseName || '').trim().toLowerCase();
+    if (fName && !fName.includes('regional branch') && !fName.endsWith(' branch')) {
       return 'Academy';
     }
+
+    const sName = String(student.schoolName || '').trim().toLowerCase();
+    const bName = String(student.branch || student.branchName || '').trim().toLowerCase();
+
+    // If schoolName is just the branch name (e.g. "Tenkasi Branch" or "Tenkasi"), it's NOT a school
+    const isSchoolNameJustBranch = sName && (
+      sName === bName || 
+      sName.includes('regional branch') || 
+      sName.endsWith(' branch') ||
+      (bName && (bName.includes(sName) || sName.includes(bName)))
+    );
+
+    if (sName && !isSchoolNameJustBranch) {
+      if (sName.includes('school') || sName.includes('matric') || sName.includes('vidyalaya') || sName.includes('cbse') || sName.includes('higher secondary')) {
+        return 'School';
+      }
+      if (sName.includes('academy') || sName.includes('studio') || sName.includes('tuition') || sName.includes('institute')) {
+        return 'Academy';
+      }
+    }
+
+    const inst = String(student.institution || '').trim().toLowerCase();
+    const isInstJustBranch = inst && (
+      inst === bName ||
+      inst.includes('regional branch') ||
+      inst.endsWith(' branch') ||
+      (bName && (bName.includes(inst) || inst.includes(bName)))
+    );
+
+    if (inst && !isInstJustBranch) {
+      if (inst.includes('school') || inst.includes('matric') || inst.includes('vidyalaya') || inst.includes('cbse') || inst.includes('higher secondary')) {
+        return 'School';
+      }
+      if (inst.includes('academy') || inst.includes('franchise') || inst.includes('studio') || inst.includes('tuition') || inst.includes('institute') || inst.includes('center') || inst.includes('centre')) {
+        return 'Academy';
+      }
+    }
+
+    if (cat.includes('school')) return 'School';
+    if (cat.includes('franchise') || cat.includes('academy')) return 'Academy';
+
     return 'Branch';
   };
 
@@ -598,14 +654,17 @@ export default function AdminBranchStudentDetailsPage({
         if (!matches) return false;
       }
 
-      // 3. Category Filter
-      if (categoryFilter !== 'All') {
-        const cat = (item.admissionCategory || item.category || '').toLowerCase();
-        const isSchool = cat === 'school' || Boolean(item.schoolId) || Boolean(item.schoolName);
-        const isAcademy = cat === 'academy' || cat === 'franchise' || Boolean(item.franchiseId) || Boolean(item.franchiseName);
-        if (categoryFilter === 'School' && !isSchool) return false;
-        if (categoryFilter === 'Academy' && !isAcademy) return false;
-        if (categoryFilter === 'Branch' && (isSchool || isAcademy)) return false;
+      // 3. Category Filter (Branch, Academy, School)
+      if (categoryFilter && categoryFilter !== 'All') {
+        const itemCat = getStudentCategory(item).toLowerCase();
+        const targetCat = categoryFilter.toLowerCase();
+        if (targetCat === 'branch' || targetCat === 'individual') {
+          if (itemCat !== 'branch' && itemCat !== 'individual') return false;
+        } else if (targetCat === 'academy' || targetCat === 'franchise') {
+          if (itemCat !== 'academy' && itemCat !== 'franchise') return false;
+        } else if (itemCat !== targetCat) {
+          return false;
+        }
       }
 
       // 4. Class Filter

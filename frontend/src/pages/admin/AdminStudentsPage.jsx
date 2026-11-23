@@ -11,6 +11,8 @@ import {
   Phone,
   CheckCircle2,
   Clock,
+  XCircle,
+  ChevronDown,
   GraduationCap,
   FileText,
   Award,
@@ -18,6 +20,7 @@ import {
 } from 'lucide-react';
 import StudentAvatar from '../../components/StudentAvatar';
 import { updateUserProfile } from '../../utils/authStorage';
+import { getStudentFeeStatus } from '../../utils/studentValidator';
 import {
   getStudentPhotoUrl,
   getStudentRegisterNumber,
@@ -49,8 +52,25 @@ export default function AdminStudentsPage({
   setShowAddStudentModal,
   schoolsList = [],
   coursesList = [],
-  usersList = []
+  usersList = [],
+  showToast = () => {}
 }) {
+  // Handle interactive fee status changes (Approved, Pending, Rejected)
+  const handleUpdateFeeStatus = (userId, newStatus, studentObj) => {
+    const updates = {
+      feeStatus: newStatus,
+      feePaymentType: newStatus === 'Approved' ? 'Approved' : (newStatus === 'Rejected' ? 'Rejected' : 'Pay Later')
+    };
+    if (newStatus === 'Approved') {
+      const newReceipt = `RCP-DESK-${Math.floor(100000 + Math.random() * 900000)}`;
+      if (!studentObj?.receiptRefNo || studentObj.receiptRefNo.includes('PAY-LATER')) {
+        updates.receiptRefNo = newReceipt;
+      }
+    }
+    updateUserProfile(userId, updates);
+    showToast(`Fee status for ${studentObj?.studentName || 'student'} updated to ${newStatus}`);
+  };
+
   // Comprehensive list of all official courses across B★SEL
   // Comprehensive list of all 16 official courses across B★SEL
   const allCourses = useMemo(() => [
@@ -77,11 +97,12 @@ export default function AdminStudentsPage({
     { value: 'All', label: 'All Branches' },
     ...getAllDistrictBranches()
   ], []);
-  // Fee status options
+  // Fee status options: Approved, Pending, Rejected
   const feeStatusOptions = useMemo(() => [
     { value: 'All', label: 'All Fee Statuses' },
-    { value: 'Paid', label: 'Approved' },
-    { value: 'Pending', label: 'Pending' }
+    { value: 'Approved', label: 'Approved' },
+    { value: 'Pending', label: 'Pending' },
+    { value: 'Rejected', label: 'Rejected' }
   ], []);
   return (
           <div className="space-y-4 animate-in fade-in duration-200">
@@ -238,7 +259,8 @@ export default function AdminStudentsPage({
                 ) : (
                   filteredStudentsSuperAdmin.map((student, idx) => {
                     const isSelected = selectedStudentIds.includes(student.userId);
-                    const isPaid = student.feePaymentType === 'Paid' || student.feePaymentType === 'Pay Now' || student.feePaymentType === 'Approved';
+                    const currentFeeStatus = getStudentFeeStatus(student);
+                    const isPaid = currentFeeStatus === 'Approved';
                     const formattedFee = student.feeAmount 
                       ? (String(student.feeAmount).trim().startsWith('₹') ? String(student.feeAmount).trim() : `₹${String(student.feeAmount).trim()}`)
                       : '₹450';
@@ -321,8 +343,29 @@ export default function AdminStudentsPage({
                               <span>Admission</span>
                             </button>
 
-                            {/* Fee Receipt / Pay Button */}
-                            {isPaid ? (
+                            {/* Interactive Fee Status Selector (Approved / Pending / Rejected) */}
+                            <div className="relative inline-flex items-center w-full">
+                              <select
+                                value={currentFeeStatus}
+                                onChange={(e) => handleUpdateFeeStatus(student.userId, e.target.value, student)}
+                                className={`w-full py-1 pl-2 pr-5 rounded-lg text-[10px] font-black uppercase border cursor-pointer outline-none appearance-none transition-colors ${
+                                  currentFeeStatus === 'Approved'
+                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
+                                    : currentFeeStatus === 'Rejected'
+                                    ? 'bg-rose-50 text-rose-700 border-rose-300'
+                                    : 'bg-amber-50 text-amber-800 border-amber-300'
+                                }`}
+                                title="Change Fee Status"
+                              >
+                                <option value="Approved">Approved</option>
+                                <option value="Pending">Pending</option>
+                                <option value="Rejected">Rejected</option>
+                              </select>
+                              <ChevronDown className="w-3 h-3 absolute right-1.5 pointer-events-none opacity-60 text-slate-500" />
+                            </div>
+
+                            {/* Fee Receipt Button (When Approved) */}
+                            {isPaid && (
                               <button
                                 type="button"
                                 onClick={() => handleOpenReceiptForStudent?.(student)}
@@ -331,22 +374,6 @@ export default function AdminStudentsPage({
                               >
                                 <Receipt className="w-3.5 h-3.5 text-sky-600 shrink-0" />
                                 <span>Receipt</span>
-                              </button>
-                            ) : (
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const newReceipt = `RCP-DESK-${Math.floor(100000 + Math.random() * 900000)}`;
-                                  updateUserProfile(student.userId, { 
-                                    feePaymentType: 'Approved',
-                                    receiptRefNo: (student.receiptRefNo && !student.receiptRefNo.includes('PAY-LATER')) ? student.receiptRefNo : newReceipt
-                                  });
-                                }}
-                                className="w-full py-1.5 px-2 bg-amber-50 hover:bg-emerald-100 text-amber-800 hover:text-emerald-900 border border-amber-300 hover:border-emerald-300 font-black rounded-lg text-[10.5px] transition cursor-pointer flex items-center justify-center gap-1 shadow-2xs active:scale-95"
-                                title="Approve Fee Payment"
-                              >
-                                <Clock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                                <span>Pay Later</span>
                               </button>
                             )}
                           </div>
@@ -477,41 +504,42 @@ export default function AdminStudentsPage({
                           {/* Fee Status */}
                           <td className="py-3 px-3 whitespace-nowrap">
                             {(() => {
-                              const isPaid = student.feePaymentType === 'Paid' || student.feePaymentType === 'Pay Now' || student.feePaymentType === 'Approved';
+                              const currentStatus = getStudentFeeStatus(student);
                               const formattedFee = student.feeAmount 
                                 ? (String(student.feeAmount).trim().startsWith('₹') ? String(student.feeAmount).trim() : `₹${String(student.feeAmount).trim()}`)
                                 : '₹450';
                               return (
-                                <div className="flex flex-col items-start gap-1">
-                                  {isPaid ? (
-                                    <span
-                                      className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-2xs select-none"
-                                      title="Fee Verified & Approved"
-                                    >
-                                      <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                                      <span>{formattedFee} • APPROVED</span>
-                                    </span>
-                                  ) : (
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        const newReceipt = `RCP-DESK-${Math.floor(100000 + Math.random() * 900000)}`;
-                                        updateUserProfile(student.userId, { 
-                                          feePaymentType: 'Approved',
-                                          receiptRefNo: (student.receiptRefNo && !student.receiptRefNo.includes('PAY-LATER')) ? student.receiptRefNo : newReceipt
-                                        });
-                                      }}
-                                      title="Click to Approve Fee Payment (Pay Later)"
-                                      className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase transition cursor-pointer bg-amber-50 text-amber-700 border border-amber-300 hover:bg-emerald-100 hover:text-emerald-800 hover:border-emerald-300 shadow-2xs group"
-                                    >
-                                      <Clock className="w-3 h-3 text-amber-600 group-hover:text-emerald-700" />
-                                      <span>{formattedFee} • PENDING</span>
-                                      <span className="text-[9px] font-bold text-amber-800 group-hover:text-emerald-800 ml-0.5 underline">Approve</span>
-                                    </button>
-                                  )}
+                                <div className="flex flex-col items-start gap-1.5" onClick={(e) => e.stopPropagation()}>
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="font-bold text-slate-800 text-xs">{formattedFee}</span>
+                                    <div className="relative inline-flex items-center">
+                                      <span className="absolute left-2 pointer-events-none z-10">
+                                        {currentStatus === 'Approved' && <CheckCircle2 className="w-3 h-3 text-emerald-600" />}
+                                        {currentStatus === 'Pending' && <Clock className="w-3 h-3 text-amber-600" />}
+                                        {currentStatus === 'Rejected' && <XCircle className="w-3 h-3 text-rose-600" />}
+                                      </span>
+                                      <select
+                                        value={currentStatus}
+                                        onChange={(e) => handleUpdateFeeStatus(student.userId, e.target.value, student)}
+                                        className={`pl-6 pr-6 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border shadow-2xs cursor-pointer outline-none appearance-none transition-colors ${
+                                          currentStatus === 'Approved'
+                                            ? 'bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100 focus:ring-1 focus:ring-emerald-400'
+                                            : currentStatus === 'Rejected'
+                                            ? 'bg-rose-50 text-rose-700 border-rose-300 hover:bg-rose-100 focus:ring-1 focus:ring-rose-400'
+                                            : 'bg-amber-50 text-amber-800 border-amber-300 hover:bg-amber-100 focus:ring-1 focus:ring-amber-400'
+                                        }`}
+                                        title="Change Fee Status (Approved / Pending / Rejected)"
+                                      >
+                                        <option value="Approved" className="bg-white text-emerald-700 font-bold">Approved</option>
+                                        <option value="Pending" className="bg-white text-amber-800 font-bold">Pending</option>
+                                        <option value="Rejected" className="bg-white text-rose-700 font-bold">Rejected</option>
+                                      </select>
+                                      <ChevronDown className="w-3 h-3 absolute right-2 pointer-events-none opacity-60 text-slate-500" />
+                                    </div>
+                                  </div>
 
                                   {/* Fee Receipt Under Fee Status (Only if Approved) */}
-                                  {isPaid && (
+                                  {currentStatus === 'Approved' && (
                                     <button
                                       type="button"
                                       onClick={() => handleOpenReceiptForStudent?.(student)}

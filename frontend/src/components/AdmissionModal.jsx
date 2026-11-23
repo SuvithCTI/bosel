@@ -2789,6 +2789,7 @@ export default function AdmissionModal({
                         onClick={() => setFormData(prev => ({
                           ...prev,
                           feePaymentType: 'Pay Now',
+                          feeStatus: 'Approved',
                           paymentMode: prev.paymentMode === 'Cash / Pay at Centre' ? 'UPI / QR Code' : (prev.paymentMode || 'UPI / QR Code')
                         }))}
                         className={`px-2 py-2 rounded-lg border text-xs font-black transition flex items-center justify-center gap-1.5 cursor-pointer ${
@@ -2806,6 +2807,7 @@ export default function AdmissionModal({
                         onClick={() => setFormData(prev => ({
                           ...prev,
                           feePaymentType: 'Pay Later',
+                          feeStatus: 'Pending',
                           paymentMode: 'Cash / Pay at Centre'
                         }))}
                         className={`px-2 py-2 rounded-lg border text-xs font-black transition flex items-center justify-center gap-1.5 cursor-pointer ${
