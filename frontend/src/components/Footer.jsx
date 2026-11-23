@@ -63,7 +63,7 @@ export default function Footer({ setActivePage, handleNav, onOpenLegal }) {
   },
   {
     name: 'WhatsApp',
-    href: 'https://wa.me/919655319131',
+    href: 'https://wa.me/9655319131',
     icon: FaWhatsapp,
     color: 'hover:bg-green-600',
   },
@@ -208,7 +208,7 @@ export default function Footer({ setActivePage, handleNav, onOpenLegal }) {
                   href="mailto:contact@besellearning.org"
                   className="break-all transition-colors hover:text-amber-300"
                 >
-                  contact@besellearning.org
+                  bsel.support@gmail.com
                 </a>
               </li>
             </ul>

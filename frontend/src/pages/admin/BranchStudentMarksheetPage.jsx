@@ -44,18 +44,18 @@ const PRINT_ROOT_ID = 'bsel-print-root';
 
 // ------------------------------------------------
 // ASSESSMENT RULES
-// Each subject: 4 weekly revision tests (avg = Assessment, out of 40)
-// + final exam out of 100, converted to 60.
-// Subject total = Assessment + converted exam = out of 100.
+// Each subject: 4 weekly revision tests (each out of 40)
+// Assessment = average of the 4 revisions (out of 40)
+// Final exam = out of 60 (entered directly, no conversion)
+// Subject total = Assessment (40) + Exam (60) = 100
 // All calculated values are rounded to whole numbers.
 // ------------------------------------------------
 
 const REVISION_COUNT = 4;
-const REVISION_MAX = 40;        // each weekly revision test is out of 40
+const REVISION_MAX = 40;        // each weekly revision test is out of 40 (entry cap)
 const ASSESSMENT_MAX = 40;      // average of the 4 revisions
-const EXAM_MAX = 100;           // final exam is marked out of 100
-const EXAM_CONVERTED_MAX = 60;  // final exam is converted to 60
-const SUBJECT_MAX = ASSESSMENT_MAX + EXAM_CONVERTED_MAX; // 100
+const EXAM_MAX = 60;            // final exam is out of 60 (entry cap)
+const SUBJECT_MAX = ASSESSMENT_MAX + EXAM_MAX; // 100
 
 const STAGES = [
   { key: 'rev1', type: 'revision', index: 0, tab: 'Rev 1', short: 'Rev 1', label: 'Week 1 - Revision 1' },
@@ -221,12 +221,10 @@ const computeSubjectResult = (meta, entry) => {
     : null;
 
   const exam = toNumberOrNull(entry?.exam);
-  const examConverted =
-    exam !== null ? round2((exam * EXAM_CONVERTED_MAX) / EXAM_MAX) : null;
 
   const marks =
-    assessment !== null && examConverted !== null
-      ? round2(assessment + examConverted)
+    assessment !== null && exam !== null
+      ? round2(assessment + exam)
       : null;
 
   return {
@@ -238,8 +236,6 @@ const computeSubjectResult = (meta, entry) => {
     revisions,
     exam,
     examMax: EXAM_MAX,
-    examConverted,
-    examConvertedMax: EXAM_CONVERTED_MAX,
     marks,
   };
 };
@@ -301,9 +297,9 @@ const buildSheetBody = (student, sheet) => {
         <tr>
           <td class="c">${i + 1}</td>
           <td>${escapeHtml(s.name)}</td>
-          <td class="c">${escapeHtml(dv(s.max))}</td>
+          <td class="c">${EXAM_MAX}</td>
           <td class="c">${escapeHtml(dv(s.assessment))} / ${ASSESSMENT_MAX}</td>
-          <td class="c">${escapeHtml(dv(s.examConverted))} / ${EXAM_CONVERTED_MAX}</td>
+          <td class="c">${escapeHtml(dv(s.exam))} / ${EXAM_MAX}</td>
           <td class="c">${escapeHtml(dv(s.marks))}</td>
           <td class="c">${escapeHtml(pctText(s.marks))}</td>
           <td class="c">${escapeHtml(grade)}</td>
@@ -687,7 +683,7 @@ const TableExportView = ({ records, subjectColCount, branch }) => {
           {/* Legend and signature */}
           <div style={{ marginTop: '6px', fontSize: '9px', color: NAVY }}>
             R1–R4 = weekly revision tests (/40 each) · Avg = average of the four revisions (/40) ·
-            Tot = Avg + final exam converted to /60 (/100)
+            Tot = Avg (/40) + final exam (/60) = total (/100)
           </div>
 
           <div
@@ -881,6 +877,8 @@ export default function BranchStudentMarksheetPage({
 
   // ------------------------------------------------
   // EDIT / ENTRY CHANGE
+  // Digits only, and values above the test's maximum are rejected while typing
+  // (revision tests: max 40, final exam: max 60)
   // ------------------------------------------------
 
   const handleEditMarks = () => {
@@ -891,7 +889,15 @@ export default function BranchStudentMarksheetPage({
   };
 
   const handleEntryChange = (subjectId, stage, value) => {
-    if (value !== '' && !/^\d+$/.test(value)) return;
+    if (value !== '') {
+      if (!/^\d+$/.test(value)) return;
+      if (Number(value) > stageMax(stage)) {
+        setError(`${stage.label} marks cannot be more than ${stageMax(stage)}.`);
+        return;
+      }
+    }
+
+    setError('');
 
     setEntries((prev) => {
       const current = prev[subjectId] || emptyEntry();
@@ -917,6 +923,7 @@ export default function BranchStudentMarksheetPage({
           value={toInput(stageValue(entry, stage))}
           onChange={(e) => handleEntryChange(meta.id, stage, e.target.value)}
           placeholder="0"
+          maxLength={String(stageMax(stage)).length}
           className={`${wide ? 'w-full min-w-0' : 'w-16'} px-1.5 py-1 rounded-lg border border-slate-200 text-xs font-bold text-center outline-none focus:ring-2 focus:ring-sky-500`}
         />
       );
@@ -1582,7 +1589,7 @@ export default function BranchStudentMarksheetPage({
                     : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
                 }`}
               >
-                {stage.tab}
+                {stage.tab} {stage.type === 'exam' ? `(/${EXAM_MAX})` : `(/${REVISION_MAX})`}
               </button>
             );
           })}
@@ -1631,7 +1638,7 @@ export default function BranchStudentMarksheetPage({
                   </div>
                   <div>
                     <span className="block text-[8px] uppercase text-slate-400">Exam /60</span>
-                    <span className="text-slate-900">{dv(r.examConverted)}</span>
+                    <span className="text-slate-900">{dv(r.exam)}</span>
                   </div>
                   <div>
                     <span className="block text-[8px] uppercase text-slate-400">Total /100</span>
@@ -1648,7 +1655,7 @@ export default function BranchStudentMarksheetPage({
         </div>
 
         {/* DESKTOP / TABLET: SUBJECT TABLE */}
-        <div 
+        <div
           className="hidden sm:block overflow-x-auto no-scrollbar admin-table-container"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
@@ -1663,8 +1670,7 @@ export default function BranchStudentMarksheetPage({
                   </th>
                 ))}
                 <th className={thCls}>Avg /40</th>
-                <th className={`${thCls}${stageHeadCls(EXAM_STAGE.key)}`}>Exam /100</th>
-                <th className={thCls}>Exam /60</th>
+                <th className={`${thCls}${stageHeadCls(EXAM_STAGE.key)}`}>Exam /60</th>
                 <th className={thCls}>Total /100</th>
                 <th className={thCls}>%</th>
                 <th className={thCls}>Grade</th>
@@ -1698,7 +1704,6 @@ export default function BranchStudentMarksheetPage({
                     <td className={`${tdCls}${stageCellCls(EXAM_STAGE.key)}`}>
                       {renderStageCell(meta, r, EXAM_STAGE)}
                     </td>
-                    <td className={`${tdCls} text-xs font-bold text-slate-900`}>{dv(r.examConverted)}</td>
                     <td className={`${tdCls} text-xs font-black text-slate-950`}>{dv(r.marks)}</td>
                     <td className={`${tdCls} text-xs font-bold text-sky-800`}>{pctText(r.marks)}</td>
                     <td className={tdCls}>{renderGradeBadge(r)}</td>
@@ -1908,7 +1913,7 @@ export default function BranchStudentMarksheetPage({
         </div>
 
         {/* DESKTOP / TABLET: TABLE (scrolls sideways; revision columns per subject) */}
-        <div 
+        <div
           className="hidden sm:block overflow-x-auto p-2 no-scrollbar admin-table-container"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
