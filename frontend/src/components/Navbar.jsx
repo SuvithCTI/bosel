@@ -81,9 +81,9 @@ export default function Navbar({ activePage, setActivePage, sessionUser }) {
                   <span className="text-base sm:text-xl font-extrabold tracking-[0.12em] whitespace-nowrap">
                     B <span className="text-amber-400">★</span> SEL
                   </span>
-                  <span className="hidden sm:block mt-1 text-[11px] lg:text-xs font-medium text-slate-200 whitespace-nowrap">
-                    Board of Skills and Educational Learning
-                  </span>
+                 <span className="block mt-0.5 text-[9px] sm:text-[11px] lg:text-xs font-medium text-slate-200 truncate max-w-[180px] sm:max-w-none">
+  Board of Skills and Educational Learning
+</span>
                 </span>
               </button>
             </div>
