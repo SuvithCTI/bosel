@@ -678,7 +678,7 @@ export default function FranchiseDashboard({
         {/* =========================================================================
             RIGHT MAIN CONTENT: TAB PANELS & WORKSPACE
             ========================================================================= */}
-        <main className="flex-1 min-w-0 w-full lg:ml-72 xl:ml-80 p-4 sm:p-6 lg:p-8 space-y-5 bg-slate-100">
+        <main className="flex-1 min-w-0 w-full lg:ml-72 xl:ml-80 p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8 space-y-5 bg-slate-100">
           
           {/* TAB 1: FRANCHISE OVERVIEW */}
           {activeTab === 'franchise_overview' && (
@@ -807,7 +807,7 @@ export default function FranchiseDashboard({
               activeTab === 'franchise_overview' ? 'text-amber-400 bg-white/10' : 'text-slate-300'
             }`}
           >
-            <Building className="w-4 h-4 mb-0.5" />
+            {isSchool ? <School className="w-4 h-4 mb-0.5" /> : <Building className="w-4 h-4 mb-0.5" />}
             <span>Home</span>
           </button>
 

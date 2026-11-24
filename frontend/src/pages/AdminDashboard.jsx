@@ -2133,7 +2133,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
         className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#081d3d] border-t-2 border-amber-400 text-white shadow-2xl"
         style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
       >
-        <div className={`grid ${currentAdminRole === 'Branch Head' ? 'grid-cols-4' : 'grid-cols-5'} h-14 items-stretch select-none`}>
+        <div className="grid grid-cols-5 h-14 items-stretch select-none">
           {currentAdminRole === 'Branch Head' ? (
             <>
               {/* Branch Tab 1: Overview */}
@@ -2182,6 +2182,16 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
               >
                 <ClipboardList className="w-4 h-4" />
                 <span>Marksheet</span>
+              </button>
+
+              {/* Branch Tab 5: More Desks Drawer */}
+              <button
+                type="button"
+                onClick={() => setMobileSidebarOpen(true)}
+                className="flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold text-slate-300 hover:text-white transition cursor-pointer"
+              >
+                <Menu className="w-4 h-4" />
+                <span>More</span>
               </button>
             </>
           ) : (
