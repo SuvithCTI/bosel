@@ -177,45 +177,50 @@ export default function AdminPaymentsPage({
       </div>
 
       {/* Filter Bar */}
-      <div className="bg-white p-3 rounded-xl border border-slate-200 flex flex-wrap items-center justify-between gap-2.5">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs font-bold text-slate-500">Fee Sector:</span>
-          <select
-            value={paymentSectorFilter}
-            onChange={(e) => setPaymentSectorFilter(e.target.value)}
-            className="px-2.5 py-1 text-xs border border-slate-300 rounded-lg outline-none font-bold bg-white"
-          >
-            <option value="All">All Sectors</option>
-            <option value="Course Tuition">Course Entry Fee</option>
-            <option value="Competition & Events">Competition & Events</option>
-            <option value="Toolkits & Courseware">Toolkits & Courseware</option>
-            <option value="Franchise Affiliation">Franchise Affiliation</option>
-            <option value="Monthly Fee">Monthly Fee</option>
-            <option value="Exam Fee">Exam Fee</option>
-            <option value="Event Fee">Event Fee</option>
-            <option value="Book Fee">Book Fee</option>
-            <option value="Entry Fee">Entry Fee</option>
-            <option value="Franchise Fee">Franchise Fee</option>
-            <option value="Others">Others</option>
-          </select>
+      <div className="bg-white p-3 sm:p-3.5 rounded-xl border border-slate-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <span className="text-xs font-bold text-slate-500 shrink-0 w-20 sm:w-auto">Fee Sector:</span>
+            <select
+              value={paymentSectorFilter}
+              onChange={(e) => setPaymentSectorFilter(e.target.value)}
+              className="flex-1 sm:flex-initial px-2.5 py-1.5 sm:py-1 text-xs border border-slate-300 rounded-lg outline-none font-bold bg-white text-slate-800 shadow-2xs"
+            >
+              <option value="All">All Sectors</option>
+              <option value="Course Tuition">Course Entry Fee</option>
+              <option value="Competition & Events">Competition & Events</option>
+              <option value="Toolkits & Courseware">Toolkits & Courseware</option>
+              <option value="Franchise Affiliation">Franchise Affiliation</option>
+              <option value="Monthly Fee">Monthly Fee</option>
+              <option value="Exam Fee">Exam Fee</option>
+              <option value="Event Fee">Event Fee</option>
+              <option value="Book Fee">Book Fee</option>
+              <option value="Entry Fee">Entry Fee</option>
+              <option value="Franchise Fee">Franchise Fee</option>
+              <option value="Others">Others</option>
+            </select>
+          </div>
 
-          <select
-            value={paymentBranchFilter}
-            onChange={(e) => setPaymentBranchFilter(e.target.value)}
-            className="px-2.5 py-1 text-xs border border-slate-300 rounded-lg outline-none font-bold bg-white"
-          >
-            <option value="All">All Branches</option>
-            {allBranches.map((b) => (
-              <option key={b.value} value={b.value}>
-                {b.label}
-              </option>
-            ))}
-          </select>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <span className="text-xs font-bold text-slate-500 shrink-0 w-20 sm:hidden">Branch:</span>
+            <select
+              value={paymentBranchFilter}
+              onChange={(e) => setPaymentBranchFilter(e.target.value)}
+              className="flex-1 sm:flex-initial px-2.5 py-1.5 sm:py-1 text-xs border border-slate-300 rounded-lg outline-none font-bold bg-white text-slate-800 shadow-2xs"
+            >
+              <option value="All">All Branches</option>
+              {allBranches.map((b) => (
+                <option key={b.value} value={b.value}>
+                  {b.label}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
-        <div className="flex items-center gap-3 flex-wrap">
-          <div className="text-xs font-black text-emerald-800">
-            Filtered Total: ₹{filteredPayments.reduce((acc, p) => acc + (p.amountNum || 0), 0).toLocaleString('en-IN')}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between sm:justify-end gap-2 sm:gap-3 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+          <div className="text-xs font-black text-emerald-800 flex items-center justify-between sm:block">
+            <span>Filtered Total: ₹{filteredPayments.reduce((acc, p) => acc + (p.amountNum || 0), 0).toLocaleString('en-IN')}</span>
           </div>
 
           {/* Bulk print controls: only in selection mode */}
