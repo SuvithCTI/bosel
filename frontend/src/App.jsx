@@ -13,6 +13,7 @@ import ContactPage from './pages/ContactPage';
 import LoginPage from './pages/LoginPage';
 import CertificatePage from './pages/CertificatePage';
 import CertificateVerificationPage from './pages/CertificateVerificationPage';
+import MarksheetVerificationPage from './pages/MarksheetVerificationPage';
 import AdminDashboard from './pages/AdminDashboard';
 import StaffDashboard from './pages/staff/StaffDashboard';
 import FranchiseDashboard from './pages/franchise/FranchiseDashboard';
@@ -47,8 +48,18 @@ export default function App() {
       const params = new URLSearchParams(window.location.search);
       const cleanHash = window.location.hash ? window.location.hash.replace(/^#\/?/, '').split('?')[0] : '';
 
-      // HIGHEST PRIORITY: Public Student Certificate Verification
+      // HIGHEST PRIORITY: Public Student Marksheet & Certificate Verification
       // Must take precedence over any logged-in admin session or saved page!
+      if (
+        window.location.pathname.startsWith('/verify-marksheet') ||
+        cleanHash.startsWith('verify-marksheet') ||
+        params.get('page') === 'verify-marksheet' ||
+        params.get('doc') === 'marksheet' ||
+        params.get('type') === 'marksheet'
+      ) {
+        return 'verify-marksheet';
+      }
+
       if (
         window.location.pathname.startsWith('/verify') ||
         cleanHash.startsWith('verify') ||
@@ -96,7 +107,7 @@ export default function App() {
       }
 
       const savedPage = sessionStorage.getItem('bsel_current_page');
-      if (savedPage && savedPage !== 'login' && savedPage !== 'verify') {
+      if (savedPage && savedPage !== 'login' && savedPage !== 'verify' && savedPage !== 'verify-marksheet') {
         return savedPage;
       }
 
@@ -104,6 +115,7 @@ export default function App() {
         if (cleanHash.startsWith('admin')) return (session?.role === 'Super Admin' || session?.role === 'Branch Head') ? 'admin' : 'login';
         if (cleanHash.startsWith('staff')) return session?.role === 'Staff' ? 'staff' : 'login';
         if (cleanHash.startsWith('franchise') || cleanHash.startsWith('school')) return (session?.role === 'Franchise' || session?.role === 'School') ? 'franchise_portal' : 'login';
+        if (cleanHash.startsWith('verify-marksheet')) return 'verify-marksheet';
         if (cleanHash.startsWith('verify')) return 'verify';
         return cleanHash;
       }
@@ -236,6 +248,17 @@ export default function App() {
       const searchParams = new URLSearchParams(window.location.search);
       const cleanHash = window.location.hash ? window.location.hash.replace(/^#\/?/, '').split('?')[0] : '';
       if (
+        window.location.pathname.startsWith('/verify-marksheet') ||
+        cleanHash.startsWith('verify-marksheet') ||
+        searchParams.get('page') === 'verify-marksheet' ||
+        searchParams.get('doc') === 'marksheet' ||
+        searchParams.get('type') === 'marksheet'
+      ) {
+        setActivePageState('verify-marksheet');
+        return;
+      }
+
+      if (
         window.location.pathname.startsWith('/verify') ||
         cleanHash.startsWith('verify') ||
         searchParams.get('page') === 'verify' ||
@@ -304,7 +327,8 @@ export default function App() {
     activePage === 'staff' ||
     activePage === 'franchise_portal' ||
     activePage === 'login' ||
-    activePage === 'verify';
+    activePage === 'verify' ||
+    activePage === 'verify-marksheet';
 
   // -------------------------------------------------------
   // Modal states
@@ -535,6 +559,10 @@ export default function App() {
 
         {activePage === 'certificate' && (
           <CertificatePage />
+        )}
+
+        {activePage === 'verify-marksheet' && (
+          <MarksheetVerificationPage setActivePage={setActivePage} />
         )}
 
         {activePage === 'verify' && (

@@ -27,6 +27,48 @@ import QRCode from 'qrcode';
 import { buildVerificationUrl, getStudentVerificationMeta } from './Certificate';
 import MarksheetTemplate from './MarksheetTemplate';
 
+export const buildMarksheetVerificationUrl = (data = {}, forceLocal = false) => {
+  let origin = 'https://besellearning.org';
+  if (typeof window !== 'undefined') {
+    const hn = window.location.hostname;
+    if (forceLocal) {
+      origin = window.location.origin;
+    } else if (hn === 'localhost' || hn === '127.0.0.1' || hn.startsWith('192.168.') || hn.startsWith('10.')) {
+      // Local network testing on mobile phone via Wi-Fi: use LAN IP 192.168.0.7
+      const port = window.location.port ? `:${window.location.port}` : '';
+      origin = `http://192.168.0.7${port}`;
+    } else {
+      origin = window.location.origin;
+    }
+  }
+
+  const p = new URLSearchParams();
+  p.set('doc', 'marksheet');
+  p.set('page', 'verify-marksheet');
+  if (data.registrationNo) p.set('reg', data.registrationNo);
+  if (data.certificateNo) p.set('cert', data.certificateNo);
+  if (data.studentName) p.set('name', data.studentName);
+  if (data.courseName) p.set('course', data.courseName);
+  if (data.level) p.set('level', data.level);
+  if (data.grade) p.set('grade', data.grade);
+  if (data.score) p.set('score', data.score);
+  if (data.dob) p.set('dob', data.dob);
+  if (data.duration) p.set('duration', data.duration);
+  if (data.parentName) p.set('parent', data.parentName);
+  if (data.centreName) p.set('centre', data.centreName);
+  if (data.centreAddress) p.set('addr', data.centreAddress);
+  if (data.schoolName) p.set('school', data.schoolName);
+  if (data.schoolSubtitle) p.set('sub', data.schoolSubtitle);
+  if (data.schoolMotto) p.set('motto', data.schoolMotto);
+  if (data.vid) p.set('vid', data.vid);
+  if (data.sec) p.set('sec', data.sec);
+  if (data.photoKey) p.set('photo', data.photoKey);
+  if (data.marks) p.set('marks', data.marks);
+  if (data.paperType) p.set('paper', data.paperType);
+
+  return `${origin}/verify-marksheet?${p.toString()}`;
+};
+
 // ============================================================
 // WATERMARK SETTINGS
 // ============================================================
@@ -58,7 +100,7 @@ const REMARK_RULES = [
 
 const REMARK_FALLBACK = "Don't worry, every expert was once a beginner.";
 
-const getRemark = (pct) => {
+export const getRemark = (pct) => {
   const n = Number(pct);
   const rule = REMARK_RULES.find((r) => n >= r.min);
   return rule ? rule.text : REMARK_FALLBACK;
@@ -566,11 +608,13 @@ export default function OfficialMarksheetView({
   const savedSheet = getSavedMarksheet(student);
 
   // Marks show only when the final result is complete (or when explicitly asked for)
-  const showMarks = !hideMarks && (showMarksFlag || Boolean(savedSheet?.complete));
+  const showMarks = !hideMarks && (showMarksFlag || Boolean(savedSheet?.complete) || Boolean(student?.showMarks));
 
   const subjects = savedSheet?.subjects?.length
     ? savedSheet.subjects
-    : getCourseSubjectModules(courseName);
+    : student?.subjects?.length
+      ? student.subjects
+      : getCourseSubjectModules(courseName);
 
   // Total maximum = number of subjects × 100 (each subject is 40 assessment + 60 exam)
   const totalMax = subjects.length * SUBJECT_MAX;
@@ -659,8 +703,11 @@ export default function OfficialMarksheetView({
     );
 
     const scoreString = showMarks ? `${totalObtained} / ${totalMax} (${percentage}%)` : '';
+    const serializedMarks = Array.isArray(subjects) && subjects.length
+      ? subjects.map((s) => Number(s.marks) || 0).join(',')
+      : '';
 
-    const url = buildVerificationUrl({
+    const url = buildMarksheetVerificationUrl({
       certificateNo: certNo,
       studentName,
       courseName,
@@ -673,7 +720,11 @@ export default function OfficialMarksheetView({
       schoolSubtitle: customSchoolSubtitle,
       schoolMotto: customSchoolMotto,
       parentName,
+      dob,
+      duration,
       score: scoreString,
+      marks: serializedMarks,
+      paperType,
       vid: meta.vid,
       sec: meta.sec,
       photoKey: meta.photoKey,
@@ -967,8 +1018,33 @@ export default function OfficialMarksheetView({
         <div
           onClick={(e) => {
             e.stopPropagation();
-            if (typeof window !== 'undefined' && verificationUrl) {
-              window.open(verificationUrl, '_blank');
+            if (typeof window !== 'undefined') {
+              const targetUrl = buildMarksheetVerificationUrl(
+                {
+                  certificateNo: certNo,
+                  studentName,
+                  courseName,
+                  level,
+                  grade: overallGrade,
+                  registrationNo: regNo,
+                  centreName: school,
+                  centreAddress: address,
+                  schoolName: customSchoolName,
+                  schoolSubtitle: customSchoolSubtitle,
+                  schoolMotto: customSchoolMotto,
+                  parentName,
+                  dob,
+                  duration,
+                  score: showMarks ? `${totalObtained} / ${totalMax} (${percentage}%)` : '',
+                  marks: Array.isArray(subjects) && subjects.length
+                    ? subjects.map((s) => Number(s.marks) || 0).join(',')
+                    : '',
+                  paperType,
+                  photoKey: uploadedPhoto || student?.photo || student?.photoUrl || student?.avatar || '',
+                },
+                true
+              );
+              window.open(targetUrl || verificationUrl, '_blank');
             }
           }}
           className="absolute cursor-pointer pointer-events-auto rounded-sm group hover:ring-2 hover:ring-amber-400/60 transition"

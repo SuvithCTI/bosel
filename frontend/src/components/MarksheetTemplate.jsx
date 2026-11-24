@@ -1,4 +1,5 @@
 import React from 'react';
+import bselLogo from '../assets/bsel_logo.png';
 import centerSeal from '../assets/cert_center_gold_emblem.png';
 import msmeLogo from '../assets/msme-logo.png';
 import iafLogo from '../assets/iaf-logo.png';
@@ -265,7 +266,8 @@ export default function MarksheetTemplate({ remark = null, rightHeading = null, 
       {/* ---------- Header ---------- */}
       {/* Left: B★SEL crest */}
       <image
-        href="/src/assets/bsel_logo.png"
+        href={bselLogo}
+        xlinkHref={bselLogo}
         x="44"
         y="34"
         width="74"
