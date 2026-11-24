@@ -21,16 +21,28 @@ try {
   console.warn('[vite.config.js] Could not copy seal signature image:', e)
 }
 
-// Student Photo Dev Cache Plugin for cross-device QR scanning
+// Student Photo Dev Cache Plugin for cross-device QR scanning (in-memory + node_modules cache)
 function studentPhotoCachePlugin() {
-  const cacheFile = path.resolve(__dirname, 'public/student_photos_cache.json')
-  const getCache = () => {
+  const memoryCache = new Map()
+  const cacheDir = path.resolve(__dirname, 'node_modules/.cache')
+  const cacheFile = path.resolve(cacheDir, 'bsel_student_photos.json')
+
+  // Load existing cache from node_modules if present
+  try {
+    if (fs.existsSync(cacheFile)) {
+      const saved = JSON.parse(fs.readFileSync(cacheFile, 'utf-8'))
+      Object.entries(saved).forEach(([k, v]) => memoryCache.set(k, v))
+    }
+  } catch {}
+
+  const persistCache = () => {
     try {
-      if (fs.existsSync(cacheFile)) {
-        return JSON.parse(fs.readFileSync(cacheFile, 'utf-8'))
+      if (!fs.existsSync(cacheDir)) {
+        fs.mkdirSync(cacheDir, { recursive: true })
       }
+      const obj = Object.fromEntries(memoryCache.entries())
+      fs.writeFileSync(cacheFile, JSON.stringify(obj))
     } catch {}
-    return {}
   }
 
   return {
@@ -40,19 +52,22 @@ function studentPhotoCachePlugin() {
         if (req.url && req.url.startsWith('/api/photo-cache')) {
           const urlObj = new URL(req.url, 'http://localhost')
           if (req.method === 'GET') {
-            const cache = getCache()
             const key = urlObj.searchParams.get('key')
             if (key) {
               const cleanKey = key.trim()
               const lowerKey = cleanKey.toLowerCase()
               const digits = cleanKey.replace(/\D/g, '')
-              const photo = cache[cleanKey] || cache[lowerKey] || (digits ? cache[digits] : null) || null
+              const photo = memoryCache.get(cleanKey) ||
+                            memoryCache.get(lowerKey) ||
+                            (digits ? memoryCache.get(digits) : null) ||
+                            null
               res.setHeader('Content-Type', 'application/json')
               res.end(JSON.stringify({ success: true, photo }))
               return
             }
+            const allObj = Object.fromEntries(memoryCache.entries())
             res.setHeader('Content-Type', 'application/json')
-            res.end(JSON.stringify({ success: true, cache }))
+            res.end(JSON.stringify({ success: true, cache: allObj }))
             return
           }
           if (req.method === 'POST') {
@@ -62,18 +77,17 @@ function studentPhotoCachePlugin() {
               try {
                 const parsed = JSON.parse(body)
                 if (parsed.photo) {
-                  const cache = getCache()
-                  if (parsed.key) cache[parsed.key] = parsed.photo
+                  if (parsed.key) memoryCache.set(parsed.key, parsed.photo)
                   if (parsed.reg) {
-                    cache[parsed.reg] = parsed.photo
-                    cache[parsed.reg.toLowerCase()] = parsed.photo
+                    memoryCache.set(parsed.reg, parsed.photo)
+                    memoryCache.set(parsed.reg.toLowerCase(), parsed.photo)
                     const digits = parsed.reg.replace(/\D/g, '')
-                    if (digits) cache[digits] = parsed.photo
+                    if (digits) memoryCache.set(digits, parsed.photo)
                   }
                   if (parsed.name) {
-                    cache[parsed.name.toLowerCase()] = parsed.photo
+                    memoryCache.set(parsed.name.toLowerCase(), parsed.photo)
                   }
-                  fs.writeFileSync(cacheFile, JSON.stringify(cache, null, 2))
+                  persistCache()
                 }
                 res.setHeader('Content-Type', 'application/json')
                 res.end(JSON.stringify({ success: true }))
@@ -101,6 +115,9 @@ export default defineConfig({
   ],
   server: {
     host: true,
+    watch: {
+      ignored: ['**/node_modules/**', '**/student_photos_cache.json', '**/*.json']
+    },
     proxy: {
       '/api': {
         target: 'http://localhost:5000',
@@ -110,8 +127,6 @@ export default defineConfig({
         target: 'http://localhost:5000',
         changeOrigin: true
       },
-      
-      server: { host: true },
     }
   }
 })

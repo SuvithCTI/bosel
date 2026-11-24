@@ -147,6 +147,9 @@ export default function FranchiseDashboard({
 
   const [activeTab, setActiveTab] = useState(() => {
     if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlTab = urlParams.get('tab');
+      if (urlTab) return urlTab;
       const saved = sessionStorage.getItem('bsel_franchise_active_tab');
       if (saved && saved !== 'franchise_certificates' && saved !== 'franchise_branding') return saved;
     }
@@ -208,16 +211,29 @@ export default function FranchiseDashboard({
 
   const [tabHistory, setTabHistory] = useState([activeTab]);
 
-  const handleTabSelect = (tabKey) => {
+  const handleTabSelect = (tabKey, updateUrl = true) => {
     if (tabKey === activeTab) return;
     setTabHistory((prev) => [...prev, tabKey]);
     setActiveTab(tabKey);
     sessionStorage.setItem('bsel_franchise_active_tab', tabKey);
     setMobileSidebarOpen(false);
+
+    if (typeof window !== 'undefined' && updateUrl) {
+      const url = new URL(window.location.href);
+      url.searchParams.set('page', 'franchise_portal');
+      url.searchParams.set('tab', tabKey);
+      window.history.pushState({ page: 'franchise_portal', tab: tabKey }, '', url.toString());
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleTabBack = () => {
+  const handleBackClick = () => {
+    // Dismiss any active overlay / modal first
+    if (viewingAdmissionStudent) { setViewingAdmissionStudent(null); return; }
+    if (selectedMarksheetStudent) { setSelectedMarksheetStudent(null); return; }
+    if (previewCertModalData) { setPreviewCertModalData(null); return; }
+    if (viewingMergedPdfStudent) { setViewingMergedPdfStudent(null); return; }
+
     if (tabHistory.length > 1) {
       const nextHistory = [...tabHistory];
       nextHistory.pop();
@@ -225,11 +241,63 @@ export default function FranchiseDashboard({
       setTabHistory(nextHistory);
       setActiveTab(prevTab);
       sessionStorage.setItem('bsel_franchise_active_tab', prevTab);
-    } else {
+
+      if (typeof window !== 'undefined') {
+        const url = new URL(window.location.href);
+        url.searchParams.set('page', 'franchise_portal');
+        url.searchParams.set('tab', prevTab);
+        window.history.pushState({ page: 'franchise_portal', tab: prevTab }, '', url.toString());
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (activeTab !== 'franchise_overview') {
       setActiveTab('franchise_overview');
+      sessionStorage.setItem('bsel_franchise_active_tab', 'franchise_overview');
+      if (typeof window !== 'undefined') {
+        const url = new URL(window.location.href);
+        url.searchParams.set('page', 'franchise_portal');
+        url.searchParams.set('tab', 'franchise_overview');
+        window.history.pushState({ page: 'franchise_portal', tab: 'franchise_overview' }, '', url.toString());
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      if (onBack) onBack();
+      else if (goBack) goBack();
+      else setActivePage('home');
     }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  const handleTabBack = () => {
+    handleBackClick();
+  };
+
+  // Synchronize browser native Forward / Back buttons (popstate) with Franchise / School Dashboard tabs
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    // Ensure initial URL reflects current tab
+    const params = new URLSearchParams(window.location.search);
+    const initialTab = params.get('tab') || activeTab;
+    const url = new URL(window.location.href);
+    url.searchParams.set('page', 'franchise_portal');
+    url.searchParams.set('tab', initialTab);
+    window.history.replaceState({ page: 'franchise_portal', tab: initialTab }, '', url.toString());
+
+    const handlePopState = (e) => {
+      const searchParams = new URLSearchParams(window.location.search);
+      const urlTab = searchParams.get('tab');
+      if (urlTab && urlTab !== activeTab) {
+        setActiveTab(urlTab);
+        sessionStorage.setItem('bsel_franchise_active_tab', urlTab);
+        setTabHistory((prev) => [...prev, urlTab]);
+      } else if (!urlTab && activeTab !== 'franchise_overview') {
+        setActiveTab('franchise_overview');
+        sessionStorage.setItem('bsel_franchise_active_tab', 'franchise_overview');
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [activeTab]);
 
   // Sync state with local events
   useEffect(() => {
@@ -441,6 +509,7 @@ export default function FranchiseDashboard({
               {mobileSidebarOpen ? <X className="w-4 h-4 text-amber-400" /> : <Menu className="w-4 h-4" />}
               <span className="hidden sm:inline">Desks</span>
             </button>
+
 
             {/* Desktop Brand Logo */}
             <div className="hidden sm:block shrink-0">

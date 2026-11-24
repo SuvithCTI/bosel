@@ -173,6 +173,10 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
 
   const [activeTab, setActiveTab] = useState(() => {
     if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const tabFromUrl = params.get('tab');
+      if (tabFromUrl) return tabFromUrl;
+
       const savedRole = sessionStorage.getItem('bsel_active_admin_role');
       if (savedRole === 'Branch Head') return 'branch_overview';
     }
@@ -232,27 +236,115 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
 
   const [tabHistory, setTabHistory] = useState([activeTab]);
 
-  const handleTabSelect = (tabKey) => {
+  const handleTabSelect = (tabKey, updateUrl = true) => {
     if (tabKey === activeTab) return;
     setTabHistory((prev) => [...prev, tabKey]);
     setActiveTab(tabKey);
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('bsel_active_tab', tabKey);
+    }
     setMobileSidebarOpen(false);
+
+    if (typeof window !== 'undefined' && updateUrl) {
+      const url = new URL(window.location.href);
+      url.searchParams.set('page', 'admin');
+      url.searchParams.set('tab', tabKey);
+      window.history.pushState({ page: 'admin', tab: tabKey }, '', url.toString());
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleTabBack = () => {
+  const handleBackClick = () => {
+    // 1. If any modal is currently open, close modal first
+    if (viewingAdmissionStudent) { setViewingAdmissionStudent(null); return; }
+    if (selectedMarksheetStudent) { setSelectedMarksheetStudent(null); return; }
+    if (previewCertModalData) { setPreviewCertModalData(null); return; }
+    if (viewingMergedPdfStudent) { setViewingMergedPdfStudent(null); return; }
+    if (showAddStudentModal) { setShowAddStudentModal(false); return; }
+    if (showAddCourseModal) { setShowAddCourseModal(false); return; }
+    if (showAddEventModal) { setShowAddEventModal(false); return; }
+    if (showAddPaymentModal) { setShowAddPaymentModal(false); return; }
+    if (showAddSchoolModal) { setShowAddSchoolModal(false); return; }
+    if (showAddBatchModal) { setShowAddBatchModal(false); return; }
+
+    // 2. If user navigated tabs inside admin, step back in tab history
     if (tabHistory.length > 1) {
       const nextHistory = [...tabHistory];
       nextHistory.pop();
       const prevTab = nextHistory[nextHistory.length - 1];
       setTabHistory(nextHistory);
       setActiveTab(prevTab);
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('bsel_active_tab', prevTab);
+        const url = new URL(window.location.href);
+        url.searchParams.set('page', 'admin');
+        url.searchParams.set('tab', prevTab);
+        window.history.pushState({ page: 'admin', tab: prevTab }, '', url.toString());
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
       const fallbackTab = currentAdminRole === 'Branch Head' ? 'branch_overview' : 'overview';
-      setActiveTab(fallbackTab);
+      if (activeTab !== fallbackTab) {
+        setActiveTab(fallbackTab);
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('bsel_active_tab', fallbackTab);
+          const url = new URL(window.location.href);
+          url.searchParams.set('page', 'admin');
+          url.searchParams.set('tab', fallbackTab);
+          window.history.pushState({ page: 'admin', tab: fallbackTab }, '', url.toString());
+        }
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        // 3. Fallback: navigate back to website / previous page
+        if (onBack) onBack();
+        else if (goBack) goBack();
+        else if (typeof setActivePage === 'function') setActivePage('home');
+      }
     }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  const handleTabBack = () => {
+    handleBackClick();
+  };
+
+  // Synchronize browser native Forward / Back buttons (popstate) with Admin Dashboard tabs
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    // Ensure initial URL reflects current tab
+    const params = new URLSearchParams(window.location.search);
+    const initialTab = params.get('tab') || activeTab;
+    const url = new URL(window.location.href);
+    url.searchParams.set('page', 'admin');
+    url.searchParams.set('tab', initialTab);
+    window.history.replaceState({ page: 'admin', tab: initialTab }, '', url.toString());
+
+    const handlePopState = (e) => {
+      const searchParams = new URLSearchParams(window.location.search);
+      const tabFromUrl = searchParams.get('tab');
+      const tabFromState = e.state?.tab;
+      const targetTab = tabFromState || tabFromUrl;
+
+      if (targetTab && targetTab !== activeTab) {
+        setActiveTab(targetTab);
+        setTabHistory((prev) => {
+          if (prev.length > 1 && prev[prev.length - 2] === targetTab) {
+            return prev.slice(0, -1);
+          }
+          if (prev[prev.length - 1] !== targetTab) {
+            return [...prev, targetTab];
+          }
+          return prev;
+        });
+      } else if (!targetTab) {
+        const defaultTab = currentAdminRole === 'Branch Head' ? 'branch_overview' : 'overview';
+        setActiveTab(defaultTab);
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [currentAdminRole, activeTab]);
 
   // Sync state with local events
   useEffect(() => {
@@ -407,15 +499,13 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
     }
     if (newRole === 'Branch Head') {
       const branchToShow = targetBranch || activeBranch;
-      setActiveTab('branch_overview');
-      window.scrollTo(0, 0);
+      handleTabSelect('branch_overview');
       showToast(`Switched to Branch Head Portal (${branchToShow})`);
     } else {
       if (typeof window !== 'undefined') {
         sessionStorage.removeItem('bsel_active_admin_role');
       }
-      setActiveTab('overview');
-      window.scrollTo(0, 0);
+      handleTabSelect('overview');
       showToast('Switched to Super Administrator Portal');
     }
   };
@@ -1534,6 +1624,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
               {mobileSidebarOpen ? <X className="w-4 h-4 text-amber-400" /> : <Menu className="w-4 h-4" />}
               <span className="hidden sm:inline">Desks</span>
             </button>
+
 
             {/* Desktop Brand Logo */}
             <div className="hidden sm:block shrink-0">

@@ -93,14 +93,14 @@ export default function AdminPaymentsPage({
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           {!isSelectionMode && (
             <button
               type="button"
               onClick={() => setIsSelectionMode(true)}
-              className="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer"
+              className="px-2.5 py-1 sm:px-3 sm:py-1.5 bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer active:scale-95"
             >
-              <CheckSquare className="w-4 h-4 text-sky-600" />
+              <CheckSquare className="w-3.5 h-3.5 text-sky-600 shrink-0" />
               <span>Select Records</span>
             </button>
           )}
@@ -108,9 +108,9 @@ export default function AdminPaymentsPage({
           <button
             type="button"
             onClick={() => setShowAddPaymentModal(true)}
-            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black transition flex items-center gap-1.5 shadow-sm cursor-pointer"
+            className="px-2.5 py-1 sm:px-3 sm:py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-black transition flex items-center gap-1.5 shadow-xs cursor-pointer active:scale-95"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-3.5 h-3.5 shrink-0" />
             <span>Record Payment / Receipt</span>
           </button>
         </div>
@@ -177,45 +177,50 @@ export default function AdminPaymentsPage({
       </div>
 
       {/* Filter Bar */}
-      <div className="bg-white p-3 rounded-xl border border-slate-200 flex flex-wrap items-center justify-between gap-2.5">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs font-bold text-slate-500">Fee Sector:</span>
-          <select
-            value={paymentSectorFilter}
-            onChange={(e) => setPaymentSectorFilter(e.target.value)}
-            className="px-2.5 py-1 text-xs border border-slate-300 rounded-lg outline-none font-bold bg-white"
-          >
-            <option value="All">All Sectors</option>
-            <option value="Course Tuition">Course Entry Fee</option>
-            <option value="Competition & Events">Competition & Events</option>
-            <option value="Toolkits & Courseware">Toolkits & Courseware</option>
-            <option value="Franchise Affiliation">Franchise Affiliation</option>
-            <option value="Monthly Fee">Monthly Fee</option>
-            <option value="Exam Fee">Exam Fee</option>
-            <option value="Event Fee">Event Fee</option>
-            <option value="Book Fee">Book Fee</option>
-            <option value="Entry Fee">Entry Fee</option>
-            <option value="Franchise Fee">Franchise Fee</option>
-            <option value="Others">Others</option>
-          </select>
+      <div className="bg-white p-3 sm:p-3.5 rounded-xl border border-slate-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <span className="text-xs font-bold text-slate-500 shrink-0 w-20 sm:w-auto">Fee Sector:</span>
+            <select
+              value={paymentSectorFilter}
+              onChange={(e) => setPaymentSectorFilter(e.target.value)}
+              className="flex-1 sm:flex-initial px-2.5 py-1.5 sm:py-1 text-xs border border-slate-300 rounded-lg outline-none font-bold bg-white text-slate-800 shadow-2xs"
+            >
+              <option value="All">All Sectors</option>
+              <option value="Course Tuition">Course Entry Fee</option>
+              <option value="Competition & Events">Competition & Events</option>
+              <option value="Toolkits & Courseware">Toolkits & Courseware</option>
+              <option value="Franchise Affiliation">Franchise Affiliation</option>
+              <option value="Monthly Fee">Monthly Fee</option>
+              <option value="Exam Fee">Exam Fee</option>
+              <option value="Event Fee">Event Fee</option>
+              <option value="Book Fee">Book Fee</option>
+              <option value="Entry Fee">Entry Fee</option>
+              <option value="Franchise Fee">Franchise Fee</option>
+              <option value="Others">Others</option>
+            </select>
+          </div>
 
-          <select
-            value={paymentBranchFilter}
-            onChange={(e) => setPaymentBranchFilter(e.target.value)}
-            className="px-2.5 py-1 text-xs border border-slate-300 rounded-lg outline-none font-bold bg-white"
-          >
-            <option value="All">All Branches</option>
-            {allBranches.map((b) => (
-              <option key={b.value} value={b.value}>
-                {b.label}
-              </option>
-            ))}
-          </select>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <span className="text-xs font-bold text-slate-500 shrink-0 w-20 sm:hidden">Branch:</span>
+            <select
+              value={paymentBranchFilter}
+              onChange={(e) => setPaymentBranchFilter(e.target.value)}
+              className="flex-1 sm:flex-initial px-2.5 py-1.5 sm:py-1 text-xs border border-slate-300 rounded-lg outline-none font-bold bg-white text-slate-800 shadow-2xs"
+            >
+              <option value="All">All Branches</option>
+              {allBranches.map((b) => (
+                <option key={b.value} value={b.value}>
+                  {b.label}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
-        <div className="flex items-center gap-3 flex-wrap">
-          <div className="text-xs font-black text-emerald-800">
-            Filtered Total: ₹{filteredPayments.reduce((acc, p) => acc + (p.amountNum || 0), 0).toLocaleString('en-IN')}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between sm:justify-end gap-2 sm:gap-3 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+          <div className="text-xs font-black text-emerald-800 flex items-center justify-between sm:block">
+            <span>Filtered Total: ₹{filteredPayments.reduce((acc, p) => acc + (p.amountNum || 0), 0).toLocaleString('en-IN')}</span>
           </div>
 
           {/* Bulk print controls: only in selection mode */}

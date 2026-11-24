@@ -279,7 +279,7 @@ export default function AdminStudentsPage({
                           isSelected ? 'bg-amber-50/90 border-l-4 border-l-amber-500' : 'hover:bg-slate-50/80'
                         }`}
                       >
-                        <div className="flex items-start justify-between gap-2.5">
+                        <div className="flex items-center justify-between gap-2.5">
                           {/* Left: Avatar + Details */}
                           <div className="flex items-start gap-2.5 min-w-0 flex-1">
                             {isMergeMode && (
@@ -330,38 +330,44 @@ export default function AdminStudentsPage({
                             </div>
                           </div>
 
-                          {/* Right: Stacked Matching Action Buttons */}
-                          <div className="flex flex-col gap-1.5 shrink-0 w-24 pt-0.5" onClick={(e) => e.stopPropagation()}>
+                          {/* Right: Stacked Matching Action Buttons (Slim & Compact) */}
+                          <div className="flex flex-col gap-1 shrink-0 w-[90px]" onClick={(e) => e.stopPropagation()}>
                             {/* Admission Form Button */}
                             <button
                               type="button"
                               onClick={() => setViewingAdmissionStudent(student)}
-                              className="w-full h-[26px] px-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-black rounded-lg text-[10px] transition cursor-pointer flex items-center justify-center gap-1 shadow-2xs active:scale-95"
+                              className="w-full h-[22px] px-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-bold rounded-md text-[9px] transition cursor-pointer flex items-center justify-center gap-1 shadow-2xs active:scale-95"
                               title="View Admission Form"
                             >
-                              <GraduationCap className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                              <GraduationCap className="w-2.5 h-2.5 text-emerald-600 shrink-0" />
                               <span>Admission</span>
                             </button>
 
-                            {/* Interactive Fee Status Selector (Approved / Pending / Rejected) - Height reduced & matched */}
-                            <div className="relative inline-flex items-center w-full h-[26px]">
+                            {/* Interactive Fee Status Selector (Approved / Pending / Rejected) - Slimmer & Lightly Reduced */}
+                            <div className="relative inline-flex items-center w-full h-[21px]">
+                              <span className="absolute left-1.5 pointer-events-none z-10 flex items-center">
+                                {currentFeeStatus === 'Approved' && <CheckCircle2 className="w-2.5 h-2.5 text-emerald-600 shrink-0" />}
+                                {currentFeeStatus === 'Pending' && <Clock className="w-2.5 h-2.5 text-amber-600 shrink-0" />}
+                                {currentFeeStatus === 'Rejected' && <XCircle className="w-2.5 h-2.5 text-rose-600 shrink-0" />}
+                              </span>
                               <select
                                 value={currentFeeStatus}
                                 onChange={(e) => handleUpdateFeeStatus(student.userId, e.target.value, student)}
-                                className={`w-full h-full py-0 pl-2 pr-5 rounded-lg text-[10px] font-black uppercase border cursor-pointer outline-none appearance-none transition-colors leading-none ${
+                                style={{ height: '21px', minHeight: '21px', maxHeight: '21px', lineHeight: '19px' }}
+                                className={`w-full py-0 pl-4 pr-3.5 rounded-md text-[9px] font-bold border cursor-pointer outline-none appearance-none transition-colors text-center [text-align-last:center] shadow-2xs ${
                                   currentFeeStatus === 'Approved'
-                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
+                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                                     : currentFeeStatus === 'Rejected'
-                                    ? 'bg-rose-50 text-rose-700 border-rose-300'
-                                    : 'bg-amber-50 text-amber-800 border-amber-300'
+                                    ? 'bg-rose-50 text-rose-700 border-rose-200'
+                                    : 'bg-amber-50 text-amber-800 border-amber-200'
                                 }`}
                                 title="Change Fee Status"
                               >
-                                <option value="Approved">Approved</option>
-                                <option value="Pending">Pending</option>
-                                <option value="Rejected">Rejected</option>
+                                <option value="Approved" className="bg-white text-emerald-700 font-bold">Approved</option>
+                                <option value="Pending" className="bg-white text-amber-800 font-bold">Pending</option>
+                                <option value="Rejected" className="bg-white text-rose-700 font-bold">Rejected</option>
                               </select>
-                              <ChevronDown className="w-3 h-3 absolute right-1.5 pointer-events-none opacity-60 text-slate-500" />
+                              <ChevronDown className="w-2 h-2 absolute right-1 pointer-events-none opacity-60 text-slate-500 shrink-0" />
                             </div>
 
                             {/* Fee Receipt Button (When Approved) */}
@@ -369,10 +375,10 @@ export default function AdminStudentsPage({
                               <button
                                 type="button"
                                 onClick={() => handleOpenReceiptForStudent?.(student)}
-                                className="w-full h-[26px] px-2 bg-sky-50 hover:bg-sky-100 text-sky-800 border border-sky-200 font-black rounded-lg text-[10px] transition cursor-pointer flex items-center justify-center gap-1 shadow-2xs active:scale-95"
+                                className="w-full h-[22px] px-1 bg-sky-50 hover:bg-sky-100 text-sky-800 border border-sky-200 font-bold rounded-md text-[9px] transition cursor-pointer flex items-center justify-center gap-1 shadow-2xs active:scale-95"
                                 title="View Official Fee Receipt"
                               >
-                                <Receipt className="w-3.5 h-3.5 text-sky-600 shrink-0" />
+                                <Receipt className="w-2.5 h-2.5 text-sky-600 shrink-0" />
                                 <span>Receipt</span>
                               </button>
                             )}

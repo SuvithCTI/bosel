@@ -552,15 +552,6 @@ export default function AdminBranchStudentsPage({
 
       {/* Students Roster Table */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        {/* Mobile Horizontal Scroll Cue */}
-        <div className="lg:hidden flex items-center justify-between px-3.5 py-2 bg-gradient-to-r from-sky-50 to-indigo-50/50 border-b border-sky-100 text-[11px] text-sky-900 font-medium">
-          <span className="flex items-center gap-1.5">
-            <span className="text-sky-600 font-bold">⇄</span> Swipe table to view Event & Question Paper
-          </span>
-          <span className="text-[10px] font-bold bg-white text-sky-700 px-2 py-0.5 rounded-full border border-sky-200 shrink-0">
-            {filteredStudents.length} Students
-          </span>
-        </div>
 
         <div 
           className="w-full overflow-x-auto no-scrollbar admin-table-container"

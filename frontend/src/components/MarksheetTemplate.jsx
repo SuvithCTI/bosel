@@ -1,4 +1,5 @@
 import React from 'react';
+import bselLogo from '../assets/bsel_logo.png';
 import centerSeal from '../assets/cert_center_gold_emblem.png';
 import msmeLogo from '../assets/msme-logo.png';
 import iafLogo from '../assets/iaf-logo.png';
@@ -12,18 +13,17 @@ import signImage from '../assets/Sign.png';
 const NAVY = '#0b2a55';
 const GOLD = '#b8892f';
 const SERIF = "'Times New Roman', Times, serif";
-const HEADER_FONT = 'Georgia, serif';
+const HEADER_FONT = "'Cinzel', 'Outfit', 'Plus Jakarta Sans', Georgia, 'Times New Roman', serif";
 const TABLE_HEADER_BLUE = '#d4eefa'; // light blue column header row and grade value box
 
 const PAGE_CENTER_X = 362;
 
 // Header blocks
-// Left wordmark is centred on x = 226.
-// Right block sits between the centre seal (ends at x = 422) and the logo box (starts at about x = 627),
-// so it spans x = 430 to 606.
+// Symmetrical arrangement: Left text spans x=126..306, Center Seal is centered at x=362 (x=317..407),
+// and Right text is centered at x=517 (spans x=427..607).
 const LEFT_HEADER_CENTER_X = 226;
-const RIGHT_HEADER_CENTER_X = 518;
-const RIGHT_HEADER_MAX_WIDTH = 176;
+const RIGHT_HEADER_CENTER_X = 517;
+const RIGHT_HEADER_MAX_WIDTH = 180;
 
 // Watermark strip colours
 const STRIP_BG = NAVY;
@@ -33,7 +33,7 @@ const STRIP_TEXT = '#fde68a';
 const DEFAULT_RIGHT_HEADING = {
   title: 'TENKASI',
   subtitle: 'VISION FOUNDATION',
-  tagline: 'EDUCATION · EMPOWERMENT · EXCELLENCE',
+  tagline: 'EDUCATION • EMPOWERMENT • EXCELLENCE',
 };
 
 const LABELS = [
@@ -90,7 +90,7 @@ const measureAt100px = (text) => {
   const str = String(text || '');
   if (typeof document === 'undefined') return str.length * 60;
   if (!measureCtx) measureCtx = document.createElement('canvas').getContext('2d');
-  measureCtx.font = 'bold 100px Georgia, serif';
+  measureCtx.font = "900 100px 'Cinzel', 'Outfit', Georgia, serif";
   return measureCtx.measureText(str).width;
 };
 
@@ -101,6 +101,31 @@ const fitHeaderSize = (text, maxSize, maxWidth = RIGHT_HEADER_MAX_WIDTH, emSpaci
   const widthPerPx = measureAt100px(str) / 100 + str.length * emSpacing;
   if (widthPerPx <= 0) return maxSize;
   return Math.round(Math.min(maxSize, maxWidth / widthPerPx) * 10) / 10;
+};
+
+// Sizing specifically for right header to match BSEL details on left and fit evenly
+const fitRightTitleSize = (text) => {
+  const str = String(text || '').trim();
+  if (!str) return 25;
+  const widthAt25 = (measureAt100px(str) / 100) * 25 + str.length * 1.8;
+  if (widthAt25 <= RIGHT_HEADER_MAX_WIDTH) return 25;
+  return Math.max(16, Math.round((RIGHT_HEADER_MAX_WIDTH / (measureAt100px(str) / 100 + str.length * 0.018)) * 10) / 10);
+};
+
+const fitRightSubtitleSize = (text) => {
+  const str = String(text || '').trim();
+  if (!str) return 10.5;
+  const widthAtTarget = (measureAt100px(str) / 100) * 10.5 + str.length * 1.2;
+  if (widthAtTarget <= RIGHT_HEADER_MAX_WIDTH) return 10.5;
+  return Math.max(7.5, Math.round((RIGHT_HEADER_MAX_WIDTH / (measureAt100px(str) / 100 + str.length * 0.012)) * 10) / 10);
+};
+
+const fitRightMottoSize = (text) => {
+  const str = String(text || '').trim();
+  if (!str) return 7;
+  const widthAtTarget = (measureAt100px(str) / 100) * 7 + str.length * 0.35;
+  if (widthAtTarget <= RIGHT_HEADER_MAX_WIDTH) return 7;
+  return Math.max(5.5, Math.round((RIGHT_HEADER_MAX_WIDTH / (measureAt100px(str) / 100 + str.length * 0.0035)) * 10) / 10);
 };
 
 // Gold diamond on the gold rule at a corner
@@ -178,7 +203,7 @@ const Star = ({ cx, cy, r }) => {
   return <polygon points={pts.join(' ')} fill={GOLD} />;
 };
 
-export default function MarksheetTemplate({ remark = null, rightHeading = null }) {
+export default function MarksheetTemplate({ remark = null, rightHeading = null, qrCodeDataUrl = null }) {
   const colCenters = TABLE_COLS.slice(0, -1).map((x, i) => (x + TABLE_COLS[i + 1]) / 2);
 
   const goldLeft = FRAME_GOLD.x;
@@ -241,99 +266,101 @@ export default function MarksheetTemplate({ remark = null, rightHeading = null }
       {/* ---------- Header ---------- */}
       {/* Left: B★SEL crest */}
       <image
-  href="/src/assets/bsel_logo.png"
-  x="44"
-  y="36"
-  width="76"
-  height="76"
-  preserveAspectRatio="xMidYMid meet"
-/>
+        href={bselLogo}
+        xlinkHref={bselLogo}
+        x="44"
+        y="34"
+        width="74"
+        height="74"
+        preserveAspectRatio="xMidYMid meet"
+      />
 
-      {/* Left block: three-line wordmark, centred between the crest and the centre seal */}
-            <text
-        x="128"
+      {/* Left block: three-line wordmark, evenly sized and spaced to match Right block */}
+      <text
+        x="126"
         y="62"
         textAnchor="start"
         fontFamily={HEADER_FONT}
-        fontWeight="bold"
-        fontSize="30"
+        fontWeight="900"
+        fontSize="25"
+        letterSpacing="1.8"
         fill={NAVY}
       >
-        B<tspan fill={GOLD}>★</tspan>SEL
+        B <tspan fill={GOLD}>★</tspan> SEL
       </text>
       <text
-        x="128"
-        y="78"
+        x="126"
+        y="82"
         textAnchor="start"
         fontFamily={HEADER_FONT}
-        fontWeight="bold"
-        fontSize="11"
-        letterSpacing="0.3"
+        fontWeight="800"
+        fontSize="10.5"
+        letterSpacing="1.2"
         fill={NAVY}
       >
-        Learn · Grow · Achieve
+        LEARN • GROW • ACHIEVE
       </text>
       <text
-        x="128"
-        y="94"
+        x="126"
+        y="100"
         textAnchor="start"
         fontFamily={HEADER_FONT}
-        fontWeight="bold"
+        fontWeight="700"
         fontSize="7"
-        letterSpacing="0.2"
+        letterSpacing="0.3"
         fill={NAVY}
       >
         BOARD OF SKILLS AND EDUCATIONAL LEARNING
       </text>
 
-      {/* Centre: government / institutional seal */}
+      {/* Centre: government / institutional seal, perfectly centered at PAGE_CENTER_X (362) */}
       <image
         href={centerSeal}
-        x={PAGE_CENTER_X - 30}
-        y="24"
-        width="100"
-        height="100"
+        x={PAGE_CENTER_X - 45}
+        y="25"
+        width="90"
+        height="90"
         preserveAspectRatio="xMidYMid meet"
       />
 
-      {/* Right block: institution heading, same font, baselines and styling as the left block */}
+      {/* Right block: institution heading, evenly sized and aligned with left BSEL block */}
       <text
         x={RIGHT_HEADER_CENTER_X}
         y="62"
         textAnchor="middle"
         fontFamily={HEADER_FONT}
-        fontWeight="bold"
-        fontSize={fitHeaderSize(heading.title, 40, RIGHT_HEADER_MAX_WIDTH, 0.3)}
-        letterSpacing="0.3"
+        fontWeight="900"
+        fontSize={fitRightTitleSize(heading.title)}
+        letterSpacing="1.8"
         fill={NAVY}
       >
-        {heading.title}
+        {String(heading.title || '').slice(0, 12).toUpperCase()}
       </text>
       <text
         x={RIGHT_HEADER_CENTER_X}
-        y="78"
+        y="82"
         textAnchor="middle"
         fontFamily={HEADER_FONT}
-        fontWeight="bold"
-        fontSize={fitHeaderSize(heading.subtitle, 16, RIGHT_HEADER_MAX_WIDTH, 0.3)}
-        letterSpacing="0.3"
+        fontWeight="800"
+        fontSize={fitRightSubtitleSize(heading.subtitle)}
+        letterSpacing="1.2"
         fill={NAVY}
       >
-        {heading.subtitle}
+        {String(heading.subtitle || '').slice(0, 22).toUpperCase()}
       </text>
       {/* Right block tagline: same fixed size and spacing as the left block's third line */}
-<text
-  x={RIGHT_HEADER_CENTER_X}
-  y="94"
-  textAnchor="middle"
-  fontFamily={HEADER_FONT}
-  fontWeight="bold"
-  fontSize="7"
-  letterSpacing="0.2"
-  fill={NAVY}
->
-  {heading.tagline}
-</text>
+      <text
+        x={RIGHT_HEADER_CENTER_X}
+        y="100"
+        textAnchor="middle"
+        fontFamily={HEADER_FONT}
+        fontWeight="700"
+        fontSize={fitRightMottoSize(heading.tagline)}
+        letterSpacing="0.35"
+        fill={NAVY}
+      >
+        {String(heading.tagline || '').slice(0, 30).toUpperCase()}
+      </text>
 
       {/* Thin repeating watermark strip */}
       <rect
@@ -388,6 +415,33 @@ export default function MarksheetTemplate({ remark = null, rightHeading = null }
           </g>
         );
       })}
+
+      {/* QR Code frame (just left to the photo) */}
+      <rect x="428" y="228" width="113" height="130" fill="#ffffff" stroke={GOLD} strokeWidth="3" />
+      <rect x="433" y="233" width="103" height="120" fill="#ffffff" stroke={NAVY} strokeWidth="2" />
+      {qrCodeDataUrl ? (
+        <image
+          href={qrCodeDataUrl}
+          xlinkHref={qrCodeDataUrl}
+          x="438"
+          y="238"
+          width="93"
+          height="93"
+          preserveAspectRatio="xMidYMid meet"
+        />
+      ) : null}
+      <text
+        x="484.5"
+        y="346"
+        textAnchor="middle"
+        fontFamily="Arial, sans-serif"
+        fontWeight="bold"
+        fontSize="7.5"
+        letterSpacing="0.4"
+        fill={NAVY}
+      >
+        SCAN TO VERIFY
+      </text>
 
       {/* Photo frame (photo overlay sits inside this) */}
       <rect x="551" y="228" width="113" height="130" fill="none" stroke={GOLD} strokeWidth="3" />
