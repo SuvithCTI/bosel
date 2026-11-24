@@ -608,7 +608,7 @@ export default function StaffDashboard({
         {/* =========================================================================
             RIGHT MAIN CONTENT: TAB PANELS & WORKSPACE
             ========================================================================= */}
-        <main className="flex-1 min-w-0 w-full lg:ml-72 xl:ml-80 p-4 sm:p-6 lg:p-8 space-y-5 bg-slate-100">
+        <main className="flex-1 min-w-0 w-full lg:ml-72 xl:ml-80 p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8 space-y-5 bg-slate-100">
           {activeTab === 'staff_overview' && (
             <StaffOverviewPage
               currentStaff={currentStaff}

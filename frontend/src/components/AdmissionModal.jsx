@@ -442,6 +442,21 @@ export default function AdmissionModal({
   const [isOtherBranch, setIsOtherBranch] = useState(false);
   const [customBranchName, setCustomBranchName] = useState('');
   const branchDropdownRef = useRef(null);
+
+  // Custom searchable dropdowns for School & Academy (Mobile Overflow Prevention)
+  const [schoolDropdownOpen, setSchoolDropdownOpen] = useState(false);
+  const [schoolSearch, setSchoolSearch] = useState('');
+  const schoolDropdownRef = useRef(null);
+
+  const [academyDropdownOpen, setAcademyDropdownOpen] = useState(false);
+  const [academySearch, setAcademySearch] = useState('');
+  const academyDropdownRef = useRef(null);
+
+  // Custom dropdowns for Course & Level in Course Desk
+  const [activeCourseDropdownIndex, setActiveCourseDropdownIndex] = useState(null);
+  const [activeLevelDropdownIndex, setActiveLevelDropdownIndex] = useState(null);
+  const courseDropdownContainerRef = useRef(null);
+
   const [phoneError, setPhoneError] = useState('');
   const [photoError, setPhotoError] = useState(false);
   const [pincodeLoading, setPincodeLoading] = useState(false);
@@ -558,7 +573,7 @@ export default function AdmissionModal({
     }
   }, [initialProgram, initialFee, initialBranch, isOpen, coursesList, skipPayment]);
 
-  // Click outside listener for district and branch dropdowns
+  // Click outside listener for all custom dropdowns (Touch & Mouse friendly)
   useEffect(() => {
     function handleClickOutside(event) {
       if (districtDropdownRef.current && !districtDropdownRef.current.contains(event.target)) {
@@ -567,9 +582,23 @@ export default function AdmissionModal({
       if (branchDropdownRef.current && !branchDropdownRef.current.contains(event.target)) {
         setBranchDropdownOpen(false);
       }
+      if (schoolDropdownRef.current && !schoolDropdownRef.current.contains(event.target)) {
+        setSchoolDropdownOpen(false);
+      }
+      if (academyDropdownRef.current && !academyDropdownRef.current.contains(event.target)) {
+        setAcademyDropdownOpen(false);
+      }
+      if (courseDropdownContainerRef.current && !courseDropdownContainerRef.current.contains(event.target)) {
+        setActiveCourseDropdownIndex(null);
+        setActiveLevelDropdownIndex(null);
+      }
     }
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
   }, []);
 
   const normalizeBranchName = (b = '') =>
@@ -614,6 +643,28 @@ export default function AdmissionModal({
     }
     return list;
   }, [franchisesList, selectedBranchSlug, lockAdmissionCategory, initialInstitution, formData.admissionCategory, formData.franchiseId, formData.branch]);
+
+  // Memoized filtered schools for search input
+  const filteredSchoolsList = useMemo(() => {
+    if (!schoolSearch.trim()) return filteredSchoolsByBranch;
+    const q = schoolSearch.toLowerCase();
+    return filteredSchoolsByBranch.filter((s) =>
+      (s.name && s.name.toLowerCase().includes(q)) ||
+      (s.branch && s.branch.toLowerCase().includes(q)) ||
+      (s.city && s.city.toLowerCase().includes(q))
+    );
+  }, [filteredSchoolsByBranch, schoolSearch]);
+
+  // Memoized filtered academies for search input
+  const filteredAcademiesList = useMemo(() => {
+    if (!academySearch.trim()) return filteredFranchisesByBranch;
+    const q = academySearch.toLowerCase();
+    return filteredFranchisesByBranch.filter((f) =>
+      (f.name && f.name.toLowerCase().includes(q)) ||
+      (f.branch && f.branch.toLowerCase().includes(q)) ||
+      (f.city && f.city.toLowerCase().includes(q))
+    );
+  }, [filteredFranchisesByBranch, academySearch]);
 
   // Lock background scroll when modal is open
   useEffect(() => {
@@ -1511,39 +1562,39 @@ export default function AdmissionModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header Banner */}
-        <div className="bg-gradient-to-r from-[#0F2B5C] via-[#143B7A] to-[#1E4D99] text-white p-3.5 sm:p-5 relative shrink-0">
+        <div className="bg-gradient-to-r from-[#0F2B5C] via-[#143B7A] to-[#1E4D99] text-white p-3 sm:p-5 relative shrink-0">
           {/* Close Button */}
           <button
             type="button"
             onClick={onClose}
-            className="absolute top-3 right-3 sm:top-4 sm:right-4 bg-white/10 hover:bg-white/20 text-white rounded-full p-1.5 transition cursor-pointer z-10 active:scale-95"
+            className="absolute top-2.5 right-2.5 sm:top-4 sm:right-4 bg-white/10 hover:bg-white/20 text-white rounded-full p-1.5 transition cursor-pointer z-10 active:scale-95"
             aria-label="Close"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
 
           {/* Header Content with Right-side Logo */}
-          <div className="flex items-center justify-between gap-3 sm:gap-4 pr-10 sm:pr-12">
-            <div className="min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="w-6 h-6 rounded-lg bg-amber-400 text-slate-950 flex items-center justify-center font-bold shrink-0 shadow-xs">
-                  <GraduationCap className="w-4 h-4 text-slate-950" />
+          <div className="flex items-center justify-between gap-2.5 sm:gap-4 pr-8 sm:pr-12">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5 sm:gap-2 mb-1">
+                <span className="w-5 h-5 sm:w-6 sm:h-6 rounded-md sm:rounded-lg bg-amber-400 text-slate-950 flex items-center justify-center font-bold shrink-0 shadow-xs">
+                  <GraduationCap className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-950" />
                 </span>
-                <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-amber-300">
+                <span className="text-[9px] sm:text-[11px] font-black uppercase tracking-wider text-amber-300 truncate">
                   Board of Skills & Educational Learning (B★SEL)
                 </span>
               </div>
 
-              <h3 className="text-lg sm:text-2xl font-black font-heading text-white leading-tight">
+              <h3 className="text-base sm:text-2xl font-black font-heading text-white leading-tight">
                 Student Admission Form
               </h3>
-              <p className="text-[11px] sm:text-xs text-sky-200 mt-0.5 leading-relaxed font-semibold">
+              <p className="text-[10px] sm:text-xs text-sky-200 mt-0.5 leading-snug font-semibold line-clamp-1 sm:line-clamp-none">
                 Official candidate enrollment and course admission registry.
               </p>
             </div>
 
             {/* B★SEL Official Logo */}
-            <div className="w-14 h-14 sm:w-18 sm:h-18 md:w-20 md:h-20 rounded-2xl bg-white p-1.5 sm:p-2 shadow-md border-2 border-amber-300/60 flex items-center justify-center shrink-0">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-xl sm:rounded-2xl bg-white p-1 sm:p-2 shadow-md border-2 border-amber-300/60 flex items-center justify-center shrink-0">
               <img
                 src="/bsel_logo.png"
                 onError={(e) => {
@@ -1559,14 +1610,14 @@ export default function AdmissionModal({
 
           {/* Form Step Progress Bar (hidden once admission is confirmed or if skipPayment is active) */}
           {!submitted && !skipPayment && (
-            <div className="grid grid-cols-2 gap-2 mt-3 pt-2.5 border-t border-white/20 text-center text-xs font-bold">
+            <div className="grid grid-cols-2 gap-1.5 sm:gap-2 mt-2.5 sm:mt-3 pt-2 sm:pt-2.5 border-t border-white/20 text-center text-[11px] sm:text-xs font-bold">
               <button
                 type="button"
                 onClick={() => {
                   setFormStep(1);
                   modalBodyRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
-                className={`pb-1 border-b-2 flex items-center justify-center gap-1.5 transition cursor-pointer ${
+                className={`pb-1 border-b-2 flex items-center justify-center gap-1 sm:gap-1.5 transition cursor-pointer ${
                   formStep === 1
                     ? 'border-amber-400 text-amber-300 font-black'
                     : 'border-transparent text-white/75 hover:text-white'
@@ -1588,7 +1639,7 @@ export default function AdmissionModal({
                     modalBodyRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
                   }
                 }}
-                className={`pb-1 border-b-2 flex items-center justify-center gap-1.5 transition cursor-pointer ${
+                className={`pb-1 border-b-2 flex items-center justify-center gap-1 sm:gap-1.5 transition cursor-pointer ${
                   formStep === 2
                     ? 'border-amber-400 text-amber-300 font-black'
                     : 'border-transparent text-white/75 hover:text-white'
@@ -1630,41 +1681,51 @@ export default function AdmissionModal({
               </div>
 
               {/* Official Admission Slip Card */}
-              <div id="admission-slip" ref={slipRef} className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-xs text-left space-y-3.5">
-                {/* Header Profile Section */}
-                <div className="flex items-start justify-between gap-3 pb-3 border-b border-slate-100">
-                  <div className="flex items-center gap-3">
-                    {formData.photoPreview ? (
-                      <img 
-                        src={formData.photoPreview} 
-                        alt={formData.studentName} 
-                        className="w-13 h-13 rounded-xl object-cover ring-2 ring-sky-500/30 shadow-xs shrink-0" 
-                      />
-                    ) : (
-                      <div className="w-13 h-13 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 shrink-0">
-                        <User className="w-6 h-6" />
-                      </div>
-                    )}
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <h5 className="text-base font-black text-slate-900 tracking-tight leading-snug">{formData.studentName}</h5>
-                        <span className="text-[10px] font-semibold text-slate-500">({formData.gender}, {formData.age} yrs)</span>
-                      </div>
-                      {formData.studentStage && (
-                        <div className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-100 text-amber-900 font-extrabold text-[10.5px] rounded-md border border-amber-300">
-                          <span>🎯</span>
-                          <span>At the {formData.studentStage} stage</span>
+              <div id="admission-slip" ref={slipRef} className="bg-white border border-slate-200 rounded-2xl p-3.5 sm:p-5 shadow-xs text-left space-y-3">
+                {/* Header Profile Section (Mobile-First 2-Row Stack) */}
+                <div className="pb-3 border-b border-slate-100 space-y-2">
+                  <div className="flex items-start justify-between gap-2.5">
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                      {formData.photoPreview ? (
+                        <img 
+                          src={formData.photoPreview} 
+                          alt={formData.studentName} 
+                          className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl object-cover ring-2 ring-sky-500/30 shadow-xs shrink-0" 
+                        />
+                      ) : (
+                        <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 shrink-0">
+                          <User className="w-5 h-5 sm:w-6 sm:h-6" />
                         </div>
                       )}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <h5 className="text-base font-black text-slate-900 tracking-tight leading-snug truncate">
+                            {formData.studentName}
+                          </h5>
+                          <span className="text-[10px] sm:text-[11px] font-semibold text-slate-500">
+                            ({formData.gender}, {formData.age} yrs)
+                          </span>
+                        </div>
+                        <span className="text-[10px] text-slate-400 font-medium block mt-0.5">
+                          Enrolled: {formData.date}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="text-right shrink-0">
+                      <span className="text-[11px] font-mono font-black text-slate-900 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200 block shadow-2xs">
+                        Reg: {createdAccount.registerNumber || formData.registerNumber}
+                      </span>
                     </div>
                   </div>
 
-                  <div className="text-right shrink-0">
-                    <span className="text-[11px] font-mono font-black text-slate-900 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200 block">
-                      Reg: {createdAccount.registerNumber || formData.registerNumber}
-                    </span>
-                    <span className="text-[10px] text-slate-400 font-medium block mt-1">Date: {formData.date}</span>
-                  </div>
+                  {/* Academic Stage Pill (Full-width clean row on mobile so text never wraps into 5 lines!) */}
+                  {formData.studentStage && (
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 text-amber-950 font-bold text-[11px] sm:text-xs rounded-lg border border-amber-300 shadow-2xs max-w-full">
+                      <span className="shrink-0">🎯</span>
+                      <span className="truncate">Stage: <strong className="font-black text-amber-900">{formData.studentStage}</strong></span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Enrolled Courses Summary */}
@@ -1681,8 +1742,8 @@ export default function AdmissionModal({
 
                   <div className="space-y-1.5">
                     {(formData.selectedCourses && formData.selectedCourses.length > 0 ? formData.selectedCourses : [{ courseName: formData.courseName, level: 'Level 1', fee: 450 }]).map((c, idx) => (
-                      <div key={idx} className="bg-white border border-slate-200 rounded-lg p-2.5 flex items-center justify-between gap-2 shadow-2xs">
-                        <div className="min-w-0">
+                      <div key={idx} className="bg-white border border-slate-200 rounded-lg p-2.5 flex items-start justify-between gap-2 shadow-2xs">
+                        <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-1.5 flex-wrap">
                             <p className="font-extrabold text-slate-900 text-xs truncate">{c.courseName}</p>
                             {c.registerNumber && (
@@ -1691,17 +1752,17 @@ export default function AdmissionModal({
                               </span>
                             )}
                           </div>
-                          <span className="inline-block mt-0.5 text-[10px] font-bold text-sky-800 bg-sky-50 px-2 py-0.5 rounded border border-sky-200">
+                          <span className="inline-block mt-1 text-[10px] font-bold text-sky-800 bg-sky-50 px-2 py-0.5 rounded border border-sky-200 break-words leading-tight">
                             {c.level}
                           </span>
                         </div>
-                        <span className="text-xs font-mono font-bold text-slate-700 shrink-0">₹{c.fee || 450}</span>
+                        <span className="text-xs font-mono font-bold text-slate-700 shrink-0 mt-0.5">₹{c.fee || 450}</span>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                {/* Candidate & Centre Key Information */}
+                {/* Candidate & Centre Key Information (Balanced 2x2 on Mobile, No Blank Gaps!) */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs pt-0.5">
                   <div className="bg-slate-50/70 p-2 rounded-lg border border-slate-100">
                     <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider block">Branch / Centre</span>
@@ -1718,9 +1779,9 @@ export default function AdmissionModal({
                     <strong className="text-slate-900 font-extrabold block text-xs mt-0.5">{formData.phone}</strong>
                   </div>
 
-                  <div className="bg-slate-50/70 p-2 rounded-lg border border-slate-100 col-span-2 sm:col-span-1">
+                  <div className="bg-slate-50/70 p-2 rounded-lg border border-slate-100">
                     <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider block">Payment Status</span>
-                    <span className={`inline-flex items-center gap-1 font-black text-[11px] mt-0.5 ${
+                    <span className={`inline-flex items-center gap-1 font-black text-[10.5px] sm:text-[11px] mt-0.5 truncate ${
                       formData.feePaymentType === 'Pay Later' ? 'text-amber-700' : 'text-emerald-700'
                     }`}>
                       {formData.feePaymentType === 'Pay Later' ? '⏳ Pay Later (Branch Desk)' : '✓ Paid Online'}
@@ -1729,41 +1790,78 @@ export default function AdmissionModal({
 
                   <div className="col-span-2 sm:col-span-3 bg-slate-50/70 p-2 rounded-lg border border-slate-100">
                     <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider block">Address</span>
-                    <p className="text-slate-800 font-semibold text-[11px] mt-0.5 truncate">
-                      {formData.address}, {formData.village && `${formData.village}, `}{formData.city}, {formData.district} - {formData.pincode}
+                    <p className="text-slate-800 font-semibold text-[11px] mt-0.5 leading-snug break-words">
+                      {formData.address}{formData.village && `, ${formData.village}`}, {formData.city}, {formData.district} - {formData.pincode}
                     </p>
                   </div>
                 </div>
               </div>
 
-              {/* Portal Login Credentials Box */}
-              <div className="bg-gradient-to-br from-[#0F2B5C] via-[#143B7A] to-[#1E4D99] rounded-2xl p-4 text-white space-y-3 shadow-md">
-                <div className="flex items-center gap-1.5 border-b border-white/15 pb-2">
-                  <KeyRound className="w-4 h-4 text-amber-400" />
-                  <span className="text-xs font-black uppercase tracking-wider text-amber-300">
-                    Student Portal Credentials
-                  </span>
+              {/* Portal Login Credentials Box (Mobile-First Single Row per Field, No Text Breaking!) */}
+              <div className="bg-gradient-to-br from-[#0F2B5C] via-[#143B7A] to-[#1E4D99] rounded-2xl p-3.5 sm:p-4 text-white space-y-2.5 shadow-md">
+                <div className="flex items-center justify-between border-b border-white/15 pb-2">
+                  <div className="flex items-center gap-1.5">
+                    <KeyRound className="w-4 h-4 text-amber-400" />
+                    <span className="text-xs font-black uppercase tracking-wider text-amber-300">
+                      Student Portal Credentials
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-sky-200 font-semibold hidden sm:inline">Keep credentials safe</span>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 text-left">
-                  <div className="bg-white/10 backdrop-blur-xs border border-white/20 rounded-xl p-2.5">
-                    <span className="text-[9px] font-bold uppercase tracking-wider text-sky-200 block">User ID</span>
-                    <span className="font-mono text-sm sm:text-base font-black text-white">{createdAccount.userId}</span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-left">
+                  {/* User ID Card */}
+                  <div className="bg-white/10 backdrop-blur-xs border border-white/20 rounded-xl p-2.5 sm:p-3 flex items-center justify-between gap-2 shadow-2xs">
+                    <div className="min-w-0">
+                      <span className="text-[9.5px] font-bold uppercase tracking-wider text-sky-200 block">User ID</span>
+                      <span className="font-mono text-sm sm:text-base font-black text-white tracking-wide block truncate">
+                        {createdAccount.userId}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (navigator.clipboard) {
+                          navigator.clipboard.writeText(createdAccount.userId);
+                        }
+                      }}
+                      className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition cursor-pointer shrink-0"
+                      title="Copy User ID"
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                    </button>
                   </div>
-                  <div className="bg-white/10 backdrop-blur-xs border border-white/20 rounded-xl p-2.5">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[9px] font-bold uppercase tracking-wider text-sky-200">Password</span>
+
+                  {/* Password Card */}
+                  <div className="bg-white/10 backdrop-blur-xs border border-white/20 rounded-xl p-2.5 sm:p-3 flex items-center justify-between gap-2 shadow-2xs">
+                    <div className="min-w-0">
+                      <span className="text-[9.5px] font-bold uppercase tracking-wider text-sky-200 block">Password</span>
+                      <span className="font-mono text-sm sm:text-base font-black text-amber-300 tracking-wider block truncate">
+                        {showPassword ? createdAccount.password : '••••••••'}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="text-white/70 hover:text-white"
+                        className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition cursor-pointer"
+                        title={showPassword ? 'Hide Password' : 'Show Password'}
                       >
-                        {showPassword ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                        {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (navigator.clipboard) {
+                            navigator.clipboard.writeText(createdAccount.password);
+                          }
+                        }}
+                        className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition cursor-pointer"
+                        title="Copy Password"
+                      >
+                        <Copy className="w-3.5 h-3.5" />
                       </button>
                     </div>
-                    <span className="font-mono text-sm sm:text-base font-black text-amber-300">
-                      {showPassword ? createdAccount.password : '••••••••'}
-                    </span>
                   </div>
                 </div>
               </div>
@@ -1778,7 +1876,7 @@ export default function AdmissionModal({
                       setActivePage('login');
                       window.scrollTo({ top: 0, behavior: 'smooth' });
                     }}
-                    className="w-full sm:flex-1 py-2.5 px-4 bg-[#0F2B5C] hover:bg-[#18458F] text-white text-xs font-black rounded-xl transition flex items-center justify-center gap-1.5 shadow-md cursor-pointer min-h-[42px]"
+                    className="w-full sm:flex-1 py-3 px-4 bg-[#0F2B5C] hover:bg-[#18458F] active:scale-[0.99] text-white text-xs sm:text-sm font-black rounded-xl transition flex items-center justify-center gap-2 shadow-md cursor-pointer min-h-[44px]"
                   >
                     <Lock className="w-4 h-4 text-amber-400" />
                     <span>Proceed to Student Login</span>
@@ -1789,7 +1887,7 @@ export default function AdmissionModal({
                 <button
                   type="button"
                   onClick={handleReset}
-                  className="w-full sm:w-auto py-2.5 px-4 border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs font-bold rounded-xl transition cursor-pointer min-h-[42px]"
+                  className="w-full sm:w-auto py-3 px-5 border border-slate-300 text-slate-700 hover:bg-slate-50 active:scale-[0.99] text-xs sm:text-sm font-bold rounded-xl transition cursor-pointer min-h-[44px]"
                 >
                   New Admission
                 </button>
@@ -1823,7 +1921,7 @@ export default function AdmissionModal({
                       readOnly
                       tabIndex={-1}
                       value={formData.date || ''}
-                      className="w-full px-2.5 sm:px-3 py-2 bg-slate-100 border border-slate-300 rounded-lg sm:rounded-xl text-slate-700 font-bold focus:outline-none text-base sm:text-sm shadow-2xs cursor-not-allowed select-none pointer-events-none"
+                      className="w-full px-2.5 sm:px-3 py-2 bg-slate-100 border border-slate-300 rounded-lg sm:rounded-xl text-slate-700 font-bold focus:outline-none text-base sm:text-sm shadow-2xs cursor-not-allowed select-none pointer-events-none min-h-[42px]"
                     />
                   </div>
 
@@ -2098,7 +2196,7 @@ export default function AdmissionModal({
 
                       {/* If School is selected: choose School or enter custom */}
                       {formData.admissionCategory === 'School' && (
-                        <div className="pt-0.5 animate-in fade-in slide-in-from-top-1 duration-150 space-y-1.5">
+                        <div className="pt-0.5 animate-in fade-in slide-in-from-top-1 duration-150 space-y-1.5" ref={schoolDropdownRef}>
                           <label className="block text-[11px] sm:text-xs font-black text-slate-800 flex items-center justify-between">
                             <span className="flex items-center gap-1.5">
                               <School className="w-3.5 h-3.5 text-sky-700" />
@@ -2108,47 +2206,115 @@ export default function AdmissionModal({
                               <span className="text-[10px] font-semibold text-slate-400">Select School</span>
                             )}
                           </label>
-                          <select
-                            disabled={lockAdmissionCategory && Boolean(initialInstitution)}
-                            value={formData.schoolId || (filteredSchoolsByBranch.some(s => s.name === formData.institution) ? filteredSchoolsByBranch.find(s => s.name === formData.institution)?.id : '__custom__')}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              if (val === '__custom__') {
-                                setFormData(prev => ({
-                                  ...prev,
-                                  schoolId: null,
-                                  schoolName: '',
-                                  institution: ''
-                                }));
-                              } else {
-                                const sch = filteredSchoolsByBranch.find(s => s.id === val);
-                                if (sch) {
-                                  const schBranch = sch.branch ? cleanBranchName(sch.branch) : (sch.city ? cleanBranchName(sch.city) : '');
-                                  setFormData(prev => ({
-                                    ...prev,
-                                    schoolId: sch.id,
-                                    schoolName: sch.name,
-                                    institution: sch.name,
-                                    ...(schBranch && !lockBranch ? { branch: schBranch } : {})
-                                  }));
+
+                          <div className="relative">
+                            <button
+                              type="button"
+                              disabled={lockAdmissionCategory && Boolean(initialInstitution)}
+                              onClick={() => {
+                                if (!(lockAdmissionCategory && Boolean(initialInstitution))) {
+                                  setSchoolDropdownOpen(!schoolDropdownOpen);
                                 }
-                              }
-                            }}
-                            className={`w-full px-2.5 sm:px-3 py-2 border rounded-lg sm:rounded-xl font-semibold text-base sm:text-sm shadow-2xs ${
-                              lockAdmissionCategory && Boolean(initialInstitution)
-                                ? 'bg-slate-100 text-slate-700 cursor-not-allowed border-slate-300 font-bold'
-                                : 'bg-white text-slate-950 border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-sky-500'
-                            }`}
-                          >
-                            {filteredSchoolsByBranch.map(s => (
-                              <option key={s.id} value={s.id}>
-                                {s.name} ({s.city || s.branch || 'Tamil Nadu'})
-                              </option>
-                            ))}
-                            {!(lockAdmissionCategory && initialInstitution) && (
-                              <option value="__custom__">Other School (Type custom name)...</option>
+                              }}
+                              className={`w-full px-2.5 sm:px-3 py-2 border rounded-lg sm:rounded-xl text-left font-semibold text-base sm:text-sm flex items-center justify-between shadow-2xs transition min-h-[42px] ${
+                                lockAdmissionCategory && Boolean(initialInstitution)
+                                  ? 'bg-slate-100 text-slate-700 cursor-not-allowed border-slate-300 font-bold'
+                                  : schoolDropdownOpen
+                                  ? 'bg-white border-sky-500 ring-2 ring-sky-500/20 text-slate-950'
+                                  : 'bg-white text-slate-950 border-slate-300 hover:border-slate-400'
+                              }`}
+                            >
+                              <span className="truncate pr-1">
+                                {formData.schoolId
+                                  ? (filteredSchoolsByBranch.find((s) => s.id === formData.schoolId)?.name || formData.schoolName || formData.institution || 'Select School')
+                                  : (formData.schoolName || formData.institution || 'Select School')}
+                              </span>
+                              {!lockAdmissionCategory && (
+                                schoolDropdownOpen ? (
+                                  <ChevronUp className="w-3.5 h-3.5 text-slate-500 shrink-0 ml-1" />
+                                ) : (
+                                  <ChevronDown className="w-3.5 h-3.5 text-slate-500 shrink-0 ml-1" />
+                                )
+                              )}
+                            </button>
+
+                            {schoolDropdownOpen && !lockAdmissionCategory && (
+                              <div className="absolute z-30 left-0 right-0 top-full mt-1 bg-white border border-slate-300 rounded-xl shadow-xl overflow-hidden animate-in fade-in duration-100 max-w-full">
+                                <div className="p-1.5 border-b border-slate-200 bg-slate-50">
+                                  <input
+                                    type="text"
+                                    placeholder="Search school name..."
+                                    value={schoolSearch}
+                                    onChange={(e) => setSchoolSearch(e.target.value)}
+                                    className="w-full px-2 py-1 text-xs text-slate-950 font-semibold border border-slate-300 rounded-md focus:outline-none focus:border-sky-500 bg-white"
+                                    autoFocus
+                                  />
+                                </div>
+
+                                <div className="max-h-48 overflow-y-auto p-1 divide-y divide-slate-100">
+                                  {filteredSchoolsList.map((s) => {
+                                    const isSelected = formData.schoolId === s.id;
+                                    return (
+                                      <button
+                                        key={s.id}
+                                        type="button"
+                                        onClick={() => {
+                                          const schBranch = s.branch ? cleanBranchName(s.branch) : (s.city ? cleanBranchName(s.city) : '');
+                                          setFormData((prev) => ({
+                                            ...prev,
+                                            schoolId: s.id,
+                                            schoolName: s.name,
+                                            institution: s.name,
+                                            ...(schBranch && !lockBranch ? { branch: schBranch } : {})
+                                          }));
+                                          setSchoolDropdownOpen(false);
+                                          setSchoolSearch('');
+                                        }}
+                                        className={`w-full text-left px-2.5 py-2 text-xs rounded-lg transition flex items-start justify-between cursor-pointer ${
+                                          isSelected ? 'bg-sky-50 text-sky-950 font-bold' : 'text-slate-800 hover:bg-slate-100'
+                                        }`}
+                                      >
+                                        <div className="min-w-0 pr-2">
+                                          <p className="font-bold text-xs text-slate-900 leading-snug break-words">
+                                            {s.name}
+                                          </p>
+                                          <span className="text-[10px] text-slate-500 font-semibold">
+                                            {s.city || s.branch || 'Tamil Nadu'}
+                                          </span>
+                                        </div>
+                                        {isSelected && <Check className="w-3.5 h-3.5 text-sky-600 shrink-0 mt-0.5" />}
+                                      </button>
+                                    );
+                                  })}
+
+                                  {filteredSchoolsList.length === 0 && (
+                                    <div className="p-2.5 text-center text-xs text-slate-500">
+                                      No schools found matching search
+                                    </div>
+                                  )}
+
+                                  {!(lockAdmissionCategory && initialInstitution) && (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setFormData((prev) => ({
+                                          ...prev,
+                                          schoolId: null,
+                                          schoolName: '',
+                                          institution: ''
+                                        }));
+                                        setSchoolDropdownOpen(false);
+                                        setSchoolSearch('');
+                                      }}
+                                      className="w-full text-left px-2.5 py-2 text-xs font-bold text-sky-700 hover:bg-sky-50 rounded-lg transition flex items-center gap-1.5 cursor-pointer"
+                                    >
+                                      <span>✏️ Other School (Type custom name)...</span>
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
                             )}
-                          </select>
+                          </div>
 
                           {(!formData.schoolId || !filteredSchoolsByBranch.some(s => s.id === formData.schoolId)) && !(lockAdmissionCategory && initialInstitution) && (
                             <input
@@ -2166,7 +2332,7 @@ export default function AdmissionModal({
                                   institution: val
                                 }));
                               }}
-                              className="w-full px-2.5 sm:px-3 py-2 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none text-base sm:text-sm shadow-2xs placeholder:text-slate-400 placeholder:font-normal"
+                              className="w-full px-2.5 sm:px-3 py-2 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none text-base sm:text-sm shadow-2xs placeholder:text-slate-400 placeholder:font-normal min-h-[42px]"
                               autoFocus
                             />
                           )}
@@ -2175,7 +2341,7 @@ export default function AdmissionModal({
 
                       {/* If Franchise or Academy is selected: choose Franchise or enter custom */}
                       {(formData.admissionCategory === 'Franchise' || formData.admissionCategory === 'Academy') && (
-                        <div className="pt-0.5 animate-in fade-in slide-in-from-top-1 duration-150 space-y-1.5">
+                        <div className="pt-0.5 animate-in fade-in slide-in-from-top-1 duration-150 space-y-1.5" ref={academyDropdownRef}>
                           <label className="block text-[11px] sm:text-xs font-black text-slate-800 flex items-center justify-between">
                             <span className="flex items-center gap-1.5">
                               <GraduationCap className="w-3.5 h-3.5 text-sky-700" />
@@ -2185,49 +2351,117 @@ export default function AdmissionModal({
                               <span className="text-[10px] font-semibold text-slate-400">Select Academy</span>
                             )}
                           </label>
-                          <select
-                            disabled={lockAdmissionCategory && Boolean(initialInstitution)}
-                            value={formData.franchiseId || (filteredFranchisesByBranch.some(f => f.name === formData.institution) ? filteredFranchisesByBranch.find(f => f.name === formData.institution)?.id : '__custom__')}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              if (val === '__custom__') {
-                                setFormData(prev => ({
-                                  ...prev,
-                                  franchiseId: null,
-                                  franchiseName: '',
-                                  institution: '',
-                                  schoolName: ''
-                                }));
-                              } else {
-                                const fc = filteredFranchisesByBranch.find(f => f.id === val);
-                                if (fc) {
-                                  const fcBranch = fc.branch ? cleanBranchName(fc.branch) : (fc.city ? cleanBranchName(fc.city) : '');
-                                  setFormData(prev => ({
-                                    ...prev,
-                                    franchiseId: fc.id,
-                                    franchiseName: fc.name,
-                                    institution: fc.name,
-                                    schoolName: fc.schoolName || fc.name,
-                                    ...(fcBranch && !lockBranch ? { branch: fcBranch } : {})
-                                  }));
+
+                          <div className="relative">
+                            <button
+                              type="button"
+                              disabled={lockAdmissionCategory && Boolean(initialInstitution)}
+                              onClick={() => {
+                                if (!(lockAdmissionCategory && Boolean(initialInstitution))) {
+                                  setAcademyDropdownOpen(!academyDropdownOpen);
                                 }
-                              }
-                            }}
-                            className={`w-full px-2.5 sm:px-3 py-2 border rounded-lg sm:rounded-xl font-semibold text-base sm:text-sm shadow-2xs ${
-                              lockAdmissionCategory && Boolean(initialInstitution)
-                                ? 'bg-slate-100 text-slate-700 cursor-not-allowed border-slate-300 font-bold'
-                                : 'bg-white text-slate-950 border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-sky-500'
-                            }`}
-                          >
-                            {filteredFranchisesByBranch.map(f => (
-                              <option key={f.id} value={f.id}>
-                                {f.name} ({f.city || f.branch || 'Tamil Nadu'})
-                              </option>
-                            ))}
-                            {!(lockAdmissionCategory && initialInstitution) && (
-                              <option value="__custom__">Other Academy (Type custom name)...</option>
+                              }}
+                              className={`w-full px-2.5 sm:px-3 py-2 border rounded-lg sm:rounded-xl text-left font-semibold text-base sm:text-sm flex items-center justify-between shadow-2xs transition min-h-[42px] ${
+                                lockAdmissionCategory && Boolean(initialInstitution)
+                                  ? 'bg-slate-100 text-slate-700 cursor-not-allowed border-slate-300 font-bold'
+                                  : academyDropdownOpen
+                                  ? 'bg-white border-sky-500 ring-2 ring-sky-500/20 text-slate-950'
+                                  : 'bg-white text-slate-950 border-slate-300 hover:border-slate-400'
+                              }`}
+                            >
+                              <span className="truncate pr-1">
+                                {formData.franchiseId
+                                  ? (filteredFranchisesByBranch.find((f) => f.id === formData.franchiseId)?.name || formData.franchiseName || formData.institution || 'Select Academy')
+                                  : (formData.franchiseName || formData.institution || 'Select Academy')}
+                              </span>
+                              {!lockAdmissionCategory && (
+                                academyDropdownOpen ? (
+                                  <ChevronUp className="w-3.5 h-3.5 text-slate-500 shrink-0 ml-1" />
+                                ) : (
+                                  <ChevronDown className="w-3.5 h-3.5 text-slate-500 shrink-0 ml-1" />
+                                )
+                              )}
+                            </button>
+
+                            {academyDropdownOpen && !lockAdmissionCategory && (
+                              <div className="absolute z-30 left-0 right-0 top-full mt-1 bg-white border border-slate-300 rounded-xl shadow-xl overflow-hidden animate-in fade-in duration-100 max-w-full">
+                                <div className="p-1.5 border-b border-slate-200 bg-slate-50">
+                                  <input
+                                    type="text"
+                                    placeholder="Search academy name..."
+                                    value={academySearch}
+                                    onChange={(e) => setAcademySearch(e.target.value)}
+                                    className="w-full px-2 py-1 text-xs text-slate-950 font-semibold border border-slate-300 rounded-md focus:outline-none focus:border-sky-500 bg-white"
+                                    autoFocus
+                                  />
+                                </div>
+
+                                <div className="max-h-48 overflow-y-auto p-1 divide-y divide-slate-100">
+                                  {filteredAcademiesList.map((f) => {
+                                    const isSelected = formData.franchiseId === f.id;
+                                    return (
+                                      <button
+                                        key={f.id}
+                                        type="button"
+                                        onClick={() => {
+                                          const fcBranch = f.branch ? cleanBranchName(f.branch) : (f.city ? cleanBranchName(f.city) : '');
+                                          setFormData((prev) => ({
+                                            ...prev,
+                                            franchiseId: f.id,
+                                            franchiseName: f.name,
+                                            institution: f.name,
+                                            schoolName: f.schoolName || f.name,
+                                            ...(fcBranch && !lockBranch ? { branch: fcBranch } : {})
+                                          }));
+                                          setAcademyDropdownOpen(false);
+                                          setAcademySearch('');
+                                        }}
+                                        className={`w-full text-left px-2.5 py-2 text-xs rounded-lg transition flex items-start justify-between cursor-pointer ${
+                                          isSelected ? 'bg-sky-50 text-sky-950 font-bold' : 'text-slate-800 hover:bg-slate-100'
+                                        }`}
+                                      >
+                                        <div className="min-w-0 pr-2">
+                                          <p className="font-bold text-xs text-slate-900 leading-snug break-words">
+                                            {f.name}
+                                          </p>
+                                          <span className="text-[10px] text-slate-500 font-semibold">
+                                            {f.city || f.branch || 'Tamil Nadu'}
+                                          </span>
+                                        </div>
+                                        {isSelected && <Check className="w-3.5 h-3.5 text-sky-600 shrink-0 mt-0.5" />}
+                                      </button>
+                                    );
+                                  })}
+
+                                  {filteredAcademiesList.length === 0 && (
+                                    <div className="p-2.5 text-center text-xs text-slate-500">
+                                      No academies found matching search
+                                    </div>
+                                  )}
+
+                                  {!(lockAdmissionCategory && initialInstitution) && (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setFormData((prev) => ({
+                                          ...prev,
+                                          franchiseId: null,
+                                          franchiseName: '',
+                                          institution: '',
+                                          schoolName: ''
+                                        }));
+                                        setAcademyDropdownOpen(false);
+                                        setAcademySearch('');
+                                      }}
+                                      className="w-full text-left px-2.5 py-2 text-xs font-bold text-sky-700 hover:bg-sky-50 rounded-lg transition flex items-center gap-1.5 cursor-pointer"
+                                    >
+                                      <span>✏️ Other Academy (Type custom name)...</span>
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
                             )}
-                          </select>
+                          </div>
 
                           {(!formData.franchiseId || !filteredFranchisesByBranch.some(f => f.id === formData.franchiseId)) && !(lockAdmissionCategory && initialInstitution) && (
                             <input
@@ -2246,7 +2480,7 @@ export default function AdmissionModal({
                                   schoolName: val
                                 }));
                               }}
-                              className="w-full px-2.5 sm:px-3 py-2 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none text-base sm:text-sm shadow-2xs placeholder:text-slate-400 placeholder:font-normal"
+                              className="w-full px-2.5 sm:px-3 py-2 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none text-base sm:text-sm shadow-2xs placeholder:text-slate-400 placeholder:font-normal min-h-[42px]"
                               autoFocus
                             />
                           )}
@@ -2258,14 +2492,14 @@ export default function AdmissionModal({
 
                 {/* 3. Multi-Course & Level Selection Desk */}
                 <div className="space-y-2 pt-1 border-t border-slate-200">
-                  <div className="flex items-center justify-between">
-                    <div>
+                  <div className="flex items-start sm:items-center justify-between gap-2">
+                    <div className="min-w-0 flex-1">
                       <label className="block text-[11px] sm:text-xs font-black text-slate-800 flex items-center gap-1.5">
-                        <BookOpen className="w-3.5 h-3.5 text-sky-700" />
+                        <BookOpen className="w-3.5 h-3.5 text-sky-700 shrink-0" />
                         <span>3. Enrolled Courses & Levels *</span>
                       </label>
-                      <span className="text-[10px] text-slate-500 font-semibold block">
-                        Students can enroll in multiple courses and choose their starting level.
+                      <span className="text-[10px] text-slate-500 font-semibold block leading-tight mt-0.5">
+                        Enroll in multiple courses & select starting level.
                       </span>
                     </div>
 
@@ -2273,7 +2507,7 @@ export default function AdmissionModal({
                       <button
                         type="button"
                         onClick={handleAddCourse}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 bg-sky-600 hover:bg-sky-700 active:scale-95 text-white text-[10px] sm:text-[11px] font-black rounded-lg transition shadow-xs cursor-pointer"
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-sky-600 hover:bg-sky-700 active:scale-95 text-white text-[10.5px] sm:text-[11px] font-black rounded-lg transition shadow-xs cursor-pointer shrink-0"
                       >
                         <Plus className="w-3.5 h-3.5" />
                         <span>Add Course</span>
@@ -2282,7 +2516,7 @@ export default function AdmissionModal({
                   </div>
 
                   {/* Course Cards List */}
-                  <div className="space-y-2">
+                  <div className="space-y-2" ref={courseDropdownContainerRef}>
                     {(formData.selectedCourses || []).map((courseEntry, idx) => {
                       const availableLevels = getLevelsForCourse(courseEntry.courseName, coursesList);
                       return (
@@ -2327,18 +2561,50 @@ export default function AdmissionModal({
                                   type="text"
                                   readOnly
                                   value={courseEntry.courseName}
-                                  className="w-full px-2.5 py-1.5 bg-slate-100 border border-slate-300 rounded-lg text-slate-900 font-bold text-xs cursor-default select-none focus:outline-none"
+                                  className="w-full px-2.5 py-2 bg-slate-100 border border-slate-300 rounded-lg text-slate-900 font-bold text-xs cursor-default select-none focus:outline-none min-h-[38px]"
                                 />
                               ) : (
-                                <select
-                                  value={courseEntry.courseName}
-                                  onChange={(e) => handleCourseChangeAt(idx, e.target.value)}
-                                  className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-slate-950 font-bold text-xs focus:ring-2 focus:ring-sky-500 focus:outline-none"
-                                >
-                                  {availablePrograms.map((prog, i) => (
-                                    <option key={i} value={prog}>{prog}</option>
-                                  ))}
-                                </select>
+                                <div className="relative">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setActiveCourseDropdownIndex(activeCourseDropdownIndex === idx ? null : idx);
+                                      setActiveLevelDropdownIndex(null);
+                                    }}
+                                    className="w-full px-2.5 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-950 font-bold text-xs flex items-center justify-between text-left shadow-2xs hover:border-sky-400 transition min-h-[38px]"
+                                  >
+                                    <span className="truncate pr-1">{courseEntry.courseName}</span>
+                                    {activeCourseDropdownIndex === idx ? (
+                                      <ChevronUp className="w-3.5 h-3.5 text-slate-500 shrink-0 ml-1" />
+                                    ) : (
+                                      <ChevronDown className="w-3.5 h-3.5 text-slate-500 shrink-0 ml-1" />
+                                    )}
+                                  </button>
+
+                                  {activeCourseDropdownIndex === idx && (
+                                    <div className="absolute z-30 left-0 right-0 top-full mt-1 bg-white border border-slate-300 rounded-xl shadow-xl overflow-hidden max-h-52 overflow-y-auto p-1 divide-y divide-slate-100 animate-in fade-in duration-100 max-w-full">
+                                      {availablePrograms.map((prog, pIdx) => {
+                                        const isSelected = courseEntry.courseName === prog;
+                                        return (
+                                          <button
+                                            key={pIdx}
+                                            type="button"
+                                            onClick={() => {
+                                              handleCourseChangeAt(idx, prog);
+                                              setActiveCourseDropdownIndex(null);
+                                            }}
+                                            className={`w-full text-left px-2.5 py-2 text-xs rounded-lg transition flex items-center justify-between cursor-pointer ${
+                                              isSelected ? 'bg-sky-50 text-sky-950 font-bold' : 'text-slate-800 hover:bg-slate-100'
+                                            }`}
+                                          >
+                                            <span className="truncate pr-1 font-bold text-slate-900">{prog}</span>
+                                            {isSelected && <Check className="w-3.5 h-3.5 text-sky-600 shrink-0" />}
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
+                                  )}
+                                </div>
                               )}
                             </div>
 
@@ -2347,15 +2613,60 @@ export default function AdmissionModal({
                               <label className="block text-[10px] font-bold text-slate-600 mb-0.5">
                                 Select Level *
                               </label>
-                              <select
-                                value={courseEntry.level}
-                                onChange={(e) => handleLevelChangeAt(idx, e.target.value)}
-                                className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-slate-950 font-bold text-xs focus:ring-2 focus:ring-sky-500 focus:outline-none"
-                              >
-                                {availableLevels.map((lvl, lvlIdx) => (
-                                  <option key={lvlIdx} value={lvl}>{lvl}</option>
-                                ))}
-                              </select>
+                              <div className="relative">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setActiveLevelDropdownIndex(activeLevelDropdownIndex === idx ? null : idx);
+                                    setActiveCourseDropdownIndex(null);
+                                  }}
+                                  className="w-full px-2.5 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-950 font-bold text-xs flex items-center justify-between text-left shadow-2xs hover:border-sky-400 transition min-h-[38px]"
+                                >
+                                  <span className="truncate pr-1">{courseEntry.level}</span>
+                                  {activeLevelDropdownIndex === idx ? (
+                                    <ChevronUp className="w-3.5 h-3.5 text-slate-500 shrink-0 ml-1" />
+                                  ) : (
+                                    <ChevronDown className="w-3.5 h-3.5 text-slate-500 shrink-0 ml-1" />
+                                  )}
+                                </button>
+
+                                {activeLevelDropdownIndex === idx && (
+                                  <div className="absolute z-30 left-0 right-0 top-full mt-1 bg-white border border-slate-300 rounded-xl shadow-xl overflow-hidden max-h-56 overflow-y-auto p-1 divide-y divide-slate-100 animate-in fade-in duration-100 max-w-full">
+                                    {availableLevels.map((lvl, lvlIdx) => {
+                                      const isSelected = courseEntry.level === lvl;
+                                      const colonIndex = lvl.indexOf(':');
+                                      const levelTag = colonIndex !== -1 ? lvl.slice(0, colonIndex).trim() : lvl;
+                                      const levelDesc = colonIndex !== -1 ? lvl.slice(colonIndex + 1).trim() : '';
+
+                                      return (
+                                        <button
+                                          key={lvlIdx}
+                                          type="button"
+                                          onClick={() => {
+                                            handleLevelChangeAt(idx, lvl);
+                                            setActiveLevelDropdownIndex(null);
+                                          }}
+                                          className={`w-full text-left px-2.5 py-2 text-xs rounded-lg transition flex items-start justify-between cursor-pointer ${
+                                            isSelected ? 'bg-sky-50 text-sky-950 font-bold' : 'text-slate-800 hover:bg-slate-100'
+                                          }`}
+                                        >
+                                          <div className="min-w-0 pr-2">
+                                            <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-black bg-sky-100 text-sky-900 mr-1.5 shrink-0">
+                                              {levelTag}
+                                            </span>
+                                            {levelDesc && (
+                                              <span className="text-[11px] font-semibold text-slate-700 leading-snug break-words">
+                                                {levelDesc}
+                                              </span>
+                                            )}
+                                          </div>
+                                          {isSelected && <Check className="w-3.5 h-3.5 text-sky-600 shrink-0 mt-0.5" />}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -2457,7 +2768,7 @@ export default function AdmissionModal({
                         readOnly
                         value={formData.studentClass || (formData.age ? 'Calculating...' : 'Pending DOB / Age')}
                         placeholder="e.g. Class 1"
-                        className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-slate-900 font-bold text-xs"
+                        className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-slate-900 font-bold text-xs min-h-[38px]"
                       />
                     </div>
 
@@ -2468,7 +2779,7 @@ export default function AdmissionModal({
                       <select
                         value={formData.studentStage}
                         onChange={(e) => handleStageSelect(e.target.value)}
-                        className="w-full px-2.5 py-1.5 bg-white border-2 border-amber-400 rounded-lg text-slate-900 font-black text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                        className="w-full px-2.5 py-1.5 bg-white border-2 border-amber-400 rounded-lg text-slate-900 font-black text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none truncate min-h-[38px]"
                       >
                         <option value="">-- Select Stage --</option>
                         {ACADEMIC_STAGES.map((s) => (

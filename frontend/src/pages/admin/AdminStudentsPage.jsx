@@ -336,19 +336,19 @@ export default function AdminStudentsPage({
                             <button
                               type="button"
                               onClick={() => setViewingAdmissionStudent(student)}
-                              className="w-full py-1.5 px-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-black rounded-lg text-[10.5px] transition cursor-pointer flex items-center justify-center gap-1 shadow-2xs active:scale-95"
+                              className="w-full h-[26px] px-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-black rounded-lg text-[10px] transition cursor-pointer flex items-center justify-center gap-1 shadow-2xs active:scale-95"
                               title="View Admission Form"
                             >
                               <GraduationCap className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                               <span>Admission</span>
                             </button>
 
-                            {/* Interactive Fee Status Selector (Approved / Pending / Rejected) */}
-                            <div className="relative inline-flex items-center w-full">
+                            {/* Interactive Fee Status Selector (Approved / Pending / Rejected) - Height reduced & matched */}
+                            <div className="relative inline-flex items-center w-full h-[26px]">
                               <select
                                 value={currentFeeStatus}
                                 onChange={(e) => handleUpdateFeeStatus(student.userId, e.target.value, student)}
-                                className={`w-full py-1 pl-2 pr-5 rounded-lg text-[10px] font-black uppercase border cursor-pointer outline-none appearance-none transition-colors ${
+                                className={`w-full h-full py-0 pl-2 pr-5 rounded-lg text-[10px] font-black uppercase border cursor-pointer outline-none appearance-none transition-colors leading-none ${
                                   currentFeeStatus === 'Approved'
                                     ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
                                     : currentFeeStatus === 'Rejected'
@@ -369,7 +369,7 @@ export default function AdminStudentsPage({
                               <button
                                 type="button"
                                 onClick={() => handleOpenReceiptForStudent?.(student)}
-                                className="w-full py-1.5 px-2 bg-sky-50 hover:bg-sky-100 text-sky-800 border border-sky-200 font-black rounded-lg text-[10.5px] transition cursor-pointer flex items-center justify-center gap-1 shadow-2xs active:scale-95"
+                                className="w-full h-[26px] px-2 bg-sky-50 hover:bg-sky-100 text-sky-800 border border-sky-200 font-black rounded-lg text-[10px] transition cursor-pointer flex items-center justify-center gap-1 shadow-2xs active:scale-95"
                                 title="View Official Fee Receipt"
                               >
                                 <Receipt className="w-3.5 h-3.5 text-sky-600 shrink-0" />

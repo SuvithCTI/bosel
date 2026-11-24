@@ -56,42 +56,42 @@ export default function AdminOverviewPage({
           </p>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex items-center gap-2 flex-wrap">
+        {/* Action Buttons (Clean 2x2 Grid on Mobile, Flex on Desktop) */}
+        <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 w-full sm:w-auto">
           <button
             type="button"
             onClick={() => setShowAddStudentModal(true)}
-            className="px-3.5 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-black transition flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
+            className="w-full sm:w-auto px-3 sm:px-3.5 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
           >
-            <Plus className="w-4 h-4" />
-            <span>Register Student</span>
+            <Plus className="w-4 h-4 shrink-0" />
+            <span className="truncate">Register Student</span>
           </button>
 
           <button
             type="button"
             onClick={() => setShowAddCourseModal(true)}
-            className="px-3.5 py-2 bg-white/15 hover:bg-white/25 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer border border-white/20 active:scale-95"
+            className="w-full sm:w-auto px-3 sm:px-3.5 py-2 bg-white/15 hover:bg-white/25 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer border border-white/20 active:scale-95"
           >
-            <Plus className="w-4 h-4" />
-            <span>Add Course</span>
+            <Plus className="w-4 h-4 shrink-0" />
+            <span className="truncate">Add Course</span>
           </button>
 
           <button
             type="button"
             onClick={() => setShowAddEventModal(true)}
-            className="px-3.5 py-2 bg-white/15 hover:bg-white/25 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer border border-white/20 active:scale-95"
+            className="w-full sm:w-auto px-3 sm:px-3.5 py-2 bg-white/15 hover:bg-white/25 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer border border-white/20 active:scale-95"
           >
-            <Plus className="w-4 h-4" />
-            <span>Create Event</span>
+            <Plus className="w-4 h-4 shrink-0" />
+            <span className="truncate">Create Event</span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab('franchise')}
-            className="px-3.5 py-2 bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-xl text-xs font-black transition flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
+            className="w-full sm:w-auto px-3 sm:px-3.5 py-2 bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
           >
-            <Building className="w-4 h-4 text-slate-950" />
-            <span>Franchise Pipeline</span>
+            <Building className="w-4 h-4 text-slate-950 shrink-0" />
+            <span className="truncate">Franchise Pipeline</span>
           </button>
         </div>
       </div>
@@ -150,7 +150,7 @@ export default function AdminOverviewPage({
           </div>
         </div>
 
-        <div className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-2xs flex items-center justify-between">
+        <div className="col-span-2 sm:col-span-1 lg:col-span-1 bg-white p-4.5 rounded-2xl border border-slate-200 shadow-2xs flex items-center justify-between">
           <div>
             <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">District Branches</span>
             <div className="text-2xl font-black text-slate-950 mt-1">38</div>
