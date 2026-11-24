@@ -44,36 +44,48 @@ const PHOTO_MAP = {
 };
 
 // Helper to determine the photo for a student
-const resolveStudentPhoto = (name = '', reg = '', photoParam = null, photoKey = '') => {
-  const pKey = String(photoKey || photoParam || '').trim();
-
-  // If local storage reference
-  if (pKey.startsWith('local:') && typeof window !== 'undefined') {
-    const cleanReg = pKey.replace('local:', '');
-    try {
-      const saved = localStorage.getItem(`bsel_photo_${cleanReg}`);
-      if (saved) return saved;
-    } catch {}
+const resolveStudentPhoto = (name = '', reg = '', photoParam = null, photoKey = '', networkPhoto = null) => {
+  // If network / cache photo is already resolved
+  if (networkPhoto && (networkPhoto.startsWith('data:') || networkPhoto.startsWith('http') || networkPhoto.startsWith('/'))) {
+    return networkPhoto;
   }
 
-  // If direct URL or data URL
+  const pKey = String(photoKey || photoParam || '').trim();
+  const cleanReg = String(reg || '').trim();
+  const digitsOnly = cleanReg.replace(/\D/g, '');
+  const sLow = String(name || '').toLowerCase().trim();
+
+  // 1. Direct data: or http/https or /uploads in parameter
   if (pKey.startsWith('http') || pKey.startsWith('data:') || pKey.startsWith('/uploads')) {
     return pKey;
   }
 
-  const kLow = pKey.toLowerCase();
-  if (PHOTO_MAP[kLow]) {
-    return PHOTO_MAP[kLow];
+  // 2. Check localStorage for direct photo keys
+  if (typeof window !== 'undefined') {
+    try {
+      if (pKey.startsWith('local:')) {
+        const target = pKey.replace('local:', '').trim();
+        const saved = localStorage.getItem(`bsel_photo_${target}`) ||
+                      localStorage.getItem(`bsel_photo_${target.toLowerCase()}`) ||
+                      localStorage.getItem(`bsel_photo_${target.replace(/\D/g, '')}`);
+        if (saved) return saved;
+      }
+      if (cleanReg) {
+        const savedByReg = localStorage.getItem(`bsel_photo_${cleanReg}`);
+        if (savedByReg) return savedByReg;
+      }
+      if (digitsOnly) {
+        const savedByDigits = localStorage.getItem(`bsel_photo_${digitsOnly}`);
+        if (savedByDigits) return savedByDigits;
+      }
+      if (sLow) {
+        const savedByName = localStorage.getItem(`bsel_photo_${sLow}`);
+        if (savedByName) return savedByName;
+      }
+    } catch {}
   }
 
-  // Search by student name
-  const sLow = String(name || '').toLowerCase();
-  if (sLow.includes('alwin')) return student1Img;
-  if (sLow.includes('priya')) return student2Img;
-  if (sLow.includes('hema')) return student4Img;
-  if (sLow.includes('bob')) return student6Img;
-
-  // Search in localStorage registered users
+  // 3. Search in localStorage registered users for custom photo
   if (typeof window !== 'undefined') {
     try {
       const rawUsers = localStorage.getItem('bsel_registered_users');
@@ -81,8 +93,8 @@ const resolveStudentPhoto = (name = '', reg = '', photoParam = null, photoKey = 
         const users = JSON.parse(rawUsers);
         const match = users.find(
           (u) =>
-            (reg && (u.registerNumber === reg || u.admissionNo === reg || u.userId === reg)) ||
-            (name && (u.studentName?.toLowerCase() === sLow || u.name?.toLowerCase() === sLow))
+            (cleanReg && (u.registerNumber === cleanReg || u.admissionNo === cleanReg || u.userId === cleanReg)) ||
+            (sLow && (u.studentName?.toLowerCase() === sLow || u.name?.toLowerCase() === sLow))
         );
         if (match) {
           const uPhoto = match.photo_url || match.photoUrl || match.studentPhoto || match.photo;
@@ -94,10 +106,42 @@ const resolveStudentPhoto = (name = '', reg = '', photoParam = null, photoKey = 
     } catch {}
   }
 
-  // Consistent index by registration number
-  const digits = String(reg || '').replace(/\D/g, '');
-  if (digits) {
-    const idx = parseInt(digits, 10) % SAMPLE_PHOTOS.length;
+  // 4. Search in localStorage student enquiries for custom photo
+  if (typeof window !== 'undefined') {
+    try {
+      const rawEnq = localStorage.getItem('bsel_student_enquiries');
+      if (rawEnq) {
+        const enqs = JSON.parse(rawEnq);
+        const match = enqs.find(
+          (e) =>
+            (cleanReg && (e.admissionNo === cleanReg || e.registerNumber === cleanReg || e.userId === cleanReg)) ||
+            (sLow && (e.studentName?.toLowerCase() === sLow || e.name?.toLowerCase() === sLow))
+        );
+        if (match) {
+          const ePhoto = match.studentPhoto || match.photo_url || match.photoUrl || match.photo;
+          if (ePhoto && (ePhoto.startsWith('http') || ePhoto.startsWith('data:') || ePhoto.startsWith('/'))) {
+            return ePhoto;
+          }
+        }
+      }
+    } catch {}
+  }
+
+  // 5. Named stock photo mapping
+  const kLow = pKey.toLowerCase();
+  if (PHOTO_MAP[kLow]) {
+    return PHOTO_MAP[kLow];
+  }
+
+  // 6. Search by student name
+  if (sLow.includes('alwin')) return student1Img;
+  if (sLow.includes('priya')) return student2Img;
+  if (sLow.includes('hema')) return student4Img;
+  if (sLow.includes('bob')) return student6Img;
+
+  // 7. Consistent index by registration number
+  if (digitsOnly) {
+    const idx = parseInt(digitsOnly, 10) % SAMPLE_PHOTOS.length;
     return SAMPLE_PHOTOS[idx];
   }
 
@@ -237,7 +281,7 @@ export default function CertificateVerificationPage({ setActivePage }) {
         issueDate: date || '05-10-2026',
         duration: duration || '6 Months',
         centreAddress: resolvedBranch.centreAddress,
-        schoolName: school || 'Apex Academy, Chennai',
+        schoolName: school || '',
         schoolSubtitle: sub || '',
         schoolMotto: motto || '',
         parentName: parent || '',
@@ -262,7 +306,7 @@ export default function CertificateVerificationPage({ setActivePage }) {
       issueDate: '05-10-2026',
       duration: '6 Months',
       centreAddress: defaultBranch.centreAddress,
-      schoolName: 'Apex Academy, Chennai',
+      schoolName: '',
       schoolSubtitle: '',
       schoolMotto: '',
       parentName: 'S. Ramanathan',
@@ -272,6 +316,77 @@ export default function CertificateVerificationPage({ setActivePage }) {
       photo: 'alwin',
     };
   }, []);
+
+  const [networkPhoto, setNetworkPhoto] = useState(null);
+
+  useEffect(() => {
+    const reg = currentStudent?.registrationNo || currentStudent?.certificateNo || '';
+    const name = currentStudent?.studentName || '';
+    const photoParam = currentStudent?.photo || '';
+    const cleanReg = String(reg).trim();
+    const cleanDigits = cleanReg.replace(/\D/g, '');
+    const cleanName = String(name).toLowerCase().trim();
+
+    // 1. Check local storage directly
+    if (typeof window !== 'undefined') {
+      try {
+        if (photoParam.startsWith('local:')) {
+          const directKey = photoParam.replace('local:', '').trim();
+          const direct = localStorage.getItem(`bsel_photo_${directKey}`) ||
+                         localStorage.getItem(`bsel_photo_${directKey.toLowerCase()}`) ||
+                         localStorage.getItem(`bsel_photo_${directKey.replace(/\D/g, '')}`);
+          if (direct) {
+            setNetworkPhoto(direct);
+            return;
+          }
+        }
+        const localDirect = (cleanReg && localStorage.getItem(`bsel_photo_${cleanReg}`)) ||
+                            (cleanDigits && localStorage.getItem(`bsel_photo_${cleanDigits}`)) ||
+                            (cleanName && localStorage.getItem(`bsel_photo_${cleanName}`));
+        if (localDirect) {
+          setNetworkPhoto(localDirect);
+          return;
+        }
+      } catch (e) {}
+    }
+
+    // 2. Query photo cache API (supported across devices / phones over LAN)
+    const targetKey = (photoParam.startsWith('local:') ? photoParam.replace('local:', '').trim() : cleanReg) || cleanDigits || cleanName;
+    if (targetKey) {
+      fetch(`/api/photo-cache?key=${encodeURIComponent(targetKey)}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data?.photo) {
+            setNetworkPhoto(data.photo);
+            try {
+              if (cleanReg) localStorage.setItem(`bsel_photo_${cleanReg}`, data.photo);
+            } catch (e) {}
+            return;
+          }
+          throw new Error('Not found in /api/photo-cache');
+        })
+        .catch(() => {
+          // Fallback to static cache file
+          fetch('/student_photos_cache.json')
+            .then((res) => res.json())
+            .then((cache) => {
+              if (cache) {
+                const found = cache[targetKey] || cache[targetKey.toLowerCase()] ||
+                              cache[cleanReg] || cache[cleanReg.toLowerCase()] ||
+                              (cleanDigits && cache[cleanDigits]) ||
+                              (cleanName && cache[cleanName]);
+                if (found) {
+                  setNetworkPhoto(found);
+                  try {
+                    if (cleanReg) localStorage.setItem(`bsel_photo_${cleanReg}`, found);
+                  } catch (e) {}
+                }
+              }
+            })
+            .catch(() => {});
+        });
+    }
+  }, [currentStudent]);
 
   const studentName = (currentStudent.studentName || 'Candidate Name').toUpperCase();
   const registrationNo = (currentStudent.registrationNo || currentStudent.certificateNo || 'BSEL-2026-8942').toUpperCase();
@@ -288,11 +403,22 @@ export default function CertificateVerificationPage({ setActivePage }) {
     studentName,
     registrationNo,
     currentStudent.photo,
-    currentStudent.photoKey || currentStudent.photo
+    currentStudent.photoKey || currentStudent.photo,
+    networkPhoto
   );
 
   const displayCourse = currentStudent.courseName || 'Advanced Abacus & Mental Arithmetic';
-  const displaySchoolCenter = currentStudent.schoolName || (currentStudent.centreName ? `${currentStudent.centreName} Centre` : 'Apex Academy, Chennai');
+  const displaySchoolCenter = (() => {
+    const sName = (currentStudent.schoolName || '').trim();
+    const cName = (currentStudent.centreName || '').trim();
+    if (sName && cName) {
+      if (sName.toLowerCase().includes(cName.toLowerCase())) return sName;
+      return `${sName} — ${cName} Centre`;
+    }
+    if (sName) return sName;
+    if (cName) return `${cName} Centre`;
+    return 'B★SEL Learning Centre';
+  })();
 
   const handleShare = async () => {
     if (typeof window === 'undefined') return;

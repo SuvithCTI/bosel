@@ -59,6 +59,33 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Photo cache endpoint for instant cross-device verification
+const photoMemoryCache = new Map();
+app.get('/api/photo-cache', (req, res) => {
+  const { key } = req.query;
+  if (key) {
+    const k = String(key).trim();
+    const photo = photoMemoryCache.get(k) || photoMemoryCache.get(k.toLowerCase()) || photoMemoryCache.get(k.replace(/\D/g, '')) || null;
+    return res.json({ success: true, photo });
+  }
+  return res.json({ success: true });
+});
+app.post('/api/photo-cache', (req, res) => {
+  const { key, reg, name, photo } = req.body || {};
+  if (photo) {
+    if (key) photoMemoryCache.set(String(key).trim(), photo);
+    if (reg) {
+      const r = String(reg).trim();
+      photoMemoryCache.set(r, photo);
+      photoMemoryCache.set(r.toLowerCase(), photo);
+      const digits = r.replace(/\D/g, '');
+      if (digits) photoMemoryCache.set(digits, photo);
+    }
+    if (name) photoMemoryCache.set(String(name).toLowerCase().trim(), photo);
+  }
+  return res.json({ success: true });
+});
+
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/students', studentRoutes);

@@ -62,6 +62,22 @@ export const derivePhotoKey = (photoInput, studentName = '', regNo = '') => {
     return pStr;
   }
 
+  // Handle custom uploaded photo (base64 data URL, blob, or long image string)
+  if (pStr.startsWith('data:') || pStr.startsWith('blob:') || pStr.length > 50) {
+    const cleanReg = String(regNo || '').trim();
+    const cleanName = String(studentName || '').toLowerCase().trim();
+    const key = cleanReg || cleanName || 'custom';
+    if (typeof window !== 'undefined') {
+      try {
+        if (cleanReg) localStorage.setItem(`bsel_photo_${cleanReg}`, pStr);
+        if (cleanName) localStorage.setItem(`bsel_photo_${cleanName}`, pStr);
+        const digits = cleanReg.replace(/\D/g, '');
+        if (digits) localStorage.setItem(`bsel_photo_${digits}`, pStr);
+      } catch (e) {}
+    }
+    return `local:${key}`;
+  }
+
   const sLow = String(studentName || '').toLowerCase();
   if (sLow.includes('alwin')) return 'student1';
   if (sLow.includes('priya')) return 'student2';
@@ -143,10 +159,33 @@ export const getStudentVerificationMeta = (studentName = '', registrationNo = ''
   }
 
   // Photo Key (Strict 1-to-1 matching with certificate display)
-  const resolvedPhoto = photoInput || student?.studentPhoto || student?.photo || student?.photo_url || null;
+  let resolvedPhoto = photoInput || student?.studentPhoto || student?.photo || student?.photo_url || null;
+  if (!resolvedPhoto && typeof window !== 'undefined') {
+    try {
+      const cleanReg = String(registrationNo || '').trim();
+      const sLow = String(studentName || '').toLowerCase().trim();
+      if (cleanReg) {
+        resolvedPhoto = localStorage.getItem(`bsel_photo_${cleanReg}`) || localStorage.getItem(`bsel_photo_${cleanReg.replace(/\D/g, '')}`);
+      }
+      if (!resolvedPhoto && sLow) {
+        resolvedPhoto = localStorage.getItem(`bsel_photo_${sLow}`);
+      }
+      if (!resolvedPhoto) {
+        const rawUsers = localStorage.getItem('bsel_registered_users');
+        if (rawUsers) {
+          const users = JSON.parse(rawUsers);
+          const u = users.find(x => 
+            (cleanReg && (x.registerNumber === cleanReg || x.admissionNo === cleanReg || x.userId === cleanReg)) ||
+            (sLow && (x.studentName?.toLowerCase() === sLow || x.name?.toLowerCase() === sLow))
+          );
+          if (u) resolvedPhoto = u.studentPhoto || u.photo_url || u.photoUrl || u.photo;
+        }
+      }
+    } catch {}
+  }
   const photoKey = derivePhotoKey(resolvedPhoto, studentName, registrationNo);
 
-  return { vid, sec, parent, score, gradeText, photoKey };
+  return { vid, sec, parent, score, gradeText, photoKey, resolvedPhoto };
 };
 
 export const buildVerificationUrl = (data = {}, forceLocal = false) => {
@@ -614,6 +653,32 @@ export default function Certificate({
   useEffect(() => {
     let isMounted = true;
     const meta = getStudentVerificationMeta(studentName, registrationNo, displayCertNo, student, displayGrade, displayPhoto);
+
+    // Sync student photo for local and cross-device QR scanning
+    const activePhoto = displayPhoto || meta.resolvedPhoto;
+    if (activePhoto && (activePhoto.startsWith('data:') || activePhoto.startsWith('http') || activePhoto.startsWith('/'))) {
+      const cleanReg = String(registrationNo || '').trim();
+      const cleanName = String(studentName || '').trim();
+      try {
+        if (cleanReg) localStorage.setItem(`bsel_photo_${cleanReg}`, activePhoto);
+        if (cleanName) localStorage.setItem(`bsel_photo_${cleanName.toLowerCase()}`, activePhoto);
+        const digits = cleanReg.replace(/\D/g, '');
+        if (digits) localStorage.setItem(`bsel_photo_${digits}`, activePhoto);
+      } catch (e) {}
+
+      if (typeof window !== 'undefined' && typeof fetch === 'function') {
+        fetch('/api/photo-cache', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            key: cleanReg || cleanName,
+            reg: registrationNo,
+            name: studentName,
+            photo: activePhoto,
+          }),
+        }).catch(() => {});
+      }
+    }
 
     const url = buildVerificationUrl({
       certificateNo: displayCertNo,
