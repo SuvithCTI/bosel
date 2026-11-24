@@ -168,12 +168,6 @@ export default function Footer({ setActivePage, handleNav, onOpenLegal }) {
                   Contact Us
                 </button>
               </li>
-
-              <li className="col-span-2 md:col-span-1">
-                <button type="button" onClick={() => navigate('login')} className={linkClass}>
-                  Student Login
-                </button>
-              </li>
             </ul>
           </div>
 
