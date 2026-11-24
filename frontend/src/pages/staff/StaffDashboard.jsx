@@ -92,6 +92,10 @@ export default function StaffDashboard({
 
   const [activeTab, setActiveTab] = useState(() => {
     if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const tabFromUrl = params.get('tab');
+      if (tabFromUrl) return tabFromUrl;
+
       const saved = sessionStorage.getItem('bsel_staff_active_tab');
       if (saved) return saved;
     }
@@ -152,16 +156,28 @@ export default function StaffDashboard({
 
   const [tabHistory, setTabHistory] = useState([activeTab]);
 
-  const handleTabSelect = (tabKey) => {
+  const handleTabSelect = (tabKey, updateUrl = true) => {
     if (tabKey === activeTab) return;
     setTabHistory((prev) => [...prev, tabKey]);
     setActiveTab(tabKey);
     sessionStorage.setItem('bsel_staff_active_tab', tabKey);
     setMobileSidebarOpen(false);
+
+    if (typeof window !== 'undefined' && updateUrl) {
+      const url = new URL(window.location.href);
+      url.searchParams.set('page', 'staff');
+      url.searchParams.set('tab', tabKey);
+      window.history.pushState({ page: 'staff', tab: tabKey }, '', url.toString());
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleTabBack = () => {
+  const handleBackClick = () => {
+    if (viewingAdmissionStudent) { setViewingAdmissionStudent(null); return; }
+    if (selectedMarksheetStudent) { setSelectedMarksheetStudent(null); return; }
+    if (previewCertModalData) { setPreviewCertModalData(null); return; }
+    if (viewingMergedPdfStudent) { setViewingMergedPdfStudent(null); return; }
+
     if (tabHistory.length > 1) {
       const nextHistory = [...tabHistory];
       nextHistory.pop();
@@ -169,11 +185,63 @@ export default function StaffDashboard({
       setTabHistory(nextHistory);
       setActiveTab(prevTab);
       sessionStorage.setItem('bsel_staff_active_tab', prevTab);
+
+      if (typeof window !== 'undefined') {
+        const url = new URL(window.location.href);
+        url.searchParams.set('page', 'staff');
+        url.searchParams.set('tab', prevTab);
+        window.history.pushState({ page: 'staff', tab: prevTab }, '', url.toString());
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
-      setActiveTab('staff_overview');
+      if (onBack) onBack();
+      else if (goBack) goBack();
+      else setActivePage('home');
     }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  const handleTabBack = () => {
+    handleBackClick();
+  };
+
+  // Synchronize browser native Forward / Back buttons (popstate) with Staff Dashboard tabs
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    // Ensure initial URL reflects current tab
+    const params = new URLSearchParams(window.location.search);
+    const initialTab = params.get('tab') || activeTab;
+    const url = new URL(window.location.href);
+    url.searchParams.set('page', 'staff');
+    url.searchParams.set('tab', initialTab);
+    window.history.replaceState({ page: 'staff', tab: initialTab }, '', url.toString());
+
+    const handlePopState = (e) => {
+      const searchParams = new URLSearchParams(window.location.search);
+      const tabFromUrl = searchParams.get('tab');
+      const tabFromState = e.state?.tab;
+      const targetTab = tabFromState || tabFromUrl;
+
+      if (targetTab && targetTab !== activeTab) {
+        setActiveTab(targetTab);
+        sessionStorage.setItem('bsel_staff_active_tab', targetTab);
+        setTabHistory((prev) => {
+          if (prev.length > 1 && prev[prev.length - 2] === targetTab) {
+            return prev.slice(0, -1);
+          }
+          if (prev[prev.length - 1] !== targetTab) {
+            return [...prev, targetTab];
+          }
+          return prev;
+        });
+      } else if (!targetTab) {
+        setActiveTab('staff_overview');
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [activeTab]);
 
   // Sync state with local events
   useEffect(() => {
@@ -357,6 +425,7 @@ export default function StaffDashboard({
               {mobileSidebarOpen ? <X className="w-4 h-4 text-amber-400" /> : <Menu className="w-4 h-4" />}
               <span className="hidden sm:inline">Desks</span>
             </button>
+
 
             {/* Desktop Brand Logo */}
             <div className="hidden sm:block shrink-0">

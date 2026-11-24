@@ -136,8 +136,12 @@ export default function App() {
         const url = new URL(window.location.href);
         if (nextPage === 'home') {
           url.searchParams.delete('page');
+          url.searchParams.delete('tab');
         } else {
           url.searchParams.set('page', nextPage);
+          if (nextPage !== 'admin' && nextPage !== 'staff' && nextPage !== 'franchise_portal') {
+            url.searchParams.delete('tab');
+          }
         }
 
         if (replace) {
@@ -193,8 +197,12 @@ export default function App() {
           const url = new URL(window.location.href);
           if (targetPage === 'home') {
             url.searchParams.delete('page');
+            url.searchParams.delete('tab');
           } else {
             url.searchParams.set('page', targetPage);
+            if (targetPage !== 'admin' && targetPage !== 'staff' && targetPage !== 'franchise_portal') {
+              url.searchParams.delete('tab');
+            }
           }
           window.history.pushState({ page: targetPage }, '', url.toString());
         }
@@ -209,6 +217,7 @@ export default function App() {
         if (typeof window !== 'undefined') {
           const url = new URL(window.location.href);
           url.searchParams.delete('page');
+          url.searchParams.delete('tab');
           window.history.pushState({ page: 'home' }, '', url.toString());
         }
         return ['home'];
@@ -224,13 +233,16 @@ export default function App() {
     // Initialize history state on first mount if not present
     const params = new URLSearchParams(window.location.search);
     const currentPage = params.get('page') || activePage || 'home';
+    const currentTab = params.get('tab');
     const url = new URL(window.location.href);
     if (currentPage !== 'home') {
       url.searchParams.set('page', currentPage);
+      if (currentTab) url.searchParams.set('tab', currentTab);
     } else {
       url.searchParams.delete('page');
+      url.searchParams.delete('tab');
     }
-    window.history.replaceState({ page: currentPage }, '', url.toString());
+    window.history.replaceState({ page: currentPage, tab: currentTab || undefined }, '', url.toString());
 
     const handlePopState = (event) => {
       const searchParams = new URLSearchParams(window.location.search);
@@ -249,14 +261,19 @@ export default function App() {
       const pageFromUrl = searchParams.get('page');
       const targetPage = pageFromState || pageFromUrl || 'home';
 
-      setActivePageState(targetPage);
+      setActivePageState((current) => {
+        if (current === targetPage) return current;
+        window.scrollTo(0, 0);
+        return targetPage;
+      });
+
       setPageHistory((prev) => {
+        if (prev[prev.length - 1] === targetPage) return prev;
         if (prev.length > 1 && prev[prev.length - 2] === targetPage) {
           return prev.slice(0, -1);
         }
         return [...prev, targetPage];
       });
-      window.scrollTo(0, 0);
     };
 
     window.addEventListener('popstate', handlePopState);

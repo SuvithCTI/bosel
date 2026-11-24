@@ -384,11 +384,13 @@ export default function MergedQuestionPaperModal({
             </div>
 
             {/* Candidate Booklet Content (1st Page Only) */}
-            <div className="w-full flex flex-col items-center">
-              <QuestionPaperCoverPage
-                student={currentDetails.student}
-                details={currentDetails}
-              />
+            <div className="w-full flex flex-col items-center overflow-x-auto pb-4">
+              <div className="w-[724px] shrink-0">
+                <QuestionPaperCoverPage
+                  student={currentDetails.student}
+                  details={currentDetails}
+                />
+              </div>
             </div>
           </div>
         )}
