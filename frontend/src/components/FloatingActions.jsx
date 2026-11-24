@@ -24,7 +24,7 @@ export default function FloatingActions({ setActivePage }) {
     return () => window.removeEventListener('open_admission_modal', handleOpen);
   }, []);
 
-  const whatsappNumber = '919840012345';
+  const whatsappNumber = '9655319131';
   const whatsappMessage = encodeURIComponent(
     'Hello B★SEL Team, I would like to enquire about your educational courses and franchise opportunities.'
   );
