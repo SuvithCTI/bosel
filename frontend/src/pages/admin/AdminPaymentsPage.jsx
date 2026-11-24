@@ -93,14 +93,14 @@ export default function AdminPaymentsPage({
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           {!isSelectionMode && (
             <button
               type="button"
               onClick={() => setIsSelectionMode(true)}
-              className="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer"
+              className="px-2.5 py-1 sm:px-3 sm:py-1.5 bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer active:scale-95"
             >
-              <CheckSquare className="w-4 h-4 text-sky-600" />
+              <CheckSquare className="w-3.5 h-3.5 text-sky-600 shrink-0" />
               <span>Select Records</span>
             </button>
           )}
@@ -108,9 +108,9 @@ export default function AdminPaymentsPage({
           <button
             type="button"
             onClick={() => setShowAddPaymentModal(true)}
-            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black transition flex items-center gap-1.5 shadow-sm cursor-pointer"
+            className="px-2.5 py-1 sm:px-3 sm:py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-black transition flex items-center gap-1.5 shadow-xs cursor-pointer active:scale-95"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-3.5 h-3.5 shrink-0" />
             <span>Record Payment / Receipt</span>
           </button>
         </div>
