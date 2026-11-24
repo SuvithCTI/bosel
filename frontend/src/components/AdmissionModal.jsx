@@ -303,7 +303,8 @@ export default function AdmissionModal({
   onSuccess = null,
   initialAdmissionCategory = null,
   initialInstitution = null,
-  lockAdmissionCategory = false
+  lockAdmissionCategory = false,
+  prefillData = null
 }) {
   const [coursesList, setCoursesList] = useState(() => getStoredCourses());
 
@@ -571,7 +572,44 @@ export default function AdmissionModal({
         date: new Date().toISOString().split('T')[0]
       }));
     }
-  }, [initialProgram, initialFee, initialBranch, isOpen, coursesList, skipPayment]);
+    if (isOpen && prefillData) {
+      let computedAge = '';
+      let autoClass = '';
+      let autoStage = '';
+      if (prefillData.dob) {
+        const birth = new Date(prefillData.dob);
+        const today = new Date();
+        let age = today.getFullYear() - birth.getFullYear();
+        const m = today.getMonth() - birth.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+          age--;
+        }
+        if (age >= 0 && age <= 100) {
+          computedAge = String(age);
+          const stageInfo = getAcademicStageFromAge(age);
+          autoClass = stageInfo.className;
+          autoStage = stageInfo.stage;
+        }
+      }
+
+      setFormData(prev => ({
+        ...prev,
+        studentName: prefillData.studentName || prev.studentName,
+        parentName: prefillData.parentName || prev.parentName,
+        fatherName: prefillData.parentName || prev.fatherName,
+        phone: prefillData.phone || prev.phone,
+        email: prefillData.email || prev.email,
+        dob: prefillData.dob || prev.dob,
+        age: computedAge || prev.age,
+        studentClass: autoClass || prev.studentClass,
+        studentStage: autoStage || prev.studentStage,
+        city: prefillData.city || prev.city,
+        studentPhoto: prefillData.studentPhoto || prev.studentPhoto,
+        photoPreview: prefillData.studentPhoto || prev.photoPreview,
+        ...(prefillData.schoolName ? { institution: prefillData.schoolName, schoolName: prefillData.schoolName } : {})
+      }));
+    }
+  }, [initialProgram, initialFee, initialBranch, isOpen, coursesList, skipPayment, prefillData]);
 
   // Click outside listener for all custom dropdowns (Touch & Mouse friendly)
   useEffect(() => {
@@ -1903,6 +1941,16 @@ export default function AdmissionModal({
                    PAGE 1: CANDIDATE & ADMISSION DETAILS (SECTIONS 1, 2, 3)
                    ========================================================================= */
                 <div className="space-y-3 sm:space-y-4 animate-in fade-in duration-200">
+                  {prefillData?.sourceEvent && (
+                    <div className="p-3 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-300 rounded-xl flex items-center gap-2.5 text-xs text-amber-950 shadow-xs">
+                      <span className="w-5 h-5 rounded-full bg-amber-400 text-slate-950 flex items-center justify-center font-black text-xs shrink-0">
+                        ★
+                      </span>
+                      <div className="flex-1">
+                        <strong className="font-bold text-amber-900">Event Registrant Admission:</strong> Pre-filled with your registration details from <strong>{prefillData.sourceEvent}</strong>. Please review and complete your admission.
+                      </div>
+                    </div>
+                  )}
                   {/* SECTION 1: ADMISSION & COURSE DETAILS */}
               <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 sm:p-4 space-y-2.5">
                 <span className="text-[10px] sm:text-xs font-black uppercase text-sky-900 tracking-wider flex items-center gap-1.5 border-b border-slate-200 pb-1">

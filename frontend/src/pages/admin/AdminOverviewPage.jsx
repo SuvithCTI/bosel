@@ -16,7 +16,8 @@ import {
   Sparkles,
   ChevronRight,
   ShieldCheck,
-  Award
+  Award,
+  MessageSquare
 } from 'lucide-react';
 
 export default function AdminOverviewPage({
@@ -29,6 +30,7 @@ export default function AdminOverviewPage({
   usersList = [],
   eventsList = [],
   franchiseList = [],
+  contactEnquiries = [],
   setShowAddCourseModal,
   setShowAddEventModal,
   setActiveTab,
@@ -97,7 +99,7 @@ export default function AdminOverviewPage({
       </div>
 
       {/* KPI Cards Row */}
-      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
         <div className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-2xs flex items-center justify-between">
           <div>
             <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Total Students</span>
@@ -137,7 +139,10 @@ export default function AdminOverviewPage({
           </div>
         </div>
 
-        <div className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-2xs flex items-center justify-between">
+        <div 
+          onClick={() => setActiveTab && setActiveTab('franchise')}
+          className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-2xs flex items-center justify-between cursor-pointer hover:border-indigo-300 transition group"
+        >
           <div>
             <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Franchise Enquiries</span>
             <div className="text-2xl font-black text-slate-950 mt-1">{totalFranchiseCount}</div>
@@ -145,8 +150,24 @@ export default function AdminOverviewPage({
               <Building className="w-3 h-3" /> Incoming pipeline
             </span>
           </div>
-          <div className="w-11 h-11 rounded-xl bg-indigo-100 text-indigo-800 flex items-center justify-center font-bold">
+          <div className="w-11 h-11 rounded-xl bg-indigo-100 text-indigo-800 flex items-center justify-center font-bold group-hover:scale-105 transition">
             <Building className="w-5 h-5" />
+          </div>
+        </div>
+
+        <div 
+          onClick={() => setActiveTab && setActiveTab('contact_enquiries')}
+          className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-2xs flex items-center justify-between cursor-pointer hover:border-amber-400 transition group"
+        >
+          <div>
+            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Contact Us Form</span>
+            <div className="text-2xl font-black text-slate-950 mt-1">{contactEnquiries.length}</div>
+            <span className="text-[11px] font-bold text-amber-700 flex items-center gap-1 mt-0.5">
+              <MessageSquare className="w-3 h-3" /> {contactEnquiries.filter((e) => e.status === 'New').length} New Enquiries
+            </span>
+          </div>
+          <div className="w-11 h-11 rounded-xl bg-amber-100 text-amber-900 flex items-center justify-center font-bold group-hover:scale-105 transition">
+            <MessageSquare className="w-5 h-5" />
           </div>
         </div>
 

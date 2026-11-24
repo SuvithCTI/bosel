@@ -38,7 +38,8 @@ import {
   Trophy,
   FileDown,
   ClipboardList,
-  Globe
+  Globe,
+  MessageSquare
 } from 'lucide-react';
 
 import AdminAchievementsModule from '../components/admin/AdminAchievementsModule';
@@ -47,6 +48,7 @@ import AdminStudentsPage from './admin/AdminStudentsPage';
 import AdminCoursesPage from './admin/AdminCoursesPage';
 import AdminEventsPage from './admin/AdminEventsPage';
 import AdminFranchisePage from './admin/AdminFranchisePage';
+import AdminContactEnquiriesPage from './admin/AdminContactEnquiriesPage';
 import AdminPaymentsPage from './admin/AdminPaymentsPage';
 import AdminSchoolsPage from './admin/AdminSchoolsPage';
 import AdminAchievementsPage from './admin/AdminAchievementsPage';
@@ -106,6 +108,10 @@ import {
   addFranchiseLead,
   getFranchiseDisplayId
 } from '../data/franchiseData';
+
+import {
+  getStoredContactEnquiries
+} from '../data/contactEnquiriesData';
 
 import {
   getStoredPayments,
@@ -182,6 +188,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
   const [paymentsList, setPaymentsList] = useState(() => getStoredPayments());
   const [schoolsList, setSchoolsList] = useState(() => getStoredSchools());
   const [batchesList, setBatchesList] = useState(() => getStoredBatches());
+  const [contactEnquiriesList, setContactEnquiriesList] = useState(() => getStoredContactEnquiries());
 
   // Batch Management Modal State
   const [showAddBatchModal, setShowAddBatchModal] = useState(false);
@@ -256,6 +263,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
     const handlePaymentsUpdate = () => setPaymentsList(getStoredPayments());
     const handleSchoolsUpdate = () => setSchoolsList(getStoredSchools());
     const handleBatchesUpdate = () => setBatchesList(getStoredBatches());
+    const handleContactUpdate = () => setContactEnquiriesList(getStoredContactEnquiries());
 
     window.addEventListener('bsel_users_updated', handleUsersUpdate);
     window.addEventListener('bsel_events_updated', handleEventsUpdate);
@@ -264,6 +272,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
     window.addEventListener('bsel_payments_updated', handlePaymentsUpdate);
     window.addEventListener('bsel_schools_updated', handleSchoolsUpdate);
     window.addEventListener('bsel_batches_updated', handleBatchesUpdate);
+    window.addEventListener('bsel_contact_enquiries_updated', handleContactUpdate);
     window.addEventListener('bsel_branch_credentials_updated', () => {
       handleSchoolsUpdate();
       handleUsersUpdate();
@@ -379,6 +388,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
       window.removeEventListener('bsel_payments_updated', handlePaymentsUpdate);
       window.removeEventListener('bsel_schools_updated', handleSchoolsUpdate);
       window.removeEventListener('bsel_batches_updated', handleBatchesUpdate);
+      window.removeEventListener('bsel_contact_enquiries_updated', handleContactUpdate);
       window.removeEventListener('storage', handleStorage);
     };
   }, []);
@@ -1749,6 +1759,26 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
 
                   <button
                     type="button"
+                    onClick={() => handleTabSelect('contact_enquiries')}
+                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-black transition cursor-pointer text-left ${
+                      activeTab === 'contact_enquiries'
+                        ? 'bg-[#0c234b] text-white shadow-sm ring-1 ring-amber-400/40'
+                        : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <MessageSquare className={`w-4 h-4 shrink-0 ${activeTab === 'contact_enquiries' ? 'text-amber-400' : 'text-slate-500'}`} />
+                      <span className="truncate">Contact Enquiries</span>
+                    </div>
+                    {contactEnquiriesList.filter((e) => e.status === 'New').length > 0 && (
+                      <span className="px-1.5 py-0.5 text-[10px] font-black rounded-full bg-amber-400 text-slate-950 shrink-0">
+                        {contactEnquiriesList.filter((e) => e.status === 'New').length}
+                      </span>
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
                     onClick={() => handleTabSelect('payments')}
                     className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-black transition cursor-pointer text-left ${
                       activeTab === 'payments'
@@ -1906,6 +1936,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
               usersList={usersList}
               eventsList={eventsList}
               franchiseList={franchiseList}
+              contactEnquiries={contactEnquiriesList}
               setShowAddCourseModal={setShowAddCourseModal}
               setShowAddEventModal={setShowAddEventModal}
               setActiveTab={handleTabSelect}
@@ -1984,6 +2015,19 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
               handleUpdateFranchiseStatus={handleUpdateFranchiseStatus}
               handleApproveFranchiseToBranch={handleApproveFranchiseToBranch}
               showToast={showToast}
+              setActiveTab={handleTabSelect}
+              contactCount={contactEnquiriesList.length}
+            />
+          )}
+
+          {/* SUPER ADMIN: TAB 5B - CONTACT US FORM ENQUIRIES */}
+          {currentAdminRole === 'Super Admin' && activeTab === 'contact_enquiries' && (
+            <AdminContactEnquiriesPage
+              contactEnquiries={contactEnquiriesList}
+              setContactEnquiries={setContactEnquiriesList}
+              showToast={showToast}
+              currentAdminRole={currentAdminRole}
+              setActiveTab={handleTabSelect}
             />
           )}
 

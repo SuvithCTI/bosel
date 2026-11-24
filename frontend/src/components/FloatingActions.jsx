@@ -8,15 +8,17 @@ export default function FloatingActions({ setActivePage }) {
   const [showAdmissionModal, setShowAdmissionModal] = useState(false);
   const [admissionProgram, setAdmissionProgram] = useState(null);
   const [admissionFee, setAdmissionFee] = useState(null);
+  const [admissionPrefill, setAdmissionPrefill] = useState(null);
 
   useEffect(() => {
     const handleOpen = (e) => {
-      if (e?.detail?.program) {
-        setAdmissionProgram(e.detail.program);
-        setAdmissionFee(e.detail.fee || null);
-      } else {
-        setAdmissionProgram(null);
-        setAdmissionFee(null);
+      const detail = e?.detail || {};
+      if (detail.program) {
+        setAdmissionProgram(detail.program);
+        setAdmissionFee(detail.fee || null);
+      }
+      if (Object.keys(detail).length > 0) {
+        setAdmissionPrefill(detail);
       }
       setShowAdmissionModal(true);
     };
@@ -40,6 +42,7 @@ export default function FloatingActions({ setActivePage }) {
             onClick={() => {
               setAdmissionProgram(null);
               setAdmissionFee(null);
+              setAdmissionPrefill(null);
               setShowAdmissionModal(true);
             }}
             aria-label="Student Admission Form"
@@ -108,10 +111,14 @@ export default function FloatingActions({ setActivePage }) {
       {/* Official Student Admission Form Modal */}
       <AdmissionModal 
         isOpen={showAdmissionModal} 
-        onClose={() => setShowAdmissionModal(false)} 
+        onClose={() => {
+          setShowAdmissionModal(false);
+          setAdmissionPrefill(null);
+        }} 
         setActivePage={setActivePage}
         initialProgram={admissionProgram}
         initialFee={admissionFee}
+        prefillData={admissionPrefill}
       />
     </>
   );

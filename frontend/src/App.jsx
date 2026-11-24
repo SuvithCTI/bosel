@@ -280,6 +280,13 @@ export default function App() {
     }
   }, [activePage]);
 
+  // When navigating to 'admission', automatically trigger the official student admission modal
+  useEffect(() => {
+    if (activePage === 'admission') {
+      window.dispatchEvent(new CustomEvent('open_admission_modal'));
+    }
+  }, [activePage]);
+
   // -------------------------------------------------------
   // Authentication session
   // -------------------------------------------------------
@@ -505,7 +512,7 @@ export default function App() {
 
       {/* Main Content */}
       <main className="flex-1">
-        {activePage === 'home' && (
+        {(activePage === 'home' || activePage === 'admission') && (
           <HomePage
             setActivePage={setActivePage}
             onSelectProgram={handleSelectProgram}
@@ -624,6 +631,7 @@ export default function App() {
       {selectedEventForRegister && (
         <EventRegisterModal
           event={selectedEventForRegister}
+          setActivePage={setActivePage}
           onClose={() => setSelectedEventForRegister(null)}
         />
       )}
