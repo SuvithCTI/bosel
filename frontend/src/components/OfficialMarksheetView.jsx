@@ -23,6 +23,8 @@ import {
 } from '../utils/studentDataHelpers';
 import { getCoursePrefix, getActiveSession } from '../utils/authStorage';
 import { getSavedMarksheet, getGrade } from '../utils/marksheetStorage';
+import QRCode from 'qrcode';
+import { buildVerificationUrl, getStudentVerificationMeta } from './Certificate';
 import MarksheetTemplate from './MarksheetTemplate';
 
 // ============================================================
@@ -557,7 +559,9 @@ export default function OfficialMarksheetView({
   // STUDENT DATA
   // ----------------------------------------------------------
 
-  const courseName = student.program || student.courseName || 'Abacus';
+  const courseName = student.program || student.courseName || 'ABACUS SPEED ARITHMETIC';
+  // Character limit 10 for Course display on the marksheet (e.g. 'ABACUS SPE')
+  const displayCourse = String(courseName).slice(0, 10).toUpperCase();
 
   const savedSheet = getSavedMarksheet(student);
 
@@ -638,6 +642,86 @@ export default function OfficialMarksheetView({
     'Tenkasi, Tamil Nadu';
 
   const photoUrl = uploadedPhoto || getStudentPhotoUrl(student);
+
+  // QR Code Verification URL generation for marksheet (same standard as Certificate)
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState('');
+  const [verificationUrl, setVerificationUrl] = useState('');
+
+  useEffect(() => {
+    let isMounted = true;
+    const meta = getStudentVerificationMeta(
+      studentName,
+      regNo,
+      certNo,
+      student,
+      overallGrade,
+      photoUrl
+    );
+
+    const scoreString = showMarks ? `${totalObtained} / ${totalMax} (${percentage}%)` : '';
+
+    const url = buildVerificationUrl({
+      certificateNo: certNo,
+      studentName,
+      courseName,
+      level,
+      grade: overallGrade,
+      registrationNo: regNo,
+      centreName: school,
+      centreAddress: address,
+      schoolName: customSchoolName,
+      schoolSubtitle: customSchoolSubtitle,
+      schoolMotto: customSchoolMotto,
+      parentName,
+      score: scoreString,
+      vid: meta.vid,
+      sec: meta.sec,
+      photoKey: meta.photoKey,
+    });
+
+    setVerificationUrl(url);
+
+    QRCode.toDataURL(
+      url,
+      {
+        width: 260,
+        margin: 1,
+        color: {
+          dark: '#0a254c',
+          light: '#ffffff',
+        },
+        errorCorrectionLevel: 'M',
+      },
+      (err, dataUrl) => {
+        if (!err && isMounted) {
+          setQrCodeDataUrl(dataUrl);
+        }
+      }
+    );
+
+    return () => {
+      isMounted = false;
+    };
+  }, [
+    studentName,
+    regNo,
+    certNo,
+    student,
+    courseName,
+    level,
+    overallGrade,
+    photoUrl,
+    school,
+    address,
+    customSchoolName,
+    customSchoolSubtitle,
+    customSchoolMotto,
+    parentName,
+    totalObtained,
+    totalMax,
+    percentage,
+    showMarks,
+  ]);
 
   // ----------------------------------------------------------
   // DATE FORMAT
@@ -765,6 +849,7 @@ export default function OfficialMarksheetView({
           subtitle: customSchoolSubtitle,
           tagline: customSchoolMotto,
         }}
+        qrCodeDataUrl={qrCodeDataUrl}
       />
 
       {/* Full-page BSEL watermark (zIndex 0, under the template) */}
@@ -852,7 +937,7 @@ export default function OfficialMarksheetView({
         { value: studentName, top: 22.9, cls: 'uppercase' },
         { value: parentName, top: 25.49, cls: 'capitalize' },
         { value: dob, top: 28.08, cls: '' },
-        { value: courseName, top: 30.66, cls: 'capitalize' },
+        { value: displayCourse, top: 30.66, cls: 'uppercase' },
         { value: level, top: 33.25, cls: 'capitalize' },
         { value: duration, top: 35.84, cls: 'capitalize' },
         { value: school, top: 38.43, cls: 'capitalize' },
@@ -864,7 +949,7 @@ export default function OfficialMarksheetView({
           style={{
             left: '29.8%',
             top: `${row.top}%`,
-            maxWidth: '32.5%',
+            maxWidth: '28.5%',
             fontFamily: "'Times New Roman', Times, serif",
             fontSize: '2.07cqw',
             lineHeight: 1,
@@ -876,6 +961,27 @@ export default function OfficialMarksheetView({
           {row.value}
         </div>
       ))}
+
+      {/* QR CODE CLICKABLE OVERLAY (JUST LEFT TO THE PHOTO) */}
+      {qrCodeDataUrl && (
+        <div
+          onClick={(e) => {
+            e.stopPropagation();
+            if (typeof window !== 'undefined' && verificationUrl) {
+              window.open(verificationUrl, '_blank');
+            }
+          }}
+          className="absolute cursor-pointer pointer-events-auto rounded-sm group hover:ring-2 hover:ring-amber-400/60 transition"
+          style={{
+            left: `${(428 / 724) * 100}%`,
+            top: `${(228 / 1024) * 100}%`,
+            width: `${(113 / 724) * 100}%`,
+            height: `${(130 / 1024) * 100}%`,
+            zIndex: 2,
+          }}
+          title="Click to verify official credentials"
+        />
+      )}
 
       {/* STUDENT PHOTO */}
       <div
@@ -1578,16 +1684,16 @@ export default function OfficialMarksheetView({
             <div className="flex flex-col gap-3.5">
               <div className="flex flex-col gap-1">
                 <label className="text-[11px] font-semibold text-slate-300 flex justify-between">
-                  <span>Line 1: School / Branch Name <span className="text-amber-400 font-bold">(Max 20 chars, Big & Bold)</span></span>
-                  <span className="text-amber-400 font-bold">{customSchoolName.length}/20</span>
+                  <span>Line 1: School / Branch Name <span className="text-amber-400 font-bold">(Max 12)</span></span>
+                  <span className="text-amber-400 font-bold">{customSchoolName.length}/12</span>
                 </label>
                 <input
                   type="text"
                   value={customSchoolName}
-                  maxLength={20}
+                  maxLength={12}
                   placeholder="e.g. RISING STARS"
                   onChange={(e) => {
-                    const v = e.target.value;
+                    const v = e.target.value.slice(0, 12);
                     setCustomSchoolName(v);
                     handleSaveSchoolDetails(v, customSchoolSubtitle, customSchoolMotto, customSchoolLogo);
                   }}
@@ -1597,16 +1703,16 @@ export default function OfficialMarksheetView({
 
               <div className="flex flex-col gap-1">
                 <label className="text-[11px] font-semibold text-slate-300 flex justify-between">
-                  <span>Line 2: Subtitle / Division <span className="text-amber-400 font-bold">(Max 25 chars, Medium)</span></span>
-                  <span className="text-amber-400 font-bold">{customSchoolSubtitle.length}/25</span>
+                  <span>Line 2: Subtitle / Division <span className="text-amber-400 font-bold">(Max 22)</span></span>
+                  <span className="text-amber-400 font-bold">{customSchoolSubtitle.length}/22</span>
                 </label>
                 <input
                   type="text"
                   value={customSchoolSubtitle}
-                  maxLength={25}
+                  maxLength={22}
                   placeholder="e.g. VISION FOUNDATION"
                   onChange={(e) => {
-                    const v = e.target.value;
+                    const v = e.target.value.slice(0, 22);
                     setCustomSchoolSubtitle(v);
                     handleSaveSchoolDetails(customSchoolName, v, customSchoolMotto, customSchoolLogo);
                   }}
@@ -1616,7 +1722,7 @@ export default function OfficialMarksheetView({
 
               <div className="flex flex-col gap-1">
                 <label className="text-[11px] font-semibold text-slate-300 flex justify-between">
-                  <span>Line 3: Motto / Tagline <span className="text-amber-400 font-bold">(Max 30 chars, Small)</span></span>
+                  <span>Line 3: Motto / Tagline <span className="text-amber-400 font-bold">(Max 30)</span></span>
                   <span className="text-amber-400 font-bold">{customSchoolMotto.length}/30</span>
                 </label>
                 <input
@@ -1625,7 +1731,7 @@ export default function OfficialMarksheetView({
                   maxLength={30}
                   placeholder="e.g. EDUCATION · EMPOWERMENT · EXCELLENCE"
                   onChange={(e) => {
-                    const v = e.target.value;
+                    const v = e.target.value.slice(0, 30);
                     setCustomSchoolMotto(v);
                     handleSaveSchoolDetails(customSchoolName, customSchoolSubtitle, v, customSchoolLogo);
                   }}

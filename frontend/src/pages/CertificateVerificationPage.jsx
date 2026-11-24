@@ -366,10 +366,11 @@ export default function CertificateVerificationPage({ setActivePage }) {
           throw new Error('Not found in /api/photo-cache');
         })
         .catch(() => {
-          // Fallback to static cache file
-          fetch('/student_photos_cache.json')
+          // Fallback to full photo cache API
+          fetch('/api/photo-cache')
             .then((res) => res.json())
-            .then((cache) => {
+            .then((resData) => {
+              const cache = resData?.cache;
               if (cache) {
                 const found = cache[targetKey] || cache[targetKey.toLowerCase()] ||
                               cache[cleanReg] || cache[cleanReg.toLowerCase()] ||

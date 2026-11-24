@@ -229,6 +229,9 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
     if (tabKey === activeTab) return;
     setTabHistory((prev) => [...prev, tabKey]);
     setActiveTab(tabKey);
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('bsel_active_tab', tabKey);
+    }
     setMobileSidebarOpen(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -240,9 +243,15 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
       const prevTab = nextHistory[nextHistory.length - 1];
       setTabHistory(nextHistory);
       setActiveTab(prevTab);
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('bsel_active_tab', prevTab);
+      }
     } else {
       const fallbackTab = currentAdminRole === 'Branch Head' ? 'branch_overview' : 'overview';
       setActiveTab(fallbackTab);
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('bsel_active_tab', fallbackTab);
+      }
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
