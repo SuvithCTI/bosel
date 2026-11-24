@@ -48,71 +48,75 @@ export default function AdminBranchOverviewPage({
       </div>
 
       {/* Branch Metrics */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-4">
+      <div className="grid grid-cols-3 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4">
 
         {/* Enrolled Students */}
-        <div className="bg-white p-3.5 sm:p-4.5 rounded-xl sm:rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
-          <div>
-            <span className="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
-              Branch Enrolled Students
+        <div className="bg-white p-2 sm:p-4.5 rounded-xl sm:rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center sm:justify-between text-center sm:text-left gap-1 sm:gap-0">
+          <div className="min-w-0">
+            <span className="text-[9px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider block truncate">
+              <span className="sm:hidden">Students</span>
+              <span className="hidden sm:inline">Branch Enrolled Students</span>
             </span>
 
-            <div className="text-xl sm:text-2xl font-black text-slate-950 mt-0.5 sm:mt-1">
+            <div className="text-base sm:text-2xl font-black text-slate-950 mt-0.5 sm:mt-1">
               {branchStudents.length}
             </div>
 
-            <span className="text-[10px] sm:text-[11px] font-bold text-sky-700 flex items-center gap-1 mt-0.5">
-              <CheckCircle2 className="w-3 h-3" />
-              Active in {activeBranch}
+            <span className="text-[9px] sm:text-[11px] font-bold text-sky-700 flex items-center justify-center sm:justify-start gap-1 mt-0.5">
+              <CheckCircle2 className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+              <span className="truncate">Active</span>
             </span>
           </div>
 
-          <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-sky-100 text-[#0c234b] flex items-center justify-center shrink-0">
-            <Users className="w-4 h-4 sm:w-5 sm:h-5" />
+          <div className="w-7 h-7 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl bg-sky-100 text-[#0c234b] flex items-center justify-center shrink-0 order-first sm:order-last">
+            <Users className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
           </div>
         </div>
 
         {/* Active Batches */}
-        <div className="bg-white p-3.5 sm:p-4.5 rounded-xl sm:rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
-          <div>
-            <span className="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
-              Active Batches
+        <div className="bg-white p-2 sm:p-4.5 rounded-xl sm:rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center sm:justify-between text-center sm:text-left gap-1 sm:gap-0">
+          <div className="min-w-0">
+            <span className="text-[9px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider block truncate">
+              <span className="sm:hidden">Batches</span>
+              <span className="hidden sm:inline">Active Batches</span>
             </span>
 
-            <div className="text-xl sm:text-2xl font-black text-slate-950 mt-0.5 sm:mt-1">
-              {branchBatches.length} Batches
+            <div className="text-base sm:text-2xl font-black text-slate-950 mt-0.5 sm:mt-1">
+              <span className="sm:hidden">{branchBatches.length}</span>
+              <span className="hidden sm:inline">{branchBatches.length} Batches</span>
             </div>
 
-            <span className="text-[10px] sm:text-[11px] font-bold text-sky-700 flex items-center gap-1 mt-0.5">
-              <Clock className="w-3 h-3" />
-              Scheduled class slots
+            <span className="text-[9px] sm:text-[11px] font-bold text-sky-700 flex items-center justify-center sm:justify-start gap-1 mt-0.5">
+              <Clock className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+              <span className="truncate">Slots</span>
             </span>
           </div>
 
-          <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-sky-100 text-sky-800 flex items-center justify-center shrink-0">
-            <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
+          <div className="w-7 h-7 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl bg-sky-100 text-sky-800 flex items-center justify-center shrink-0 order-first sm:order-last">
+            <Clock className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
           </div>
         </div>
 
         {/* Branch Fees */}
-        <div className="bg-white p-3.5 sm:p-4.5 rounded-xl sm:rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
-          <div>
-            <span className="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
-              Branch Fees Collected
+        <div className="bg-white p-2 sm:p-4.5 rounded-xl sm:rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center sm:justify-between text-center sm:text-left gap-1 sm:gap-0">
+          <div className="min-w-0">
+            <span className="text-[9px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider block truncate">
+              <span className="sm:hidden">Fees</span>
+              <span className="hidden sm:inline">Branch Fees Collected</span>
             </span>
 
-            <div className="text-xl sm:text-2xl font-black text-slate-950 mt-0.5 sm:mt-1">
+            <div className="text-base sm:text-2xl font-black text-slate-950 mt-0.5 sm:mt-1 truncate">
               {branchRevenueFormatted}
             </div>
 
-            <span className="text-[10px] sm:text-[11px] font-bold text-sky-700 flex items-center gap-1 mt-0.5">
-              <ShieldCheck className="w-3 h-3" />
-              Branch desk collections
+            <span className="text-[9px] sm:text-[11px] font-bold text-sky-700 flex items-center justify-center sm:justify-start gap-1 mt-0.5">
+              <ShieldCheck className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+              <span className="truncate">Collections</span>
             </span>
           </div>
 
-          <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0">
-            <CreditCard className="w-4 h-4 sm:w-5 sm:h-5" />
+          <div className="w-7 h-7 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0 order-first sm:order-last">
+            <CreditCard className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
           </div>
         </div>
 
