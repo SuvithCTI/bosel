@@ -270,7 +270,7 @@ export default function AdminBranchFranchisesPage({
               <div className="flex items-start justify-between gap-1.5 sm:gap-2">
                 <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
                   <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
-                  <h3 className="text-xs sm:text-base font-black text-slate-950 group-hover:text-blue-900 transition truncate">
+                  <h3 className="text-xs sm:text-base font-black text-slate-950 group-hover:text-blue-900 transition leading-snug line-clamp-2">
                     {fc.name}
                   </h3>
                 </div>

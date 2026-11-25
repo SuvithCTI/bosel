@@ -118,20 +118,28 @@ export default function MergedStudentPdfModal({
 
         // 1. Capture Certificate (Landscape)
         const certCanvas = await html2canvas(certEl, {
-          scale: 2,
+          scale: 2.5,
           useCORS: true,
           allowTaint: false,
           logging: false,
           scrollX: 0,
           scrollY: 0,
           windowWidth: 1050,
-          backgroundColor: '#fcfbf7'
+          backgroundColor: '#ffffff',
+          onclone: (_clonedDoc, clonedEl) => {
+            const cert = clonedEl.id === 'printable-certificate' ? clonedEl : clonedEl.querySelector?.('#printable-certificate');
+            if (cert) {
+              cert.style.width = '1024px';
+              cert.style.maxWidth = '1024px';
+              cert.style.margin = '0 auto';
+            }
+          }
         });
 
         let certImgData;
         let certFmt = 'JPEG';
         try {
-          certImgData = certCanvas.toDataURL('image/jpeg', 0.95);
+          certImgData = certCanvas.toDataURL('image/jpeg', 0.98);
         } catch {
           certImgData = certCanvas.toDataURL('image/png');
           certFmt = 'PNG';
@@ -139,20 +147,29 @@ export default function MergedStudentPdfModal({
 
         // 2. Capture Marksheet (Portrait)
         const msCanvas = await html2canvas(msEl, {
-          scale: 2,
+          scale: 2.5,
           useCORS: true,
           allowTaint: false,
           logging: false,
           scrollX: 0,
           scrollY: 0,
-          windowWidth: 750,
-          backgroundColor: '#ffffff'
+          windowWidth: 1024,
+          backgroundColor: '#ffffff',
+          onclone: (_clonedDoc, clonedEl) => {
+            const ms = clonedEl.id === 'printable-marksheet-sheet' ? clonedEl : clonedEl.querySelector?.('#printable-marksheet-sheet');
+            if (ms) {
+              ms.style.width = '724px';
+              ms.style.maxWidth = '724px';
+              ms.style.aspectRatio = '724 / 1024';
+              ms.style.margin = '0 auto';
+            }
+          }
         });
 
         let msImgData;
         let msFmt = 'JPEG';
         try {
-          msImgData = msCanvas.toDataURL('image/jpeg', 0.95);
+          msImgData = msCanvas.toDataURL('image/jpeg', 0.98);
         } catch {
           msImgData = msCanvas.toDataURL('image/png');
           msFmt = 'PNG';
@@ -177,7 +194,7 @@ export default function MergedStudentPdfModal({
         pdf.addPage('a4', 'portrait');
         const p2W = pdf.internal.pageSize.getWidth();
         const p2H = pdf.internal.pageSize.getHeight();
-        const msMargin = 6;
+        const msMargin = 0;
         const availW = p2W - msMargin * 2;
         const availH = p2H - msMargin * 2;
         const mAspect = msCanvas.width / msCanvas.height;
@@ -235,6 +252,19 @@ export default function MergedStudentPdfModal({
       {/* Print Stylesheet */}
       <style>{`
         @media print {
+          @page {
+            size: A4 portrait;
+            margin: 0;
+          }
+          @page landscape-sheet {
+            size: A4 landscape;
+            margin: 0;
+          }
+          @page portrait-sheet {
+            size: A4 portrait;
+            margin: 0;
+          }
+
           body * {
             visibility: hidden !important;
           }
@@ -252,10 +282,70 @@ export default function MergedStudentPdfModal({
             border: none !important;
             background: white !important;
           }
-          .page-break {
+
+          .merged-cert-page {
+            page: landscape-sheet !important;
+            page-break-after: always !important;
+            break-after: page !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            background: white !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            box-shadow: none !important;
+            border: none !important;
+          }
+
+          .merged-cert-page #printable-certificate {
+            position: relative !important;
+            top: auto !important;
+            left: auto !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            height: auto !important;
+            max-height: 100% !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            margin: 0 auto !important;
+          }
+
+          .merged-cert-page #printable-certificate svg {
+            width: 100% !important;
+            height: auto !important;
+            max-height: 98vh !important;
+            object-fit: contain !important;
+          }
+
+          .merged-marksheet-page {
+            page: portrait-sheet !important;
             page-break-before: always !important;
             break-before: page !important;
+            width: 100vw !important;
+            min-height: 100vh !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            background: white !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            box-shadow: none !important;
+            border: none !important;
           }
+
+          .merged-marksheet-page #printable-marksheet-sheet {
+            position: relative !important;
+            top: auto !important;
+            left: auto !important;
+            width: 100% !important;
+            max-width: 724px !important;
+            aspect-ratio: 724 / 1024 !important;
+            margin: 0 auto !important;
+          }
+
           .no-print {
             display: none !important;
           }
@@ -379,7 +469,7 @@ export default function MergedStudentPdfModal({
       */}
       <div id="merged-print-container" className="w-full max-w-[1020px] space-y-6 pb-12">
         {/* Page 1 Card: Landscape Certificate */}
-        <div className="bg-slate-900/40 p-3 sm:p-5 rounded-2xl border border-amber-400/30 shadow-2xl">
+        <div className="merged-cert-page bg-slate-900/40 p-3 sm:p-5 rounded-2xl border border-amber-400/30 shadow-2xl">
           <div className="no-print flex items-center justify-between mb-2 text-xs font-black text-amber-300 uppercase tracking-wider">
             <span className="flex items-center gap-1.5">
               <FileDown className="w-4 h-4" />
@@ -394,7 +484,7 @@ export default function MergedStudentPdfModal({
         </div>
 
         {/* Page 2 Card: Portrait Marksheet */}
-        <div className="bg-slate-900/40 p-3 sm:p-5 rounded-2xl border border-sky-400/30 shadow-2xl page-break">
+        <div className="merged-marksheet-page bg-slate-900/40 p-3 sm:p-5 rounded-2xl border border-sky-400/30 shadow-2xl">
           <div className="no-print flex items-center justify-between mb-2 text-xs font-black text-sky-300 uppercase tracking-wider">
             <span className="flex items-center gap-1.5">
               <FileDown className="w-4 h-4" />

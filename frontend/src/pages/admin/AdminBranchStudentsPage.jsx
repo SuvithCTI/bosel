@@ -574,12 +574,16 @@ export default function AdminBranchStudentsPage({
                   </th>
                 )}
                 <th className={`py-3 px-4 sticky ${isMergeMode ? 'left-12' : 'left-0'} bg-[#081d3d] z-20 shadow-[2px_0_5px_rgba(0,0,0,0.15)]`}>Student Details</th>
+                {/* Mobile View: Event Reg & Question Paper appear immediately after Student Details */}
+                <th className="sm:hidden py-3 px-2 text-center whitespace-nowrap">Event Reg</th>
+                <th className="sm:hidden py-3 px-2 text-center whitespace-nowrap">Question Paper</th>
                 <th className="py-3 px-3">Parent & Contact</th>
                 <th className="py-3 px-3">Category</th>
                 <th className="py-3 px-3">Class</th>
                 <th className="py-3 px-3">Course & Level</th>
-                <th className="py-3 px-3 text-center">Event Registration</th>
-                <th className="py-3 px-3 text-center">Question Paper</th>
+                {/* Desktop View: Event Registration & Question Paper appear at the end */}
+                <th className="hidden sm:table-cell py-3 px-3 text-center whitespace-nowrap">Event Registration</th>
+                <th className="hidden sm:table-cell py-3 px-3 text-center whitespace-nowrap">Question Paper</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 font-medium">
@@ -669,6 +673,48 @@ export default function AdminBranchStudentsPage({
                         </div>
                       </td>
 
+                      {/* Mobile View: Event Registration Column (Position 2 on mobile) */}
+                      <td className="sm:hidden py-3 px-2 text-center whitespace-nowrap">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEventRegForStudent?.(student)}
+                          className="px-2.5 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-800 border border-purple-200 hover:border-purple-300 font-bold rounded-lg text-xs transition cursor-pointer inline-flex items-center justify-center gap-1 shadow-xs whitespace-nowrap active:scale-95"
+                          title="View Event Registration"
+                        >
+                          <Ticket className="w-3.5 h-3.5 text-purple-600 shrink-0" />
+                          <span>Event</span>
+                        </button>
+                      </td>
+
+                      {/* Mobile View: Question Paper Column (Position 3 on mobile) */}
+                      <td className="sm:hidden py-3 px-2 text-center whitespace-nowrap">
+                        {(() => {
+                          const hasUploadedQ = Boolean(readStudentUploadedQuestions(getStudentScopeKey(student)));
+                          return (
+                            <div className="flex flex-col items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => handleOpenQuestionPaperForStudent?.(student)}
+                                className={`px-2.5 py-1.5 font-bold rounded-lg text-xs transition cursor-pointer inline-flex items-center justify-center gap-1 shadow-xs whitespace-nowrap active:scale-95 ${
+                                  hasUploadedQ
+                                    ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-950 border border-emerald-300'
+                                    : 'bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 hover:border-amber-300'
+                                }`}
+                                title="View Question Paper (Page 1) and Uploaded Questions"
+                              >
+                                <FileSpreadsheet className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                                <span>Qn Paper</span>
+                              </button>
+                              {hasUploadedQ && (
+                                <span className="inline-flex items-center gap-0.5 text-[9px] font-black text-emerald-700 bg-emerald-100/80 px-1.5 py-0.5 rounded-full">
+                                  <Paperclip className="w-2 h-2" /> Questions
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })()}
+                      </td>
+
                       {/* Parent & Contact */}
                       <td className="py-3 px-3 whitespace-nowrap">
                         <div className="text-slate-800 font-semibold">{student.parentName || student.fatherName || 'Guardian'}</div>
@@ -730,8 +776,8 @@ export default function AdminBranchStudentsPage({
                         })()}
                       </td>
 
-                      {/* Event Registration Column */}
-                      <td className="py-3 px-3 text-center whitespace-nowrap">
+                      {/* Desktop View: Event Registration Column */}
+                      <td className="hidden sm:table-cell py-3 px-3 text-center whitespace-nowrap">
                         <button
                           type="button"
                           onClick={() => handleOpenEventRegForStudent?.(student)}
@@ -743,8 +789,8 @@ export default function AdminBranchStudentsPage({
                         </button>
                       </td>
 
-                      {/* Question Paper Column */}
-                      <td className="py-3 px-3 text-center whitespace-nowrap">
+                      {/* Desktop View: Question Paper Column */}
+                      <td className="hidden sm:table-cell py-3 px-3 text-center whitespace-nowrap">
                         {(() => {
                           const hasUploadedQ = Boolean(readStudentUploadedQuestions(getStudentScopeKey(student)));
                           return (
