@@ -27,6 +27,10 @@ import QRCode from 'qrcode';
 import { buildVerificationUrl, getStudentVerificationMeta } from './Certificate';
 import MarksheetTemplate from './MarksheetTemplate';
 
+// A4 at 96 dpi
+const A4_PX_WIDTH = 794;
+const A4_PX_HEIGHT = 1123;
+
 // Formats level so only 'Level 1', 'Level 2', etc. is displayed, stripping full level names
 export const formatMarksheetLevel = (lvl) => {
   if (!lvl) return 'Level 1';
@@ -1052,6 +1056,7 @@ export default function OfficialMarksheetView({
 
     setIsGeneratingPdf(true);
     let restoreImages = null;
+    let stage = null;
 
     try {
       const safeName = studentName.replace(/[^a-zA-Z0-9]/g, '_');
@@ -1060,7 +1065,43 @@ export default function OfficialMarksheetView({
       // Make logos, seal, signature, and photo renderable in the PDF
       restoreImages = await inlineSheetImages(sheetRef.current);
 
-      await exportPdfFromElement(sheetRef.current, {
+      // Build an A4-sized stage so the marksheet fills the page instead of
+      // being captured at its on-screen size and position.
+      stage = document.createElement('div');
+      Object.assign(stage.style, {
+        position: 'fixed',
+        left: '0px',
+        top: '0px',
+        width: `${A4_PX_WIDTH}px`,
+        height: `${A4_PX_HEIGHT}px`,
+        margin: '0',
+        padding: '0',
+        background: '#ffffff',
+        overflow: 'hidden',
+        zIndex: '-1',
+        boxSizing: 'border-box',
+      });
+
+      // Copy the sheet (images are already inlined) and strip the on-screen-only controls
+      const clone = sheetRef.current.cloneNode(true);
+      clone.removeAttribute('id');
+      clone.querySelectorAll('[data-html2canvas-ignore="true"]').forEach((node) => node.remove());
+      Object.assign(clone.style, {
+        position: 'relative',
+        width: `${A4_PX_WIDTH}px`,
+        height: `${A4_PX_HEIGHT}px`,
+        maxWidth: 'none',
+        aspectRatio: 'auto',
+        margin: '0',
+        border: 'none',
+        borderRadius: '0',
+        boxShadow: 'none',
+      });
+
+      stage.appendChild(clone);
+      document.body.appendChild(stage);
+
+      await exportPdfFromElement(stage, {
         filename,
         orientation: 'portrait',
         margin: 0,
@@ -1071,6 +1112,7 @@ export default function OfficialMarksheetView({
       console.error('PDF Generation failed:', err);
       alert('Unable to generate PDF. Please try again.');
     } finally {
+      if (stage && stage.parentNode) stage.parentNode.removeChild(stage);
       if (restoreImages) restoreImages();
       setIsGeneratingPdf(false);
     }
