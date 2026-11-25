@@ -168,12 +168,15 @@ export const generateCertificateNo = (student, courseName, level) => {
 export const getCourseSubjectTitle = (courseName) => {
   if (!courseName) return 'ABACUS';
   const c = String(courseName).toUpperCase();
+  if (c.includes('COGNITIVE') || c.includes('MEMORY')) return 'COGNITIVE';
   if (c.includes('HANDWRITING')) return 'HANDWRITING';
   if (c.includes('CALLIGRAPHY')) return 'CALLIGRAPHY';
   if (c.includes('PHONICS')) return 'PHONICS';
   if (c.includes('VEDIC')) return 'VEDIC MATHS';
-  if (c.includes('DRAWING') || c.includes('ART')) return 'DRAWING';
+  if (c.includes('DRAWING') || c.includes('FINE ART') || c.includes('ART')) return 'DRAWING';
   if (c.includes('PYTHON') || c.includes('CODING')) return 'PYTHON CODING';
+  if (c.includes('AI') || c.includes('ARTIFICIAL')) return 'ARTIFICIAL INTELLIGENCE';
+  if (c.includes('BHARATANATYAM') || c.includes('DANCE')) return 'BHARATANATYAM';
   if (c.includes('OFFICE') || c.includes('EXCEL')) return 'MS OFFICE';
   if (c.includes('HTML')) return 'HTML5';
   if (c.includes('CSS')) return 'CSS3';
@@ -552,9 +555,15 @@ export const saveStudentCustomSignature = (scopeKey, dataUrl) => {
  */
 export const readStudentUploadedQuestions = (scopeKey) => {
   if (!scopeKey) return null;
+  if (typeof window !== 'undefined' && window.__BSEL_QUESTIONS_CACHE__?.[scopeKey]) {
+    return window.__BSEL_QUESTIONS_CACHE__[scopeKey];
+  }
   try {
     const key = `bsel_student_questions_file_${scopeKey}`;
-    const saved = localStorage.getItem(key);
+    let saved = localStorage.getItem(key);
+    if (!saved && typeof sessionStorage !== 'undefined') {
+      saved = sessionStorage.getItem(key);
+    }
     if (saved) {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed)) {
@@ -572,12 +581,34 @@ export const readStudentUploadedQuestions = (scopeKey) => {
 
 export const saveStudentUploadedQuestions = (scopeKey, fileData) => {
   if (!scopeKey) return;
-  try {
-    const key = `bsel_student_questions_file_${scopeKey}`;
+  const key = `bsel_student_questions_file_${scopeKey}`;
+
+  // Always keep in window cache so in-memory access never fails
+  if (typeof window !== 'undefined') {
+    window.__BSEL_QUESTIONS_CACHE__ = window.__BSEL_QUESTIONS_CACHE__ || {};
     if (fileData && (Array.isArray(fileData) ? fileData.length > 0 : true)) {
-      localStorage.setItem(key, JSON.stringify(fileData));
+      window.__BSEL_QUESTIONS_CACHE__[scopeKey] = fileData;
     } else {
-      localStorage.removeItem(key);
+      delete window.__BSEL_QUESTIONS_CACHE__[scopeKey];
+    }
+  }
+
+  try {
+    if (fileData && (Array.isArray(fileData) ? fileData.length > 0 : true)) {
+      const serialized = JSON.stringify(fileData);
+      try {
+        localStorage.setItem(key, serialized);
+      } catch (quotaErr) {
+        console.warn('LocalStorage quota exceeded for question file, saving in sessionStorage:', quotaErr);
+        try {
+          if (typeof sessionStorage !== 'undefined') {
+            sessionStorage.setItem(key, serialized);
+          }
+        } catch (_) {}
+      }
+    } else {
+      try { localStorage.removeItem(key); } catch (_) {}
+      try { if (typeof sessionStorage !== 'undefined') sessionStorage.removeItem(key); } catch (_) {}
     }
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('bsel_student_questions_updated', {
@@ -586,7 +617,6 @@ export const saveStudentUploadedQuestions = (scopeKey, fileData) => {
     }
   } catch (e) {
     console.warn('Failed to save student uploaded questions:', e);
-    throw e;
   }
 };
 

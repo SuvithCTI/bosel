@@ -459,6 +459,97 @@ function BselWatermark() {
   );
 }
 
+// Converts an image URL into a PNG data URL that the PDF renderer can always draw.
+// Decoding happens in the browser, so the server's Content-Type header and the
+// file format (JPEG, PNG, WebP, AVIF, GIF) no longer matter.
+const urlToDataUrl = async (url) => {
+  if (!url || url.startsWith('data:')) return url;
+
+  const loadImage = (src, useCors) =>
+    new Promise((resolve, reject) => {
+      const el = new Image();
+      if (useCors) el.crossOrigin = 'anonymous';
+      el.onload = () => resolve(el);
+      el.onerror = () => reject(new Error('Image load failed'));
+      el.src = src;
+    });
+
+  // Redraws the decoded image onto a canvas and exports it as PNG
+  const redrawAsPng = (img) => {
+    const maxSide = 1200;
+    const w = img.naturalWidth || img.width;
+    const h = img.naturalHeight || img.height;
+    if (!w || !h) throw new Error('Image has no size');
+
+    const scale = Math.min(1, maxSide / Math.max(w, h));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(w * scale));
+    canvas.height = Math.max(1, Math.round(h * scale));
+
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL('image/png');
+  };
+
+  // Attempt 1: fetch the bytes, then decode them from a same-origin blob URL
+  try {
+    const res = await fetch(url, { mode: 'cors', cache: 'no-cache' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const blob = await res.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    try {
+      const img = await loadImage(objectUrl, false);
+      return redrawAsPng(img);
+    } finally {
+      URL.revokeObjectURL(objectUrl);
+    }
+  } catch (fetchErr) {
+    console.warn('Fetch route failed for', url, fetchErr.message);
+  }
+
+  // Attempt 2: load through an <img> with crossOrigin, then draw to canvas
+  try {
+    const img = await loadImage(url, true);
+    return redrawAsPng(img); // throws a SecurityError if the server blocks CORS
+  } catch (imgErr) {
+    console.error('Could not inline image for PDF:', url, imgErr.message);
+    return url;
+  }
+};
+
+// Swaps every <image> href inside the sheet for a data URL.
+// Returns a function that restores the original attributes.
+const inlineSheetImages = async (root) => {
+  const XLINK = 'http://www.w3.org/1999/xlink';
+  const images = Array.from(root.querySelectorAll('image'));
+
+  const originals = images.map((el) => ({
+    el,
+    href: el.getAttribute('href'),
+    xlink: el.getAttributeNS(XLINK, 'href'),
+  }));
+
+  await Promise.all(
+    originals.map(async ({ el, href, xlink }) => {
+      const source = href || xlink;
+      if (!source) return;
+      const dataUrl = await urlToDataUrl(source);
+      el.setAttribute('href', dataUrl);
+      el.setAttributeNS(XLINK, 'xlink:href', dataUrl);
+    })
+  );
+
+  return () => {
+    originals.forEach(({ el, href, xlink }) => {
+      if (href === null) el.removeAttribute('href');
+      else el.setAttribute('href', href);
+      if (xlink === null || xlink === '') el.removeAttributeNS(XLINK, 'href');
+      else el.setAttributeNS(XLINK, 'xlink:href', xlink);
+    });
+  };
+};
+
 // ============================================================
 // OFFICIAL MARKSHEET COMPONENT
 // ============================================================
@@ -782,7 +873,27 @@ export default function OfficialMarksheetView({
     student.district ||
     'Tenkasi, Tamil Nadu';
 
-  const photoUrl = uploadedPhoto || getStudentPhotoUrl(student);
+  // Photo source: same priority the certificate uses, so both documents show the same photo.
+  // 1) photo uploaded in this session, 2) photo stored on the student record,
+  // 3) photo cached in localStorage for this registration number, 4) the generic resolver.
+  const resolvePhotoUrl = () => {
+    if (uploadedPhoto) return uploadedPhoto;
+
+    const direct = student?.photo_url || student?.photoUrl || student?.studentPhoto || student?.photo;
+    if (direct) return direct;
+
+    if (typeof window !== 'undefined') {
+      try {
+        const reg = String(regNo || '').trim();
+        const cached = reg ? localStorage.getItem(`bsel_photo_${reg}`) : null;
+        if (cached) return cached;
+      } catch {}
+    }
+
+    return getStudentPhotoUrl(student);
+  };
+
+  const photoUrl = resolvePhotoUrl();
 
   // QR Code Verification URL generation for marksheet (same standard as Certificate)
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState('');
@@ -940,11 +1051,14 @@ export default function OfficialMarksheetView({
     if (!sheetRef.current || isGeneratingPdf) return;
 
     setIsGeneratingPdf(true);
+    let restoreImages = null;
 
     try {
       const safeName = studentName.replace(/[^a-zA-Z0-9]/g, '_');
-
       const filename = `BSEL_Marksheet_${regNo}_${safeName}.pdf`;
+
+      // Make logos, seal, signature, and photo renderable in the PDF
+      restoreImages = await inlineSheetImages(sheetRef.current);
 
       await exportPdfFromElement(sheetRef.current, {
         filename,
@@ -957,6 +1071,7 @@ export default function OfficialMarksheetView({
       console.error('PDF Generation failed:', err);
       alert('Unable to generate PDF. Please try again.');
     } finally {
+      if (restoreImages) restoreImages();
       setIsGeneratingPdf(false);
     }
   };

@@ -371,6 +371,7 @@ export default function QuestionPaperCoverPage({
       style={{
         minHeight: '1024px',
         fontFamily: "'Times New Roman', Times, Georgia, serif",
+        touchAction: 'pan-y'
       }}
     >
       {/* Outer Double Frame: Dark Blue Border with Corner Rectangles */}
@@ -758,14 +759,14 @@ export default function QuestionPaperCoverPage({
                 {/* Total Marks & Summary Row */}
                 <tr className="bg-white font-bold text-slate-950 text-[11px] sm:text-xs border-t-2 border-[#0c2d58] h-6 sm:h-7">
                   <td colSpan={2} className="border-r border-[#0c2d58] px-3 text-right font-black uppercase tracking-wider font-sans">
-                    Total Marks
+                    TOTAL MARKS
                   </td>
                   <td className="border-r border-[#0c2d58] px-2 bg-white"></td>
                   <td className="border-r border-[#0c2d58] px-2 font-black uppercase tracking-wider font-sans bg-white">
-                    Percentage
+                    PERCENTAGE
                   </td>
                   <td className="px-2 font-black uppercase tracking-wider font-sans bg-white">
-                    Grade
+                    GRADE
                   </td>
                 </tr>
               </tbody>
@@ -782,13 +783,13 @@ export default function QuestionPaperCoverPage({
                 className="px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-center font-sans !text-white"
                 style={{ backgroundColor: '#0c2d58', color: '#ffffff' }}
               >
-                Remarks
+                REMARKS
               </div>
               <div className="flex-1 min-h-[50px] p-2 flex items-center justify-center">
                 {/* Blank space for evaluator marks */}
               </div>
-              <div className="p-1 text-center border-t border-slate-200 bg-slate-50">
-                <span className="text-[8px] font-bold text-slate-500 italic">
+              <div className="p-1 text-center border-t border-slate-200 bg-white">
+                <span className="text-[8px] font-bold text-[#a83232] italic font-serif">
                   (Results not officially certified)
                 </span>
               </div>
@@ -801,7 +802,7 @@ export default function QuestionPaperCoverPage({
                   GEN. INSTRUCTIONS
                 </h3>
                 <ol className="list-decimal list-inside text-[8.5px] sm:text-[9.5px] text-slate-800 font-medium space-y-0.5 mt-1 leading-snug" style={NUMBER_FONT_STYLE}>
-                  <li>Rule points must be observed strictly during several exam actions.</li>
+                  <li>Rule points must be observed strictly during several exam sections.</li>
                   <li>Answers must be written clearly on the provided paper.</li>
                   <li>Do not overwrite or make double markings on test sums.</li>
                   <li>Complete each section within the allotted 10 minutes duration.</li>
@@ -905,7 +906,7 @@ export default function QuestionPaperCoverPage({
               </div>
               <div className="w-full border-b border-slate-700 pb-0.5 mb-1" />
               <span className="text-[10px] sm:text-[10.5px] font-black text-slate-900 uppercase tracking-wide font-sans leading-tight">
-                Authorized Signature
+                AUTHORIZED SIGNATURE
               </span>
             </div>
           </div>

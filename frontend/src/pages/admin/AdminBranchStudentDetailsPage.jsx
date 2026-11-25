@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
   Users,
   Search,
-  CheckCircle2,
   Clock,
   Trash2,
   Download,
@@ -259,9 +258,9 @@ export const getStoredStudentEnquiries = () => {
         fatherName: parent,
         courseName: u.program || u.courseName || 'Abacus Speed Arithmetic',
         program: u.program || u.courseName || 'Abacus Speed Arithmetic',
-        grade: u.grade || u.level || u.courseLevel || 'Level 1',
-        level: u.level || u.grade || u.courseLevel || 'Level 1',
-        courseLevel: u.courseLevel || u.level || u.grade || 'Level 1',
+        grade: (Array.isArray(u.selectedCourses) && u.selectedCourses[0]?.level) || (Array.isArray(u.courses) && u.courses[0]?.level) || u.level || u.courseLevel || u.grade || ((u.program || u.courseName || '').match(/(?:Level|Lvl|L|Module|Stage)\s*(\d+)/i) ? `Level ${(u.program || u.courseName).match(/(?:Level|Lvl|L|Module|Stage)\s*(\d+)/i)[1]}` : 'Level 1'),
+        level: (Array.isArray(u.selectedCourses) && u.selectedCourses[0]?.level) || (Array.isArray(u.courses) && u.courses[0]?.level) || u.level || u.courseLevel || u.grade || ((u.program || u.courseName || '').match(/(?:Level|Lvl|L|Module|Stage)\s*(\d+)/i) ? `Level ${(u.program || u.courseName).match(/(?:Level|Lvl|L|Module|Stage)\s*(\d+)/i)[1]}` : 'Level 1'),
+        courseLevel: (Array.isArray(u.selectedCourses) && u.selectedCourses[0]?.level) || (Array.isArray(u.courses) && u.courses[0]?.level) || u.courseLevel || u.level || u.grade || ((u.program || u.courseName || '').match(/(?:Level|Lvl|L|Module|Stage)\s*(\d+)/i) ? `Level ${(u.program || u.courseName).match(/(?:Level|Lvl|L|Module|Stage)\s*(\d+)/i)[1]}` : 'Level 1'),
         courseDuration: u.courseDuration || u.duration || '6 Months',
         duration: u.duration || u.courseDuration || '6 Months',
         selectedCourses: Array.isArray(u.selectedCourses) ? u.selectedCourses : (Array.isArray(u.courses) ? u.courses : []),
@@ -457,10 +456,19 @@ export default function AdminBranchStudentDetailsPage({
 
     const gradeStr = String(student.grade || student.level || '').trim();
 
-    // 1. Detect Level from grade, level, or selectedCourses
+    // 1. Detect Level from grade, level, courseLevel, selectedCourses, or embedded in courseName
     let level = '';
     let levelNum = null;
-    const levelMatch = gradeStr.match(/Level\s*(\d+)/i) || String(student.level || '').match(/Level\s*(\d+)/i);
+    const rawToCheck = [
+      student.level,
+      student.courseLevel,
+      student.grade,
+      Array.isArray(student.selectedCourses) ? student.selectedCourses.map(c => c?.level).join(' ') : '',
+      student.courseName,
+      student.program
+    ].filter(Boolean).join(' ');
+
+    const levelMatch = rawToCheck.match(/(?:Level|Lvl|L|Module|Stage)\s*(\d+)/i);
     if (levelMatch) {
       levelNum = parseInt(levelMatch[1], 10);
       level = `Level ${levelNum}`;
@@ -893,19 +901,99 @@ export default function AdminBranchStudentDetailsPage({
     }));
   };
 
-  // Level selector per student
+  // Level selector per student (if manually updated)
   const handleLevelChange = (rowId, newLevel) => {
     setStudentLevels((prev) => ({ ...prev, [rowId]: newLevel }));
   };
 
+  // Fixed student admission level resolution
   const getStudentCurrentLevel = (item) => {
-    const rowId = item.id || item.admissionNo;
-    const chosen = studentLevels[rowId] || item.level || item.grade;
+    if (!item) return 'Level 1';
+    const rowId = item.id || item.admissionNo || item.userId;
+
+    // 1. If an admin explicitly overrode this row in local state
+    if (studentLevels[rowId]) {
+      return studentLevels[rowId];
+    }
+
+    // 2. Extract from selectedCourses array (from official student admission)
+    let rawLevel = '';
+    if (Array.isArray(item.selectedCourses) && item.selectedCourses.length > 0) {
+      const prog = (item.courseName || item.program || '').toLowerCase();
+      const matchedCourse = item.selectedCourses.find(c =>
+        c && c.courseName && prog.includes(c.courseName.toLowerCase())
+      ) || item.selectedCourses[0];
+
+      if (matchedCourse && (matchedCourse.level || matchedCourse.grade)) {
+        rawLevel = matchedCourse.level || matchedCourse.grade;
+      }
+    }
+
+    // 3. Check direct student level fields
+    if (!rawLevel) {
+      rawLevel = item.level || item.courseLevel || item.grade || '';
+    }
+
+    // 4. Handle combined multi-course strings, e.g. "Abacus Speed Math: Level 4 | Fine Arts: Level 1"
+    if (rawLevel && typeof rawLevel === 'string' && rawLevel.includes('|')) {
+      const parts = rawLevel.split('|');
+      const prog = (item.courseName || item.program || '').toLowerCase();
+      const matchedPart = parts.find(p => prog.includes(p.split(':')[0]?.trim().toLowerCase())) || parts[0];
+      if (matchedPart && matchedPart.includes(':')) {
+        rawLevel = matchedPart.split(':')[1]?.trim() || rawLevel;
+      }
+    }
+
+    // 5. If rawLevel is missing or generic "Level 1" / "Class 1", check if level is embedded in courseName or program, e.g. "Abacus Speed Math (Level 4) & Fine Arts"
+    if (!rawLevel || rawLevel === 'Level 1' || String(rawLevel).toLowerCase().startsWith('class')) {
+      const embeddedMatch = (item.courseName || item.program || '').match(/(?:Level|Lvl|L|Module|Stage)\s*(\d+)/i);
+      if (embeddedMatch) {
+        rawLevel = `Level ${embeddedMatch[1]}`;
+      }
+    }
+
+    // 6. Check results or events
+    if (!rawLevel || rawLevel === 'Level 1') {
+      if (Array.isArray(item.results) && item.results[0]?.level) {
+        rawLevel = item.results[0].level;
+      } else if (Array.isArray(item.events) && item.events[0]?.level) {
+        rawLevel = item.events[0].level;
+      }
+    }
+
     const available = getLevelsForProgram(item.courseName || item.program);
 
-    if (chosen && available.some(l => l.value.toLowerCase() === chosen.toLowerCase())) {
-      const match = available.find(l => l.value.toLowerCase() === chosen.toLowerCase());
-      return match ? match.value : chosen;
+    if (rawLevel) {
+      const cleanRaw = String(rawLevel).trim();
+
+      // Direct exact match
+      const exactMatch = available.find(
+        (l) => l.value.toLowerCase() === cleanRaw.toLowerCase() ||
+               l.label?.toLowerCase() === cleanRaw.toLowerCase() ||
+               l.shortLabel?.toLowerCase() === cleanRaw.toLowerCase()
+      );
+      if (exactMatch) return exactMatch.value;
+
+      // Extract number: e.g. "Level 4: Combination Formulas..." -> "Level 4"
+      const numMatch = cleanRaw.match(/(?:Level|Lvl|L|Module|Stage)\s*(\d+)/i);
+      if (numMatch) {
+        const num = numMatch[1];
+        const numLevelMatch = available.find((l) => {
+          const lNum = String(l.value || l.shortLabel || l.label).match(/\d+/);
+          return lNum && lNum[0] === num;
+        });
+        if (numLevelMatch) return numLevelMatch.value;
+        return `Level ${num}`;
+      }
+
+      // Substring match
+      const subMatch = available.find(
+        (l) => cleanRaw.toLowerCase().includes(l.value.toLowerCase()) ||
+               l.value.toLowerCase().includes(cleanRaw.toLowerCase())
+      );
+      if (subMatch) return subMatch.value;
+
+      return cleanRaw;
     }
 
     return available[0]?.value || 'Level 1';
@@ -1066,14 +1154,83 @@ export default function AdminBranchStudentDetailsPage({
     if (setViewingMergedPdfStudent) {
       setViewingMergedPdfStudent({
         students: packages,
-        autoDownload: true
+        autoDownload: true,
+        downloadMode: 'merged'
       });
     } else {
       setLocalMergedPdfData({
         students: packages,
-        autoDownload: true
+        autoDownload: true,
+        downloadMode: 'merged'
       });
     }
+  };
+
+  const handleDownloadMarksheetsOnly = () => {
+    const selected = getSelectedStudentObjects();
+    const targetStudents = selected.length > 0 ? selected : paginatedRecords;
+
+    if (targetStudents.length === 0) {
+      alert('No student records found to download marksheets.');
+      return;
+    }
+
+    const packages = buildStudentPackages(targetStudents);
+
+    showToast(`Generating marksheet(s) PDF for ${packages.length} candidate(s)...`);
+
+    const modalData = {
+      students: packages,
+      autoDownload: true,
+      downloadMode: 'marksheet'
+    };
+
+    if (setViewingMergedPdfStudent) {
+      setViewingMergedPdfStudent(modalData);
+    } else {
+      setLocalMergedPdfData(modalData);
+    }
+  };
+
+  const handleDownloadCertificatesOnly = () => {
+    const selected = getSelectedStudentObjects();
+    const targetStudents = selected.length > 0 ? selected : paginatedRecords;
+
+    if (targetStudents.length === 0) {
+      alert('No student records found to download certificates.');
+      return;
+    }
+
+    const packages = buildStudentPackages(targetStudents);
+
+    showToast(`Generating certificate(s) PDF for ${packages.length} candidate(s)...`);
+
+    const modalData = {
+      students: packages,
+      autoDownload: true,
+      downloadMode: 'certificate'
+    };
+
+    if (setViewingMergedPdfStudent) {
+      setViewingMergedPdfStudent(modalData);
+    } else {
+      setLocalMergedPdfData(modalData);
+    }
+  };
+
+  const handleOpenMergedForStudent = (item) => {
+    const packages = buildStudentPackages([item]);
+    const modalData = {
+      students: packages,
+      autoDownload: false
+    };
+
+    if (setViewingMergedPdfStudent) {
+      setViewingMergedPdfStudent(modalData);
+    } else {
+      setLocalMergedPdfData(modalData);
+    }
+    showToast(`Opening merged Certificate & Marksheet for ${item.studentName || item.name || 'Candidate'}...`);
   };
 
   return (
@@ -1169,14 +1326,6 @@ export default function AdminBranchStudentDetailsPage({
                   <>
                     <button
                       type="button"
-                      onClick={handleApproveSelected}
-                      className="px-3.5 py-2 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white transition flex items-center gap-1.5 cursor-pointer shadow-xs"
-                    >
-                      <CheckCircle2 className="w-3.5 h-3.5 text-white" />
-                      <span>Approve ({selectedIds.length})</span>
-                    </button>
-                    <button
-                      type="button"
                       onClick={handleDeleteSelected}
                       className="px-3.5 py-2 text-xs font-bold rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition flex items-center gap-1.5 cursor-pointer active:scale-95 shadow-2xs"
                     >
@@ -1187,17 +1336,40 @@ export default function AdminBranchStudentDetailsPage({
                       type="button"
                       onClick={handleMergePrintCertificates}
                       className="px-3.5 py-2 text-xs font-black rounded-xl bg-[#081d3d] hover:bg-[#0c2b5b] active:scale-95 text-white transition flex items-center gap-2 cursor-pointer shadow-xs"
+                      title="Print merged Certificate + Marksheet for selected students"
                     >
                       <Printer className="w-3.5 h-3.5 text-amber-300" />
-                      <span>Print Selected ({selectedIds.length})</span>
+                      <span>Print Merged ({selectedIds.length})</span>
                     </button>
                     <button
                       type="button"
                       onClick={handleDownloadMergedPdf}
                       className="px-3.5 py-2 text-xs font-black rounded-xl bg-sky-600 hover:bg-sky-700 active:scale-95 text-white transition flex items-center gap-2 cursor-pointer shadow-xs"
+                      title="Download merged 2-page PDF for selected students"
                     >
                       <Download className="w-3.5 h-3.5 text-white" />
                       <span>Download PDF ({selectedIds.length})</span>
+                    </button>
+                    {/* Download Marksheet(s) Separately */}
+                    <button
+                      type="button"
+                      onClick={handleDownloadMarksheetsOnly}
+                      className="px-3.5 py-2 text-xs font-black rounded-xl bg-amber-500 hover:bg-amber-600 active:scale-95 text-slate-950 transition flex items-center gap-2 cursor-pointer shadow-xs"
+                      title="Download Marksheet(s) separately as PDF for selected candidate(s)"
+                    >
+                      <FileText className="w-3.5 h-3.5 text-slate-950" />
+                      <span>Marksheet ({selectedIds.length})</span>
+                    </button>
+
+                    {/* Download Certificate(s) Separately */}
+                    <button
+                      type="button"
+                      onClick={handleDownloadCertificatesOnly}
+                      className="px-3.5 py-2 text-xs font-black rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white transition flex items-center gap-2 cursor-pointer shadow-xs"
+                      title="Download Certificate(s) separately as PDF for selected candidate(s)"
+                    >
+                      <Award className="w-3.5 h-3.5 text-amber-200" />
+                      <span>Certificate ({selectedIds.length})</span>
                     </button>
                     <button
                       type="button"
@@ -1522,69 +1694,59 @@ export default function AdminBranchStudentDetailsPage({
                           {item.courseName || item.program || 'Course'}
                         </td>
 
-                        {/* 7. LEVEL DOCUMENTS (Level selector + Marksheet + Certificate) */}
+                        {/* 7. LEVEL DOCUMENTS (Fixed Admission Level + Merged + Separate Marksheet & Certificate) */}
                         <td className="py-3 px-3 text-center whitespace-nowrap">
-                          <div className="inline-flex items-center gap-1.5 justify-center">
+                          {(() => {
+                            const activeLvl = getStudentCurrentLevel(item);
+                            return (
+                              <div className="inline-flex items-center gap-1.5 justify-center">
 
-                            {/* Dynamic program-specific level selector */}
-                            {(() => {
-                              const progName = item.courseName || item.program || '';
-                              const availableLevels = getLevelsForProgram(progName);
-                              const activeLvl = getStudentCurrentLevel(item);
-                              return (
-                                <select
-                                  value={activeLvl}
-                                  onChange={(e) => handleLevelChange(rowId, e.target.value)}
-                                  className="px-2 py-1 text-xs font-bold text-slate-800 bg-white border border-slate-300 rounded-lg outline-none cursor-pointer hover:border-slate-400 transition"
-                                  title={`${progName} (${availableLevels.length} total levels)`}
+                                {/* Fixed Student Admission Level Badge */}
+                                <span
+                                  className="px-2.5 py-1 text-xs font-black bg-slate-100 text-slate-800 border border-slate-300 rounded-lg shadow-2xs whitespace-nowrap select-none"
+                                  title={`Official Admission Level: ${activeLvl}`}
                                 >
-                                  {availableLevels.map((lvl) => (
-                                    <option key={lvl.value} value={lvl.value} title={lvl.label}>
-                                      {lvl.shortLabel || lvl.value}
-                                    </option>
-                                  ))}
-                                </select>
-                              );
-                            })()}
+                                  {activeLvl}
+                                </span>
 
-                            {/* Marksheet button */}
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const activeLvl = getStudentCurrentLevel(item);
-                                const enriched = { ...item, grade: activeLvl, level: activeLvl };
-                                if (handleOpenMarksheet) {
-                                  handleOpenMarksheet(enriched);
-                                } else {
-                                  showToast(`Opening marksheet for ${displayName} (${activeLvl})`);
-                                }
-                              }}
-                              className="px-2.5 py-1 bg-[#0c234b] hover:bg-[#081d3d] active:scale-95 text-white text-[11px] font-black rounded-lg transition shadow-2xs inline-flex items-center gap-1 cursor-pointer"
-                              title="View official marksheet"
-                            >
-                              <FileText className="w-3 h-3 text-amber-300" />
-                              <span>Marksheet</span>
-                            </button>
+                                {/* Separate Marksheet Button */}
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const enriched = { ...item, grade: activeLvl, level: activeLvl, courseLevel: activeLvl };
+                                    if (handleOpenMarksheet) {
+                                      handleOpenMarksheet(enriched);
+                                    } else {
+                                      showToast(`Opening marksheet for ${displayName} (${activeLvl})`);
+                                    }
+                                  }}
+                                  className="px-2.5 py-1 bg-[#0c234b] hover:bg-[#081d3d] active:scale-95 text-white text-[11px] font-black rounded-lg transition shadow-2xs inline-flex items-center gap-1 cursor-pointer"
+                                  title="Print marksheet separately"
+                                >
+                                  <FileText className="w-3 h-3 text-amber-300" />
+                                  <span>Marksheet</span>
+                                </button>
 
-                            {/* Certificate button */}
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const activeLvl = getStudentCurrentLevel(item);
-                                const enriched = { ...item, grade: activeLvl, level: activeLvl };
-                                if (handleOpenCertForStudent) {
-                                  handleOpenCertForStudent(enriched);
-                                } else {
-                                  showToast(`Opening certificate for ${displayName} (${activeLvl})`);
-                                }
-                              }}
-                              className="px-2.5 py-1 bg-[#0c234b] hover:bg-[#081d3d] active:scale-95 text-white text-[11px] font-black rounded-lg transition shadow-2xs inline-flex items-center gap-1 cursor-pointer"
-                              title="View official certificate"
-                            >
-                              <Award className="w-3 h-3 text-sky-400" />
-                              <span>Certificate</span>
-                            </button>
-                          </div>
+                                {/* Separate Certificate Button */}
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const enriched = { ...item, grade: activeLvl, level: activeLvl, courseLevel: activeLvl };
+                                    if (handleOpenCertForStudent) {
+                                      handleOpenCertForStudent(enriched);
+                                    } else {
+                                      showToast(`Opening certificate for ${displayName} (${activeLvl})`);
+                                    }
+                                  }}
+                                  className="px-2.5 py-1 bg-[#0c234b] hover:bg-[#081d3d] active:scale-95 text-white text-[11px] font-black rounded-lg transition shadow-2xs inline-flex items-center gap-1 cursor-pointer"
+                                  title="Print certificate separately"
+                                >
+                                  <Award className="w-3 h-3 text-sky-400" />
+                                  <span>Certificate</span>
+                                </button>
+                              </div>
+                            );
+                          })()}
                         </td>
                       </tr>
                     );

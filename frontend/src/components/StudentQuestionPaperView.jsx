@@ -24,10 +24,11 @@ import {
   ChevronLeft,
   ChevronRight,
   Layers,
-  Maximize2,
-  Minimize2,
 } from 'lucide-react';
-import { exportPdfFromElement } from '../utils/pdfExport';
+import html2canvas from 'html2canvas-pro';
+import { jsPDF } from 'jspdf';
+import { PDFDocument } from 'pdf-lib';
+import { exportPdfFromElement, triggerDirectPdfDownload } from '../utils/pdfExport';
 import {
   getStudentRegisterNumber,
   getStudentPhotoUrl,
@@ -119,7 +120,7 @@ export const typeFromSeed = (seed) => {
 
 const buildDefaultDetails = (student, regNoOverride) => {
   const regNo = regNoOverride || (student ? getStudentRegisterNumber(student) : 'AB26-004, HW22-001');
-  const pType = typeFromSeed(regNo || student?.registerNumber || student?.userId || 'A');
+  const pType = student?.paperType || student?.examCategory || (student?.category && ['A', 'B', 'C', 'D', 'E'].includes(student.category) ? student.category : 'A');
 
   const course =
     student?.program ||
@@ -332,9 +333,9 @@ export default function StudentQuestionPaperView({ student, onClose }) {
   };
 
   // Mobile responsive zoom & scale calculation
-  const [zoomMode, setZoomMode] = useState('fit'); // 'fit' | 'full'
   const [windowWidth, setWindowWidth] = useState(() => (typeof window !== 'undefined' ? window.innerWidth : 1024));
-  const [measuredCoverHeight, setMeasuredCoverHeight] = useState(1050);
+  const combinedBookletRef = useRef(null);
+  const [measuredCombinedHeight, setMeasuredCombinedHeight] = useState(1100);
 
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
@@ -343,64 +344,345 @@ export default function StudentQuestionPaperView({ student, onClose }) {
   }, []);
 
   useEffect(() => {
-    if (!page1Ref.current) return;
+    if (!combinedBookletRef.current) return;
     const updateH = () => {
-      if (page1Ref.current?.offsetHeight) {
-        setMeasuredCoverHeight(page1Ref.current.offsetHeight);
+      if (combinedBookletRef.current?.offsetHeight) {
+        setMeasuredCombinedHeight(combinedBookletRef.current.offsetHeight);
       }
     };
     updateH();
     const ro = new ResizeObserver(updateH);
-    ro.observe(page1Ref.current);
+    ro.observe(combinedBookletRef.current);
     return () => ro.disconnect();
-  }, []);
+  }, [uploadedFiles, isEditMode, activeFileIndex]);
 
   const isMobileScreen = windowWidth < 768;
   const targetDocWidth = 724;
-  const availableDocWidth = Math.max(300, windowWidth - 16);
-  const docScale = isMobileScreen && zoomMode === 'fit' ? Math.min(1, Math.max(0.35, availableDocWidth / targetDocWidth)) : 1;
+  const availableDocWidth = Math.max(300, windowWidth - (isMobileScreen ? 16 : 32));
+  const docScale = windowWidth < 760 ? Math.min(1, Math.max(0.35, availableDocWidth / targetDocWidth)) : 1;
 
   const showTempMsg = (msg) => {
     setSaveSuccessMsg(msg);
     setTimeout(() => setSaveSuccessMsg(''), 3000);
   };
 
-  // Print handler - prints only Page 1
-  const handlePrint = () => {
-    window.print();
+  const [isPrinting, setIsPrinting] = useState(false);
+  const [mergedPdfUrl, setMergedPdfUrl] = useState(null);
+  const [isGeneratingPreview, setIsGeneratingPreview] = useState(false);
+  const [previewMode, setPreviewMode] = useState('merged'); // 'merged' | 'raw'
+  const mergedBlobUrlRef = useRef(null);
+
+  // Helper to convert dataUrl to Uint8Array safely without fetch overhead
+  const dataUrlToUint8Array = (dataUrl) => {
+    try {
+      const base64Index = dataUrl.indexOf(';base64,');
+      if (base64Index !== -1) {
+        const base64 = dataUrl.substring(base64Index + 8);
+        const binaryStr = atob(base64);
+        const len = binaryStr.length;
+        const bytes = new Uint8Array(len);
+        for (let i = 0; i < len; i++) {
+          bytes[i] = binaryStr.charCodeAt(i);
+        }
+        return bytes;
+      }
+    } catch (e) {
+      console.warn('dataUrlToUint8Array conversion error:', e);
+    }
+    return null;
   };
 
-  // PDF Export - exports only Page 1 (high-resolution A4)
+  // Generates a unified merged PDF Blob containing Page 1 (Cover Page) + all pages from uploaded documents (PDF / Images)
+  const generateMergedPdfBlob = async () => {
+    if (!page1Ref.current) return null;
+
+    try {
+      // 1. Render Page 1 (Question Paper Cover Page) to high-resolution PNG
+      const canvas = await html2canvas(page1Ref.current, {
+        scale: 2.0,
+        useCORS: true,
+        allowTaint: false,
+        logging: false,
+        scrollX: 0,
+        scrollY: 0,
+        windowWidth: 1024,
+        backgroundColor: '#ffffff',
+        ignoreElements: (el) => el.classList?.contains('no-print') || el.classList?.contains('print:hidden'),
+        onclone: (clonedDoc, clonedEl) => {
+          clonedEl.style.transform = 'none';
+          clonedEl.style.margin = '0 auto';
+          let p = clonedEl.parentElement;
+          while (p) {
+            if (p.style) {
+              p.style.transform = 'none';
+              p.style.height = 'auto';
+            }
+            p = p.parentElement;
+          }
+        }
+      });
+
+      let page1DataUrl = null;
+      try {
+        page1DataUrl = canvas.toDataURL('image/png');
+      } catch (_) {
+        page1DataUrl = canvas.toDataURL('image/jpeg', 0.95);
+      }
+
+      const page1Bytes = dataUrlToUint8Array(page1DataUrl) || (await fetch(page1DataUrl).then((r) => r.arrayBuffer()));
+
+      // 2. Initialize PDFDocument from pdf-lib
+      const mergedDoc = await PDFDocument.create();
+
+      // Standard A4 dimensions in PDF points: 595.28 x 841.89
+      const a4W = 595.28;
+      const a4H = 841.89;
+      const page1Image = await mergedDoc.embedPng(page1Bytes);
+      const coverPage = mergedDoc.addPage([a4W, a4H]);
+
+      const margin = 14;
+      const availW = a4W - margin * 2;
+      const availH = a4H - margin * 2;
+      const aspect = page1Image.width / page1Image.height;
+      let rW = availW;
+      let rH = availW / aspect;
+      if (rH > availH) {
+        rH = availH;
+        rW = availH * aspect;
+      }
+      const posX = (a4W - rW) / 2;
+      const posY = (a4H - rH) / 2;
+
+      coverPage.drawImage(page1Image, {
+        x: posX,
+        y: posY,
+        width: rW,
+        height: rH,
+      });
+
+      // 3. Append uploaded documents (PDFs or Images)
+      for (let i = 0; i < uploadedFiles.length; i++) {
+        const file = uploadedFiles[i];
+        if (!file?.dataUrl) continue;
+
+        const isPdf = file.fileType?.includes('pdf') || file.fileName?.toLowerCase().endsWith('.pdf');
+        const isImage = file.fileType?.startsWith('image/') || file.fileName?.match(/\.(png|jpe?g|webp|gif|bmp|svg)$/i);
+
+        if (isPdf) {
+          try {
+            const pdfBytes = dataUrlToUint8Array(file.dataUrl) || (await fetch(file.dataUrl).then((r) => r.arrayBuffer()));
+            const donorDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
+            const donorPageIndices = donorDoc.getPageIndices();
+            const copiedPages = await mergedDoc.copyPages(donorDoc, donorPageIndices);
+            copiedPages.forEach((donorPage) => {
+              mergedDoc.addPage(donorPage);
+            });
+          } catch (pdfErr) {
+            console.warn('Could not merge uploaded PDF document directly:', pdfErr);
+          }
+        } else if (isImage) {
+          try {
+            const img = new Image();
+            img.src = file.dataUrl;
+            await new Promise((resolve, reject) => {
+              if (img.complete) resolve();
+              else {
+                img.onload = resolve;
+                img.onerror = reject;
+              }
+            });
+
+            // Draw onto canvas to normalize to PNG format
+            const offscreen = document.createElement('canvas');
+            offscreen.width = img.naturalWidth || 800;
+            offscreen.height = img.naturalHeight || 1100;
+            const ctx = offscreen.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            const normalizedPng = offscreen.toDataURL('image/png');
+            const imgBytes = dataUrlToUint8Array(normalizedPng) || (await fetch(normalizedPng).then((r) => r.arrayBuffer()));
+            const embeddedImg = await mergedDoc.embedPng(imgBytes);
+
+            const imgPage = mergedDoc.addPage([a4W, a4H]);
+            const imgAspect = embeddedImg.width / embeddedImg.height;
+            let imgW = availW;
+            let imgH = availW / imgAspect;
+            if (imgH > availH) {
+              imgH = availH;
+              imgW = availH * imgAspect;
+            }
+            const imgX = (a4W - imgW) / 2;
+            const imgY = (a4H - imgH) / 2;
+
+            imgPage.drawImage(embeddedImg, {
+              x: imgX,
+              y: imgY,
+              width: imgW,
+              height: imgH,
+            });
+          } catch (imgErr) {
+            console.warn('Could not embed uploaded image:', imgErr);
+          }
+        }
+      }
+
+      const mergedBytes = await mergedDoc.save();
+      return new Blob([mergedBytes], { type: 'application/pdf' });
+    } catch (err) {
+      console.error('generateMergedPdfBlob error:', err);
+      return null;
+    }
+  };
+
+  // PDF Export - merges Question Paper 1st page + uploaded document(s) into one single PDF
   const handleDownloadPdf = async () => {
     if (isGeneratingPdf || !page1Ref.current) return;
     setIsGeneratingPdf(true);
 
-    const prevZoom = zoomMode;
-    if (prevZoom !== 'full') {
-      setZoomMode('full');
-      await new Promise(resolve => setTimeout(resolve, 80));
-    }
-
     try {
-      const filename = `${studentDetails.regNo}_${studentDetails.studentName.replace(/\s+/g, '_')}_BSEL_Question_Paper.pdf`;
+      showTempMsg('Merging question paper with uploaded document...');
+      const mergedBlob = await generateMergedPdfBlob();
+      if (!mergedBlob) throw new Error('Could not create merged PDF.');
 
-      await exportPdfFromElement(page1Ref.current, {
-        filename,
-        orientation: 'portrait',
-        margin: 5,
-        scale: 2.2,
-      });
-      showTempMsg('Question paper PDF exported successfully!');
+      const filename = `${studentDetails.regNo}_${studentDetails.studentName.replace(/\s+/g, '_')}_Combined_Question_Paper.pdf`;
+      const blobUrl = URL.createObjectURL(mergedBlob);
+      const downloadLink = document.createElement('a');
+      downloadLink.href = blobUrl;
+      downloadLink.download = filename;
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      document.body.removeChild(downloadLink);
+
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 4000);
+      showTempMsg('Merged question paper PDF downloaded successfully!');
     } catch (err) {
       console.error('PDF export error:', err);
-      showTempMsg('Could not export PDF. Please try printing to PDF.');
-    } finally {
-      if (prevZoom !== 'full') {
-        setZoomMode(prevZoom);
+      // Fallback to exportPdfFromElement
+      try {
+        const filename = `${studentDetails.regNo}_${studentDetails.studentName.replace(/\s+/g, '_')}_BSEL_Question_Paper.pdf`;
+        await exportPdfFromElement(page1Ref.current, {
+          filename,
+          orientation: 'portrait',
+          margin: 5,
+          scale: 2.2,
+        });
+        showTempMsg('Exported question paper cover page.');
+      } catch {
+        showTempMsg('Could not export PDF. Please try printing.');
       }
+    } finally {
       setIsGeneratingPdf(false);
     }
   };
+
+  // Print handler - prints merged document (Page 1 + uploaded PDF / images)
+  const handlePrint = async () => {
+    if (uploadedFiles.length === 0) {
+      window.print();
+      return;
+    }
+
+    setIsPrinting(true);
+    showTempMsg('Preparing merged question paper for printing...');
+    try {
+      const mergedBlob = await generateMergedPdfBlob();
+      if (!mergedBlob) {
+        window.print();
+        return;
+      }
+
+      const blobUrl = URL.createObjectURL(mergedBlob);
+      const printIframe = document.createElement('iframe');
+      printIframe.style.position = 'fixed';
+      printIframe.style.top = '-9999px';
+      printIframe.style.left = '-9999px';
+      printIframe.style.width = '1px';
+      printIframe.style.height = '1px';
+      printIframe.style.border = 'none';
+      printIframe.src = blobUrl;
+      document.body.appendChild(printIframe);
+
+      printIframe.onload = () => {
+        setTimeout(() => {
+          try {
+            printIframe.contentWindow?.focus();
+            printIframe.contentWindow?.print();
+          } catch (printErr) {
+            console.warn('Iframe print failed, opening popup print window:', printErr);
+            const win = window.open(blobUrl, '_blank');
+            win?.focus();
+            win?.print();
+          }
+          setTimeout(() => {
+            document.body.removeChild(printIframe);
+            URL.revokeObjectURL(blobUrl);
+          }, 60000);
+        }, 400);
+      };
+    } catch (err) {
+      console.error('Print generation failed:', err);
+      window.print();
+    } finally {
+      setIsPrinting(false);
+    }
+  };
+
+  // Live merged PDF preview generator: compiles Page 1 + uploaded files into a single preview starting from 1st page
+  useEffect(() => {
+    let isCancelled = false;
+
+    const createPreview = async () => {
+      if (uploadedFiles.length === 0 || !page1Ref.current) {
+        if (mergedBlobUrlRef.current) {
+          URL.revokeObjectURL(mergedBlobUrlRef.current);
+          mergedBlobUrlRef.current = null;
+        }
+        setMergedPdfUrl(null);
+        return;
+      }
+
+      setIsGeneratingPreview(true);
+      try {
+        await new Promise((resolve) => setTimeout(resolve, 200));
+        const blob = await generateMergedPdfBlob();
+        if (blob && !isCancelled) {
+          if (mergedBlobUrlRef.current) {
+            URL.revokeObjectURL(mergedBlobUrlRef.current);
+          }
+          const url = URL.createObjectURL(blob);
+          mergedBlobUrlRef.current = url;
+          setMergedPdfUrl(url);
+        }
+      } catch (err) {
+        console.error('Error generating merged preview:', err);
+      } finally {
+        if (!isCancelled) {
+          setIsGeneratingPreview(false);
+        }
+      }
+    };
+
+    createPreview();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [
+    uploadedFiles,
+    activeFileIndex,
+    studentDetails.paperType,
+    studentDetails.studentName,
+    studentDetails.regNo,
+    studentDetails.course,
+    studentDetails.level,
+  ]);
+
+  useEffect(() => {
+    return () => {
+      if (mergedBlobUrlRef.current) {
+        URL.revokeObjectURL(mergedBlobUrlRef.current);
+      }
+    };
+  }, []);
 
   // Handler to upload one or multiple questions files (PDF, Doc, Image) for the respective student
   const handleUploadQuestionsFile = async (e) => {
@@ -447,9 +729,16 @@ export default function StudentQuestionPaperView({ student, onClose }) {
       const newItems = await Promise.all(fileList.map(readFileAsync));
       const combined = [...uploadedFiles, ...newItems];
 
-      saveStudentUploadedQuestions(scopeKey, combined);
+      // Update state first so files are immediately loaded and visible
       setUploadedFiles(combined);
       setActiveFileIndex(combined.length - newItems.length);
+
+      // Persist to storage safely
+      try {
+        saveStudentUploadedQuestions(scopeKey, combined);
+      } catch (storageErr) {
+        console.warn('Persistent storage warning (kept in memory):', storageErr);
+      }
 
       showTempMsg(`${newItems.length} question paper file(s) uploaded successfully!`);
       setTimeout(() => {
@@ -457,7 +746,7 @@ export default function StudentQuestionPaperView({ student, onClose }) {
       }, 150);
     } catch (err) {
       console.error('File reading error:', err);
-      alert('Could not process or save the file(s). Browser local storage quota may have been exceeded.');
+      alert('Could not read the selected file(s). Please try choosing another file.');
     } finally {
       if (questionsFileInputRef.current) {
         questionsFileInputRef.current.value = '';
@@ -502,6 +791,11 @@ export default function StudentQuestionPaperView({ student, onClose }) {
   };
 
   const handleViewSingleFileFullscreen = (fileItem) => {
+    if (previewMode === 'merged' && mergedPdfUrl) {
+      const win = window.open(mergedPdfUrl, '_blank');
+      win?.focus();
+      return;
+    }
     const target = fileItem || uploadedFiles[activeFileIndex];
     if (!target?.dataUrl) return;
     const win = window.open();
@@ -517,20 +811,29 @@ export default function StudentQuestionPaperView({ student, onClose }) {
 
   return (
     <div
-      className="fixed inset-0 z-[99999] isolate overflow-y-auto bg-slate-950/90 backdrop-blur-sm flex flex-col items-center justify-start py-3 px-2 sm:px-4"
-      style={{ minHeight: '100dvh' }}
+      className="fixed inset-0 z-[99999] isolate overflow-y-auto overscroll-contain bg-slate-950/90 backdrop-blur-sm flex flex-col items-center justify-start py-3 px-2 sm:px-4"
+      style={{
+        height: '100dvh',
+        maxHeight: '100dvh',
+        touchAction: 'pan-y',
+        WebkitOverflowScrolling: 'touch',
+        overscrollBehaviorY: 'contain'
+      }}
     >
       {/* Hidden file input for manual questions upload (supports multiple files) */}
       <input
         ref={questionsFileInputRef}
         type="file"
         multiple
-        accept=".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx,.txt"
+        accept="application/pdf,image/png,image/jpeg,image/webp,image/*,.pdf,.png,.jpg,.jpeg,.webp,.doc,.docx"
+        onClick={(e) => {
+          e.target.value = '';
+        }}
         onChange={handleUploadQuestionsFile}
         className="hidden"
       />
 
-      {/* Print stylesheet - prints exclusively Page 1 without any second page */}
+      {/* Print stylesheet - prints combined booklet */}
       <style>{`
         @media print {
           body * {
@@ -549,6 +852,10 @@ export default function StudentQuestionPaperView({ student, onClose }) {
             box-shadow: none !important;
             background: white !important;
           }
+          .print-page-break {
+            page-break-after: always !important;
+            break-after: page !important;
+          }
           .no-print {
             display: none !important;
           }
@@ -559,7 +866,7 @@ export default function StudentQuestionPaperView({ student, onClose }) {
           TOP ACTION TOOLBAR
           ========================================================================= */}
       <div className="no-print w-full max-w-[840px] bg-[#0c234b] text-white px-2.5 sm:px-4 py-2 sm:py-2.5 rounded-xl shadow-2xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sticky top-2 z-[100000] border border-amber-400/40 mb-3">
-        {/* Row 1 on mobile / Left on desktop: Back button & Title + mobile Zoom toggle */}
+        {/* Row 1 on mobile / Left on desktop: Back button & Title */}
         <div className="flex items-center justify-between gap-2 min-w-0">
           <div className="flex items-center gap-2 min-w-0">
             <button
@@ -574,33 +881,33 @@ export default function StudentQuestionPaperView({ student, onClose }) {
 
             <div className="flex items-center gap-1.5 text-xs font-black min-w-0">
               <BookOpen className="w-4 h-4 text-amber-400 shrink-0" />
-              <span className="truncate max-w-[140px] sm:max-w-[200px] text-white">
+              <span className="truncate max-w-[170px] sm:max-w-[260px] text-white">
                 {studentDetails.testBookletTitle}
               </span>
             </div>
           </div>
-
-          {/* Mobile Zoom / Fit Switcher */}
-          {isMobileScreen && (
-            <button
-              type="button"
-              onClick={() => setZoomMode(zoomMode === 'fit' ? 'full' : 'fit')}
-              className="px-2 py-1 bg-white/10 hover:bg-white/20 active:scale-95 text-amber-300 rounded-lg text-[11px] font-bold transition flex items-center gap-1 shrink-0 cursor-pointer border border-white/10"
-              title={zoomMode === 'fit' ? 'Switch to 100% full size' : 'Fit to screen width'}
-            >
-              {zoomMode === 'fit' ? <Maximize2 className="w-3.5 h-3.5" /> : <Minimize2 className="w-3.5 h-3.5" />}
-              <span>{zoomMode === 'fit' ? 'Fit' : '100%'}</span>
-            </button>
-          )}
         </div>
 
         {/* Row 2 on mobile / Right on desktop: Action Buttons */}
         <div className="flex items-center justify-between sm:justify-end gap-1.5 flex-wrap">
-          {/* UPLOAD QUESTIONS BUTTON */}
-          {uploadedFiles.length > 0 ? (
+          {/* UPLOAD QUESTIONS BUTTON - ALWAYS PROMINENT AND WORKING */}
+          <button
+            type="button"
+            onClick={() => questionsFileInputRef.current?.click()}
+            className="px-2.5 sm:px-3 py-1.5 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 active:scale-95 text-white rounded-lg text-xs font-black transition flex items-center gap-1.5 shadow-md cursor-pointer border border-sky-300/40"
+            title="Upload or attach question papers (PDF, Images, Word Docs)"
+          >
+            <FileUp className="w-3.5 h-3.5 text-amber-300 shrink-0" />
+            <span className="text-[11px] sm:text-xs">
+              {uploadedFiles.length > 0 ? '+ Upload More' : 'Upload Questions'}
+            </span>
+          </button>
+
+          {/* Files badge if files exist */}
+          {uploadedFiles.length > 0 && (
             <div className="flex items-center gap-1 bg-amber-400 text-slate-950 px-2 py-1 rounded-lg text-xs font-black shadow-md border border-amber-300">
               <Paperclip className="w-3.5 h-3.5 text-slate-900 shrink-0" />
-              <span className="truncate max-w-[90px] sm:max-w-[140px]" title={uploadedFiles[activeFileIndex]?.fileName || 'Question Papers'}>
+              <span className="truncate max-w-[80px] sm:max-w-[120px]" title={uploadedFiles[activeFileIndex]?.fileName || 'Question Papers'}>
                 {uploadedFiles.length === 1 ? '1 File' : `${uploadedFiles.length} Files`}
               </span>
               <button
@@ -612,35 +919,17 @@ export default function StudentQuestionPaperView({ student, onClose }) {
                 title="View attached questions"
               >
                 <Eye className="w-2.5 h-2.5" />
-                <span className="hidden sm:inline">Preview</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => questionsFileInputRef.current?.click()}
-                className="p-1 hover:bg-black/15 text-slate-950 rounded cursor-pointer transition flex items-center"
-                title="Add more files"
-              >
-                <Plus className="w-3 h-3" />
+                <span className="hidden sm:inline">View</span>
               </button>
               <button
                 type="button"
                 onClick={handleRemoveAllQuestionsFiles}
                 className="p-1 hover:bg-rose-100 text-rose-800 rounded cursor-pointer transition"
-                title="Clear all"
+                title="Clear all uploaded files"
               >
                 <X className="w-3 h-3" />
               </button>
             </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => questionsFileInputRef.current?.click()}
-              className="px-2.5 sm:px-3 py-1.5 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 active:scale-95 text-white rounded-lg text-xs font-black transition flex items-center gap-1 shadow-md cursor-pointer border border-sky-300/40"
-              title="Upload question sheet or paper"
-            >
-              <FileUp className="w-3.5 h-3.5 text-amber-300 shrink-0" />
-              <span className="text-[11px] sm:text-xs">Upload</span>
-            </button>
           )}
 
           {/* Edit Mode Toggle */}
@@ -658,26 +947,13 @@ export default function StudentQuestionPaperView({ student, onClose }) {
             <span className="text-[11px] sm:text-xs">{isEditMode ? 'Editing' : 'Edit'}</span>
           </button>
 
-          {/* Desktop Zoom toggle */}
-          {!isMobileScreen && (
-            <button
-              type="button"
-              onClick={() => setZoomMode(zoomMode === 'fit' ? 'full' : 'fit')}
-              className="px-2 py-1.5 bg-white/10 hover:bg-white/20 active:scale-95 text-amber-300 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer border border-white/10"
-              title={zoomMode === 'fit' ? 'Zoom to 100%' : 'Fit to container'}
-            >
-              {zoomMode === 'fit' ? <Maximize2 className="w-3.5 h-3.5" /> : <Minimize2 className="w-3.5 h-3.5" />}
-              <span>{zoomMode === 'fit' ? 'Fit' : '100%'}</span>
-            </button>
-          )}
-
           {/* Download PDF */}
           <button
             type="button"
             onClick={handleDownloadPdf}
-            disabled={isGeneratingPdf}
+            disabled={isGeneratingPdf || isPrinting}
             className="px-2.5 py-1.5 bg-amber-400 hover:bg-amber-300 active:scale-95 text-slate-950 rounded-lg text-xs font-black transition flex items-center gap-1 shadow-sm cursor-pointer disabled:opacity-50"
-            title="Export Question Paper as PDF"
+            title="Download Merged Question Paper as PDF (Cover Page + Uploaded Documents)"
           >
             {isGeneratingPdf ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
             <span>PDF</span>
@@ -687,10 +963,11 @@ export default function StudentQuestionPaperView({ student, onClose }) {
           <button
             type="button"
             onClick={handlePrint}
-            className="p-1.5 bg-white/15 hover:bg-white/25 active:scale-95 text-white rounded-lg transition cursor-pointer"
-            title="Print Question Paper"
+            disabled={isPrinting || isGeneratingPdf}
+            className="p-1.5 bg-white/15 hover:bg-white/25 active:scale-95 text-white rounded-lg transition cursor-pointer disabled:opacity-50"
+            title="Print Merged Question Paper (Cover Page + Uploaded Documents)"
           >
-            <Printer className="w-4 h-4" />
+            {isPrinting ? <Loader2 className="w-4 h-4 animate-spin text-amber-300" /> : <Printer className="w-4 h-4" />}
           </button>
         </div>
       </div>
@@ -768,15 +1045,14 @@ export default function StudentQuestionPaperView({ student, onClose }) {
       )}
 
       {/* =========================================================================
-          PRINTABLE & VIEWABLE QUESTION PAPER (PAGE 1 ONLY)
+          PRINTABLE & VIEWABLE COMBINED QUESTION PAPER BOOKLET
           ========================================================================= */}
       <div
-        className="printable-booklet w-full flex justify-center"
+        className="printable-booklet w-full flex justify-center pb-12"
         style={{
-          overflowX: zoomMode === 'full' ? 'auto' : 'hidden',
-          overflowY: 'visible',
+          touchAction: 'pan-y',
           WebkitOverflowScrolling: 'touch',
-          height: docScale < 1 ? `${Math.ceil(measuredCoverHeight * docScale) + 8}px` : 'auto',
+          minHeight: docScale < 1 ? `${Math.ceil(measuredCombinedHeight * docScale) + 40}px` : 'auto',
         }}
       >
         <div
@@ -785,31 +1061,71 @@ export default function StudentQuestionPaperView({ student, onClose }) {
             minWidth: `${targetDocWidth}px`,
             transform: docScale < 1 ? `scale(${docScale})` : 'none',
             transformOrigin: 'top center',
-            marginBottom: docScale < 1 ? `-${Math.round(measuredCoverHeight * (1 - docScale))}px` : 0,
+            marginBottom: docScale < 1 ? `-${Math.round(measuredCombinedHeight * (1 - docScale))}px` : 0,
             transition: 'transform 0.15s ease-out',
+            touchAction: 'pan-y',
           }}
         >
           <div
-            ref={page1Ref}
-            className="print-page-1 relative block w-[724px] max-w-[724px] mx-auto"
+            ref={combinedBookletRef}
+            className="w-[724px] max-w-[724px] mx-auto bg-white rounded-xl shadow-2xl border border-slate-300 overflow-hidden flex flex-col"
+            style={{ touchAction: 'pan-y' }}
           >
-            <QuestionPaperCoverPage
-              student={student}
-              details={studentDetails}
-              editMode={isEditMode}
-              onDetailChange={updateDetail}
-            />
-          </div>
-        </div>
-      </div>
+            {/* PAGE 1: TEST BOOKLET COVER PAGE */}
+            <div
+              ref={page1Ref}
+              className="print-page-1 print-page-break relative block w-[724px] max-w-[724px] mx-auto"
+            >
+              <QuestionPaperCoverPage
+                student={student}
+                details={studentDetails}
+                editMode={isEditMode}
+                onDetailChange={updateDetail}
+              />
+            </div>
 
-      {/* =========================================================================
-          ATTACHED QUESTIONS FILE SECTION (FOR RESPECTIVE STUDENT - SCREEN VIEW)
-          ========================================================================= */}
-      <div 
-        ref={attachedQuestionsRef}
-        className="no-print w-full max-w-[724px] mt-4 mb-8 bg-white border border-slate-300 rounded-xl p-4 shadow-xl"
-      >
+            {/* SEAMLESS BOOKLET CONNECTION / PERFORATION DIVIDER */}
+            <div className="no-print relative w-full bg-slate-100 py-2.5 px-4 border-t-2 border-b-2 border-dashed border-slate-300 flex items-center justify-between text-slate-800">
+              <div className="flex items-center gap-2">
+                <BookOpen className="w-4 h-4 text-sky-700" />
+                <span className="text-xs font-black uppercase tracking-wider text-slate-900 font-sans">
+                  Question Paper & Exam Questions Section
+                </span>
+                {uploadedFiles.length > 0 && (
+                  <span className="bg-amber-100 text-amber-900 px-2 py-0.5 rounded-full text-[10px] font-black border border-amber-300 font-sans">
+                    {uploadedFiles.length} Page{uploadedFiles.length > 1 ? 's' : ''} Attached
+                  </span>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => questionsFileInputRef.current?.click()}
+                  className="px-2.5 py-1 bg-[#0c234b] hover:bg-[#123068] text-white rounded-lg text-[11px] font-bold transition flex items-center gap-1 cursor-pointer shadow-xs active:scale-95 font-sans"
+                >
+                  <Plus className="w-3 h-3 text-amber-400" />
+                  <span>{uploadedFiles.length > 0 ? 'Add More' : 'Upload Questions'}</span>
+                </button>
+                {uploadedFiles.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={handleRemoveAllQuestionsFiles}
+                    className="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg text-[11px] font-bold transition flex items-center gap-1 cursor-pointer font-sans"
+                    title="Remove all uploaded questions"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                    <span>Clear</span>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* ATTACHED QUESTIONS FILE SECTION (COMBINED DIRECTLY INSIDE BOOKLET) */}
+            <div 
+              ref={attachedQuestionsRef}
+              className="w-full bg-white p-4 sm:p-5"
+            >
         <div className="flex items-center justify-between pb-3 border-b border-slate-200 gap-2 flex-wrap">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-sky-100 text-sky-700 flex items-center justify-center font-bold shrink-0">
@@ -953,7 +1269,7 @@ export default function StudentQuestionPaperView({ student, onClose }) {
                     type="button"
                     onClick={() => handleViewSingleFileFullscreen(uploadedFiles[activeFileIndex])}
                     className="px-2.5 py-1.5 bg-sky-600 hover:bg-sky-500 text-white rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer shadow-2xs"
-                    title="Open in new window / tab"
+                    title={previewMode === 'merged' ? 'Open merged booklet starting from 1st page in new tab' : 'Open file in new window / tab'}
                   >
                     <Eye className="w-3.5 h-3.5" />
                     <span>Fullscreen</span>
@@ -961,9 +1277,9 @@ export default function StudentQuestionPaperView({ student, onClose }) {
 
                   <button
                     type="button"
-                    onClick={() => handleDownloadSingleFile(uploadedFiles[activeFileIndex])}
+                    onClick={previewMode === 'merged' ? handleDownloadPdf : () => handleDownloadSingleFile(uploadedFiles[activeFileIndex])}
                     className="px-2.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer shadow-2xs"
-                    title="Download active file"
+                    title={previewMode === 'merged' ? 'Download merged PDF starting from 1st page' : 'Download active file'}
                   >
                     <Download className="w-3.5 h-3.5" />
                     <span>Download</span>
@@ -981,34 +1297,88 @@ export default function StudentQuestionPaperView({ student, onClose }) {
               </div>
             )}
 
-            {/* LIVE AUTOMATIC EMBEDDED PREVIEW FOR ACTIVE FILE */}
+            {/* LIVE AUTOMATIC EMBEDDED PREVIEW (STARTS FROM 1ST PAGE) */}
             {uploadedFiles[activeFileIndex] && (
               <div className="border border-slate-300 rounded-xl overflow-hidden bg-slate-900/5 shadow-sm">
-                <div className="bg-[#0c234b] text-white text-xs font-bold px-3.5 py-2 flex items-center justify-between">
-                  <span className="flex items-center gap-1.5 text-amber-300">
-                    <Eye className="w-3.5 h-3.5" />
-                    <span>Previewing File {activeFileIndex + 1} of {uploadedFiles.length}</span>
-                  </span>
-                  <span className="text-[11px] font-normal text-slate-200 truncate max-w-[200px] sm:max-w-xs">
-                    {uploadedFiles[activeFileIndex].fileName}
-                  </span>
+                <div className="bg-[#0c234b] text-white text-xs font-bold px-3.5 py-2 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="flex items-center gap-1.5 text-amber-300">
+                      <Eye className="w-3.5 h-3.5" />
+                      <span>
+                        {previewMode === 'merged'
+                          ? 'Previewing Merged Booklet (From 1st Page)'
+                          : `Previewing Uploaded File (${activeFileIndex + 1} of ${uploadedFiles.length})`}
+                      </span>
+                    </span>
+                    {previewMode === 'merged' && (
+                      <span className="bg-emerald-500/25 text-emerald-300 border border-emerald-400/30 px-2 py-0.5 rounded-full text-[10px] font-black">
+                        Cover Page + Upload Merged
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Switcher: Merged (Cover + Upload) vs Raw Uploaded File */}
+                  <div className="flex items-center gap-1 bg-white/10 p-0.5 rounded-lg text-[11px] font-bold">
+                    <button
+                      type="button"
+                      onClick={() => setPreviewMode('merged')}
+                      className={`px-2 py-1 rounded transition cursor-pointer ${
+                        previewMode === 'merged'
+                          ? 'bg-amber-400 text-slate-950 font-black shadow-xs'
+                          : 'text-slate-300 hover:text-white'
+                      }`}
+                    >
+                      Merged (From 1st Page)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPreviewMode('raw')}
+                      className={`px-2 py-1 rounded transition cursor-pointer ${
+                        previewMode === 'raw'
+                          ? 'bg-amber-400 text-slate-950 font-black shadow-xs'
+                          : 'text-slate-300 hover:text-white'
+                      }`}
+                    >
+                      Uploaded File Only
+                    </button>
+                  </div>
                 </div>
 
-                <div className="p-2 sm:p-3 flex items-center justify-center bg-slate-50 min-h-[350px]">
-                  {uploadedFiles[activeFileIndex].fileType?.startsWith('image/') || uploadedFiles[activeFileIndex].fileName?.match(/\.(png|jpe?g|webp|gif|bmp|svg)$/i) ? (
-                    <div className="w-full flex items-center justify-center bg-white border border-slate-200 rounded-lg p-2.5 shadow-inner">
+                <div className="p-2 sm:p-3 flex items-center justify-center bg-slate-50 min-h-[450px]">
+                  {previewMode === 'merged' && mergedPdfUrl ? (
+                    <div className="w-full h-[700px] bg-white border border-slate-200 rounded-lg overflow-hidden shadow-inner">
+                      <iframe
+                        src={`${mergedPdfUrl}#toolbar=1&navpanes=0&page=1`}
+                        title="Merged Question Paper Booklet"
+                        className="w-full h-full border-0"
+                      />
+                    </div>
+                  ) : uploadedFiles[activeFileIndex]?.fileType?.startsWith('image/') || uploadedFiles[activeFileIndex]?.fileName?.match(/\.(png|jpe?g|webp|gif|bmp|svg)$/i) ? (
+                    <div className="w-full flex flex-col items-center justify-center bg-white border border-slate-200 rounded-lg p-2.5 shadow-inner">
+                      {isGeneratingPreview && (
+                        <div className="w-full bg-amber-50 text-amber-900 border border-amber-200 rounded px-3 py-1 mb-2 text-xs font-bold flex items-center gap-1.5 animate-pulse">
+                          <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-600" />
+                          <span>Compiling 1st page merged preview...</span>
+                        </div>
+                      )}
                       <img
                         src={uploadedFiles[activeFileIndex].dataUrl}
                         alt={uploadedFiles[activeFileIndex].fileName}
                         className="max-h-[750px] w-auto max-w-full object-contain rounded"
                       />
                     </div>
-                  ) : uploadedFiles[activeFileIndex].fileType?.includes('pdf') || uploadedFiles[activeFileIndex].fileName?.endsWith('.pdf') ? (
-                    <div className="w-full h-[650px] bg-white border border-slate-200 rounded-lg overflow-hidden shadow-inner">
+                  ) : uploadedFiles[activeFileIndex]?.fileType?.includes('pdf') || uploadedFiles[activeFileIndex]?.fileName?.endsWith('.pdf') ? (
+                    <div className="w-full h-[650px] bg-white border border-slate-200 rounded-lg overflow-hidden shadow-inner flex flex-col">
+                      {isGeneratingPreview && (
+                        <div className="w-full bg-amber-50 text-amber-900 border-b border-amber-200 px-3 py-1 text-xs font-bold flex items-center gap-1.5 animate-pulse shrink-0">
+                          <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-600" />
+                          <span>Compiling 1st page merged preview...</span>
+                        </div>
+                      )}
                       <iframe
                         src={`${uploadedFiles[activeFileIndex].dataUrl}#toolbar=1&navpanes=0`}
                         title={uploadedFiles[activeFileIndex].fileName}
-                        className="w-full h-full border-0"
+                        className="w-full h-full border-0 flex-1"
                       />
                     </div>
                   ) : (
@@ -1017,7 +1387,7 @@ export default function StudentQuestionPaperView({ student, onClose }) {
                         <FileText className="w-7 h-7" />
                       </div>
                       <h4 className="text-sm font-bold text-slate-900 mb-1">
-                        {uploadedFiles[activeFileIndex].fileName}
+                        {uploadedFiles[activeFileIndex]?.fileName}
                       </h4>
                       <p className="text-xs text-slate-500 max-w-sm mb-4">
                         Word document attached. Click below to view or download.
@@ -1049,17 +1419,43 @@ export default function StudentQuestionPaperView({ student, onClose }) {
         ) : (
           <div
             onClick={() => questionsFileInputRef.current?.click()}
-            className="mt-3.5 border-2 border-dashed border-sky-300 hover:border-sky-500 bg-sky-50/50 hover:bg-sky-50 rounded-xl p-5 text-center cursor-pointer transition group"
+            className="no-print mt-2 border-2 border-dashed border-sky-300 hover:border-sky-500 bg-sky-50/50 hover:bg-sky-50 rounded-xl p-6 text-center cursor-pointer transition group"
           >
-            <Upload className="w-7 h-7 text-sky-500 mx-auto mb-1.5 group-hover:scale-110 transition-transform" />
-            <p className="text-xs font-bold text-slate-800">
+            <Upload className="w-8 h-8 text-sky-600 mx-auto mb-2 group-hover:scale-110 transition-transform" />
+            <p className="text-xs font-black text-slate-800 uppercase tracking-wide">
               Click to upload question papers for <span className="font-black text-sky-900">{studentDetails.studentName}</span>
             </p>
-            <p className="text-[10.5px] text-slate-500 mt-1">
+            <p className="text-[11px] text-slate-500 mt-1 max-w-md mx-auto">
               Supports selecting multiple files at once (PDF, Word Documents, Images) up to 10 MB each.
             </p>
+            <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#0c234b] text-white rounded-lg text-xs font-bold shadow-xs group-hover:bg-[#123068]">
+              <Plus className="w-3.5 h-3.5 text-amber-400" />
+              <span>Select Files to Attach</span>
+            </div>
           </div>
         )}
+
+        {/* Print-only: Uploaded Question Sheets */}
+        {uploadedFiles.map((file, idx) => {
+          const isImage = file.fileType?.startsWith('image/') || file.fileName?.match(/\.(png|jpe?g|webp|gif|bmp|svg)$/i);
+          if (!isImage || !file.dataUrl) return null;
+          return (
+            <div key={file.id || idx} className="hidden print:block print-page-break p-4 w-[724px] mx-auto bg-white text-center">
+              <div className="border-b border-slate-300 pb-2 mb-3 flex items-center justify-between text-xs font-bold text-slate-700">
+                <span>{studentDetails.testBookletTitle} • {studentDetails.regNo}</span>
+                <span>Question Paper Sheet {idx + 1} of {uploadedFiles.length}</span>
+              </div>
+              <img
+                src={file.dataUrl}
+                alt={file.fileName}
+                className="w-full h-auto max-h-[960px] object-contain mx-auto"
+              />
+            </div>
+          );
+        })}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
