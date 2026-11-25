@@ -6,6 +6,101 @@ import { exportMergedLandscapeAndPortraitPdf, exportPdfFromElement, triggerDirec
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas-pro';
 
+const XLINK_NS = 'http://www.w3.org/1999/xlink';
+
+// Loads an image element. useCors is only needed when reading the remote URL directly.
+const loadImageEl = (src, useCors) =>
+  new Promise((resolve, reject) => {
+    const el = new Image();
+    if (useCors) el.crossOrigin = 'anonymous';
+    el.onload = () => resolve(el);
+    el.onerror = () => reject(new Error('Image load failed'));
+    el.src = src;
+  });
+
+// Redraws a decoded image as a PNG data URL so html2canvas can always draw it
+const drawImageAsPng = (img) => {
+  const maxSide = 1200;
+  const w = img.naturalWidth || img.width;
+  const h = img.naturalHeight || img.height;
+  if (!w || !h) throw new Error('Image has no size');
+
+  const scale = Math.min(1, maxSide / Math.max(w, h));
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.max(1, Math.round(w * scale));
+  canvas.height = Math.max(1, Math.round(h * scale));
+
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  return canvas.toDataURL('image/png');
+};
+
+// Converts a remote or local image URL into a PNG data URL.
+// Returns the original URL if every route fails.
+const imageUrlToPngDataUrl = async (url) => {
+  if (!url || url.startsWith('data:')) return url;
+
+  // Attempt 1: fetch the bytes, then decode them from a blob URL
+  try {
+    const res = await fetch(url, { mode: 'cors', cache: 'no-cache' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const blob = await res.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    try {
+      const img = await loadImageEl(objectUrl, false);
+      return drawImageAsPng(img);
+    } finally {
+      URL.revokeObjectURL(objectUrl);
+    }
+  } catch (fetchErr) {
+    console.warn('Fetch route failed for', url, fetchErr.message);
+  }
+
+  // Attempt 2: load through an <img> with crossOrigin, then draw to canvas
+  try {
+    const img = await loadImageEl(url, true);
+    return drawImageAsPng(img);
+  } catch (imgErr) {
+    console.error('Could not inline image for merged PDF:', url, imgErr.message);
+    return url;
+  }
+};
+
+// Replaces every <image> href inside the root with a PNG data URL.
+// Returns a function that restores the original attributes.
+const inlineSvgImages = async (root) => {
+  if (!root) return () => {};
+
+  const images = Array.from(root.querySelectorAll('image'));
+  const originals = images.map((el) => ({
+    el,
+    href: el.getAttribute('href'),
+    xlink: el.getAttributeNS(XLINK_NS, 'href'),
+  }));
+
+  await Promise.all(
+    originals.map(async ({ el, href, xlink }) => {
+      const source = href || xlink;
+      if (!source) return;
+      const dataUrl = await imageUrlToPngDataUrl(source);
+      if (dataUrl && dataUrl !== source) {
+        el.setAttribute('href', dataUrl);
+        el.setAttributeNS(XLINK_NS, 'xlink:href', dataUrl);
+      }
+    })
+  );
+
+  return () => {
+    originals.forEach(({ el, href, xlink }) => {
+      if (href === null) el.removeAttribute('href');
+      else el.setAttribute('href', href);
+      if (xlink === null || xlink === '') el.removeAttributeNS(XLINK_NS, 'href');
+      else el.setAttributeNS(XLINK_NS, 'xlink:href', xlink);
+    });
+  };
+};
+
 /**
  * MergedStudentPdfModal
  *
@@ -41,6 +136,9 @@ export default function MergedStudentPdfModal({
     setIsGenerating(true);
     setErrorMessage(null);
     setDownloadSuccess(false);
+
+    let restoreCert = null;
+    let restoreMs = null;
 
     try {
       setCurrentStep(`Preparing ${pkg.student?.studentName || 'Student'}...`);
@@ -95,6 +193,20 @@ export default function MergedStudentPdfModal({
         }
       }
 
+      setCurrentStep(`Preparing photos for ${pkg.student?.studentName}...`);
+      restoreCert = await inlineSvgImages(certEl);
+      restoreMs = await inlineSvgImages(msEl);
+
+      setCurrentStep(`Rendering Certificate & Marksheet for ${pkg.student?.studentName}...`);
+
+      await exportMergedLandscapeAndPortraitPdf({
+        page1Element: certEl,
+        page2Element: msEl,
+        filename: pkg.filename || `BSEL_Merged_Certificate_Marksheet_${pkg.student?.studentName || 'Student'}.pdf`,
+        page1Scale: 2,
+        page2Scale: 2
+      });
+
       setDownloadSuccess(true);
       setCurrentStep('Download complete!');
     } catch (err) {
@@ -104,6 +216,8 @@ export default function MergedStudentPdfModal({
         showToast('PDF Generation failed: ' + (err.message || 'Error'));
       }
     } finally {
+      if (restoreCert) restoreCert();
+      if (restoreMs) restoreMs();
       setIsGenerating(false);
     }
   };
@@ -141,6 +255,62 @@ export default function MergedStudentPdfModal({
           if (!certEl) {
             throw new Error(`Could not locate Certificate canvas for ${pkg.student?.studentName}`);
           }
+        if (!certEl || !msEl) {
+          throw new Error(`Could not locate canvas elements for ${pkg.student?.studentName}`);
+        }
+
+        // Replace remote photos and logos with data URLs before capture
+        const restoreCert = await inlineSvgImages(certEl);
+        const restoreMs = await inlineSvgImages(msEl);
+
+        let certCanvas;
+        let msCanvas;
+
+        try {
+          // 1. Capture Certificate (Landscape)
+          certCanvas = await html2canvas(certEl, {
+            scale: 2.5,
+            useCORS: true,
+            allowTaint: false,
+            logging: false,
+            scrollX: 0,
+            scrollY: 0,
+            windowWidth: 1050,
+            backgroundColor: '#ffffff',
+            onclone: (_clonedDoc, clonedEl) => {
+              const cert = clonedEl.id === 'printable-certificate' ? clonedEl : clonedEl.querySelector?.('#printable-certificate');
+              if (cert) {
+                cert.style.width = '1024px';
+                cert.style.maxWidth = '1024px';
+                cert.style.margin = '0 auto';
+              }
+            }
+          });
+
+          // 2. Capture Marksheet (Portrait)
+          msCanvas = await html2canvas(msEl, {
+            scale: 2.5,
+            useCORS: true,
+            allowTaint: false,
+            logging: false,
+            scrollX: 0,
+            scrollY: 0,
+            windowWidth: 1024,
+            backgroundColor: '#ffffff',
+            onclone: (_clonedDoc, clonedEl) => {
+              const ms = clonedEl.id === 'printable-marksheet-sheet' ? clonedEl : clonedEl.querySelector?.('#printable-marksheet-sheet');
+              if (ms) {
+                ms.style.width = '724px';
+                ms.style.maxWidth = '724px';
+                ms.style.aspectRatio = '724 / 1024';
+                ms.style.margin = '0 auto';
+              }
+            }
+          });
+        } finally {
+          restoreCert();
+          restoreMs();
+        }
 
           const certCanvas = await html2canvas(certEl, {
             scale: 2.5,
@@ -211,6 +381,14 @@ export default function MergedStudentPdfModal({
               }
             }
           });
+        let msImgData;
+        let msFmt = 'JPEG';
+        try {
+          msImgData = msCanvas.toDataURL('image/jpeg', 0.98);
+        } catch {
+          msImgData = msCanvas.toDataURL('image/png');
+          msFmt = 'PNG';
+        }
 
           let msImgData;
           let msFmt = 'JPEG';
