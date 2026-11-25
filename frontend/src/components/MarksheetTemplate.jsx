@@ -203,7 +203,20 @@ const Star = ({ cx, cy, r }) => {
   return <polygon points={pts.join(' ')} fill={GOLD} />;
 };
 
-export default function MarksheetTemplate({ remark = null, rightHeading = null, qrCodeDataUrl = null }) {
+export default function MarksheetTemplate({
+  remark = null,
+  rightHeading = null,
+  qrCodeDataUrl = null,
+  studentData = null,
+  subjects = [],
+  summary = null,
+  photoUrl = null,
+  schoolLogo = null,
+  directorSign = null,
+  paperType = null,
+  issueDate = null,
+  showMarks = true,
+}) {
   const colCenters = TABLE_COLS.slice(0, -1).map((x, i) => (x + TABLE_COLS[i + 1]) / 2);
 
   const goldLeft = FRAME_GOLD.x;
@@ -219,6 +232,37 @@ export default function MarksheetTemplate({ remark = null, rightHeading = null, 
     tagline: rightHeading?.tagline || DEFAULT_RIGHT_HEADING.tagline,
   };
 
+  const cellW = 724 / 16;
+  const cellH = 1024 / 48;
+  const watermarkTiles = [];
+  for (let r = 0; r < 48; r++) {
+    for (let c = 0; c < 16; c++) {
+      watermarkTiles.push({
+        key: `${r}-${c}`,
+        x: c * cellW + cellW / 2,
+        y: r * cellH + cellH / 2,
+      });
+    }
+  }
+  const EMBLEM_SIZE = 362;
+  const EMBLEM_X = 724 / 2 - EMBLEM_SIZE / 2;
+  const EMBLEM_Y = 1024 / 2 - EMBLEM_SIZE / 2;
+
+  const studentValues = studentData
+    ? [
+        studentData.registrationNo || '',
+        studentData.certificateNo || '',
+        (studentData.studentName || '').toUpperCase(),
+        studentData.parentName || '',
+        studentData.dob || '',
+        (studentData.displayCourse || studentData.courseName || '').slice(0, 10).toUpperCase(),
+        studentData.level || '',
+        studentData.duration || '',
+        studentData.school || studentData.centreName || '',
+        studentData.address || studentData.centreAddress || '',
+      ]
+    : null;
+
   return (
     <svg
       viewBox="0 0 724 1024"
@@ -231,6 +275,24 @@ export default function MarksheetTemplate({ remark = null, rightHeading = null, 
         <clipPath id="strip-clip">
           <rect x="28" y="0" width="668" height="200" />
         </clipPath>
+        <clipPath id="bsel-watermark-clip">
+          <rect x="24" y="24" width="676" height="976" />
+        </clipPath>
+        <radialGradient id="bsel-emblem-fade" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="black" />
+          <stop offset="72%" stopColor="black" />
+          <stop offset="100%" stopColor="white" />
+        </radialGradient>
+        <mask id="bsel-watermark-mask" maskUnits="userSpaceOnUse" x="0" y="0" width="724" height="1024">
+          <rect x="0" y="0" width="724" height="1024" fill="white" />
+          <rect
+            x={EMBLEM_X}
+            y={EMBLEM_Y}
+            width={EMBLEM_SIZE}
+            height={EMBLEM_SIZE}
+            fill="url(#bsel-emblem-fade)"
+          />
+        </mask>
       </defs>
 
       {/* ---------- Border: thick navy outer frame and gold rule ---------- */}
@@ -251,6 +313,40 @@ export default function MarksheetTemplate({ remark = null, rightHeading = null, 
         fill="none"
         stroke={GOLD}
         strokeWidth="2"
+      />
+
+      {/* Background Watermark Tiles */}
+      <g clipPath="url(#bsel-watermark-clip)">
+        <g mask="url(#bsel-watermark-mask)">
+          {watermarkTiles.map((t) => (
+            <text
+              key={t.key}
+              x={t.x}
+              y={t.y}
+              textAnchor="middle"
+              dominantBaseline="middle"
+              fontFamily="'Times New Roman', Times, serif"
+              fontWeight="700"
+              fontSize="11"
+              fill="#0b2a55"
+              fillOpacity="0.08"
+            >
+              B★SEL
+            </text>
+          ))}
+        </g>
+      </g>
+
+      {/* Centre emblem: watermark logo */}
+      <image
+        href={bselLogo}
+        xlinkHref={bselLogo}
+        x={EMBLEM_X}
+        y={EMBLEM_Y}
+        width={EMBLEM_SIZE}
+        height={EMBLEM_SIZE}
+        opacity="0.09"
+        preserveAspectRatio="xMidYMid meet"
       />
 
       {/* Corner diamonds on the gold rule */}
@@ -362,6 +458,19 @@ export default function MarksheetTemplate({ remark = null, rightHeading = null, 
         {String(heading.tagline || '').slice(0, 30).toUpperCase()}
       </text>
 
+      {/* School logo */}
+      {schoolLogo && (
+        <image
+          href={schoolLogo}
+          xlinkHref={schoolLogo}
+          x="615"
+          y="40"
+          width="58"
+          height="62"
+          preserveAspectRatio="xMidYMid meet"
+        />
+      )}
+
       {/* Thin repeating watermark strip */}
       <rect
         x="24"
@@ -401,6 +510,7 @@ export default function MarksheetTemplate({ remark = null, rightHeading = null, 
       {LABELS.map((label, i) => {
         const cy = 181.4 + i * 26.2;
         const longLabel = label.length >= 19;
+        const val = studentValues ? studentValues[i] : null;
         return (
           <g key={label} fontFamily={SERIF} fontWeight="bold" fontSize="16" fill={NAVY}>
             <text
@@ -412,6 +522,18 @@ export default function MarksheetTemplate({ remark = null, rightHeading = null, 
               {label}
             </text>
             <text x="200" y={cy + 5}>:</text>
+            {val && (
+              <text
+                x="215"
+                y={cy + 5}
+                fill="#000000"
+                fontFamily={SERIF}
+                fontWeight="bold"
+                fontSize="15"
+              >
+                {val}
+              </text>
+            )}
           </g>
         );
       })}
@@ -444,8 +566,33 @@ export default function MarksheetTemplate({ remark = null, rightHeading = null, 
       </text>
 
       {/* Photo frame (photo overlay sits inside this) */}
-      <rect x="551" y="228" width="113" height="130" fill="none" stroke={GOLD} strokeWidth="3" />
-      <rect x="556" y="233" width="103" height="120" fill="none" stroke={NAVY} strokeWidth="2" />
+      <rect x="551" y="228" width="113" height="130" fill="#ffffff" stroke={GOLD} strokeWidth="3" />
+      <rect x="556" y="233" width="103" height="120" fill="#ffffff" stroke={NAVY} strokeWidth="2" />
+      {photoUrl ? (
+        <image
+          href={photoUrl}
+          xlinkHref={photoUrl}
+          x="557"
+          y="234"
+          width="101"
+          height="118"
+          preserveAspectRatio="xMidYMid slice"
+        />
+      ) : (
+        <g>
+          <circle cx="607.5" cy="285" r="32" fill="#081d3d" />
+          <path d="M607.5 275 L611 286 L622.5 286 L613.3 292.8 L616.8 303.8 L607.5 297 L598.2 303.8 L601.7 292.8 L592.5 286 L604 286 Z" fill={GOLD} />
+          <text x="607.5" y="325" textAnchor="middle" fontFamily={SERIF} fontWeight="bold" fontSize="8" fill={NAVY}>OFFICIAL</text>
+        </g>
+      )}
+
+      {paperType && (
+        <g>
+          <rect x="612" y="132" width="60" height="44" fill="#fde047" stroke={NAVY} strokeWidth="2" rx="3" />
+          <text x="642" y="145" textAnchor="middle" fontFamily="Arial, sans-serif" fontWeight="900" fontSize="7" fill={NAVY}>TYPE</text>
+          <text x="642" y="167" textAnchor="middle" fontFamily={SERIF} fontWeight="900" fontSize="16" fill={NAVY}>{paperType}</text>
+        </g>
+      )}
       {/* ---------- Heading above the subjects table ---------- */}
       <SectionTitle x={197} y={440} w={331} h={22} fill={GOLD} text="GRADE CARD & RESULT" />
       {/* ---------- Subjects & Marks table ---------- */}
@@ -458,8 +605,6 @@ export default function MarksheetTemplate({ remark = null, rightHeading = null, 
         stroke={NAVY}
         strokeWidth={TABLE_OUTER_STROKE}
       />
-
-      <SectionTitle x={197} y={142} w={331} h={22} fill={GOLD} text="STUDENT & COURSE DETAILS" />
 
       {/* Title bar */}
       <NavyBand {...SUBJECT_BAND} />
@@ -543,6 +688,32 @@ export default function MarksheetTemplate({ remark = null, rightHeading = null, 
         </text>
       ))}
 
+      {showMarks && subjects && subjects.slice(0, 5).map((sub, i) => {
+        const cy = [559, 595, 631, 668, 704][i];
+        const asm = sub.assessment !== null && sub.assessment !== undefined ? Math.round(Number(sub.assessment)) : 0;
+        const exam = sub.exam !== null && sub.exam !== undefined ? Math.round(Number(sub.exam)) : 0;
+        const total = sub.marks !== null && sub.marks !== undefined ? Math.round(Number(sub.marks)) : (asm + exam);
+        return (
+          <g key={sub.id || i} fontFamily={SERIF} fontWeight="bold" fill={NAVY}>
+            <text x="94" y={cy + 4} fontSize="12" fill={NAVY}>
+              {sub.name}
+            </text>
+            <text x="473.5" y={cy + 4} textAnchor="middle" fontSize="12" fill={NAVY}>
+              60
+            </text>
+            <text x="534.5" y={cy + 4} textAnchor="middle" fontSize="12" fill={NAVY}>
+              {asm}
+            </text>
+            <text x="595.5" y={cy + 4} textAnchor="middle" fontSize="12.5" fontWeight="900" fill={NAVY}>
+              {exam}
+            </text>
+            <text x="656.5" y={cy + 4} textAnchor="middle" fontSize="12" fill={NAVY}>
+              {`${total}%`}
+            </text>
+          </g>
+        );
+      })}
+
       <line x1="37" y1="722" x2="687" y2="722" stroke={NAVY} strokeWidth={TABLE_OUTER_STROKE} />
       <text x="45" y="740" fontFamily="Arial, sans-serif" fontWeight="bold" fontSize="10.5" fill={NAVY}>
         Grade Details:
@@ -560,6 +731,14 @@ export default function MarksheetTemplate({ remark = null, rightHeading = null, 
         <text x="437" y={TOTALS_BAND.y + TOTALS_BAND.h / 2}>Percentage</text>
       </g>
 
+      {showMarks && summary && (
+        <g fontFamily={SERIF} fontWeight="900" fill={NAVY} textAnchor="middle" dominantBaseline="central">
+          <text x="134" y="817" fontSize="15">{summary.totalMax || 500}</text>
+          <text x="286" y="817" fontSize="15">{summary.totalObtained ?? 0}</text>
+          <text x="437" y="817" fontSize="15">{summary.percentage ? `${summary.percentage}%` : '0%'}</text>
+        </g>
+      )}
+
       <rect x="541" y="763" width="124" height="75" fill="none" stroke={NAVY} strokeWidth="2" />
       <NavyBand {...GRADE_BAND} />
       <rect x="543" y="798" width="120" height="38" fill={TABLE_HEADER_BLUE} />
@@ -576,6 +755,21 @@ export default function MarksheetTemplate({ remark = null, rightHeading = null, 
       >
         Grade
       </text>
+
+      {showMarks && summary && (
+        <text
+          x="603"
+          y="817"
+          dominantBaseline="central"
+          textAnchor="middle"
+          fontFamily={SERIF}
+          fontWeight="900"
+          fontSize="22"
+          fill="#b45309"
+        >
+          {summary.overallGrade || 'D'}
+        </text>
+      )}
 
       {/* ---------- Remarks & Date of Issue ---------- */}
       <rect
@@ -613,6 +807,20 @@ export default function MarksheetTemplate({ remark = null, rightHeading = null, 
       <text x="600" y="865" textAnchor="middle" fontFamily="Arial, sans-serif" fontWeight="bold" fontSize="12" fill="#ffffff">
         Date of Issue
       </text>
+
+      {showMarks && issueDate && (
+        <text
+          x="600"
+          y="884"
+          textAnchor="middle"
+          fontFamily={SERIF}
+          fontSize="13"
+          fontWeight="bold"
+          fill={NAVY}
+        >
+          {issueDate}
+        </text>
+      )}
 
       {/* ---------- Footer ---------- */}
       {/* Footer headings (centred over their logo groups, clear of the Remarks box) */}
@@ -660,6 +868,18 @@ export default function MarksheetTemplate({ remark = null, rightHeading = null, 
       <text x="60" y="989" fontFamily={SERIF} fontWeight="bold" fontSize="12" fill={NAVY}>
         Center Director / Principal
       </text>
+
+      {directorSign && (
+        <image
+          href={directorSign}
+          xlinkHref={directorSign}
+          x="55"
+          y="930"
+          width="120"
+          height="55"
+          preserveAspectRatio="xMidYMid meet"
+        />
+      )}
 
       {/* Authorized signature image: wider, centred over the label */}
       <image

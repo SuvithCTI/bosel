@@ -62,26 +62,51 @@ export const svgElementToCanvas = async (svgEl, scale = 3) => {
     for (const img of images) {
       const href = img.getAttribute('href') || img.getAttribute('xlink:href');
       if (href && !href.startsWith('data:')) {
+        let converted = false;
+        // Method A: Fetch as Blob and convert via FileReader (no canvas tainting)
         try {
-          const offImg = new Image();
-          offImg.crossOrigin = 'anonymous';
-          await new Promise((res) => {
-            offImg.onload = res;
-            offImg.onerror = res;
-            offImg.src = href;
-          });
-          if (offImg.naturalWidth) {
-            const offCanvas = document.createElement('canvas');
-            offCanvas.width = offImg.naturalWidth;
-            offCanvas.height = offImg.naturalHeight;
-            const ctx = offCanvas.getContext('2d');
-            ctx.drawImage(offImg, 0, 0);
-            const dataUrl = offCanvas.toDataURL('image/png');
-            img.setAttribute('href', dataUrl);
-            img.setAttribute('xlink:href', dataUrl);
+          const resp = await fetch(href);
+          if (resp.ok) {
+            const blob = await resp.blob();
+            const dataUrl = await new Promise((resolve) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result);
+              reader.onerror = () => resolve(null);
+              reader.readAsDataURL(blob);
+            });
+            if (dataUrl && typeof dataUrl === 'string' && dataUrl.startsWith('data:')) {
+              img.setAttribute('href', dataUrl);
+              img.setAttribute('xlink:href', dataUrl);
+              converted = true;
+            }
           }
         } catch {
-          // Keep original href if conversion fails
+          // Ignore and try fallback
+        }
+
+        // Method B: Image element drawing into offscreen canvas
+        if (!converted) {
+          try {
+            const offImg = new Image();
+            offImg.crossOrigin = 'anonymous';
+            await new Promise((res) => {
+              offImg.onload = res;
+              offImg.onerror = res;
+              offImg.src = href;
+            });
+            if (offImg.naturalWidth) {
+              const offCanvas = document.createElement('canvas');
+              offCanvas.width = offImg.naturalWidth;
+              offCanvas.height = offImg.naturalHeight;
+              const ctx = offCanvas.getContext('2d');
+              ctx.drawImage(offImg, 0, 0);
+              const dataUrl = offCanvas.toDataURL('image/png');
+              img.setAttribute('href', dataUrl);
+              img.setAttribute('xlink:href', dataUrl);
+            }
+          } catch {
+            // Keep original href if conversion fails
+          }
         }
       }
     }
