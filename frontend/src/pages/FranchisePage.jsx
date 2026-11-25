@@ -918,7 +918,7 @@ export default function FranchisePage({ setActivePage }) {
             </div>
 
             {/* Form Container */}
-            <div className="p-3.5 sm:p-8 lg:p-12 space-y-3 sm:space-y-6 text-slate-700">
+            <div className="p-3 sm:p-8 lg:p-12 space-y-2.5 sm:space-y-6 text-slate-700">
               
               {submitted ? (
                 <div className="text-center py-6 sm:py-8 space-y-4">
@@ -1004,13 +1004,13 @@ export default function FranchisePage({ setActivePage }) {
                     </p>
                   </div>
 
-                  {/* 12-Field Form - Compact 2-Col on Mobile */}
-                  <form onSubmit={handleSubmit} className="space-y-2.5 sm:space-y-3.5 text-xs font-bold">
+                  {/* 12-Field Form - Compact on Mobile View Alone */}
+                  <form onSubmit={handleSubmit} className="space-y-2 sm:space-y-3.5 text-xs font-bold">
                     
                     {/* Full Name & Mobile Number (Stacked or 2-Col) */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
                       <div>
-                        <label className="block text-slate-800 text-[11px] sm:text-xs font-black mb-0.5 sm:mb-1 truncate">
+                        <label className="block text-slate-800 text-[10.5px] sm:text-xs font-black mb-0.5 sm:mb-1 truncate">
                           Full Name *
                         </label>
                         <input
@@ -1018,12 +1018,12 @@ export default function FranchisePage({ setActivePage }) {
                           required
                           value={formData.name}
                           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                          className="w-full px-3 py-2.5 sm:py-3 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-hidden transition shadow-2xs text-base sm:text-sm min-h-[44px]"
+                          className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2.5 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-hidden transition shadow-2xs text-xs sm:text-sm min-h-[36px] sm:min-h-[44px]"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-slate-800 text-[11px] sm:text-xs font-black mb-0.5 sm:mb-1 truncate">
+                        <label className="block text-slate-800 text-[10.5px] sm:text-xs font-black mb-0.5 sm:mb-1 truncate">
                           Mobile Number *
                         </label>
                         <input
@@ -1031,14 +1031,14 @@ export default function FranchisePage({ setActivePage }) {
                           required
                           value={formData.phone}
                           onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                          className="w-full px-3 py-2.5 sm:py-3 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-hidden transition shadow-2xs text-base sm:text-sm min-h-[44px]"
+                          className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2.5 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-hidden transition shadow-2xs text-xs sm:text-sm min-h-[36px] sm:min-h-[44px]"
                         />
                       </div>
                     </div>
 
-                    {/* Email Address (Full Width on Mobile for easy typing) */}
+                    {/* Email Address */}
                     <div>
-                      <label className="block text-slate-800 text-[11px] sm:text-xs font-black mb-0.5 sm:mb-1">
+                      <label className="block text-slate-800 text-[10.5px] sm:text-xs font-black mb-0.5 sm:mb-1">
                         Email Address *
                       </label>
                       <input
@@ -1046,14 +1046,14 @@ export default function FranchisePage({ setActivePage }) {
                         required
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        className="w-full px-3 py-2.5 sm:py-3 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-hidden transition shadow-2xs text-base sm:text-sm min-h-[44px]"
+                        className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2.5 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-hidden transition shadow-2xs text-xs sm:text-sm min-h-[36px] sm:min-h-[44px]"
                       />
                     </div>
 
                     {/* City & District (2-Col on Mobile) */}
                     <div className="grid grid-cols-2 gap-2 sm:gap-4">
                       <div>
-                        <label className="block text-slate-800 text-[11px] sm:text-xs font-black mb-0.5 sm:mb-1 truncate">
+                        <label className="block text-slate-800 text-[10.5px] sm:text-xs font-black mb-0.5 sm:mb-1 truncate">
                           City *
                         </label>
                         <input
@@ -1061,12 +1061,12 @@ export default function FranchisePage({ setActivePage }) {
                           required
                           value={formData.city}
                           onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                          className="w-full px-2.5 sm:px-3.5 py-2 sm:py-3 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-hidden transition shadow-2xs text-base sm:text-sm min-h-[44px]"
+                          className="w-full px-2 sm:px-3.5 py-1.5 sm:py-2.5 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-hidden transition shadow-2xs text-xs sm:text-sm min-h-[36px] sm:min-h-[44px]"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-slate-800 text-[11px] sm:text-xs font-black mb-0.5 sm:mb-1 truncate">
+                        <label className="block text-slate-800 text-[10.5px] sm:text-xs font-black mb-0.5 sm:mb-1 truncate">
                           District *
                         </label>
                         <input
@@ -1074,47 +1074,47 @@ export default function FranchisePage({ setActivePage }) {
                           required
                           value={formData.district}
                           onChange={(e) => setFormData({ ...formData, district: e.target.value })}
-                          className="w-full px-2.5 sm:px-3.5 py-2 sm:py-3 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-hidden transition shadow-2xs text-base sm:text-sm min-h-[44px]"
+                          className="w-full px-2 sm:px-3.5 py-1.5 sm:py-2.5 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-hidden transition shadow-2xs text-xs sm:text-sm min-h-[36px] sm:min-h-[44px]"
                         />
                       </div>
                     </div>
 
-                      <div>
-                        <label className="block text-slate-800 text-[11px] sm:text-xs font-black mb-0.5 sm:mb-1 truncate">
-                          State *
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          value={formData.state}
-                          onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                          className="w-full px-2.5 sm:px-3.5 py-2 sm:py-3 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-hidden transition shadow-2xs text-base sm:text-sm min-h-[44px]"
-                        />
-                      </div>
+                    <div>
+                      <label className="block text-slate-800 text-[10.5px] sm:text-xs font-black mb-0.5 sm:mb-1 truncate">
+                        State *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={formData.state}
+                        onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                        className="w-full px-2 sm:px-3.5 py-1.5 sm:py-2.5 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-hidden transition shadow-2xs text-xs sm:text-sm min-h-[36px] sm:min-h-[44px]"
+                      />
+                    </div>
 
                     {/* Current Profession & Experience (2-Col on Mobile) */}
                     <div className="grid grid-cols-2 gap-2 sm:gap-4">
                       <div>
-                        <label className="block text-slate-800 text-[11px] sm:text-xs font-black mb-0.5 sm:mb-1 truncate">
+                        <label className="block text-slate-800 text-[10.5px] sm:text-xs font-black mb-0.5 sm:mb-1 truncate">
                           Current Profession
                         </label>
                         <input
                           type="text"
                           value={formData.profession}
                           onChange={(e) => setFormData({ ...formData, profession: e.target.value })}
-                          className="w-full px-2.5 sm:px-3.5 py-2 sm:py-3 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-hidden transition shadow-2xs text-base sm:text-sm"
+                          className="w-full px-2 sm:px-3.5 py-1.5 sm:py-2.5 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-hidden transition shadow-2xs text-xs sm:text-sm min-h-[36px] sm:min-h-[42px]"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-slate-800 text-[11px] sm:text-xs font-black mb-0.5 sm:mb-1 truncate">
+                        <label className="block text-slate-800 text-[10.5px] sm:text-xs font-black mb-0.5 sm:mb-1 truncate">
                           Experience
                         </label>
                         <input
                           type="text"
                           value={formData.experience}
                           onChange={(e) => setFormData({ ...formData, experience: e.target.value })}
-                          className="w-full px-2.5 sm:px-3.5 py-2 sm:py-3 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-hidden transition shadow-2xs text-base sm:text-sm"
+                          className="w-full px-2 sm:px-3.5 py-1.5 sm:py-2.5 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-hidden transition shadow-2xs text-xs sm:text-sm min-h-[36px] sm:min-h-[42px]"
                         />
                       </div>
                     </div>
@@ -1122,13 +1122,13 @@ export default function FranchisePage({ setActivePage }) {
                     {/* Interested Program & Operates Center (2-Col on Mobile) */}
                     <div className="grid grid-cols-2 gap-2 sm:gap-4">
                       <div>
-                        <label className="block text-slate-800 text-[11px] sm:text-xs font-black mb-0.5 sm:mb-1 truncate">
+                        <label className="block text-slate-800 text-[10.5px] sm:text-xs font-black mb-0.5 sm:mb-1 truncate">
                           Interested Program
                         </label>
                         <select
                           value={formData.interestedProgram}
                           onChange={(e) => setFormData({ ...formData, interestedProgram: e.target.value })}
-                          className="w-full px-2 sm:px-3.5 py-2 sm:py-3 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-hidden transition shadow-2xs text-base sm:text-sm"
+                          className="w-full px-2 sm:px-3.5 py-1.5 sm:py-2.5 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-hidden transition shadow-2xs text-xs sm:text-sm min-h-[36px] sm:min-h-[42px]"
                         >
                           <option value="">Choose program</option>
                           <option value="Abacus Speed Arithmetic">Abacus Speed Arithmetic</option>
@@ -1143,14 +1143,14 @@ export default function FranchisePage({ setActivePage }) {
                       </div>
 
                       <div>
-                        <label className="block text-slate-800 text-[11px] sm:text-xs font-black mb-0.5 sm:mb-1 truncate">
+                        <label className="block text-slate-800 text-[10.5px] sm:text-xs font-black mb-0.5 sm:mb-1 truncate">
                           <span className="sm:hidden">Own a Centre?</span>
                           <span className="hidden sm:inline">Do you currently operate a centre?</span>
                         </label>
                         <select
                           value={formData.operatesCenter}
                           onChange={(e) => setFormData({ ...formData, operatesCenter: e.target.value })}
-                          className="w-full px-2 sm:px-3.5 py-2 sm:py-3 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-hidden transition shadow-2xs text-base sm:text-sm"
+                          className="w-full px-2 sm:px-3.5 py-1.5 sm:py-2.5 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-hidden transition shadow-2xs text-xs sm:text-sm min-h-[36px] sm:min-h-[42px]"
                         >
                           <option value="">Choose</option>
                           <option value="Yes">Yes</option>
@@ -1161,13 +1161,13 @@ export default function FranchisePage({ setActivePage }) {
 
                     {/* Preferred Partnership Type */}
                     <div>
-                      <label className="block text-slate-800 text-[11px] sm:text-xs font-black mb-0.5 sm:mb-1">
+                      <label className="block text-slate-800 text-[10.5px] sm:text-xs font-black mb-0.5 sm:mb-1">
                         Preferred Partnership Type
                       </label>
                       <select
                         value={formData.partnershipType}
                         onChange={(e) => setFormData({ ...formData, partnershipType: e.target.value })}
-                        className="w-full px-2.5 sm:px-3.5 py-2 sm:py-3 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-hidden transition shadow-2xs text-base sm:text-sm"
+                        className="w-full px-2 sm:px-3.5 py-1.5 sm:py-2.5 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-hidden transition shadow-2xs text-xs sm:text-sm min-h-[36px] sm:min-h-[42px]"
                       >
                         <option value="">Choose a partnership type</option>
                         <option value="Authorized Learning Center Franchise">Authorized Learning Center Franchise</option>
@@ -1180,14 +1180,14 @@ export default function FranchisePage({ setActivePage }) {
 
                     {/* Message / Enquiry */}
                     <div>
-                      <label className="block text-slate-800 text-[11px] sm:text-xs font-black mb-0.5 sm:mb-1">
+                      <label className="block text-slate-800 text-[10.5px] sm:text-xs font-black mb-0.5 sm:mb-1">
                         Message / Enquiry
                       </label>
                       <textarea
                         rows="2"
                         value={formData.message}
                         onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                        className="w-full px-2.5 sm:px-3.5 py-2 sm:py-3 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-hidden resize-none transition shadow-2xs text-base sm:text-sm"
+                        className="w-full px-2 sm:px-3.5 py-1.5 sm:py-2.5 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-hidden resize-none transition shadow-2xs text-xs sm:text-sm"
                       />
                     </div>
 

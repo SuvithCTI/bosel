@@ -213,17 +213,17 @@ export default function FranchiseModal({ isOpen, onClose }) {
                 <span className="text-xs sm:text-sm font-black text-[#F05A28] uppercase tracking-wider block">
                   Franchise Enquiry
                 </span>
-                <p className="text-xs text-slate-600 mt-0.5 font-semibold">
+                <p className="text-[11px] sm:text-xs text-slate-600 mt-0.5 font-semibold">
                   Start your B★SEL partnership journey. Fill in your details below:
                 </p>
               </div>
 
               {/* Exact 12-Field Reference Form */}
-              <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-3.5 text-xs font-bold">
+              <form onSubmit={handleSubmit} className="space-y-2 sm:space-y-3.5 text-xs font-bold">
                 {/* 1. Full Name & 2. Mobile Number */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
                   <div>
-                    <label className="block text-slate-800 text-[11px] sm:text-xs font-black mb-1">
+                    <label className="block text-slate-800 text-[10.5px] sm:text-xs font-black mb-0.5 sm:mb-1">
                       Full Name *
                     </label>
                     <input
@@ -231,12 +231,12 @@ export default function FranchiseModal({ isOpen, onClose }) {
                       required
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-none transition shadow-2xs text-base sm:text-sm"
+                      className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2.5 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-none transition shadow-2xs text-xs sm:text-sm min-h-[36px] sm:min-h-[42px]"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-slate-800 text-[11px] sm:text-xs font-black mb-1">
+                    <label className="block text-slate-800 text-[10.5px] sm:text-xs font-black mb-0.5 sm:mb-1">
                       Mobile Number *
                     </label>
                     <input
@@ -246,15 +246,15 @@ export default function FranchiseModal({ isOpen, onClose }) {
                       placeholder="10-digit mobile"
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
-                      className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-none transition shadow-2xs text-base sm:text-sm"
+                      className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2.5 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-none transition shadow-2xs text-xs sm:text-sm min-h-[36px] sm:min-h-[42px]"
                     />
                   </div>
                 </div>
 
                 {/* 3. Email Address & 4. City */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
                   <div>
-                    <label className="block text-slate-800 text-[11px] sm:text-xs font-black mb-1">
+                    <label className="block text-slate-800 text-[10.5px] sm:text-xs font-black mb-0.5 sm:mb-1">
                       Email Address *
                     </label>
                     <input
@@ -262,12 +262,12 @@ export default function FranchiseModal({ isOpen, onClose }) {
                       required
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-none transition shadow-2xs text-base sm:text-sm"
+                      className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2.5 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-none transition shadow-2xs text-xs sm:text-sm min-h-[36px] sm:min-h-[42px]"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-slate-800 text-[11px] sm:text-xs font-black mb-1">
+                    <label className="block text-slate-800 text-[10.5px] sm:text-xs font-black mb-0.5 sm:mb-1">
                       City *
                     </label>
                     <input
@@ -275,15 +275,15 @@ export default function FranchiseModal({ isOpen, onClose }) {
                       required
                       value={formData.city}
                       onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                      className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-none transition shadow-2xs text-base sm:text-sm"
+                      className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2.5 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-none transition shadow-2xs text-xs sm:text-sm min-h-[36px] sm:min-h-[42px]"
                     />
                   </div>
                 </div>
 
                 {/* 5. District & 6. State */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
                   <div>
-                    <label className="block text-slate-800 text-[11px] sm:text-xs font-black mb-1">
+                    <label className="block text-slate-800 text-[10.5px] sm:text-xs font-black mb-0.5 sm:mb-1">
                       District *
                     </label>
                     <input
@@ -291,12 +291,12 @@ export default function FranchiseModal({ isOpen, onClose }) {
                       required
                       value={formData.district}
                       onChange={(e) => setFormData({ ...formData, district: e.target.value })}
-                      className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-none transition shadow-2xs text-base sm:text-sm"
+                      className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2.5 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-none transition shadow-2xs text-xs sm:text-sm min-h-[36px] sm:min-h-[42px]"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-slate-800 text-[11px] sm:text-xs font-black mb-1">
+                    <label className="block text-slate-800 text-[10.5px] sm:text-xs font-black mb-0.5 sm:mb-1">
                       State *
                     </label>
                     <input
@@ -304,48 +304,48 @@ export default function FranchiseModal({ isOpen, onClose }) {
                       required
                       value={formData.state}
                       onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                      className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-none transition shadow-2xs text-base sm:text-sm"
+                      className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2.5 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-none transition shadow-2xs text-xs sm:text-sm min-h-[36px] sm:min-h-[42px]"
                     />
                   </div>
                 </div>
 
                 {/* 7. Current Profession & 8. Educational / Training Experience */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
                   <div>
-                    <label className="block text-slate-800 text-[11px] sm:text-xs font-black mb-1">
+                    <label className="block text-slate-800 text-[10.5px] sm:text-xs font-black mb-0.5 sm:mb-1">
                       Current Profession / Occupation
                     </label>
                     <input
                       type="text"
                       value={formData.profession}
                       onChange={(e) => setFormData({ ...formData, profession: e.target.value })}
-                      className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-none transition shadow-2xs text-base sm:text-sm"
+                      className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2.5 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-none transition shadow-2xs text-xs sm:text-sm min-h-[36px] sm:min-h-[42px]"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-slate-800 text-[11px] sm:text-xs font-black mb-1">
+                    <label className="block text-slate-800 text-[10.5px] sm:text-xs font-black mb-0.5 sm:mb-1">
                       Educational / Training Experience
                     </label>
                     <input
                       type="text"
                       value={formData.experience}
                       onChange={(e) => setFormData({ ...formData, experience: e.target.value })}
-                      className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-none transition shadow-2xs text-base sm:text-sm"
+                      className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2.5 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-none transition shadow-2xs text-xs sm:text-sm min-h-[36px] sm:min-h-[42px]"
                     />
                   </div>
                 </div>
 
                 {/* 9. Interested Program & 10. Do you currently operate a learning centre? */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
                   <div>
-                    <label className="block text-slate-800 text-[11px] sm:text-xs font-black mb-1">
+                    <label className="block text-slate-800 text-[10.5px] sm:text-xs font-black mb-0.5 sm:mb-1">
                       Interested Program
                     </label>
                     <select
                       value={formData.interestedProgram}
                       onChange={(e) => setFormData({ ...formData, interestedProgram: e.target.value })}
-                      className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-none transition shadow-2xs text-base sm:text-sm"
+                      className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2.5 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-none transition shadow-2xs text-xs sm:text-sm min-h-[36px] sm:min-h-[42px]"
                     >
                       <option value="">Choose a program</option>
                       <option value="Abacus Speed Arithmetic">Abacus Speed Arithmetic</option>
@@ -361,13 +361,13 @@ export default function FranchiseModal({ isOpen, onClose }) {
                   </div>
 
                   <div>
-                    <label className="block text-slate-800 text-[11px] sm:text-xs font-black mb-1">
+                    <label className="block text-slate-800 text-[10.5px] sm:text-xs font-black mb-0.5 sm:mb-1">
                       Do you currently operate a learning centre?
                     </label>
                     <select
                       value={formData.operatesCenter}
                       onChange={(e) => setFormData({ ...formData, operatesCenter: e.target.value })}
-                      className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-none transition shadow-2xs text-base sm:text-sm"
+                      className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2.5 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-none transition shadow-2xs text-xs sm:text-sm min-h-[36px] sm:min-h-[42px]"
                     >
                       <option value="">Choose an answer</option>
                       <option value="Yes">Yes</option>
@@ -378,13 +378,13 @@ export default function FranchiseModal({ isOpen, onClose }) {
 
                 {/* 11. Preferred Partnership Type */}
                 <div>
-                  <label className="block text-slate-800 text-[11px] sm:text-xs font-black mb-1">
+                  <label className="block text-slate-800 text-[10.5px] sm:text-xs font-black mb-0.5 sm:mb-1">
                     Preferred Partnership Type
                   </label>
                   <select
                     value={formData.partnershipType}
                     onChange={(e) => setFormData({ ...formData, partnershipType: e.target.value })}
-                    className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-none transition shadow-2xs text-base sm:text-sm"
+                    className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2.5 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-none transition shadow-2xs text-xs sm:text-sm min-h-[36px] sm:min-h-[42px]"
                   >
                     <option value="">Choose a partnership type</option>
                     <option value="Authorized Learning Center Franchise">Authorized Learning Center Franchise</option>
@@ -397,21 +397,21 @@ export default function FranchiseModal({ isOpen, onClose }) {
 
                 {/* 12. Message / Enquiry */}
                 <div>
-                  <label className="block text-slate-800 text-[11px] sm:text-xs font-black mb-1">
+                  <label className="block text-slate-800 text-[10.5px] sm:text-xs font-black mb-0.5 sm:mb-1">
                     Message / Enquiry
                   </label>
                   <textarea
                     rows="2"
                     value={formData.message}
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                    className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-none resize-none transition shadow-2xs text-base sm:text-sm"
+                    className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2.5 bg-white border border-slate-300 rounded-lg sm:rounded-xl text-slate-950 font-semibold focus:ring-2 focus:ring-[#F05A28] focus:border-transparent focus:outline-none resize-none transition shadow-2xs text-xs sm:text-sm"
                   />
                 </div>
 
                 {/* =========================================================================
                     RULES & CRITERIA TO BECOME A B★SEL FRANCHISE / PARTNER (THE B★SEL TOOLKIT)
                    ========================================================================= */}
-                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 sm:p-4 space-y-2.5 text-left">
+                <div className="bg-slate-50 border border-slate-200 rounded-xl sm:rounded-2xl p-2.5 sm:p-4 space-y-2 text-left">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] sm:text-xs font-black uppercase text-slate-900 flex items-center gap-1.5">
                       <ShieldCheck className="w-4 h-4 text-[#F05A28]" />

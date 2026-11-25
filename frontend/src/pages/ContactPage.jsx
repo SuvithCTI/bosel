@@ -189,13 +189,13 @@ export default function ContactPage({ setActivePage }) {
           </div>
 
           {/* Right Column: General Enquiry Form */}
-          <div id="general-enquiry-form" className="lg:col-span-7 bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-slate-200 scroll-mt-24">
-            <div className="mb-6">
-              <span className="text-xs font-black text-sky-700 uppercase tracking-wider">Get in Touch</span>
-              <h2 className="text-2xl font-black font-heading text-slate-950 mt-1">
+          <div id="general-enquiry-form" className="lg:col-span-7 bg-white rounded-2xl p-3.5 sm:p-6 md:p-8 shadow-sm border border-slate-200 scroll-mt-24">
+            <div className="mb-3.5 sm:mb-6">
+              <span className="text-[10px] sm:text-xs font-black text-sky-700 uppercase tracking-wider">Get in Touch</span>
+              <h2 className="text-xl sm:text-2xl font-black font-heading text-slate-950 mt-0.5 sm:mt-1">
                 General Enquiry
               </h2>
-              <p className="text-xs text-slate-900 mt-1 font-semibold">
+              <p className="text-[11px] sm:text-xs text-slate-900 mt-0.5 sm:mt-1 font-semibold leading-relaxed">
                 Have questions regarding our academic programs, partner affiliations, state competitions, or center facilities? Send us your message below.
               </p>
             </div>
@@ -262,10 +262,10 @@ export default function ContactPage({ setActivePage }) {
                 </div>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-2.5 sm:space-y-4">
                 {/* Full Name */}
                 <div>
-                  <label className="block text-xs font-black text-black mb-1">
+                  <label className="block text-[10.5px] sm:text-xs font-black text-black mb-0.5 sm:mb-1">
                     Full Name *
                   </label>
                   <input
@@ -273,14 +273,14 @@ export default function ContactPage({ setActivePage }) {
                     required
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-3.5 py-2.5 text-base sm:text-sm text-black font-semibold border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                    className="w-full px-2.5 sm:px-3.5 py-1.5 sm:py-2.5 min-h-[36px] sm:min-h-[44px] text-xs sm:text-sm text-black font-semibold border-2 border-slate-300 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none"
                   />
                 </div>
 
                 {/* Email Address & Phone Number */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
                   <div>
-                    <label className="block text-xs font-black text-black mb-1">
+                    <label className="block text-[10.5px] sm:text-xs font-black text-black mb-0.5 sm:mb-1">
                       Email Address *
                     </label>
                     <input
@@ -288,12 +288,12 @@ export default function ContactPage({ setActivePage }) {
                       required
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full px-3.5 py-2.5 text-base sm:text-sm text-black font-semibold border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                      className="w-full px-2.5 sm:px-3.5 py-1.5 sm:py-2.5 min-h-[36px] sm:min-h-[44px] text-xs sm:text-sm text-black font-semibold border-2 border-slate-300 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-black text-black mb-1">
+                    <label className="block text-[10.5px] sm:text-xs font-black text-black mb-0.5 sm:mb-1">
                       Phone Number *
                     </label>
                     <input
@@ -301,21 +301,21 @@ export default function ContactPage({ setActivePage }) {
                       required
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      className="w-full px-3.5 py-2.5 text-base sm:text-sm text-black font-semibold border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                      className="w-full px-2.5 sm:px-3.5 py-1.5 sm:py-2.5 min-h-[36px] sm:min-h-[44px] text-xs sm:text-sm text-black font-semibold border-2 border-slate-300 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none"
                     />
                   </div>
                 </div>
 
                 {/* Subject / Purpose of Enquiry */}
                 <div>
-                  <label className="block text-xs font-black text-black mb-1">
+                  <label className="block text-[10.5px] sm:text-xs font-black text-black mb-0.5 sm:mb-1">
                     Enquiry Subject *
                   </label>
                   <select
                     required
                     value={formData.subject}
                     onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                    className="w-full px-3.5 py-2.5 text-base sm:text-sm text-black font-semibold border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none bg-white"
+                    className="w-full px-2.5 sm:px-3.5 py-1.5 sm:py-2.5 min-h-[36px] sm:min-h-[44px] text-xs sm:text-sm text-black font-semibold border-2 border-slate-300 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none bg-white"
                   >
                     <option value="General Enquiry">General Enquiry</option>
                     <option value="Courses & Programs">Courses & Program Details (Abacus, Phonics, Art, Handwriting)</option>
@@ -329,23 +329,23 @@ export default function ContactPage({ setActivePage }) {
 
                 {/* Message */}
                 <div>
-                  <label className="block text-xs font-black text-black mb-1">
+                  <label className="block text-[10.5px] sm:text-xs font-black text-black mb-0.5 sm:mb-1">
                     Your Message / Query *
                   </label>
                   <textarea
-                    rows={4}
+                    rows={2}
                     required
                     value={formData.message}
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                    className="w-full px-3.5 py-2.5 text-base sm:text-sm text-black font-semibold border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                    className="w-full px-2.5 sm:px-3.5 py-1.5 sm:py-2.5 text-xs sm:text-sm text-black font-semibold border-2 border-slate-300 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none resize-none"
                   />
                 </div>
 
                 <button
                   type="submit"
-                  className="w-full bg-[#0F2B5C] hover:bg-[#18458F] active:scale-[0.99] text-white py-3.5 rounded-xl font-black text-sm transition flex items-center justify-center gap-2 shadow-md hover:shadow-lg cursor-pointer"
+                  className="w-full bg-[#0F2B5C] hover:bg-[#18458F] active:scale-[0.99] text-white py-2.5 sm:py-3.5 min-h-[38px] sm:min-h-[48px] rounded-lg sm:rounded-xl font-black text-xs sm:text-sm transition flex items-center justify-center gap-2 shadow-md hover:shadow-lg cursor-pointer"
                 >
-                  <Send className="w-4 h-4" />
+                  <Send className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   <span>Submit General Enquiry</span>
                 </button>
               </form>
