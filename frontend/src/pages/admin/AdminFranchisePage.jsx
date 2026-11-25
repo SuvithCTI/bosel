@@ -149,12 +149,12 @@ export default function AdminFranchisePage({
           <div 
             key={lead.refId} 
             onClick={() => setSelectedLead(lead)}
-            className="bg-white rounded-xl border border-slate-200 shadow-2xs hover:shadow-md hover:border-indigo-300 transition-all p-3.5 flex flex-col justify-between cursor-pointer group select-none"
+            className="bg-white rounded-xl border border-slate-200 shadow-2xs hover:shadow-md hover:border-indigo-300 transition-all p-2.5 sm:p-3.5 flex flex-col justify-between cursor-pointer group select-none"
           >
             <div>
               {/* Header: Name + Status */}
-              <div className="flex items-start justify-between gap-2 mb-1.5">
-                <h3 className="text-sm font-black text-slate-900 group-hover:text-indigo-600 transition truncate" title={lead.name}>
+              <div className="flex items-start justify-between gap-1 sm:gap-2 mb-1.5">
+                <h3 className="text-xs sm:text-sm font-black text-slate-900 group-hover:text-indigo-600 transition truncate flex-1 min-w-0" title={lead.name}>
                   {lead.name}
                 </h3>
                 <select
@@ -164,7 +164,7 @@ export default function AdminFranchisePage({
                     e.stopPropagation();
                     handleUpdateFranchiseStatus(lead.refId, e.target.value, lead.message);
                   }}
-                  className={`text-[9.5px] font-black uppercase rounded-md px-2 py-0.5 border outline-none cursor-pointer shrink-0 ${
+                  className={`text-[8.5px] sm:text-[9.5px] font-black uppercase rounded-md px-1.5 py-0.5 border outline-none cursor-pointer shrink-0 max-w-[90px] sm:max-w-none truncate ${
                     lead.status === 'Approved Franchise Branch' 
                       ? 'bg-emerald-50 text-emerald-800 border-emerald-300' 
                       : lead.status === 'Site Inspection Scheduled'
@@ -176,45 +176,42 @@ export default function AdminFranchisePage({
                 >
                   <option value="New Franchise Lead">New Lead</option>
                   <option value="In Discussion">In Discussion</option>
-                  <option value="Site Inspection Scheduled">Site Inspection</option>
-                  <option value="Approved Franchise Branch">Approved Branch</option>
+                  <option value="Site Inspection Scheduled">Inspection</option>
+                  <option value="Approved Franchise Branch">Approved</option>
                   <option value="Archived">Archived</option>
                 </select>
               </div>
 
               {/* Ref ID, Date, Location */}
-              <div className="flex items-center gap-1.5 flex-wrap text-[10px] text-slate-500 mb-2">
-                <span className="font-mono font-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.2 rounded border border-indigo-200">
-                  {getFranchiseDisplayId(lead)}
-                </span>
-                <span>•</span>
-                <span className="text-slate-400">{lead.date}</span>
-                <span>•</span>
-                <span className="font-semibold text-slate-700 flex items-center gap-0.5 truncate">
+              <div className="flex flex-col gap-0.5 text-[9px] sm:text-[10px] text-slate-500 mb-2">
+                <div className="flex items-center gap-1 sm:gap-1.5 flex-wrap">
+                  <span className="font-mono font-bold text-indigo-700 bg-indigo-50 px-1 py-0.2 rounded border border-indigo-200 text-[8.5px] sm:text-[10px] truncate max-w-full">
+                    {getFranchiseDisplayId(lead)}
+                  </span>
+                  <span className="text-slate-300 hidden sm:inline">•</span>
+                  <span className="text-slate-400 text-[8.5px] sm:text-[10px]">{lead.date}</span>
+                </div>
+                <div className="font-semibold text-slate-700 flex items-center gap-0.5 truncate text-[9px] sm:text-[10px]">
                   <MapPin className="w-2.5 h-2.5 text-slate-400 shrink-0" />
-                  {lead.city}, {lead.district}
-                </span>
+                  <span className="truncate">{lead.city}, {lead.district}</span>
+                </div>
               </div>
 
               {/* Compact Contact & Program Summary */}
-              <div className="flex items-center justify-between gap-1 text-[11px] text-slate-700 bg-slate-50/90 px-2.5 py-1.5 rounded-lg border border-slate-100">
+              <div className="flex flex-col gap-1 text-[10px] sm:text-[11px] text-slate-700 bg-slate-50/90 p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg border border-slate-100 sm:flex-row sm:items-center sm:justify-between">
                 <span className="font-bold flex items-center gap-1 truncate text-slate-800">
                   <Phone className="w-3 h-3 text-slate-400 shrink-0" />
-                  <span>{lead.phone}</span>
+                  <span className="truncate">{lead.phone}</span>
                 </span>
-                <span className="text-[10px] font-semibold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 truncate max-w-[150px]">
+                <span className="text-[9px] sm:text-[10px] font-semibold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 truncate w-fit max-w-full sm:max-w-[150px]">
                   {lead.interestedProgram || 'All Programs'}
                 </span>
               </div>
             </div>
 
             {/* Footer: View Details hint + Action buttons */}
-            <div className="flex items-center justify-between gap-2 mt-2.5 pt-2 border-t border-slate-100">
-              <span className="text-[10.5px] font-bold text-indigo-600 group-hover:underline flex items-center gap-0.5">
-                View full data &rarr;
-              </span>
-
-              <div className="flex items-center gap-1.5">
+            <div className="mt-2 pt-1.5 border-t border-slate-100 flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center justify-between gap-1 w-full sm:w-auto sm:order-2">
                 {lead.status !== 'Approved Franchise Branch' ? (
                   <button
                     type="button"
@@ -222,13 +219,13 @@ export default function AdminFranchisePage({
                       e.stopPropagation();
                       handleApproveFranchiseToBranch(lead);
                     }}
-                    className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-md text-[10.5px] font-black transition cursor-pointer flex items-center gap-1 shadow-2xs"
+                    className="flex-1 sm:flex-none px-2 sm:px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-md text-[10px] sm:text-[10.5px] font-black transition cursor-pointer flex items-center justify-center gap-1 shadow-2xs"
                   >
                     <Check className="w-3 h-3" />
                     <span>Approve</span>
                   </button>
                 ) : (
-                  <span className="inline-flex items-center gap-0.5 text-[9.5px] font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                  <span className="flex-1 sm:flex-none inline-flex items-center justify-center gap-0.5 text-[9px] sm:text-[9.5px] font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
                     <Check className="w-2.5 h-2.5" />
                     <span>Approved</span>
                   </span>
@@ -243,12 +240,16 @@ export default function AdminFranchisePage({
                       showToast(`Enquiry ${getFranchiseDisplayId(lead)} removed.`);
                     }
                   }}
-                  className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition cursor-pointer"
+                  className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition cursor-pointer shrink-0"
                   title="Delete Enquiry"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
               </div>
+
+              <span className="text-[9.5px] sm:text-[10.5px] font-bold text-indigo-600 group-hover:underline flex items-center justify-center sm:justify-start gap-0.5 sm:order-1">
+                View full data &rarr;
+              </span>
             </div>
           </div>
         ))}
