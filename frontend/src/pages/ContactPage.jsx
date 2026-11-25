@@ -156,17 +156,17 @@ export default function ContactPage({ setActivePage }) {
 
             {/* Quick Action Buttons */}
             <div className="bg-white rounded-2xl p-3 sm:p-4 shadow-sm border border-slate-200">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
+              <div className="grid grid-cols-2 gap-2 sm:gap-3">
                 {/* Franchise Form */}
                 <button
                   type="button"
                   onClick={() => setShowFranchiseModal(true)}
                   title="Franchise Application Form"
                   aria-label="Franchise Form"
-                  className="py-3 px-3 rounded-xl bg-amber-50/70 border-2 border-amber-300 hover:border-amber-500 hover:bg-amber-400 text-amber-900 hover:text-slate-950 transition flex items-center justify-center gap-2 shadow-2xs hover:shadow-xs cursor-pointer group text-center w-full"
+                  className="py-2.5 sm:py-3 px-2 sm:px-3 rounded-xl bg-amber-50/70 border-2 border-amber-300 hover:border-amber-500 hover:bg-amber-400 text-amber-900 hover:text-slate-950 transition flex items-center justify-center gap-1.5 sm:gap-2 shadow-2xs hover:shadow-xs cursor-pointer group text-center w-full"
                 >
-                  <Store className="w-5 h-5 group-hover:scale-110 transition-transform shrink-0 text-amber-700 group-hover:text-slate-950" />
-                  <span className="text-xs sm:text-sm font-black tracking-wide leading-none text-slate-800 group-hover:text-slate-950">
+                  <Store className="w-4 h-4 sm:w-5 sm:h-5 group-hover:scale-110 transition-transform shrink-0 text-amber-700 group-hover:text-slate-950" />
+                  <span className="text-xs sm:text-sm font-black tracking-wide leading-none text-slate-800 group-hover:text-slate-950 truncate">
                     Franchise Form
                   </span>
                 </button>
@@ -177,10 +177,10 @@ export default function ContactPage({ setActivePage }) {
                   onClick={() => setShowAdmissionModal(true)}
                   title="Student Admission Form"
                   aria-label="Admission Form"
-                  className="py-3 px-3 rounded-xl bg-sky-50/70 border-2 border-sky-300 hover:border-sky-500 hover:bg-[#0F2B5C] text-sky-900 hover:text-white transition flex items-center justify-center gap-2 shadow-2xs hover:shadow-xs cursor-pointer group text-center w-full"
+                  className="py-2.5 sm:py-3 px-2 sm:px-3 rounded-xl bg-sky-50/70 border-2 border-sky-300 hover:border-sky-500 hover:bg-[#0F2B5C] text-sky-900 hover:text-white transition flex items-center justify-center gap-1.5 sm:gap-2 shadow-2xs hover:shadow-xs cursor-pointer group text-center w-full"
                 >
-                  <GraduationCap className="w-5 h-5 group-hover:scale-110 transition-transform shrink-0 text-sky-700 group-hover:text-white" />
-                  <span className="text-xs sm:text-sm font-black tracking-wide leading-none text-slate-800 group-hover:text-white">
+                  <GraduationCap className="w-4 h-4 sm:w-5 sm:h-5 group-hover:scale-110 transition-transform shrink-0 text-sky-700 group-hover:text-white" />
+                  <span className="text-xs sm:text-sm font-black tracking-wide leading-none text-slate-800 group-hover:text-white truncate">
                     Admission Form
                   </span>
                 </button>
