@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import html2canvas from 'html2canvas-pro';
 import { jsPDF } from 'jspdf';
+import { triggerDirectPdfDownload } from '../utils/pdfExport';
 import {
   getStudentRegisterNumber,
   getStudentPhotoUrl,
@@ -190,12 +191,16 @@ export default function MergedQuestionPaperModal({
         await new Promise((r) => setTimeout(r, 120));
 
         const canvas = await html2canvas(pageElements[i], {
-          scale: 2.2,
+          scale: 2.5,
           useCORS: true,
+          logging: false,
+          scrollX: 0,
+          scrollY: 0,
+          windowWidth: 1024,
           backgroundColor: '#ffffff'
         });
 
-        const imgData = canvas.toDataURL('image/jpeg', 0.95);
+        const imgData = canvas.toDataURL('image/jpeg', 0.98);
 
         if (i > 0) {
           pdf.addPage('a4', 'portrait');
@@ -222,7 +227,7 @@ export default function MergedQuestionPaperModal({
       const filename = `BSEL_Merged_Question_Papers_${safeBranch}_${dateStr}.pdf`;
 
       setCurrentStep('Finalizing Merged PDF...');
-      pdf.save(filename);
+      triggerDirectPdfDownload(pdf, filename);
 
       setDownloadSuccess(true);
       setCurrentStep('Download complete!');
@@ -414,6 +419,10 @@ export default function MergedQuestionPaperModal({
       {/* Print Styles */}
       <style>{`
         @media print {
+          @page {
+            size: A4 portrait;
+            margin: 8mm;
+          }
           body * {
             visibility: hidden !important;
           }
@@ -427,6 +436,11 @@ export default function MergedQuestionPaperModal({
             width: 100% !important;
             opacity: 1 !important;
             pointer-events: auto !important;
+          }
+          .batch-qp-page {
+            width: 100% !important;
+            max-width: 194mm !important;
+            margin: 0 auto !important;
           }
           .qp-page-break {
             page-break-after: always !important;

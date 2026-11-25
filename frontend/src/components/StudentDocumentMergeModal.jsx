@@ -79,14 +79,22 @@ export default function StudentDocumentMergeModal({ type, students = [], onClose
     await waitForImages(pageElement);
 
     return html2canvas(pageElement, {
-      scale: 2,
+      scale: 2.5,
       useCORS: true,
       allowTaint: false,
       logging: false,
       scrollX: 0,
       scrollY: 0,
-      windowWidth: pageElement.scrollWidth || document.documentElement.offsetWidth,
-      backgroundColor: '#ffffff'
+      windowWidth: 1024,
+      backgroundColor: '#ffffff',
+      onclone: (_clonedDoc, clonedEl) => {
+        const adm = clonedEl.querySelector?.('#printable-admission-form, [data-merged-admission-form]') || clonedEl;
+        if (adm && !isReceipt) {
+          adm.style.width = '794px';
+          adm.style.maxWidth = '794px';
+          adm.style.margin = '0 auto';
+        }
+      }
     });
   };
 

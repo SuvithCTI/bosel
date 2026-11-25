@@ -241,20 +241,20 @@ export default function AdminSchoolsPage({
   return (
     <div className="space-y-4 animate-in fade-in duration-200">
       {/* Header Banner with Real-Time Search & Quick Branch Jump */}
-      <div className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-sm flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+      <div className="bg-white p-3.5 sm:p-4.5 rounded-2xl border border-slate-200 shadow-sm flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <h2 className="text-base font-black text-slate-950 flex items-center gap-2">
-            <Building2 className="w-5 h-5 text-amber-500" />
+          <h2 className="text-sm sm:text-base font-black text-slate-950 flex items-center gap-2">
+            <Building2 className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500 shrink-0" />
             <span>Authorized District Branches Network</span>
           </h2>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5">
             Super Admin sets official Branch Login credentials and can directly jump to any Branch Admin portal.
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-2.5 w-full lg:w-auto">
           {/* Real-time Branch Search */}
-          <div className="relative flex-1 sm:w-56 lg:w-64 min-w-[180px]">
+          <div className="relative flex-1 sm:w-56 lg:w-64 min-w-0">
             <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
@@ -279,7 +279,7 @@ export default function AdminSchoolsPage({
           <button
             type="button"
             onClick={() => setShowAddSchoolModal(true)}
-            className="px-4 py-2 bg-[#0c234b] hover:bg-[#163e7c] text-white rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer whitespace-nowrap"
+            className="w-full sm:w-auto px-4 py-2 bg-[#0c234b] hover:bg-[#163e7c] text-white rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer whitespace-nowrap"
           >
             <Plus className="w-4 h-4 text-amber-400" />
             <span>Add New Branch</span>
@@ -288,7 +288,7 @@ export default function AdminSchoolsPage({
       </div>
 
       {/* Network Branch Cards Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         {filteredBranches.map((branch) => {
           const creds = getCredentialsForBranchOrSchool(branch);
           const emailKey = `email_${branch.code}_${creds.slug}`;
@@ -298,15 +298,15 @@ export default function AdminSchoolsPage({
           return (
             <div
               key={branch.code}
-              className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col justify-between gap-3"
+              className="bg-white p-3.5 sm:p-4.5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col justify-between gap-3"
             >
               {/* Branch Name */}
               <div className="flex items-start justify-between gap-2">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 min-w-0">
                   <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span>
                   <div className="min-w-0">
                     <h3 className="text-sm font-black text-slate-950 leading-snug">{branch.name}</h3>
-                    <p className="mt-1 text-[11px] text-slate-500">{cleanCity(branch.city)}</p>
+                    <p className="mt-0.5 text-[11px] text-slate-500">{cleanCity(branch.city)}</p>
                   </div>
                 </div>
                 <div className="flex shrink-0 flex-col items-end gap-1">

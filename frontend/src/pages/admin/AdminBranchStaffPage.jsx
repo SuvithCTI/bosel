@@ -316,7 +316,7 @@ export default function AdminBranchStaffPage({
                     {staff.name?.slice(0, 2).toUpperCase() || 'ST'}
                   </div>
                   <div className="min-w-0">
-                    <h3 className="text-xs sm:text-sm font-black text-slate-950 truncate leading-snug">
+                    <h3 className="text-xs sm:text-sm font-black text-slate-950 leading-snug line-clamp-2">
                       {staff.name}
                     </h3>
                     <div className="flex items-center gap-1.5 flex-wrap mt-0.5">

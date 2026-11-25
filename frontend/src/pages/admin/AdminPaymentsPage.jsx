@@ -187,15 +187,11 @@ export default function AdminPaymentsPage({
               className="flex-1 sm:flex-initial px-2.5 py-1.5 sm:py-1 text-xs border border-slate-300 rounded-lg outline-none font-bold bg-white text-slate-800 shadow-2xs"
             >
               <option value="All">All Sectors</option>
-              <option value="Course Tuition">Course Entry Fee</option>
-              <option value="Competition & Events">Competition & Events</option>
-              <option value="Toolkits & Courseware">Toolkits & Courseware</option>
-              <option value="Franchise Affiliation">Franchise Affiliation</option>
+              <option value="Course Entry Fee">Course Entry Fee</option>
               <option value="Monthly Fee">Monthly Fee</option>
               <option value="Exam Fee">Exam Fee</option>
               <option value="Event Fee">Event Fee</option>
               <option value="Book Fee">Book Fee</option>
-              <option value="Entry Fee">Entry Fee</option>
               <option value="Franchise Fee">Franchise Fee</option>
               <option value="Others">Others</option>
             </select>
@@ -289,12 +285,11 @@ export default function AdminPaymentsPage({
                     />
                   </th>
                 )}
-                <th className="py-3 px-3">Txn / Receipt No</th>
                 <th className="py-3 px-3">Payer Name</th>
                 <th className="py-3 px-3">Branch</th>
                 <th className="py-3 px-3">Payment Sector</th>
                 <th className="py-3 px-3">Amount</th>
-                <th className="py-3 px-3">Mode & UTR</th>
+                <th className="py-3 px-3">Payment Mode</th>
                 <th className="py-3 px-3 text-right">Actions</th>
               </tr>
             </thead>
@@ -321,13 +316,6 @@ export default function AdminPaymentsPage({
                       </td>
                     )}
 
-                    <td className="py-3 px-3 font-mono font-bold text-slate-800">
-                      <div>{payment.id}</div>
-                      <div className="text-[10px] text-slate-400">
-                        {payment.receiptNo}
-                      </div>
-                    </td>
-
                     <td className="py-3 px-3">
                       <div className="font-extrabold text-slate-900">
                         {payment.payerName}
@@ -343,7 +331,14 @@ export default function AdminPaymentsPage({
 
                     <td className="py-3 px-3">
                       <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-800">
-                        {payment.sector === 'Course Tuition' ? 'Course Entry Fee' : payment.sector}
+                        {(() => {
+                          const s = payment.sector || '';
+                          if (s === 'Course Tuition' || s === 'Entry Fee') return 'Course Entry Fee';
+                          if (s === 'Franchise Affiliation') return 'Franchise Fee';
+                          if (s === 'Toolkits & Courseware') return 'Book Fee';
+                          if (s === 'Competition & Events') return 'Event Fee';
+                          return s || 'Fee Payment';
+                        })()}
                       </span>
                     </td>
 
@@ -354,9 +349,6 @@ export default function AdminPaymentsPage({
                     <td className="py-3 px-3">
                       <div className="font-bold text-slate-800">
                         {payment.paymentMode}
-                      </div>
-                      <div className="font-mono text-[10px] text-slate-500">
-                        {payment.refNo}
                       </div>
                     </td>
 
@@ -393,7 +385,7 @@ export default function AdminPaymentsPage({
 
               {filteredPayments.length === 0 && (
                 <tr>
-                  <td colSpan={isSelectionMode ? 8 : 7} className="py-8 text-center text-slate-400 font-bold">
+                  <td colSpan={isSelectionMode ? 7 : 6} className="py-8 text-center text-slate-400 font-bold">
                     No payments match the selected filters.
                   </td>
                 </tr>

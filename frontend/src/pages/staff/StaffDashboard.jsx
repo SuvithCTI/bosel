@@ -505,10 +505,10 @@ export default function StaffDashboard({
             {/* View Live Website Button */}
             <button
               onClick={() => setActivePage('home')}
-              className="text-xs font-black bg-white hover:bg-slate-100 text-[#0c234b] p-1.5 sm:px-3 sm:py-1.5 rounded-xl transition shadow-sm cursor-pointer flex items-center gap-1 sm:gap-1.5 active:scale-95 whitespace-nowrap shrink-0"
+              className="w-7 h-7 sm:w-auto sm:h-auto p-0 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl text-xs font-black bg-white hover:bg-slate-100 text-[#0c234b] transition shadow-xs cursor-pointer flex items-center justify-center gap-1 sm:gap-1.5 active:scale-95 whitespace-nowrap shrink-0"
               title="Visit Live Website"
             >
-              <Globe className="w-3.5 h-3.5 shrink-0 text-[#0c234b] sm:hidden" />
+              <Globe className="w-3.5 h-3.5 shrink-0 text-[#0c234b]" />
               <span className="hidden sm:inline">Website</span>
               <ArrowRight className="hidden sm:inline w-3.5 h-3.5 shrink-0" />
             </button>
@@ -516,7 +516,7 @@ export default function StaffDashboard({
             {/* Sign Out Button */}
             <button
               onClick={onLogout}
-              className="text-xs font-black bg-rose-600/90 hover:bg-rose-700 text-white p-1.5 sm:px-3 sm:py-1.5 rounded-xl transition shadow-sm cursor-pointer flex items-center gap-1 sm:gap-1.5 active:scale-95 whitespace-nowrap shrink-0"
+              className="w-7 h-7 sm:w-auto sm:h-auto p-0 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl text-xs font-black bg-rose-600/90 hover:bg-rose-700 text-white transition shadow-xs cursor-pointer flex items-center justify-center gap-1 sm:gap-1.5 active:scale-95 whitespace-nowrap shrink-0"
               title="Sign Out"
             >
               <LogOut className="w-3.5 h-3.5 shrink-0" />

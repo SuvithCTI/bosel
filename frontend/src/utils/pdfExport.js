@@ -138,12 +138,12 @@ export const exportPdfFromElement = async (element, options = {}, maybeOpts = {}
   const {
     filename = 'document.pdf',
     orientation = 'portrait',
-    margin = orientation === 'landscape' ? 0 : 8, // mm
+    margin = orientation === 'landscape' ? 0 : 0, // mm - default 0 for authentic full-bleed official documents
     backgroundColor = '#ffffff',
     scale = 2.5
   } = resolvedOpts;
 
-  // Wait for all webfonts (Cinzel, Great Vibes, etc.) to be fully ready
+  // Wait for all webfonts (Cinzel, Great Vibes, Outfit, etc.) to be fully ready
   if (typeof document !== 'undefined' && document.fonts && document.fonts.ready) {
     try {
       await document.fonts.ready;
@@ -152,14 +152,17 @@ export const exportPdfFromElement = async (element, options = {}, maybeOpts = {}
     }
   }
 
-  // 1. Try native high-fidelity SVG rasterization first if element is or contains an SVG
+  // 1. Check if the element IS or strictly contains the official Certificate SVG
   let canvas = null;
-  const svgEl = element.tagName?.toLowerCase() === 'svg' ? element : element.querySelector?.('svg');
-  if (svgEl) {
-    canvas = await svgElementToCanvas(svgEl, scale);
+  const certSvg = element.id === 'printable-certificate-svg'
+    ? element
+    : element.querySelector?.('#printable-certificate-svg');
+
+  if (certSvg) {
+    canvas = await svgElementToCanvas(certSvg, scale);
   }
 
-  // 2. Fallback to html2canvas if native SVG rasterization wasn't applicable or failed
+  // 2. High-fidelity html2canvas rasterization (preserves desktop alignment even when generated on mobile)
   if (!canvas) {
     canvas = await html2canvas(element, {
       scale,
@@ -168,7 +171,7 @@ export const exportPdfFromElement = async (element, options = {}, maybeOpts = {}
       logging: false,
       scrollX: 0,
       scrollY: 0,
-      windowWidth: element.scrollWidth || document.documentElement.offsetWidth,
+      windowWidth: Math.max(element.scrollWidth || 0, document.documentElement.offsetWidth || 0, 1024),
       backgroundColor,
       ignoreElements: (el) => {
         return (
@@ -176,6 +179,44 @@ export const exportPdfFromElement = async (element, options = {}, maybeOpts = {}
           el.classList?.contains('no-print') ||
           el.getAttribute?.('data-html2canvas-ignore') === 'true'
         );
+      },
+      onclone: (_clonedDoc, clonedEl) => {
+        const target = clonedEl || _clonedDoc.body;
+        target.style.transform = 'none';
+        target.style.margin = '0';
+
+        // Marksheet desktop dimension lock
+        const ms = target.id === 'printable-marksheet-sheet' ? target : target.querySelector?.('#printable-marksheet-sheet');
+        if (ms) {
+          ms.style.width = '724px';
+          ms.style.maxWidth = '724px';
+          ms.style.aspectRatio = '724 / 1024';
+          ms.style.margin = '0 auto';
+        }
+
+        // Certificate desktop dimension lock
+        const cert = target.id === 'printable-certificate' ? target : target.querySelector?.('#printable-certificate');
+        if (cert) {
+          cert.style.width = '1024px';
+          cert.style.maxWidth = '1024px';
+          cert.style.margin = '0 auto';
+        }
+
+        // Question paper booklet dimension lock
+        const qp = target.id === 'printable-question-paper' ? target : target.querySelector?.('#printable-question-paper, .batch-qp-page');
+        if (qp) {
+          qp.style.width = '724px';
+          qp.style.maxWidth = '724px';
+          qp.style.margin = '0 auto';
+        }
+
+        // Admission form dimension lock
+        const adm = target.id === 'printable-admission-form' ? target : target.querySelector?.('#printable-admission-form, [data-merged-admission-form]');
+        if (adm) {
+          adm.style.width = '794px';
+          adm.style.maxWidth = '794px';
+          adm.style.margin = '0 auto';
+        }
       }
     });
   }
@@ -244,18 +285,30 @@ export const exportMergedLandscapeAndPortraitPdf = async ({
   page1Element,
   page2Element,
   filename = 'BSEL_Merged_Certificate_Marksheet.pdf',
-  page1Scale = 2,
-  page2Scale = 2
+  page1Scale = 2.5,
+  page2Scale = 2.5
 }) => {
   if (!page1Element || !page2Element) {
     throw new Error('Both Certificate and Marksheet elements must be present to merge.');
   }
 
+  // Wait for all webfonts to be ready
+  if (typeof document !== 'undefined' && document.fonts && document.fonts.ready) {
+    try {
+      await document.fonts.ready;
+    } catch {
+      // ignore
+    }
+  }
+
   // 1. Capture Page 1 (Landscape Certificate)
-  const p1Svg = page1Element.tagName?.toLowerCase() === 'svg' ? page1Element : page1Element.querySelector?.('svg');
+  const certSvg = page1Element.id === 'printable-certificate-svg'
+    ? page1Element
+    : page1Element.querySelector?.('#printable-certificate-svg');
+
   let p1Canvas = null;
-  if (p1Svg) {
-    p1Canvas = await svgElementToCanvas(p1Svg, page1Scale || 2.5);
+  if (certSvg) {
+    p1Canvas = await svgElementToCanvas(certSvg, page1Scale || 2.5);
   }
   if (!p1Canvas) {
     p1Canvas = await html2canvas(page1Element, {
@@ -265,15 +318,23 @@ export const exportMergedLandscapeAndPortraitPdf = async ({
       logging: false,
       scrollX: 0,
       scrollY: 0,
-      windowWidth: page1Element.scrollWidth || 1050,
-      backgroundColor: '#fcfbf7'
+      windowWidth: 1050,
+      backgroundColor: '#ffffff',
+      onclone: (_clonedDoc, clonedEl) => {
+        const cert = clonedEl.id === 'printable-certificate' ? clonedEl : clonedEl.querySelector?.('#printable-certificate');
+        if (cert) {
+          cert.style.width = '1024px';
+          cert.style.maxWidth = '1024px';
+          cert.style.margin = '0 auto';
+        }
+      }
     });
   }
 
   let p1ImgData;
   let p1Format = 'JPEG';
   try {
-    p1ImgData = p1Canvas.toDataURL('image/jpeg', 0.95);
+    p1ImgData = p1Canvas.toDataURL('image/jpeg', 0.98);
   } catch {
     p1ImgData = p1Canvas.toDataURL('image/png');
     p1Format = 'PNG';
@@ -287,14 +348,23 @@ export const exportMergedLandscapeAndPortraitPdf = async ({
     logging: false,
     scrollX: 0,
     scrollY: 0,
-    windowWidth: page2Element.scrollWidth || 750,
-    backgroundColor: '#ffffff'
+    windowWidth: 1024,
+    backgroundColor: '#ffffff',
+    onclone: (_clonedDoc, clonedEl) => {
+      const ms = clonedEl.id === 'printable-marksheet-sheet' ? clonedEl : clonedEl.querySelector?.('#printable-marksheet-sheet');
+      if (ms) {
+        ms.style.width = '724px';
+        ms.style.maxWidth = '724px';
+        ms.style.aspectRatio = '724 / 1024';
+        ms.style.margin = '0 auto';
+      }
+    }
   });
 
   let p2ImgData;
   let p2Format = 'JPEG';
   try {
-    p2ImgData = p2Canvas.toDataURL('image/jpeg', 0.95);
+    p2ImgData = p2Canvas.toDataURL('image/jpeg', 0.98);
   } catch {
     p2ImgData = p2Canvas.toDataURL('image/png');
     p2Format = 'PNG';
@@ -327,7 +397,7 @@ export const exportMergedLandscapeAndPortraitPdf = async ({
   pdf.addPage('a4', 'portrait');
   const p2Width = pdf.internal.pageSize.getWidth();
   const p2Height = pdf.internal.pageSize.getHeight();
-  const p2Margin = 6; // mm margin for clean printing
+  const p2Margin = 0; // Seamless fit for authentic official marksheet
 
   const availP2W = p2Width - p2Margin * 2;
   const availP2H = p2Height - p2Margin * 2;

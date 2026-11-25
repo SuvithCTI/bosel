@@ -1510,16 +1510,12 @@ export default function AdminModals({
                     onChange={(e) => setNewPayment(prev => ({ ...prev, sector: e.target.value }))}
                     className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none bg-white font-bold"
                   >
-                    <option value="Course Tuition">Course Entry Fee</option>
+                    <option value="Course Entry Fee">Course Entry Fee</option>
                     <option value="Monthly Fee">Monthly Fee</option>
                     <option value="Exam Fee">Exam Fee</option>
                     <option value="Event Fee">Event Fee</option>
                     <option value="Book Fee">Book Fee</option>
-                    <option value="Entry Fee">Entry Fee</option>
                     <option value="Franchise Fee">Franchise Fee</option>
-                    <option value="Competition & Events">Competition & Events</option>
-                    <option value="Toolkits & Courseware">Toolkits & Courseware</option>
-                    <option value="Franchise Affiliation">Franchise Affiliation</option>
                     <option value="Others">Others</option>
                   </select>
                 </div>
