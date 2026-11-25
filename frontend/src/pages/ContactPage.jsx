@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import FranchiseModal from '../components/FranchiseModal';
 import AdmissionModal from '../components/AdmissionModal';
+import { addStoredContactEnquiry } from '../data/contactEnquiriesData';
 
 export default function ContactPage({ setActivePage }) {
   const [formData, setFormData] = useState({
@@ -39,17 +40,20 @@ export default function ContactPage({ setActivePage }) {
     const newRefId = `BSEL-ENQ-${Math.floor(100000 + Math.random() * 900000)}`;
     setRefId(newRefId);
     try {
-      const raw = localStorage.getItem('bsel_general_enquiries') || '[]';
-      const existing = JSON.parse(raw);
-      const enquiry = {
+      addStoredContactEnquiry({
         refId: newRefId,
-        ...formData,
+        id: newRefId,
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        phone: formData.phone.trim(),
+        subject: formData.subject,
+        message: formData.message.trim(),
         date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+        time: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }),
         status: 'New'
-      };
-      localStorage.setItem('bsel_general_enquiries', JSON.stringify([enquiry, ...existing]));
-    } catch {
-      // ignore
+      });
+    } catch (err) {
+      console.error('Error saving contact enquiry:', err);
     }
     setSubmitted(true);
   };

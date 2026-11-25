@@ -1663,12 +1663,11 @@ export default function OfficialMarksheetView({
                   <Download className="w-3.5 h-3.5 shrink-0" />
                 )}
 
-                <span className="sm:hidden">
-                  {isGeneratingPdf ? 'Saving' : 'PDF'}
-                </span>
-
                 <span className="hidden sm:inline">
                   {isGeneratingPdf ? 'Downloading...' : 'Download PDF'}
+                </span>
+                <span className="sm:hidden">
+                  {isGeneratingPdf ? 'Saving...' : 'Download PDF'}
                 </span>
               </button>
 

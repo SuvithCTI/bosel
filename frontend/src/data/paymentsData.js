@@ -142,7 +142,20 @@ export const addStoredPayment = (newPayment) => {
     verifiedBy: newPayment.verifiedBy || 'Admin Desk'
   };
 
-  const updated = [paymentRecord, ...payments];
+  const existingIdx = payments.findIndex(
+    (p) =>
+      (newPayment.id && p.id === newPayment.id) ||
+      (newPayment.receiptNo && p.receiptNo === newPayment.receiptNo)
+  );
+
+  let updated;
+  if (existingIdx !== -1) {
+    updated = [...payments];
+    updated[existingIdx] = { ...updated[existingIdx], ...paymentRecord };
+  } else {
+    updated = [paymentRecord, ...payments];
+  }
+
   saveStoredPayments(updated);
   return updated;
 };

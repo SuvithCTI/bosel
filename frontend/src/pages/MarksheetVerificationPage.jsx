@@ -20,6 +20,7 @@ import {
   Clock,
   Building2,
   GraduationCap,
+  Printer,
 } from 'lucide-react';
 
 import shieldLogo from '../assets/bsel-shield-logo.png';
@@ -478,13 +479,18 @@ export default function MarksheetVerificationPage({ setActivePage }) {
     }
   };
 
+  const handlePrint = () => {
+    window.print();
+  };
+
   const handleDownloadPdf = async () => {
     if (!marksheetRef.current || isDownloading) return;
     try {
       setIsDownloading(true);
       const safeName = studentName.replace(/[^a-zA-Z0-9]/g, '_');
       const filename = `BSEL_Marksheet_${registrationNo}_${safeName}.pdf`;
-      await exportPdfFromElement(marksheetRef.current, filename, {
+      await exportPdfFromElement(marksheetRef.current, {
+        filename,
         orientation: 'portrait',
         format: 'a4',
       });
@@ -717,38 +723,41 @@ export default function MarksheetVerificationPage({ setActivePage }) {
           </div>
         </div>
 
-        {/* Student Mobile Actions: Download PDF & Share */}
-        <div className="grid grid-cols-2 gap-2.5 pt-2 pb-6">
+        {/* Verification Actions: Download PDF, Print & Share (Identical in Desktop and Mobile) */}
+        <div className="grid grid-cols-3 gap-2 sm:gap-2.5 pt-2 pb-6">
           <button
             type="button"
             onClick={handleDownloadPdf}
             disabled={isDownloading}
-            className="py-2.5 px-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-60 text-white font-bold rounded-xl text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-md transition active:scale-95 cursor-pointer"
+            className="py-2.5 px-2 sm:px-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-60 text-white font-bold rounded-xl text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-md transition active:scale-95 cursor-pointer"
+            title="Download Marksheet as PDF"
           >
             {isDownloading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <Loader2 className="w-4 h-4 animate-spin shrink-0" />
             ) : (
-              <Download className="w-4 h-4" />
+              <Download className="w-4 h-4 shrink-0" />
             )}
-            <span>{isDownloading ? 'Saving...' : 'Download PDF'}</span>
+            <span className="truncate">{isDownloading ? 'Saving...' : 'Download PDF'}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handlePrint}
+            className="py-2.5 px-2 sm:px-3 bg-[#163e7c] hover:bg-[#1f54a6] border border-[#2b599d]/50 text-white font-bold rounded-xl text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-md transition active:scale-95 cursor-pointer"
+            title="Print Marksheet"
+          >
+            <Printer className="w-4 h-4 shrink-0" />
+            <span>Print</span>
           </button>
 
           <button
             type="button"
             onClick={handleShare}
-            className="py-2.5 px-3 bg-[#0d1e48] hover:bg-[#12285e] border border-[#233d7d] text-white font-bold rounded-xl text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-md transition active:scale-95 cursor-pointer"
+            className="py-2.5 px-2 sm:px-3 bg-[#0d1e48] hover:bg-[#12285e] border border-[#233d7d] text-white font-bold rounded-xl text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-md transition active:scale-95 cursor-pointer"
+            title="Share Marksheet Link"
           >
-            {copied ? (
-              <>
-                <Check className="w-4 h-4 text-emerald-400" />
-                <span className="text-emerald-300">Link Copied!</span>
-              </>
-            ) : (
-              <>
-                <Share2 className="w-4 h-4 text-[#d4af37]" />
-                <span>Share Marksheet</span>
-              </>
-            )}
+            <Share2 className="w-4 h-4 text-[#d4af37] shrink-0" />
+            <span className="truncate">{copied ? 'Copied!' : 'Share'}</span>
           </button>
         </div>
       </div>

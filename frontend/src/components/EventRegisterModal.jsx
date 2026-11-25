@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   X,
   Ticket,
@@ -18,12 +18,17 @@ import {
 
 import { getStoredEvents } from '../data/eventsData';
 import { getStudentPhotoUrl } from '../utils/studentDataHelpers';
-import { getRegisteredUsers } from '../utils/authStorage';
+import {
+  getRegisteredUsers,
+  getActiveSession,
+  isPhoneNumberRegistered,
+} from '../utils/authStorage';
 
 export default function EventRegisterModal({
   event: initialEvent,
   onClose,
   student,
+  setActivePage,
 }) {
   const availableEvents = getStoredEvents() || [];
 
@@ -290,7 +295,96 @@ export default function EventRegisterModal({
   const labelClass =
     'block text-[10px] sm:text-xs font-bold text-slate-800 mb-1';
 
+  const isUnknownPerson = useMemo(() => {
+    if (student) return false;
+    const session = getActiveSession?.();
+    if (session) {
+      if (session.role === 'Student' || session.studentName) return false;
+      const uid = String(session.userId || session.id || '').toLowerCase();
+      if (
+        uid &&
+        uid !== 'admin' &&
+        uid !== 'staff' &&
+        !uid.startsWith('branch.') &&
+        !uid.startsWith('sch-') &&
+        !uid.startsWith('school')
+      ) {
+        return false;
+      }
+    }
+    const cleanPhone = String(formData.phone || '').replace(/\D/g, '').slice(-10);
+    if (cleanPhone && cleanPhone.length === 10 && isPhoneNumberRegistered(cleanPhone)) {
+      return false;
+    }
+    return true;
+  }, [student, formData.phone]);
+
+  const [redirectCountdown, setRedirectCountdown] = useState(3);
+
+  const navigateToAdmission = useCallback(() => {
+    if (onClose) onClose();
+
+    if (typeof setActivePage === 'function') {
+      setActivePage('admission');
+    }
+
+    let targetProgram = 'Abacus Speed Arithmetic';
+    if (event?.category) {
+      targetProgram = event.category;
+    } else if (event?.eventName) {
+      const lower = event.eventName.toLowerCase();
+      if (lower.includes('vedic') || lower.includes('math')) {
+        targetProgram = 'Vedic Mathematics';
+      } else if (lower.includes('rubik') || lower.includes('cube')) {
+        targetProgram = 'Rubik’s Cube Mastery';
+      } else if (lower.includes('calligraphy') || lower.includes('handwriting')) {
+        targetProgram = 'Calligraphy & Handwriting';
+      } else if (lower.includes('phonics') || lower.includes('english')) {
+        targetProgram = 'Phonics & Spoken English';
+      }
+    }
+
+    window.dispatchEvent(
+      new CustomEvent('open_admission_modal', {
+        detail: {
+          studentName: formData.studentName || '',
+          parentName: formData.parentName || '',
+          phone: formData.phone || '',
+          email: formData.email || '',
+          dob: formData.dob || '',
+          city: formData.city || 'Tenkasi',
+          schoolName: formData.schoolName || '',
+          program: targetProgram,
+          studentPhoto: studentPhoto || null,
+          sourceEvent: event?.eventName || 'B★SEL Event',
+          isFromEventRegistration: true,
+        },
+      })
+    );
+  }, [onClose, setActivePage, event, formData, studentPhoto]);
+
+  useEffect(() => {
+    if (currentStep === 'payment_success' && isUnknownPerson) {
+      const timer = setInterval(() => {
+        setRedirectCountdown((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            navigateToAdmission();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      return () => clearInterval(timer);
+    }
+  }, [currentStep, isUnknownPerson, navigateToAdmission]);
+
   const closeModal = () => {
+    if (currentStep === 'payment_success' && isUnknownPerson) {
+      navigateToAdmission();
+      return;
+    }
     if (onClose) onClose();
   };
 
@@ -1830,6 +1924,39 @@ export default function EventRegisterModal({
                   </p>
                 </div>
 
+                {/* Unknown Person Auto-Navigation Notice */}
+                {isUnknownPerson && (
+                  <div className="
+                    bg-gradient-to-r from-amber-50 to-orange-50
+                    border border-amber-300
+                    rounded-xl
+                    p-3.5 sm:p-4
+                    max-w-md
+                    mx-auto
+                    text-left
+                    shadow-xs
+                  ">
+                    <div className="flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center shrink-0 font-black text-sm shadow-xs">
+                        ★
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                          <h5 className="text-xs sm:text-sm font-black text-slate-900">
+                            Student Admission Form
+                          </h5>
+                          <span className="text-[10px] font-bold text-amber-800 bg-amber-200/90 px-2 py-0.5 rounded-full animate-pulse">
+                            Redirecting in {redirectCountdown}s...
+                          </span>
+                        </div>
+                        <p className="text-[11px] sm:text-xs text-slate-700 mt-1 leading-relaxed">
+                          As a new student, your registration details are being forwarded to the official <strong>Student Admission Form</strong> to complete your student admission at B★SEL.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div className="
                   bg-slate-50
                   border border-slate-200
@@ -1908,27 +2035,70 @@ export default function EventRegisterModal({
                   </div>
                 </div>
 
-                <div className="flex items-center justify-center gap-2 pt-2">
-                  <button
-                    type="button"
-                    onClick={closeModal}
-                    className="
-                      w-full sm:w-auto
-                      px-6 py-2.5
-                      bg-[#0F2B5C]
-                      hover:bg-slate-900
-                      active:scale-95
-                      text-white
-                      rounded-xl
-                      text-xs
-                      font-bold
-                      transition
-                      cursor-pointer
-                      shadow-md
-                    "
-                  >
-                    Done / Close
-                  </button>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 pt-2">
+                  {isUnknownPerson ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={navigateToAdmission}
+                        className="
+                          w-full sm:w-auto
+                          px-6 py-2.5
+                          bg-gradient-to-r from-amber-500 to-amber-600
+                          hover:from-amber-600 hover:to-amber-700
+                          active:scale-95
+                          text-slate-950
+                          rounded-xl
+                          text-xs sm:text-sm
+                          font-black
+                          transition
+                          cursor-pointer
+                          shadow-md
+                          flex items-center justify-center gap-2
+                        "
+                      >
+                        <span>Proceed to Student Admission Form</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={closeModal}
+                        className="
+                          w-full sm:w-auto
+                          px-4 py-2
+                          text-slate-500
+                          hover:text-slate-700
+                          text-[11px]
+                          font-semibold
+                          transition
+                          cursor-pointer
+                        "
+                      >
+                        Close & Go to Admission
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={closeModal}
+                      className="
+                        w-full sm:w-auto
+                        px-6 py-2.5
+                        bg-[#0F2B5C]
+                        hover:bg-slate-900
+                        active:scale-95
+                        text-white
+                        rounded-xl
+                        text-xs
+                        font-bold
+                        transition
+                        cursor-pointer
+                        shadow-md
+                      "
+                    >
+                      Done / Close
+                    </button>
+                  )}
                 </div>
               </div>
             )}

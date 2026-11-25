@@ -890,52 +890,54 @@ export default function Certificate({
       )}
 
       {showControls && (
-
-        <div className="w-full max-w-[1024px] mb-3 bg-slate-900/95 text-white p-2 sm:p-3 rounded-xl sm:rounded-2xl shadow-xl border border-slate-700 print:hidden flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-3">
-
-          <div className="text-[11px] sm:text-xs font-semibold text-slate-200 truncate hidden sm:block">
-
+        <div className="w-full max-w-[1024px] mb-3 bg-[#0b173b]/95 text-white p-2 sm:p-3 rounded-xl sm:rounded-2xl shadow-xl border border-[#1d3269] print:hidden flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-3">
+          <div className="text-[11px] sm:text-xs font-semibold text-slate-200 truncate">
             Official B★SEL Certificate: <strong className="text-amber-400 capitalize">{studentName || 'Candidate Name'}</strong> — <span className="text-amber-300 font-bold uppercase">{courseUpper}</span>
-
           </div>
 
-          <div className="grid grid-cols-3 sm:flex sm:items-center gap-1.5 sm:gap-2 w-full sm:w-auto">
-
+          <div className="grid grid-cols-3 sm:flex items-center gap-1.5 sm:gap-2 w-full sm:w-auto shrink-0">
             <button
               type="button"
               onClick={() => setIsFormModalOpen(true)}
-              className="flex-1 sm:flex-none px-2 sm:px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-lg sm:rounded-xl text-[11px] sm:text-xs flex items-center justify-center gap-1 cursor-pointer shadow-sm transition active:scale-95 truncate"
-              title="Customize Certificate Details"
+              className="px-2 sm:px-3 py-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded-lg text-[10px] sm:text-xs font-bold transition flex items-center justify-center gap-1 border border-amber-400/40 cursor-pointer shadow-sm active:scale-95"
+              title="Customize School Name, Logo & Authorized Signature"
             >
               <PenTool className="w-3.5 h-3.5 shrink-0" />
-              <span className="truncate">Customize</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={handlePrint}
-              className="flex-1 sm:flex-none px-2 sm:px-3.5 py-1.5 bg-sky-600 hover:bg-sky-500 text-white font-black rounded-lg sm:rounded-xl text-[11px] sm:text-xs flex items-center justify-center gap-1 cursor-pointer shadow-md transition active:scale-95"
-              title="Print Certificate (Landscape)"
-            >
-              <Printer className="w-3.5 h-3.5 shrink-0" />
-              <span>Print</span>
+              <span className="hidden sm:inline">Customize</span>
+              <span className="sm:hidden">Customize</span>
             </button>
 
             <button
               type="button"
               onClick={handleDownloadPdf}
               disabled={isDownloadingPdf}
-              className="flex-1 sm:flex-none px-2 sm:px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white font-black rounded-lg sm:rounded-xl text-[11px] sm:text-xs flex items-center justify-center gap-1 cursor-pointer shadow-md transition active:scale-95 truncate"
+              className="px-2 sm:px-3.5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg text-[10px] sm:text-xs font-black transition flex items-center justify-center gap-1 shadow-sm cursor-pointer disabled:opacity-50 active:scale-95"
               title="Download Certificate PDF"
             >
-              {isDownloadingPdf ? <Loader2 className="w-3.5 h-3.5 shrink-0 animate-spin" /> : <Download className="w-3.5 h-3.5 shrink-0" />}
-              <span className="truncate">{isDownloadingPdf ? 'PDF...' : 'Download'}</span>
+              {isDownloadingPdf ? (
+                <Loader2 className="w-3.5 h-3.5 shrink-0 animate-spin" />
+              ) : (
+                <Download className="w-3.5 h-3.5 shrink-0" />
+              )}
+              <span className="hidden sm:inline">
+                {isDownloadingPdf ? 'Generating PDF...' : 'Download PDF'}
+              </span>
+              <span className="sm:hidden">
+                {isDownloadingPdf ? 'Saving...' : 'Download PDF'}
+              </span>
             </button>
 
+            <button
+              type="button"
+              onClick={handlePrint}
+              className="px-2 sm:px-3.5 py-2 bg-[#163e7c] hover:bg-[#1f54a6] text-white rounded-lg text-[10px] sm:text-xs font-black transition flex items-center justify-center gap-1 shadow-sm border border-[#2b599d]/50 cursor-pointer active:scale-95"
+              title="Print Certificate (Landscape)"
+            >
+              <Printer className="w-3.5 h-3.5 shrink-0" />
+              <span>Print</span>
+            </button>
           </div>
-
         </div>
-
       )}
 
       {isEditable && isFormModalOpen && (
@@ -1146,6 +1148,58 @@ export default function Certificate({
         </div>
 
       )}
+
+      {/* ===== Print Styles for Clean A4 Landscape Isolation ===== */}
+      <style>{`
+        @media print {
+          @page {
+            size: A4 landscape;
+            margin: 0;
+          }
+
+          html,
+          body {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            background: #ffffff !important;
+            overflow: visible !important;
+          }
+
+          body * {
+            visibility: hidden !important;
+          }
+
+          #printable-certificate,
+          #printable-certificate * {
+            visibility: visible !important;
+          }
+
+          #printable-certificate {
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            max-width: none !important;
+            height: 100vh !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: none !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            overflow: hidden !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+
+          #printable-certificate-svg {
+            width: 100% !important;
+            height: 100% !important;
+            display: block !important;
+          }
+        }
+      `}</style>
 
       {/* ===== Certificate (vector, print-ready) ===== */}
 

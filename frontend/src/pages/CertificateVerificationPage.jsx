@@ -10,6 +10,7 @@ import {
   Check,
   ShieldCheck,
   Award,
+  Printer,
 } from 'lucide-react';
 
 import shieldLogo from '../assets/bsel-shield-logo.png';
@@ -445,13 +446,18 @@ export default function CertificateVerificationPage({ setActivePage }) {
     }
   };
 
+  const handlePrint = () => {
+    window.print();
+  };
+
   const handleDownloadPdf = async () => {
     if (!certContainerRef.current || isDownloading) return;
     try {
       setIsDownloading(true);
       const safeName = studentName.replace(/[^a-zA-Z0-9]/g, '_');
       const filename = `BSEL_Certificate_${registrationNo}_${safeName}.pdf`;
-      await exportPdfFromElement(certContainerRef.current, filename, {
+      await exportPdfFromElement(certContainerRef.current, {
+        filename,
         orientation: 'landscape',
         format: 'a4',
       });
@@ -640,29 +646,41 @@ export default function CertificateVerificationPage({ setActivePage }) {
           </div>
         </div>
 
-        {/* Student Mobile Actions: Download & Share */}
-        <div className="grid grid-cols-2 gap-2.5 pt-1">
+        {/* Verification Actions: Download PDF, Print & Share (Identical in Desktop and Mobile) */}
+        <div className="grid grid-cols-3 gap-2 sm:gap-2.5 pt-1">
           <button
             type="button"
             onClick={handleDownloadPdf}
             disabled={isDownloading}
-            className="py-2.5 px-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-60 text-white font-bold rounded-xl text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-md transition active:scale-95 cursor-pointer"
+            className="py-2.5 px-2 sm:px-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-60 text-white font-bold rounded-xl text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-md transition active:scale-95 cursor-pointer"
+            title="Download Certificate as PDF"
           >
             {isDownloading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <Loader2 className="w-4 h-4 animate-spin shrink-0" />
             ) : (
-              <Download className="w-4 h-4" />
+              <Download className="w-4 h-4 shrink-0" />
             )}
-            <span>{isDownloading ? 'Saving...' : 'Download PDF'}</span>
+            <span className="truncate">{isDownloading ? 'Saving...' : 'Download PDF'}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handlePrint}
+            className="py-2.5 px-2 sm:px-3 bg-[#163e7c] hover:bg-[#1f54a6] border border-[#2b599d]/50 text-white font-bold rounded-xl text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-md transition active:scale-95 cursor-pointer"
+            title="Print Certificate (Landscape)"
+          >
+            <Printer className="w-4 h-4 shrink-0" />
+            <span>Print</span>
           </button>
 
           <button
             type="button"
             onClick={handleShare}
-            className="py-2.5 px-3 bg-[#13234d] hover:bg-[#1a2f64] border border-[#2a4585] text-slate-200 font-bold rounded-xl text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-md transition active:scale-95 cursor-pointer"
+            className="py-2.5 px-2 sm:px-3 bg-[#13234d] hover:bg-[#1a2f64] border border-[#2a4585] text-slate-200 font-bold rounded-xl text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-md transition active:scale-95 cursor-pointer"
+            title="Share Certificate Link"
           >
-            <Share2 className="w-4 h-4 text-[#d4af37]" />
-            <span>{copied ? 'Link Copied!' : 'Share Link'}</span>
+            <Share2 className="w-4 h-4 text-[#d4af37] shrink-0" />
+            <span className="truncate">{copied ? 'Copied!' : 'Share'}</span>
           </button>
         </div>
 
