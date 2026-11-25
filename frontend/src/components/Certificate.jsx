@@ -890,11 +890,20 @@ export default function Certificate({
       )}
 
       {showControls && (
+<<<<<<< HEAD
         <div className="w-full max-w-[1024px] mb-3 bg-[#0b173b]/95 text-white p-2 sm:p-3 rounded-2xl shadow-xl border border-[#1d3269] print:hidden flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-3">
           <div className="text-xs font-semibold text-slate-200 truncate">
+=======
+
+        <div className="w-full max-w-[1024px] mb-3 bg-slate-900/95 text-white p-2 sm:p-3 rounded-xl sm:rounded-2xl shadow-xl border border-slate-700 print:hidden flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-3">
+
+          <div className="text-[11px] sm:text-xs font-semibold text-slate-200 truncate hidden sm:block">
+
+>>>>>>> 0b07ad317cf871e4310a263d28914ead4634a3b1
             Official B★SEL Certificate: <strong className="text-amber-400 capitalize">{studentName || 'Candidate Name'}</strong> — <span className="text-amber-300 font-bold uppercase">{courseUpper}</span>
           </div>
 
+<<<<<<< HEAD
           <div className="grid grid-cols-3 sm:flex items-center gap-1.5 sm:gap-2 shrink-0">
             <button
               type="button"
@@ -905,12 +914,35 @@ export default function Certificate({
               <PenTool className="w-3.5 h-3.5 shrink-0" />
               <span className="hidden sm:inline">Customize</span>
               <span className="sm:hidden">Customize</span>
+=======
+          <div className="grid grid-cols-3 sm:flex sm:items-center gap-1.5 sm:gap-2 w-full sm:w-auto">
+
+            <button
+              type="button"
+              onClick={() => setIsFormModalOpen(true)}
+              className="flex-1 sm:flex-none px-2 sm:px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-lg sm:rounded-xl text-[11px] sm:text-xs flex items-center justify-center gap-1 cursor-pointer shadow-sm transition active:scale-95 truncate"
+              title="Customize Certificate Details"
+            >
+              <PenTool className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate">Customize</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handlePrint}
+              className="flex-1 sm:flex-none px-2 sm:px-3.5 py-1.5 bg-sky-600 hover:bg-sky-500 text-white font-black rounded-lg sm:rounded-xl text-[11px] sm:text-xs flex items-center justify-center gap-1 cursor-pointer shadow-md transition active:scale-95"
+              title="Print Certificate (Landscape)"
+            >
+              <Printer className="w-3.5 h-3.5 shrink-0" />
+              <span>Print</span>
+>>>>>>> 0b07ad317cf871e4310a263d28914ead4634a3b1
             </button>
 
             <button
               type="button"
               onClick={handleDownloadPdf}
               disabled={isDownloadingPdf}
+<<<<<<< HEAD
               className="px-2 sm:px-3.5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg text-[10px] sm:text-xs font-black transition flex items-center justify-center gap-1 shadow-sm cursor-pointer disabled:opacity-50 active:scale-95"
             >
               {isDownloadingPdf ? (
@@ -924,6 +956,13 @@ export default function Certificate({
               <span className="sm:hidden">
                 {isDownloadingPdf ? 'Saving...' : 'Download PDF'}
               </span>
+=======
+              className="flex-1 sm:flex-none px-2 sm:px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white font-black rounded-lg sm:rounded-xl text-[11px] sm:text-xs flex items-center justify-center gap-1 cursor-pointer shadow-md transition active:scale-95 truncate"
+              title="Download Certificate PDF"
+            >
+              {isDownloadingPdf ? <Loader2 className="w-3.5 h-3.5 shrink-0 animate-spin" /> : <Download className="w-3.5 h-3.5 shrink-0" />}
+              <span className="truncate">{isDownloadingPdf ? 'PDF...' : 'Download'}</span>
+>>>>>>> 0b07ad317cf871e4310a263d28914ead4634a3b1
             </button>
 
             <button

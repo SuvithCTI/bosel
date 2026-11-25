@@ -38,7 +38,8 @@ import {
   Trophy,
   FileDown,
   ClipboardList,
-  Globe
+  Globe,
+  MessageSquare
 } from 'lucide-react';
 
 import AdminAchievementsModule from '../components/admin/AdminAchievementsModule';
@@ -47,6 +48,7 @@ import AdminStudentsPage from './admin/AdminStudentsPage';
 import AdminCoursesPage from './admin/AdminCoursesPage';
 import AdminEventsPage from './admin/AdminEventsPage';
 import AdminFranchisePage from './admin/AdminFranchisePage';
+import AdminContactEnquiriesPage from './admin/AdminContactEnquiriesPage';
 import AdminPaymentsPage from './admin/AdminPaymentsPage';
 import AdminSchoolsPage from './admin/AdminSchoolsPage';
 import AdminAchievementsPage from './admin/AdminAchievementsPage';
@@ -108,6 +110,10 @@ import {
 } from '../data/franchiseData';
 
 import {
+  getStoredContactEnquiries
+} from '../data/contactEnquiriesData';
+
+import {
   getStoredPayments,
   addStoredPayment,
   updatePaymentStatus,
@@ -167,6 +173,10 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
 
   const [activeTab, setActiveTab] = useState(() => {
     if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const tabFromUrl = params.get('tab');
+      if (tabFromUrl) return tabFromUrl;
+
       const savedRole = sessionStorage.getItem('bsel_active_admin_role');
       if (savedRole === 'Branch Head') return 'branch_overview';
     }
@@ -182,6 +192,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
   const [paymentsList, setPaymentsList] = useState(() => getStoredPayments());
   const [schoolsList, setSchoolsList] = useState(() => getStoredSchools());
   const [batchesList, setBatchesList] = useState(() => getStoredBatches());
+  const [contactEnquiriesList, setContactEnquiriesList] = useState(() => getStoredContactEnquiries());
 
   // Batch Management Modal State
   const [showAddBatchModal, setShowAddBatchModal] = useState(false);
@@ -225,7 +236,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
 
   const [tabHistory, setTabHistory] = useState([activeTab]);
 
-  const handleTabSelect = (tabKey) => {
+  const handleTabSelect = (tabKey, updateUrl = true) => {
     if (tabKey === activeTab) return;
     setTabHistory((prev) => [...prev, tabKey]);
     setActiveTab(tabKey);
@@ -233,10 +244,30 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
       sessionStorage.setItem('bsel_active_tab', tabKey);
     }
     setMobileSidebarOpen(false);
+
+    if (typeof window !== 'undefined' && updateUrl) {
+      const url = new URL(window.location.href);
+      url.searchParams.set('page', 'admin');
+      url.searchParams.set('tab', tabKey);
+      window.history.pushState({ page: 'admin', tab: tabKey }, '', url.toString());
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleTabBack = () => {
+  const handleBackClick = () => {
+    // 1. If any modal is currently open, close modal first
+    if (viewingAdmissionStudent) { setViewingAdmissionStudent(null); return; }
+    if (selectedMarksheetStudent) { setSelectedMarksheetStudent(null); return; }
+    if (previewCertModalData) { setPreviewCertModalData(null); return; }
+    if (viewingMergedPdfStudent) { setViewingMergedPdfStudent(null); return; }
+    if (showAddStudentModal) { setShowAddStudentModal(false); return; }
+    if (showAddCourseModal) { setShowAddCourseModal(false); return; }
+    if (showAddEventModal) { setShowAddEventModal(false); return; }
+    if (showAddPaymentModal) { setShowAddPaymentModal(false); return; }
+    if (showAddSchoolModal) { setShowAddSchoolModal(false); return; }
+    if (showAddBatchModal) { setShowAddBatchModal(false); return; }
+
+    // 2. If user navigated tabs inside admin, step back in tab history
     if (tabHistory.length > 1) {
       const nextHistory = [...tabHistory];
       nextHistory.pop();
@@ -245,16 +276,75 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
       setActiveTab(prevTab);
       if (typeof window !== 'undefined') {
         sessionStorage.setItem('bsel_active_tab', prevTab);
+        const url = new URL(window.location.href);
+        url.searchParams.set('page', 'admin');
+        url.searchParams.set('tab', prevTab);
+        window.history.pushState({ page: 'admin', tab: prevTab }, '', url.toString());
       }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
       const fallbackTab = currentAdminRole === 'Branch Head' ? 'branch_overview' : 'overview';
-      setActiveTab(fallbackTab);
-      if (typeof window !== 'undefined') {
-        sessionStorage.setItem('bsel_active_tab', fallbackTab);
+      if (activeTab !== fallbackTab) {
+        setActiveTab(fallbackTab);
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('bsel_active_tab', fallbackTab);
+          const url = new URL(window.location.href);
+          url.searchParams.set('page', 'admin');
+          url.searchParams.set('tab', fallbackTab);
+          window.history.pushState({ page: 'admin', tab: fallbackTab }, '', url.toString());
+        }
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        // 3. Fallback: navigate back to website / previous page
+        if (onBack) onBack();
+        else if (goBack) goBack();
+        else if (typeof setActivePage === 'function') setActivePage('home');
       }
     }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  const handleTabBack = () => {
+    handleBackClick();
+  };
+
+  // Synchronize browser native Forward / Back buttons (popstate) with Admin Dashboard tabs
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    // Ensure initial URL reflects current tab
+    const params = new URLSearchParams(window.location.search);
+    const initialTab = params.get('tab') || activeTab;
+    const url = new URL(window.location.href);
+    url.searchParams.set('page', 'admin');
+    url.searchParams.set('tab', initialTab);
+    window.history.replaceState({ page: 'admin', tab: initialTab }, '', url.toString());
+
+    const handlePopState = (e) => {
+      const searchParams = new URLSearchParams(window.location.search);
+      const tabFromUrl = searchParams.get('tab');
+      const tabFromState = e.state?.tab;
+      const targetTab = tabFromState || tabFromUrl;
+
+      if (targetTab && targetTab !== activeTab) {
+        setActiveTab(targetTab);
+        setTabHistory((prev) => {
+          if (prev.length > 1 && prev[prev.length - 2] === targetTab) {
+            return prev.slice(0, -1);
+          }
+          if (prev[prev.length - 1] !== targetTab) {
+            return [...prev, targetTab];
+          }
+          return prev;
+        });
+      } else if (!targetTab) {
+        const defaultTab = currentAdminRole === 'Branch Head' ? 'branch_overview' : 'overview';
+        setActiveTab(defaultTab);
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [currentAdminRole, activeTab]);
 
   // Sync state with local events
   useEffect(() => {
@@ -265,6 +355,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
     const handlePaymentsUpdate = () => setPaymentsList(getStoredPayments());
     const handleSchoolsUpdate = () => setSchoolsList(getStoredSchools());
     const handleBatchesUpdate = () => setBatchesList(getStoredBatches());
+    const handleContactUpdate = () => setContactEnquiriesList(getStoredContactEnquiries());
 
     window.addEventListener('bsel_users_updated', handleUsersUpdate);
     window.addEventListener('bsel_events_updated', handleEventsUpdate);
@@ -273,6 +364,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
     window.addEventListener('bsel_payments_updated', handlePaymentsUpdate);
     window.addEventListener('bsel_schools_updated', handleSchoolsUpdate);
     window.addEventListener('bsel_batches_updated', handleBatchesUpdate);
+    window.addEventListener('bsel_contact_enquiries_updated', handleContactUpdate);
     window.addEventListener('bsel_branch_credentials_updated', () => {
       handleSchoolsUpdate();
       handleUsersUpdate();
@@ -388,6 +480,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
       window.removeEventListener('bsel_payments_updated', handlePaymentsUpdate);
       window.removeEventListener('bsel_schools_updated', handleSchoolsUpdate);
       window.removeEventListener('bsel_batches_updated', handleBatchesUpdate);
+      window.removeEventListener('bsel_contact_enquiries_updated', handleContactUpdate);
       window.removeEventListener('storage', handleStorage);
     };
   }, []);
@@ -406,15 +499,13 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
     }
     if (newRole === 'Branch Head') {
       const branchToShow = targetBranch || activeBranch;
-      setActiveTab('branch_overview');
-      window.scrollTo(0, 0);
+      handleTabSelect('branch_overview');
       showToast(`Switched to Branch Head Portal (${branchToShow})`);
     } else {
       if (typeof window !== 'undefined') {
         sessionStorage.removeItem('bsel_active_admin_role');
       }
-      setActiveTab('overview');
-      window.scrollTo(0, 0);
+      handleTabSelect('overview');
       showToast('Switched to Super Administrator Portal');
     }
   };
@@ -1534,6 +1625,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
               <span className="hidden sm:inline">Desks</span>
             </button>
 
+
             {/* Desktop Brand Logo */}
             <div className="hidden sm:block shrink-0">
               <Logo lightText={true} />
@@ -1758,6 +1850,26 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
 
                   <button
                     type="button"
+                    onClick={() => handleTabSelect('contact_enquiries')}
+                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-black transition cursor-pointer text-left ${
+                      activeTab === 'contact_enquiries'
+                        ? 'bg-[#0c234b] text-white shadow-sm ring-1 ring-amber-400/40'
+                        : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <MessageSquare className={`w-4 h-4 shrink-0 ${activeTab === 'contact_enquiries' ? 'text-amber-400' : 'text-slate-500'}`} />
+                      <span className="truncate">Contact Enquiries</span>
+                    </div>
+                    {contactEnquiriesList.filter((e) => e.status === 'New').length > 0 && (
+                      <span className="px-1.5 py-0.5 text-[10px] font-black rounded-full bg-amber-400 text-slate-950 shrink-0">
+                        {contactEnquiriesList.filter((e) => e.status === 'New').length}
+                      </span>
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
                     onClick={() => handleTabSelect('payments')}
                     className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-black transition cursor-pointer text-left ${
                       activeTab === 'payments'
@@ -1915,6 +2027,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
               usersList={usersList}
               eventsList={eventsList}
               franchiseList={franchiseList}
+              contactEnquiries={contactEnquiriesList}
               setShowAddCourseModal={setShowAddCourseModal}
               setShowAddEventModal={setShowAddEventModal}
               setActiveTab={handleTabSelect}
@@ -1993,6 +2106,19 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
               handleUpdateFranchiseStatus={handleUpdateFranchiseStatus}
               handleApproveFranchiseToBranch={handleApproveFranchiseToBranch}
               showToast={showToast}
+              setActiveTab={handleTabSelect}
+              contactCount={contactEnquiriesList.length}
+            />
+          )}
+
+          {/* SUPER ADMIN: TAB 5B - CONTACT US FORM ENQUIRIES */}
+          {currentAdminRole === 'Super Admin' && activeTab === 'contact_enquiries' && (
+            <AdminContactEnquiriesPage
+              contactEnquiries={contactEnquiriesList}
+              setContactEnquiries={setContactEnquiriesList}
+              showToast={showToast}
+              currentAdminRole={currentAdminRole}
+              setActiveTab={handleTabSelect}
             />
           )}
 

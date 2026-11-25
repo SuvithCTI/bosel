@@ -213,7 +213,7 @@ export default function CertificateModal({
         </div>
 
         {/* SCROLLABLE CERTIFICATE PREVIEW */}
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-slate-950/60 p-2 sm:p-3">
+        <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain bg-slate-950/60 p-2 sm:p-3">
           <div className="flex min-h-full items-start justify-center">
             <Certificate
               studentName={studentName}
@@ -244,8 +244,8 @@ export default function CertificateModal({
         </div>
 
         {/* FIXED FOOTER */}
-        <div className="flex shrink-0 flex-col items-center justify-between gap-2 border-t border-slate-800 bg-slate-900 px-3 py-2 text-xs text-slate-400 sm:flex-row sm:px-5">
-          <div className="flex max-w-full items-center gap-1.5 text-[10px] sm:text-[11px]">
+        <div className="flex shrink-0 flex-col sm:flex-row items-center justify-between gap-2 border-t border-slate-800 bg-slate-900 px-3 py-2 text-xs text-slate-400 sm:px-5">
+          <div className="flex max-w-full items-center gap-1.5 text-[10px] sm:text-[11px] self-start sm:self-auto">
             <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500" />
 
             <span className="truncate">
@@ -256,7 +256,7 @@ export default function CertificateModal({
             </span>
           </div>
 
-          <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+          <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 w-full sm:w-auto">
             <button
               type="button"
               onClick={() => {
@@ -283,16 +283,16 @@ export default function CertificateModal({
                   window.open(targetUrl, '_blank');
                 }
               }}
-              className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 px-3 py-1.5 font-bold text-slate-950 text-xs shadow transition active:scale-95 cursor-pointer"
+              className="flex items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 px-2 sm:px-3 py-1.5 font-bold text-slate-950 text-[11px] sm:text-xs shadow transition active:scale-95 cursor-pointer truncate text-center"
             >
-              <ExternalLink className="w-3.5 h-3.5" />
-              <span>Open Mobile Verification</span>
+              <ExternalLink className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate">Verify Online</span>
             </button>
 
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg bg-slate-800 px-4 py-1.5 font-bold text-white transition hover:bg-slate-700 text-xs cursor-pointer"
+              className="flex items-center justify-center rounded-lg bg-slate-800 px-3 py-1.5 font-bold text-white transition hover:bg-slate-700 text-[11px] sm:text-xs cursor-pointer text-center"
             >
               Close Preview
             </button>

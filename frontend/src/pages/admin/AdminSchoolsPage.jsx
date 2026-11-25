@@ -288,7 +288,7 @@ export default function AdminSchoolsPage({
       </div>
 
       {/* Network Branch Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-4">
         {filteredBranches.map((branch) => {
           const creds = getCredentialsForBranchOrSchool(branch);
           const emailKey = `email_${branch.code}_${creds.slug}`;

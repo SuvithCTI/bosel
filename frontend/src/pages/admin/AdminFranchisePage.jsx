@@ -29,7 +29,9 @@ export default function AdminFranchisePage({
   handleApproveFranchiseToBranch,
   showToast,
   activeBranch,
-  currentAdminRole
+  currentAdminRole,
+  setActiveTab,
+  contactCount = 0
 }) {
   const [selectedLead, setSelectedLead] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -73,6 +75,27 @@ export default function AdminFranchisePage({
 
   return (
     <div className="space-y-3.5 animate-in fade-in duration-200">
+      {/* Top Enquiries Category Switcher */}
+      {setActiveTab && (
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            className="px-3.5 py-1.5 rounded-xl text-xs font-black bg-[#0c234b] text-white shadow-xs flex items-center gap-2 cursor-default"
+          >
+            <Building className="w-3.5 h-3.5 text-indigo-300" />
+            <span>Franchise Partnerships ({franchiseList.length})</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('contact_enquiries')}
+            className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-950 hover:bg-slate-100 bg-white border border-slate-200 transition flex items-center gap-2 cursor-pointer shadow-2xs"
+          >
+            <MessageSquare className="w-3.5 h-3.5 text-slate-500" />
+            <span>Contact Us Messages ({contactCount})</span>
+          </button>
+        </div>
+      )}
+
       {/* Top Header & Filter Bar */}
       <div className="bg-white p-3.5 sm:p-4 rounded-xl border border-slate-200 shadow-2xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
@@ -121,7 +144,7 @@ export default function AdminFranchisePage({
       </div>
 
       {/* Small & Sleek Franchise Leads Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
         {displayedLeads.map((lead) => (
           <div 
             key={lead.refId} 

@@ -841,7 +841,12 @@ export default function StudentDashboard({
           </div>
         </section>
 
-        {activeSection === 'course' && <StudentFeePayment student={student} />}
+        {activeSection === 'course' && (
+          <StudentFeePayment
+            student={student}
+            onOpenReceipts={openReceiptsBills}
+          />
+        )}
 
         <main className="min-w-0">{renderSection()}</main>
 

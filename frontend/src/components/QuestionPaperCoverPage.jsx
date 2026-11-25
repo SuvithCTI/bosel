@@ -367,7 +367,7 @@ export default function QuestionPaperCoverPage({
 
   return (
     <div
-      className="relative mx-auto w-full max-w-[724px] bg-white text-slate-950 shadow-2xl p-4 sm:p-5 box-border select-text font-serif"
+      className="relative mx-auto w-[724px] max-w-[724px] bg-white text-slate-950 shadow-2xl p-4 sm:p-5 box-border select-text font-serif shrink-0"
       style={{
         minHeight: '1024px',
         fontFamily: "'Times New Roman', Times, Georgia, serif",
@@ -386,7 +386,7 @@ export default function QuestionPaperCoverPage({
           {/* =========================================================================
               1. TOP HEADER: BSEL (LEFT) | CENTER GOLD SEAL | BRANCH & LOGO (RIGHT)
               ========================================================================= */}
-          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-1 sm:gap-2 pb-2.5 border-b border-[#0c2d58] min-h-[96px] w-full">
+          <div className="grid grid-cols-[1fr_80px_1fr] items-center gap-2 pb-2.5 border-b border-[#0c2d58] min-h-[96px] w-full">
             {/* Left Corner: BSEL Logo, Name & Tagline */}
             <div className="min-w-0 flex items-center justify-start gap-2 sm:gap-2.5">
               <img
@@ -406,14 +406,14 @@ export default function QuestionPaperCoverPage({
                   LEARN <span className="text-amber-500">★</span> GROW <span className="text-amber-500">★</span> ACHIEVE
                 </p>
                 {/* 3rd line: BOARD OF SKILLS AND EDUCATIONAL LEARNING (Enlarged) */}
-                <p className="text-[9px] sm:text-[10px] font-black text-slate-900 uppercase tracking-tight whitespace-nowrap mt-0.5 text-center">
+                <p className="text-[9px] sm:text-[10px] font-black text-slate-900 uppercase tracking-tight whitespace-nowrap mt-0.5 text-center leading-tight">
                   BOARD OF SKILLS AND EDUCATIONAL LEARNING
                 </p>
               </div>
             </div>
 
             {/* Center: Gold Lion Crest Seal - Dedicated Centered Column (No Overlap) */}
-            <div className="shrink-0 px-2 sm:px-3 flex items-center justify-center">
+            <div className="w-[80px] shrink-0 flex items-center justify-center">
               <img
                 src={centerSeal}
                 alt="Official Gold Emblem"
@@ -536,7 +536,7 @@ export default function QuestionPaperCoverPage({
               ========================================================================= */}
           <div className="relative py-2 flex items-center justify-between border-b border-slate-300 min-h-[82px]">
             {/* Left spacer matching right badges width so title is perfectly centered */}
-            <div className="w-[116px] shrink-0 hidden sm:block" />
+            <div className="w-[116px] shrink-0" />
 
             {/* Center: Title + Ribbon (Editable) */}
             <div className="flex-1 flex flex-col items-center justify-center text-center">
@@ -678,7 +678,7 @@ export default function QuestionPaperCoverPage({
             {/* Left: 10 Admission Data Rows */}
             <div className="flex-1 space-y-1 sm:space-y-1.5 text-xs sm:text-[12px] font-sans" style={NUMBER_FONT_STYLE}>
               {DETAIL_ROWS.map(({ field, label }) => (
-                <div key={field} className="grid grid-cols-[145px_10px_1fr] sm:grid-cols-[170px_12px_1fr] items-center">
+                <div key={field} className="grid grid-cols-[165px_12px_1fr] items-center">
                   <span className="font-bold text-slate-900" style={NUMBER_FONT_STYLE}>{label}</span>
                   <span className="font-bold text-slate-900 text-center">:</span>
                   <div className="min-w-0 pr-1">
