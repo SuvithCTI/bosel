@@ -126,10 +126,14 @@ export const svgElementToCanvas = async (svgEl, scale = 3) => {
 /**
  * High-precision, properly aligned PDF export from any HTML DOM element.
  */
-export const exportPdfFromElement = async (element, options = {}) => {
+export const exportPdfFromElement = async (element, options = {}, maybeOpts = {}) => {
   if (!element) {
     throw new Error('Target element for PDF export not found.');
   }
+
+  const resolvedOpts = typeof options === 'string'
+    ? { filename: options, ...maybeOpts }
+    : (options || {});
 
   const {
     filename = 'document.pdf',
@@ -137,7 +141,7 @@ export const exportPdfFromElement = async (element, options = {}) => {
     margin = orientation === 'landscape' ? 0 : 8, // mm
     backgroundColor = '#ffffff',
     scale = 2.5
-  } = options;
+  } = resolvedOpts;
 
   // Wait for all webfonts (Cinzel, Great Vibes, etc.) to be fully ready
   if (typeof document !== 'undefined' && document.fonts && document.fonts.ready) {
