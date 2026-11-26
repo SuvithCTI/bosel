@@ -47,8 +47,9 @@ export default function MergedStudentPdfModal({
     const certEl = certWrap?.querySelector('#printable-certificate') || certWrap;
     const certSvg = certWrap?.querySelector('#printable-certificate-svg') || certWrap?.querySelector('svg');
     const msEl = msWrap?.querySelector('#printable-marksheet-sheet') || msWrap;
+    const msSvg = msWrap?.querySelector('#printable-marksheet-svg') || msWrap?.querySelector('svg');
 
-    return { certWrap, certEl, certSvg, msEl };
+    return { certWrap, certEl, certSvg, msEl, msSvg };
   };
 
   // Download a single student's PDF (merged, marksheet only, or certificate only)
@@ -72,36 +73,36 @@ export default function MergedStudentPdfModal({
 
       await new Promise(resolve => setTimeout(resolve, 300));
 
-      const { certEl, msEl } = getStudentElements(idx);
+      const { certEl, certSvg, msEl, msSvg } = getStudentElements(idx);
 
       if (mode === 'certificate') {
-        if (!certEl) throw new Error('Could not locate Certificate container in DOM.');
+        if (!certEl && !certSvg) throw new Error('Could not locate Certificate container in DOM.');
         setCurrentStep(`Rendering Certificate for ${pkg.student?.studentName}...`);
-        await exportPdfFromElement(certEl, {
+        await exportPdfFromElement(certSvg || certEl, {
           orientation: 'landscape',
           filename: `BSEL_Certificate_${pkg.student?.studentName || 'Student'}.pdf`,
           scale: 2.5
         });
         if (showToast) showToast(`Downloaded Certificate for ${pkg.student?.studentName || 'Student'}!`);
       } else if (mode === 'marksheet') {
-        if (!msEl) throw new Error('Could not locate Marksheet container in DOM.');
+        if (!msEl && !msSvg) throw new Error('Could not locate Marksheet container in DOM.');
         setCurrentStep(`Rendering Marksheet for ${pkg.student?.studentName}...`);
-        await exportPdfFromElement(msEl, {
+        await exportPdfFromElement(msSvg || msEl, {
           orientation: 'portrait',
           filename: `BSEL_Marksheet_${pkg.student?.studentName || 'Student'}.pdf`,
           scale: 2.5
         });
         if (showToast) showToast(`Downloaded Marksheet for ${pkg.student?.studentName || 'Student'}!`);
       } else {
-        if (!certEl || !msEl) {
+        if ((!certEl && !certSvg) || (!msEl && !msSvg)) {
           throw new Error('Both Certificate and Marksheet must be present in DOM.');
         }
 
         setCurrentStep(`Rendering Certificate & Marksheet for ${pkg.student?.studentName}...`);
 
         await exportMergedLandscapeAndPortraitPdf({
-          page1Element: certEl,
-          page2Element: msEl,
+          page1Element: certSvg || certEl,
+          page2Element: msSvg || msEl,
           filename: pkg.filename || `BSEL_Merged_Certificate_Marksheet_${pkg.student?.studentName || 'Student'}.pdf`,
           page1Scale: 2.5,
           page2Scale: 2.5
@@ -157,7 +158,7 @@ export default function MergedStudentPdfModal({
         setCurrentStep(`Processing ${i + 1}/${students.length}: ${pkg.student?.studentName}...`);
         setProgressText(`${i + 1}/${students.length}`);
 
-        const { certEl, certSvg, msEl } = getStudentElements(i);
+        const { certEl, certSvg, msEl, msSvg } = getStudentElements(i);
 
         // 1. Capture Certificate (Landscape)
         if (mode === 'merged' || mode === 'certificate') {
@@ -222,29 +223,44 @@ export default function MergedStudentPdfModal({
 
         // 2. Capture Marksheet (Portrait)
         if (mode === 'merged' || mode === 'marksheet') {
-          if (!msEl) {
+          if (!msEl && !msSvg) {
             throw new Error(`Could not locate Marksheet element for ${pkg.student?.studentName}`);
           }
 
-          const msCanvas = await html2canvas(msEl, {
-            scale: 2.5,
-            useCORS: true,
-            allowTaint: false,
-            logging: false,
-            scrollX: 0,
-            scrollY: 0,
-            windowWidth: 1024,
-            backgroundColor: '#ffffff',
-            onclone: (_doc, el) => {
-              const ms = el.id === 'printable-marksheet-sheet' ? el : el.querySelector?.('#printable-marksheet-sheet');
-              if (ms) {
-                ms.style.width = '724px';
-                ms.style.maxWidth = '724px';
-                ms.style.aspectRatio = '724 / 1024';
-                ms.style.margin = '0 auto';
-              }
+          let msCanvas = null;
+          if (msSvg) {
+            try {
+              msCanvas = await svgElementToCanvas(msSvg, 2.5);
+            } catch (e) {
+              console.warn('svgElementToCanvas marksheet fallback to html2canvas', e);
             }
-          });
+          }
+
+          if (!msCanvas && msEl) {
+            msCanvas = await html2canvas(msEl, {
+              scale: 2.5,
+              useCORS: true,
+              allowTaint: false,
+              logging: false,
+              scrollX: 0,
+              scrollY: 0,
+              windowWidth: 1024,
+              backgroundColor: '#ffffff',
+              onclone: (_doc, el) => {
+                const ms = el.id === 'printable-marksheet-sheet' ? el : el.querySelector?.('#printable-marksheet-sheet');
+                if (ms) {
+                  ms.style.width = '724px';
+                  ms.style.maxWidth = '724px';
+                  ms.style.height = '1024px';
+                  ms.style.minHeight = '1024px';
+                  ms.style.maxHeight = '1024px';
+                  ms.style.aspectRatio = '724 / 1024';
+                  ms.style.overflow = 'visible';
+                  ms.style.margin = '0 auto';
+                }
+              }
+            });
+          }
 
           let msImgData;
           let msFmt = 'JPEG';
@@ -349,7 +365,17 @@ export default function MergedStudentPdfModal({
       <style>{`
         @media print {
           @page {
-            size: ${viewFilter === 'certificate' ? 'A4 landscape' : 'A4 portrait'};
+            size: ${viewFilter === 'certificate' ? 'A4 landscape' : (viewFilter === 'marksheet' ? 'A4 portrait' : 'auto')};
+            margin: 0;
+          }
+
+          @page cert-page-landscape {
+            size: A4 landscape;
+            margin: 0;
+          }
+
+          @page marksheet-page-portrait {
+            size: A4 portrait;
             margin: 0;
           }
 
@@ -387,19 +413,31 @@ export default function MergedStudentPdfModal({
           .merged-student-wrapper {
             margin: 0 !important;
             padding: 0 !important;
+            display: block !important;
+            position: relative !important;
+            left: auto !important;
+            top: auto !important;
+            opacity: 1 !important;
           }
 
           .merged-cert-page {
+            page: cert-page-landscape;
+            page-break-before: auto !important;
+            break-before: auto !important;
             page-break-after: always !important;
             break-after: page !important;
-            width: 100vw !important;
-            min-height: 100vh !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+            width: 100% !important;
+            max-width: 297mm !important;
+            height: 100vh !important;
+            max-height: 210mm !important;
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
             background: white !important;
             padding: 0 !important;
-            margin: 0 !important;
+            margin: 0 auto !important;
             box-shadow: none !important;
             border: none !important;
           }
@@ -409,9 +447,9 @@ export default function MergedStudentPdfModal({
             top: auto !important;
             left: auto !important;
             width: 100% !important;
-            max-width: 100% !important;
+            max-width: 285mm !important;
             height: auto !important;
-            max-height: 98vh !important;
+            max-height: 198mm !important;
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
@@ -421,21 +459,29 @@ export default function MergedStudentPdfModal({
           .merged-cert-page svg {
             width: 100% !important;
             height: auto !important;
-            max-height: 98vh !important;
+            max-height: 198mm !important;
             object-fit: contain !important;
+            display: block !important;
           }
 
           .merged-marksheet-page {
+            page: marksheet-page-portrait;
+            page-break-before: always !important;
+            break-before: page !important;
             page-break-after: always !important;
             break-after: page !important;
-            width: 100vw !important;
-            min-height: 100vh !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+            width: 100% !important;
+            max-width: 210mm !important;
+            height: 100vh !important;
+            max-height: 297mm !important;
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
             background: white !important;
             padding: 0 !important;
-            margin: 0 !important;
+            margin: 0 auto !important;
             box-shadow: none !important;
             border: none !important;
           }
@@ -445,9 +491,20 @@ export default function MergedStudentPdfModal({
             top: auto !important;
             left: auto !important;
             width: 100% !important;
-            max-width: 724px !important;
+            max-width: 195mm !important;
+            height: auto !important;
+            max-height: 278mm !important;
             aspect-ratio: 724 / 1024 !important;
             margin: 0 auto !important;
+            overflow: visible !important;
+          }
+
+          .merged-marksheet-page #printable-marksheet-sheet svg {
+            width: 100% !important;
+            height: 100% !important;
+            max-height: 100% !important;
+            object-fit: contain !important;
+            display: block !important;
           }
 
           ${viewFilter === 'certificate' ? '.merged-marksheet-page { display: none !important; }' : ''}
@@ -629,7 +686,18 @@ export default function MergedStudentPdfModal({
           return (
             <div
               key={pkg.student?.userId || pkg.student?.id || idx}
-              className={`merged-student-wrapper ${isScreenActive ? 'block space-y-6' : 'hidden print:block space-y-6'}`}
+              className={`merged-student-wrapper ${isScreenActive ? 'block space-y-6' : 'space-y-6'}`}
+              style={
+                isScreenActive
+                  ? {}
+                  : {
+                      position: 'fixed',
+                      left: '-99999px',
+                      top: '0',
+                      opacity: 0,
+                      pointerEvents: 'none',
+                    }
+              }
             >
               {/* Page 1 Card: Landscape Certificate */}
               <div

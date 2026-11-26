@@ -265,6 +265,7 @@ export default function MarksheetTemplate({
 
   return (
     <svg
+      id="printable-marksheet-svg"
       viewBox="0 0 724 1024"
       preserveAspectRatio="xMidYMid meet"
       className="absolute inset-0 w-full h-full"
