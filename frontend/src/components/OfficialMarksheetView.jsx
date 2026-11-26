@@ -813,12 +813,13 @@ export default function OfficialMarksheetView({
     ? Number(student.totalMarks)
     : totalMarks;
 
-  // Whole-number percentage
-  const percentage = student?.percentage !== undefined && student?.percentage !== null && student?.percentage !== ''
-    ? String(Math.round(Number(student.percentage)))
-    : totalMax
-      ? String(Math.round((totalObtained / totalMax) * 100))
-      : '0';
+  // Whole-number percentage (accurate calculation capped at 100%)
+  const computedPct = totalMax > 0 ? Math.min(100, Math.round((totalObtained / totalMax) * 100)) : 0;
+  const percentage = (totalObtained > 0 && totalMax > 0)
+    ? String(computedPct)
+    : (student?.percentage !== undefined && student?.percentage !== null && student?.percentage !== ''
+      ? String(Math.min(100, Math.round(Number(student.percentage))))
+      : (totalMax ? String(Math.min(100, Math.round((totalObtained / totalMax) * 100))) : '0'));
 
   const overallGrade = Number(percentage) > 0 ? getGrade(Number(percentage)) : (student?.grade || 'D');
 

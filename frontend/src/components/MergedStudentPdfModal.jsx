@@ -365,17 +365,7 @@ export default function MergedStudentPdfModal({
       <style>{`
         @media print {
           @page {
-            size: ${viewFilter === 'certificate' ? 'A4 landscape' : (viewFilter === 'marksheet' ? 'A4 portrait' : 'auto')};
-            margin: 0;
-          }
-
-          @page cert-page-landscape {
-            size: A4 landscape;
-            margin: 0;
-          }
-
-          @page marksheet-page-portrait {
-            size: A4 portrait;
+            size: ${viewFilter === 'certificate' ? 'A4 landscape' : 'A4 portrait'};
             margin: 0;
           }
 
@@ -383,6 +373,8 @@ export default function MergedStudentPdfModal({
           body {
             margin: 0 !important;
             padding: 0 !important;
+            width: 100% !important;
+            height: auto !important;
             background: #ffffff !important;
             overflow: visible !important;
             -webkit-print-color-adjust: exact !important;
@@ -421,25 +413,24 @@ export default function MergedStudentPdfModal({
           }
 
           .merged-cert-page {
-            page: cert-page-landscape;
             page-break-before: auto !important;
             break-before: auto !important;
             page-break-after: always !important;
             break-after: page !important;
             page-break-inside: avoid !important;
             break-inside: avoid !important;
+            display: block !important;
             width: 100% !important;
-            max-width: 297mm !important;
-            height: 100vh !important;
-            max-height: 210mm !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
+            max-width: ${viewFilter === 'certificate' ? '297mm' : '210mm'} !important;
+            height: auto !important;
+            max-height: ${viewFilter === 'certificate' ? '210mm' : '150mm'} !important;
+            display: block !important;
             background: white !important;
-            padding: 0 !important;
+            padding: 4mm 0 !important;
             margin: 0 auto !important;
             box-shadow: none !important;
             border: none !important;
+            box-sizing: border-box !important;
           }
 
           .merged-cert-page #printable-certificate {
@@ -447,56 +438,56 @@ export default function MergedStudentPdfModal({
             top: auto !important;
             left: auto !important;
             width: 100% !important;
-            max-width: 285mm !important;
+            max-width: ${viewFilter === 'certificate' ? '285mm' : '195mm'} !important;
             height: auto !important;
-            max-height: 198mm !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
+            max-height: ${viewFilter === 'certificate' ? '196mm' : '138mm'} !important;
+            display: block !important;
             margin: 0 auto !important;
+            box-sizing: border-box !important;
           }
 
           .merged-cert-page svg {
             width: 100% !important;
             height: auto !important;
-            max-height: 198mm !important;
+            max-height: ${viewFilter === 'certificate' ? '196mm' : '138mm'} !important;
             object-fit: contain !important;
             display: block !important;
+            margin: 0 auto !important;
           }
 
           .merged-marksheet-page {
-            page: marksheet-page-portrait;
-            page-break-before: always !important;
-            break-before: page !important;
+            page-break-before: ${viewFilter === 'marksheet' ? 'auto' : 'always'} !important;
+            break-before: ${viewFilter === 'marksheet' ? 'auto' : 'page'} !important;
             page-break-after: always !important;
             break-after: page !important;
             page-break-inside: avoid !important;
             break-inside: avoid !important;
+            display: block !important;
             width: 100% !important;
             max-width: 210mm !important;
-            height: 100vh !important;
+            height: auto !important;
             max-height: 297mm !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
             background: white !important;
-            padding: 0 !important;
+            padding: 4mm 0 !important;
             margin: 0 auto !important;
             box-shadow: none !important;
             border: none !important;
+            box-sizing: border-box !important;
           }
 
           .merged-marksheet-page #printable-marksheet-sheet {
             position: relative !important;
             top: auto !important;
             left: auto !important;
-            width: 100% !important;
-            max-width: 195mm !important;
-            height: auto !important;
-            max-height: 278mm !important;
+            width: 182mm !important;
+            max-width: 182mm !important;
+            height: 257mm !important;
+            max-height: 257mm !important;
             aspect-ratio: 724 / 1024 !important;
             margin: 0 auto !important;
             overflow: visible !important;
+            box-sizing: border-box !important;
+            display: block !important;
           }
 
           .merged-marksheet-page #printable-marksheet-sheet svg {
