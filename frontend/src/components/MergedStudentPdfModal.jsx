@@ -424,10 +424,17 @@ export default function MergedStudentPdfModal({
 
           .merged-student-wrapper.print-show {
             display: block !important;
+            position: static !important;
+            left: auto !important;
+            top: auto !important;
+            width: 100% !important;
+            height: auto !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
             margin: 0 !important;
             padding: 0 !important;
-            width: 100% !important;
             background: white !important;
+            transform: none !important;
           }
 
           .merged-cert-page {
@@ -497,6 +504,11 @@ export default function MergedStudentPdfModal({
             overflow: hidden !important;
             box-shadow: none !important;
             border: none !important;
+          }
+
+          .merged-student-wrapper:last-child .merged-marksheet-page {
+            page-break-after: avoid !important;
+            break-after: avoid !important;
           }
 
           .merged-marksheet-page #printable-marksheet-sheet {
@@ -721,7 +733,7 @@ export default function MergedStudentPdfModal({
                 isPrintVisible ? 'print-show' : 'print-hide'
               }`}
               style={
-                isScreenActive
+                isScreenActive || printTarget === 'all'
                   ? {}
                   : {
                       position: 'fixed',

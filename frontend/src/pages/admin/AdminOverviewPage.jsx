@@ -15,7 +15,6 @@ import {
   MapPin,
   Sparkles,
   ChevronRight,
-  ShieldCheck,
   Award,
   MessageSquare
 } from 'lucide-react';
@@ -99,7 +98,7 @@ export default function AdminOverviewPage({
       </div>
 
       {/* KPI Cards Row */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
         <div className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-2xs flex items-center justify-between">
           <div>
             <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Total Students</span>
@@ -157,7 +156,7 @@ export default function AdminOverviewPage({
 
         <div 
           onClick={() => setActiveTab && setActiveTab('contact_enquiries')}
-          className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-2xs flex items-center justify-between cursor-pointer hover:border-amber-400 transition group"
+          className="col-span-2 sm:col-span-1 lg:col-span-1 bg-white p-4.5 rounded-2xl border border-slate-200 shadow-2xs flex items-center justify-between cursor-pointer hover:border-amber-400 transition group"
         >
           <div>
             <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Contact Us Form</span>
@@ -168,19 +167,6 @@ export default function AdminOverviewPage({
           </div>
           <div className="w-11 h-11 rounded-xl bg-amber-100 text-amber-900 flex items-center justify-center font-bold group-hover:scale-105 transition">
             <MessageSquare className="w-5 h-5" />
-          </div>
-        </div>
-
-        <div className="col-span-2 sm:col-span-1 lg:col-span-1 bg-white p-4.5 rounded-2xl border border-slate-200 shadow-2xs flex items-center justify-between">
-          <div>
-            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">District Branches</span>
-            <div className="text-2xl font-black text-slate-950 mt-1">38</div>
-            <span className="text-[11px] font-bold text-emerald-700 flex items-center gap-1 mt-0.5">
-              <ShieldCheck className="w-3 h-3" /> All TN Districts
-            </span>
-          </div>
-          <div className="w-11 h-11 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">
-            <Building className="w-5 h-5" />
           </div>
         </div>
       </div>
