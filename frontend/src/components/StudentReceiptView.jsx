@@ -35,6 +35,7 @@ export default function StudentReceiptView({
   backLabel = 'Back to student list',
   acknowledgement = false,
   batchMode = false,
+  showPrint = true,
 }) {
   const receiptRef = useRef(null);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
@@ -269,26 +270,28 @@ export default function StudentReceiptView({
 
 
           {/* PRINT */}
-          <button
-            type="button"
-            onClick={handlePrint}
-            className="
-              px-3 sm:px-4 py-2
-              bg-sky-600 hover:bg-sky-500
-              active:scale-95
-              text-white rounded-lg
-              text-xs sm:text-sm font-black
-              transition flex items-center gap-1.5
-              border border-white/20
-              cursor-pointer
-            "
-          >
-            <Printer className="w-4 h-4" />
+          {showPrint && (
+            <button
+              type="button"
+              onClick={handlePrint}
+              className="
+                px-3 sm:px-4 py-2
+                bg-sky-600 hover:bg-sky-500
+                active:scale-95
+                text-white rounded-lg
+                text-xs sm:text-sm font-black
+                transition flex items-center gap-1.5
+                border border-white/20
+                cursor-pointer
+              "
+            >
+              <Printer className="w-4 h-4" />
 
-            <span>
-              Print
-            </span>
-          </button>
+              <span>
+                Print
+              </span>
+            </button>
+          )}
 
         </div>
       </div>}

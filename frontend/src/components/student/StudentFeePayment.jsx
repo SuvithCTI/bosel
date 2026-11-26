@@ -371,15 +371,6 @@ export default function StudentFeePayment({ student, onOpenReceipts }) {
       setFeePaymentError('Enter a valid fee amount greater than zero.');
       return;
     }
-    if (
-      feePayment.paymentMode === 'UPI / QR Code' &&
-      !feePayment.refNo.trim()
-    ) {
-      setFeePaymentError(
-        'Enter the UPI transaction reference after completing the payment.'
-      );
-      return;
-    }
     if (feePayment.paymentMode !== 'UPI / QR Code') {
       setFeePaymentError(
         'Card and net-banking are simulated here. Use UPI to submit payment.'
@@ -404,7 +395,7 @@ export default function StudentFeePayment({ student, onOpenReceipts }) {
         amount: `₹${amount}`,
         amountNum: amount,
         paymentMode: feePayment.paymentMode,
-        refNo: feePayment.refNo.trim(),
+        refNo: feePayment.refNo?.trim() || `UPI-SCAN-${Date.now().toString().slice(-6)}`,
         date: paymentDate,
         status: 'Verified',
         verifiedBy: 'Super Admin',
@@ -909,8 +900,7 @@ export default function StudentFeePayment({ student, onOpenReceipts }) {
                               Pay with UPI
                             </h3>
                             <p className="mt-1 text-xs leading-5 text-slate-600">
-                              Scan the QR or use the UPI ID below, then enter the
-                              transaction reference after payment.
+                              Scan the QR code with any UPI app to pay the fee amount directly.
                             </p>
                             <div className="mt-3 flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50 p-2.5">
                               <div>
@@ -1031,27 +1021,7 @@ export default function StudentFeePayment({ student, onOpenReceipts }) {
                       </div>
                     )}
 
-                    <div>
-                      <label
-                        htmlFor="fee-reference"
-                        className="mb-1.5 block text-xs font-bold text-slate-700"
-                      >
-                        UPI Transaction Reference *
-                      </label>
-                      <input
-                        id="fee-reference"
-                        name="refNo"
-                        type="text"
-                        value={feePayment.refNo}
-                        onChange={handleChange}
-                        required={feePayment.paymentMode === 'UPI / QR Code'}
-                        disabled={feePayment.paymentMode !== 'UPI / QR Code'}
-                        placeholder="Enter UPI reference after paying"
-                        className="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-blue-800 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-100"
-                      />
-                    </div>
-
-                    <div>
+                    <div className="sm:col-span-2">
                       <label
                         htmlFor="fee-purpose"
                         className="mb-1.5 block text-xs font-bold text-slate-700"
@@ -1105,6 +1075,7 @@ export default function StudentFeePayment({ student, onOpenReceipts }) {
               receipt={selectedReceipt}
               onClose={() => setSelectedReceipt(null)}
               width={1120}
+              showPrint={false}
             />
           </div>
         </div>

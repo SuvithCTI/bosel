@@ -12,7 +12,6 @@ import {
   ShieldCheck,
   CheckCircle2,
   ArrowRight,
-  ArrowLeft,
   Award,
   Sparkles
 } from 'lucide-react';
@@ -29,8 +28,7 @@ import Logo from '../../components/Logo';
 import {
   getRegisteredUsers,
   getActiveSession,
-  getCoursePrefix,
-  setActiveSession
+  getCoursePrefix
 } from '../../utils/authStorage';
 import { isStudentUser } from '../../utils/studentValidator';
 import { getStoredBatches } from '../../data/batchesData';
@@ -205,8 +203,12 @@ export default function FranchiseDashboard({
       }
     };
     updateHeaderHeight();
+    const t = setTimeout(updateHeaderHeight, 100);
     window.addEventListener('resize', updateHeaderHeight);
-    return () => window.removeEventListener('resize', updateHeaderHeight);
+    return () => {
+      clearTimeout(t);
+      window.removeEventListener('resize', updateHeaderHeight);
+    };
   }, []);
 
   const [tabHistory, setTabHistory] = useState([activeTab]);
@@ -488,7 +490,7 @@ export default function FranchiseDashboard({
       )}
 
       {/* =========================================================================
-          TOP MASTER HEADER (MATCHING STAFF DASHBOARD EXACTLY)
+          TOP MASTER HEADER (MATCHING SUPER ADMIN EXACTLY)
           ========================================================================= */}
       <header
         ref={headerRef}
@@ -510,7 +512,6 @@ export default function FranchiseDashboard({
               <span className="hidden sm:inline">Desks</span>
             </button>
 
-
             {/* Desktop Brand Logo */}
             <div className="hidden sm:block shrink-0">
               <Logo lightText={true} />
@@ -524,23 +525,19 @@ export default function FranchiseDashboard({
             {/* Desktop Divider */}
             <div className="hidden lg:block h-8 w-px bg-white/20 shrink-0"></div>
 
-            {/* Header Logged-In Entity Indicator Badge (Displays Branch & School/Franchise Name) */}
-            <div className="flex items-center gap-2 sm:gap-2.5 bg-white/10 hover:bg-white/15 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl border border-white/20 backdrop-blur-xs transition min-w-0 shadow-xs">
-              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-amber-400/20 border border-amber-400/40 flex items-center justify-center shrink-0">
-                {isSchool ? <School className="w-4 h-4 text-amber-300" /> : <Building className="w-4 h-4 text-amber-300" />}
+            {/* Desktop-Only Logged-In Entity Indicator Badge (Displays Branch & School/Franchise Name) */}
+            <div className="hidden lg:flex items-center gap-2 bg-white/10 hover:bg-white/15 px-3 py-1.5 rounded-xl border border-white/20 backdrop-blur-xs transition min-w-0 shadow-xs">
+              <div className="w-6 h-6 rounded-lg bg-amber-400/20 border border-amber-400/40 flex items-center justify-center shrink-0">
+                {isSchool ? <School className="w-3.5 h-3.5 text-amber-300" /> : <Building className="w-3.5 h-3.5 text-amber-300" />}
               </div>
               <div className="flex flex-col min-w-0 leading-tight">
-                <div className="flex items-center gap-1.5 flex-wrap">
+                <div className="flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
                   <span className="text-[9px] font-black uppercase tracking-wider text-amber-300 truncate">
-                    {isSchool ? 'LOGGED IN SCHOOL' : 'LOGGED IN FRANCHISE'}
-                  </span>
-                  <span className="text-white/40 text-[9px]">•</span>
-                  <span className="text-[9px] font-black uppercase tracking-wider text-emerald-300 truncate bg-emerald-950/40 px-1.5 py-0.5 rounded border border-emerald-500/30">
-                    {currentFranchise.branch || currentSession.branch || 'Tenkasi Branch'}
+                    {isSchool ? 'Logged In School' : 'Logged In Franchise'}
                   </span>
                 </div>
-                <span className="text-xs sm:text-sm font-black text-white truncate max-w-[160px] sm:max-w-xs md:max-w-sm lg:max-w-md xl:max-w-lg">
+                <span className="text-xs sm:text-sm font-black text-white truncate max-w-[180px] xl:max-w-xs">
                   {currentFranchise.name}
                 </span>
               </div>
@@ -549,45 +546,7 @@ export default function FranchiseDashboard({
 
           {/* Controls */}
           <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
-            {/* Quick Switch / Back to Branch Admin Button (Matches Attachment 3) */}
-            <button
-              type="button"
-              onClick={() => {
-                let returnSession = null;
-                try {
-                  const raw = sessionStorage.getItem('bsel_admin_return_session');
-                  if (raw) returnSession = JSON.parse(raw);
-                } catch (_) {}
-
-                const targetBranch = returnSession?.branch || currentFranchise?.branch || 'Tenkasi Branch';
-                const targetRole = returnSession?.role || 'Branch Head';
-
-                if (returnSession) {
-                  setActiveSession(returnSession);
-                } else {
-                  const isTirunelveli = targetBranch.toLowerCase().includes('tirunelveli');
-                  const fallbackAdmin = {
-                    userId: isTirunelveli ? 'bseltirunelveli@bsel.org' : 'bseltenkasi@bsel.org',
-                    studentName: isTirunelveli ? 'Dr. M. Arumugam' : 'Mrs. Thangam Sivaji',
-                    name: isTirunelveli ? 'Dr. M. Arumugam' : 'Mrs. Thangam Sivaji',
-                    role: 'Branch Head',
-                    branch: isTirunelveli ? 'Tirunelveli Branch' : 'Tenkasi Branch'
-                  };
-                  setActiveSession(fallbackAdmin);
-                }
-
-                sessionStorage.setItem('bsel_active_admin_role', targetRole);
-                sessionStorage.setItem('bsel_active_branch', targetBranch);
-                setActivePage('admin');
-              }}
-              className="text-xs font-bold text-amber-300 border border-amber-400/60 bg-[#0c234b]/40 hover:bg-amber-400/20 active:scale-95 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full transition shadow-sm cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0"
-              title="Return to Branch Admin"
-            >
-              <ArrowLeft className="w-3.5 h-3.5 text-amber-300" />
-              <span>Branch Admin</span>
-            </button>
-
-            {/* View Live Website Button */}
+            {/* View Live Website Button (Icon on mobile, text on sm+) */}
             <button
               onClick={() => setActivePage('home')}
               className="text-xs font-black bg-white hover:bg-slate-100 text-[#0c234b] p-1.5 sm:px-3 sm:py-1.5 rounded-xl transition shadow-sm cursor-pointer flex items-center gap-1 sm:gap-1.5 active:scale-95 whitespace-nowrap shrink-0"
@@ -598,7 +557,7 @@ export default function FranchiseDashboard({
               <ArrowRight className="hidden sm:inline w-3.5 h-3.5 shrink-0" />
             </button>
 
-            {/* Sign Out Button */}
+            {/* Sign Out (Icon on mobile, text on sm+) */}
             <button
               onClick={onLogout}
               className="text-xs font-black bg-rose-600/90 hover:bg-rose-700 text-white p-1.5 sm:px-3 sm:py-1.5 rounded-xl transition shadow-sm cursor-pointer flex items-center gap-1 sm:gap-1.5 active:scale-95 whitespace-nowrap shrink-0"
@@ -611,26 +570,23 @@ export default function FranchiseDashboard({
 
         </div>
 
-        {/* Mobile-Dedicated Active Franchise Status Sub-Bar */}
+        {/* Mobile-Dedicated Active Status Sub-Bar (Matches Super Admin) */}
         <div className="lg:hidden bg-gradient-to-r from-[#051329] via-[#091e3d] to-[#0c2650] px-3 py-1.5 border-t border-amber-400/20 flex items-center justify-between gap-2 shadow-inner">
           <div className="flex items-center gap-2 min-w-0">
             <div className="w-5 h-5 rounded-md bg-amber-400/20 border border-amber-400/40 flex items-center justify-center shrink-0">
               {isSchool ? <School className="w-3 h-3 text-amber-300" /> : <Building className="w-3 h-3 text-amber-300" />}
             </div>
-            <div className="flex items-center gap-1.5 min-w-0 truncate">
-              <span className="text-[10px] font-black uppercase tracking-wider text-emerald-300 shrink-0">
-                {currentFranchise.branch || currentSession.branch || 'Tenkasi Branch'}
-              </span>
-              <span className="text-white/40 text-[9px]">•</span>
-              <span className="text-xs font-black text-white truncate">
-                {currentFranchise.name}
-              </span>
-            </div>
+            <span className="text-[10px] font-black uppercase tracking-wider text-amber-300/90 shrink-0">
+              {isSchool ? 'School Desk:' : 'Franchise Desk:'}
+            </span>
+            <span className="text-xs font-black text-white truncate">
+              {currentFranchise.name}
+            </span>
           </div>
 
           <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-[10px] font-bold shrink-0">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span className="text-[10px] font-black uppercase">{isSchool ? 'School' : 'Franchise'}</span>
+            <span>Active</span>
           </div>
         </div>
       </header>
@@ -866,40 +822,43 @@ export default function FranchiseDashboard({
         </main>
       </div>
 
-      {/* MOBILE BOTTOM NAVIGATION BAR (MATCHING STAFF DASHBOARD) */}
-      <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-[#0c234b]/95 backdrop-blur-md border-t border-white/10 px-3 py-2 text-white">
-        <div className="grid grid-cols-3 gap-2 text-center">
+      {/* MOBILE BOTTOM NAVIGATION BAR (MATCHING SUPER ADMIN) */}
+      <nav 
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#081d3d] border-t-2 border-amber-400 text-white shadow-2xl"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+      >
+        <div className="grid grid-cols-3 h-14 items-stretch select-none">
           <button
             type="button"
             onClick={() => handleTabSelect('franchise_overview')}
-            className={`flex flex-col items-center justify-center py-1.5 rounded-lg text-[10px] font-bold transition ${
-              activeTab === 'franchise_overview' ? 'text-amber-400 bg-white/10' : 'text-slate-300'
+            className={`flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold transition cursor-pointer ${
+              activeTab === 'franchise_overview' ? 'text-amber-400 bg-white/10' : 'text-slate-300 hover:text-white'
             }`}
           >
-            {isSchool ? <School className="w-4 h-4 mb-0.5" /> : <Building className="w-4 h-4 mb-0.5" />}
-            <span>Home</span>
+            {isSchool ? <School className="w-4 h-4" /> : <Building className="w-4 h-4" />}
+            <span>Overview</span>
           </button>
 
           <button
             type="button"
             onClick={() => handleTabSelect('franchise_student_details')}
-            className={`flex flex-col items-center justify-center py-1.5 rounded-lg text-[10px] font-bold transition ${
-              activeTab === 'franchise_student_details' ? 'text-amber-400 bg-white/10' : 'text-slate-300'
+            className={`flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold transition cursor-pointer ${
+              activeTab === 'franchise_student_details' ? 'text-amber-400 bg-white/10' : 'text-slate-300 hover:text-white'
             }`}
           >
-            <FileText className="w-4 h-4 mb-0.5" />
+            <FileText className="w-4 h-4" />
             <span>Students</span>
           </button>
 
           <button
             type="button"
             onClick={() => handleTabSelect('franchise_marksheet')}
-            className={`flex flex-col items-center justify-center py-1.5 rounded-lg text-[10px] font-bold transition ${
-              activeTab === 'franchise_marksheet' ? 'text-amber-400 bg-white/10' : 'text-slate-300'
+            className={`flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold transition cursor-pointer ${
+              activeTab === 'franchise_marksheet' ? 'text-amber-400 bg-white/10' : 'text-slate-300 hover:text-white'
             }`}
           >
-            <ClipboardList className="w-4 h-4 mb-0.5" />
-            <span>Marks</span>
+            <ClipboardList className="w-4 h-4" />
+            <span>Marksheet</span>
           </button>
         </div>
       </nav>
@@ -930,20 +889,10 @@ export default function FranchiseDashboard({
       )}
 
       {viewingAdmissionStudent && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
-          <div className="bg-white rounded-2xl max-w-4xl w-full p-4 sm:p-6 shadow-2xl relative my-auto max-h-[90vh] overflow-y-auto">
-            <button
-              onClick={() => setViewingAdmissionStudent(null)}
-              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-700 rounded-full hover:bg-slate-100 transition cursor-pointer"
-            >
-              <X className="w-5 h-5" />
-            </button>
-            <StudentAdmissionFormView
-              student={viewingAdmissionStudent}
-              onClose={() => setViewingAdmissionStudent(null)}
-            />
-          </div>
-        </div>
+        <StudentAdmissionFormView
+          student={viewingAdmissionStudent}
+          onClose={() => setViewingAdmissionStudent(null)}
+        />
       )}
 
     </div>

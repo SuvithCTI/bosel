@@ -12,6 +12,7 @@ import {
   X,
   Award,
   BookOpen,
+  GraduationCap,
   Globe,
   Receipt,
 } from 'lucide-react';
@@ -117,6 +118,39 @@ export default function StudentDashboard({
       .trim();
 
     return combinedName || 'Student';
+  }, [student]);
+
+  const primaryCourseName = useMemo(() => {
+    if (
+      Array.isArray(student?.selectedCourses) &&
+      student.selectedCourses.length > 0
+    ) {
+      return student.selectedCourses
+        .map((c) => c.courseName || c.name)
+        .filter(Boolean)
+        .join(' & ');
+    }
+    return (
+      student?.courseName ||
+      student?.program ||
+      student?.course ||
+      'Abacus Speed Arithmetic'
+    );
+  }, [student]);
+
+  const primaryCourseLevel = useMemo(() => {
+    if (
+      Array.isArray(student?.selectedCourses) &&
+      student.selectedCourses.length > 0
+    ) {
+      return student.selectedCourses[0]?.level || 'Level 1';
+    }
+    return (
+      student?.courseLevel ||
+      student?.level ||
+      student?.grade ||
+      'Level 1'
+    );
   }, [student]);
 
   const studentImage =
@@ -838,6 +872,16 @@ export default function StudentDashboard({
             <h2 className="break-words text-lg font-black tracking-tight text-white sm:text-3xl lg:text-4xl">
               {greeting}, {displayName}!
             </h2>
+            <div className="mt-2 sm:mt-2.5 flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-lg bg-amber-400 px-3 py-1 text-xs font-black text-blue-950 shadow-sm">
+                <BookOpen className="h-3.5 w-3.5" />
+                <span>{primaryCourseName}</span>
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-lg bg-white/20 px-2.5 py-1 text-xs font-bold text-white border border-white/20 backdrop-blur-xs">
+                <GraduationCap className="h-3.5 w-3.5 text-amber-300" />
+                <span>{primaryCourseLevel}</span>
+              </span>
+            </div>
           </div>
         </section>
 

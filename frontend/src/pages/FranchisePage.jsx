@@ -556,19 +556,17 @@ export default function FranchisePage({ setActivePage }) {
         <div className="w-full max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-12 relative z-10">
           <div className="max-w-5xl mx-auto text-center space-y-4 sm:space-y-6 lg:space-y-8">
             
-            <p className="text-[#0F2B5C] text-xs sm:text-sm md:text-base font-black uppercase tracking-widest">
-              Franchise & Partnership
-            </p>
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50/95 border border-blue-200/80 text-[#0F2B5C] text-xs sm:text-sm md:text-base font-black tracking-wide shadow-sm">
+              <span>B<span className="text-amber-500 font-bold inline-block text-[1.05em] -translate-y-[1px]">★</span>SEL – School Academic & Skill Development Programs</span>
+            </div>
 
             <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-black font-heading tracking-tight text-slate-900 leading-[1.25] sm:leading-[1.15] max-w-5xl mx-auto">
-              Build Your Learning Centre With{' '}
-              <span className="text-[#0F2B5C] whitespace-nowrap">
-                B<span className="text-[#0F2B5C] font-bold inline-block text-[1.05em] -translate-y-[2px]">★</span>SEL
-              </span>
+              Empowering Schools Through{' '}
+              <span className="text-[#0F2B5C]">Quality Skill Development</span>
             </h1>
 
-            <p className="text-slate-600 text-sm sm:text-base lg:text-xl font-medium leading-relaxed sm:leading-loose max-w-3xl lg:max-w-4xl mx-auto px-1 sm:px-0">
-              B<span className="text-[#0F2B5C] font-bold">★</span>SEL provides franchise opportunities for individuals and education professionals interested in offering structured skill-development programs in their area.
+            <p className="text-slate-800 text-base sm:text-xl lg:text-2xl font-extrabold tracking-wide max-w-3xl lg:max-w-4xl mx-auto px-1 sm:px-0 text-blue-950/90">
+              “Learn • Practice • Perform • Succeed!”
             </p>
 
             <div className="pt-2 sm:pt-4 flex items-center justify-center w-full">
