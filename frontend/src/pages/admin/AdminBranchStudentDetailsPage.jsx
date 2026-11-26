@@ -1717,7 +1717,17 @@ export default function AdminBranchStudentDetailsPage({
                                     if (handleOpenMarksheet) {
                                       handleOpenMarksheet(enriched);
                                     } else {
-                                      showToast(`Opening marksheet for ${displayName} (${activeLvl})`);
+                                      const packages = buildStudentPackages([enriched]);
+                                      const modalData = {
+                                        students: packages,
+                                        autoDownload: false,
+                                        initialView: 'marksheet'
+                                      };
+                                      if (setViewingMergedPdfStudent) {
+                                        setViewingMergedPdfStudent(modalData);
+                                      } else {
+                                        setLocalMergedPdfData(modalData);
+                                      }
                                     }
                                   }}
                                   className="px-2.5 py-1 bg-[#0c234b] hover:bg-[#081d3d] active:scale-95 text-white text-[11px] font-black rounded-lg transition shadow-2xs inline-flex items-center gap-1 cursor-pointer"
@@ -1735,7 +1745,17 @@ export default function AdminBranchStudentDetailsPage({
                                     if (handleOpenCertForStudent) {
                                       handleOpenCertForStudent(enriched);
                                     } else {
-                                      showToast(`Opening certificate for ${displayName} (${activeLvl})`);
+                                      const packages = buildStudentPackages([enriched]);
+                                      const modalData = {
+                                        students: packages,
+                                        autoDownload: false,
+                                        initialView: 'certificate'
+                                      };
+                                      if (setViewingMergedPdfStudent) {
+                                        setViewingMergedPdfStudent(modalData);
+                                      } else {
+                                        setLocalMergedPdfData(modalData);
+                                      }
                                     }
                                   }}
                                   className="px-2.5 py-1 bg-[#0c234b] hover:bg-[#081d3d] active:scale-95 text-white text-[11px] font-black rounded-lg transition shadow-2xs inline-flex items-center gap-1 cursor-pointer"

@@ -562,9 +562,10 @@ export default function OfficialMarksheetView({
   hideMarks = false,
   paperType = null,
   hideDownloadAndPrint = false,
+  disablePrintStyle = false,
 }) {
   const sessionUser = getActiveSession();
-  const isStaff = sessionUser?.role === 'Staff' || hideDownloadAndPrint;
+  const isStaff = false; // Never block download or print for users or staff
   const sheetRef = useRef(null);
   const fileInputRef = useRef(null);
 
@@ -1021,7 +1022,6 @@ export default function OfficialMarksheetView({
   // ----------------------------------------------------------
 
   const handlePrint = () => {
-    if (isStaff) return;
     window.print();
   };
 
@@ -1047,7 +1047,6 @@ export default function OfficialMarksheetView({
   };
 
   const handleDownloadPdf = async () => {
-    if (isStaff) return;
     if (!sheetRef.current || isGeneratingPdf) return;
 
     setIsGeneratingPdf(true);
@@ -1381,7 +1380,8 @@ export default function OfficialMarksheetView({
       sm:p-4
     ">
 
-      <style>{`
+      {!disablePrintStyle && (
+        <style>{`
         @media print {
           @page {
             size: A4 portrait;
@@ -1402,18 +1402,10 @@ export default function OfficialMarksheetView({
             visibility: hidden !important;
           }
 
-          ${isStaff ? `
-          #printable-marksheet-sheet,
-          #printable-marksheet-sheet * {
-            visibility: hidden !important;
-            display: none !important;
-          }
-          ` : `
           #printable-marksheet-sheet,
           #printable-marksheet-sheet * {
             visibility: visible !important;
           }
-          `}
 
           #printable-marksheet-sheet {
             position: absolute !important;
@@ -1436,7 +1428,10 @@ export default function OfficialMarksheetView({
             display: none !important;
           }
         }
+        `}</style>
+      )}
 
+      <style>{`
         @media (max-width: 640px) {
           .marksheet-toolbar {
             border-radius: 10px;
@@ -1544,7 +1539,7 @@ export default function OfficialMarksheetView({
           w-full
           sm:w-auto
         ">
-          {!isStaff ? (
+          {!hideDownloadAndPrint && (
             <>
               <button
                 type="button"
@@ -1649,10 +1644,6 @@ export default function OfficialMarksheetView({
                 <span>Print</span>
               </button>
             </>
-          ) : (
-            <div className="px-3 py-1.5 bg-amber-400/15 border border-amber-400/30 rounded-lg text-[10px] sm:text-xs font-bold text-amber-200">
-              Staff Evaluation View
-            </div>
           )}
         </div>
       </div>

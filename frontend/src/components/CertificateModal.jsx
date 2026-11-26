@@ -15,8 +15,7 @@ export default function CertificateModal({
 }) {
   const data = certData || initialData || {};
   const sessionUser = getActiveSession();
-  const isStaff = sessionUser?.role === 'Staff';
-  const effectiveShowControls = !isStaff && showControls;
+  const effectiveShowControls = showControls !== false;
   const [studentName, setStudentName] = useState(() => {
     if (data.studentName) return data.studentName;
 

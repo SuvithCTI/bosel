@@ -754,7 +754,6 @@ export default function StaffDashboard({
       {selectedMarksheetStudent && (
         <OfficialMarksheetView
           student={selectedMarksheetStudent}
-          hideDownloadAndPrint={true}
           onClose={() => setSelectedMarksheetStudent(null)}
         />
       )}
@@ -763,7 +762,7 @@ export default function StaffDashboard({
         <CertificateModal
           isOpen={Boolean(previewCertModalData)}
           initialData={previewCertModalData}
-          showControls={false}
+          showControls={true}
           onClose={() => setPreviewCertModalData(null)}
         />
       )}

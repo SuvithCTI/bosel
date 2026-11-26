@@ -1378,21 +1378,105 @@ export default function StaffStudentDetailsPage({
             </p>
           </div>
 
-          {/* Action Buttons & Desk Badge */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <button
-              type="button"
-              onClick={() => setShowAdmissionModal(true)}
-              className="px-3.5 py-2 text-xs font-black rounded-xl bg-gradient-to-r from-emerald-600 via-emerald-700 to-teal-800 hover:from-emerald-700 hover:to-teal-900 active:scale-95 text-white shadow-sm hover:shadow transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
-              title="Open Student Registration Form for School or Academy"
-            >
-              <UserPlus className="w-3.5 h-3.5 text-emerald-200 shrink-0" />
-              <span>Student Registration Form</span>
-            </button>
+          {/* Action Toolbar */}
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+            {!isSelectionMode ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setIsSelectionMode(true)}
+                  className="px-3.5 py-2 text-xs font-black rounded-xl bg-sky-50 text-sky-700 hover:bg-sky-100 border border-sky-200 transition flex items-center gap-1.5 cursor-pointer"
+                  title="Enable batch selection"
+                >
+                  <CheckSquare className="w-3.5 h-3.5" />
+                  <span>Select Records</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowAdmissionModal(true)}
+                  className="px-3.5 py-2 text-xs font-black rounded-xl bg-gradient-to-r from-emerald-600 via-emerald-700 to-teal-800 hover:from-emerald-700 hover:to-teal-900 active:scale-95 text-white shadow-sm hover:shadow transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+                  title="Open Student Registration Form for School or Academy"
+                >
+                  <UserPlus className="w-3.5 h-3.5 text-emerald-200 shrink-0" />
+                  <span>Student Registration Form</span>
+                </button>
 
-            <span className="text-[11px] font-bold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200 whitespace-nowrap">
-              {effectivePortalType === 'school' ? 'School Record Desk' : (effectivePortalType === 'franchise' ? 'Academy Record Desk' : 'Staff Record Viewing Desk')}
-            </span>
+                <span className="text-[11px] font-bold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200 whitespace-nowrap">
+                  {effectivePortalType === 'school' ? 'School Record Desk' : (effectivePortalType === 'franchise' ? 'Academy Record Desk' : 'Staff Record Viewing Desk')}
+                </span>
+              </>
+            ) : (
+              <>
+                {selectedIds.length > 0 && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={handleDeleteSelected}
+                      className="px-3.5 py-2 text-xs font-bold rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition flex items-center gap-1.5 cursor-pointer active:scale-95 shadow-2xs"
+                    >
+                      <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                      <span>Delete ({selectedIds.length})</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleMergePrintCertificates}
+                      className="px-3.5 py-2 text-xs font-black rounded-xl bg-[#081d3d] hover:bg-[#0c2b5b] active:scale-95 text-white transition flex items-center gap-2 cursor-pointer shadow-xs"
+                      title="Print merged Certificate + Marksheet for selected students"
+                    >
+                      <Printer className="w-3.5 h-3.5 text-amber-300" />
+                      <span>Print Merged ({selectedIds.length})</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDownloadMergedPdf}
+                      className="px-3.5 py-2 text-xs font-black rounded-xl bg-sky-600 hover:bg-sky-700 active:scale-95 text-white transition flex items-center gap-2 cursor-pointer shadow-xs"
+                      title="Download merged 2-page PDF for selected students"
+                    >
+                      <Download className="w-3.5 h-3.5 text-white" />
+                      <span>Download PDF ({selectedIds.length})</span>
+                    </button>
+                    {/* Download Marksheet(s) Separately */}
+                    <button
+                      type="button"
+                      onClick={handleDownloadMarksheetsOnly}
+                      className="px-3.5 py-2 text-xs font-black rounded-xl bg-amber-500 hover:bg-amber-600 active:scale-95 text-slate-950 transition flex items-center gap-2 cursor-pointer shadow-xs"
+                      title="Download Marksheet(s) separately as PDF for selected candidate(s)"
+                    >
+                      <FileText className="w-3.5 h-3.5 text-slate-950" />
+                      <span>Marksheet ({selectedIds.length})</span>
+                    </button>
+
+                    {/* Download Certificate(s) Separately */}
+                    <button
+                      type="button"
+                      onClick={handleDownloadCertificatesOnly}
+                      className="px-3.5 py-2 text-xs font-black rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white transition flex items-center gap-2 cursor-pointer shadow-xs"
+                      title="Download Certificate(s) separately as PDF for selected candidate(s)"
+                    >
+                      <Award className="w-3.5 h-3.5 text-amber-200" />
+                      <span>Certificate ({selectedIds.length})</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedIds([])}
+                      className="px-2.5 py-2 text-xs font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition cursor-pointer"
+                    >
+                      Clear
+                    </button>
+                  </>
+                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsSelectionMode(false);
+                    setSelectedIds([]);
+                  }}
+                  className="px-3 py-2 text-xs font-bold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-xl transition cursor-pointer"
+                >
+                  Exit Selection
+                </button>
+              </>
+            )}
           </div>
         </div>
 
@@ -1718,7 +1802,17 @@ export default function StaffStudentDetailsPage({
                                     if (handleOpenMarksheet) {
                                       handleOpenMarksheet(enriched);
                                     } else {
-                                      showToast(`Opening marksheet for ${displayName} (${activeLvl})`);
+                                      const packages = buildStudentPackages([enriched]);
+                                      const modalData = {
+                                        students: packages,
+                                        autoDownload: false,
+                                        initialView: 'marksheet'
+                                      };
+                                      if (setViewingMergedPdfStudent) {
+                                        setViewingMergedPdfStudent(modalData);
+                                      } else {
+                                        setLocalMergedPdfData(modalData);
+                                      }
                                     }
                                   }}
                                   className="px-2.5 py-1 bg-[#0c234b] hover:bg-[#081d3d] active:scale-95 text-white text-[11px] font-black rounded-lg transition shadow-2xs inline-flex items-center gap-1 cursor-pointer"
@@ -1736,7 +1830,17 @@ export default function StaffStudentDetailsPage({
                                     if (handleOpenCertForStudent) {
                                       handleOpenCertForStudent(enriched);
                                     } else {
-                                      showToast(`Opening certificate for ${displayName} (${activeLvl})`);
+                                      const packages = buildStudentPackages([enriched]);
+                                      const modalData = {
+                                        students: packages,
+                                        autoDownload: false,
+                                        initialView: 'certificate'
+                                      };
+                                      if (setViewingMergedPdfStudent) {
+                                        setViewingMergedPdfStudent(modalData);
+                                      } else {
+                                        setLocalMergedPdfData(modalData);
+                                      }
                                     }
                                   }}
                                   className="px-2.5 py-1 bg-[#0c234b] hover:bg-[#081d3d] active:scale-95 text-white text-[11px] font-black rounded-lg transition shadow-2xs inline-flex items-center gap-1 cursor-pointer"
