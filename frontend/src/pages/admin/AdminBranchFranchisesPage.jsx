@@ -259,18 +259,18 @@ export default function AdminBranchFranchisesPage({
       </div>
 
       {/* Franchises Cards Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-2 xl:grid-cols-3 gap-2.5 sm:gap-5">
+      <div className="grid grid-cols-2 md:grid-cols-2 xl:grid-cols-3 gap-2 sm:gap-5">
         {franchises.map((fc) => (
           <div
             key={fc.id}
-            className="bg-white rounded-xl sm:rounded-2xl border border-slate-200 p-3 sm:p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between gap-2.5 sm:gap-4 group"
+            className="bg-white rounded-xl sm:rounded-2xl border border-slate-200 p-2.5 sm:p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between gap-2 sm:gap-4 group"
           >
             {/* Top Info Header */}
             <div>
-              <div className="flex items-start justify-between gap-1.5 sm:gap-2">
-                <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-                  <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
-                  <h3 className="text-xs sm:text-base font-black text-slate-950 group-hover:text-blue-900 transition truncate">
+              <div className="flex items-start justify-between gap-1 sm:gap-2">
+                <div className="flex items-start gap-1.5 sm:gap-2 min-w-0">
+                  <span className="w-1.5 h-1.5 sm:w-2.5 sm:h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0 mt-1 sm:mt-1.5"></span>
+                  <h3 className="text-[11px] sm:text-base font-black text-slate-950 group-hover:text-blue-900 transition leading-tight sm:leading-snug line-clamp-2" title={fc.name}>
                     {fc.name}
                   </h3>
                 </div>
@@ -281,15 +281,15 @@ export default function AdminBranchFranchisesPage({
                     className="p-1 sm:p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition cursor-pointer"
                     title="Delete Franchise"
                   >
-                    <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                    <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
                   </button>
                 </div>
               </div>
 
               {/* Location & Coordinator */}
-              <div className="mt-2 space-y-0.5 sm:space-y-1 text-[10px] sm:text-xs text-slate-600">
+              <div className="mt-1.5 sm:mt-2 space-y-0.5 sm:space-y-1 text-[9.5px] sm:text-xs text-slate-600">
                 <p className="flex items-center gap-1 sm:gap-1.5 text-slate-700 font-semibold truncate">
-                  <MapPin className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-sky-600 shrink-0" />
+                  <MapPin className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 text-sky-600 shrink-0" />
                   <span className="truncate">{fc.address || `${fc.city}, Tamil Nadu`}</span>
                 </p>
                 <p className="flex items-center gap-1 sm:gap-1.5 truncate">
@@ -305,16 +305,16 @@ export default function AdminBranchFranchisesPage({
               </div>
 
               {/* FRANCHISE LOGIN ACCESS BOX */}
-              <div className="mt-2.5 sm:mt-3.5 p-2 sm:p-3 rounded-lg sm:rounded-xl bg-slate-50 border border-slate-200 flex flex-col gap-1.5 sm:gap-2">
+              <div className="mt-2 sm:mt-3.5 p-1.5 sm:p-3 rounded-lg sm:rounded-xl bg-slate-50 border border-slate-200 flex flex-col gap-1 sm:gap-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-[9px] sm:text-[10px] font-black uppercase text-slate-500 flex items-center gap-1 truncate">
+                  <span className="text-[8.5px] sm:text-[10px] font-black uppercase text-slate-500 flex items-center gap-0.5 sm:gap-1 truncate">
                     <KeyRound className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-amber-500 shrink-0" />
                     <span className="truncate">Login Access</span>
                   </span>
                   <button
                     type="button"
                     onClick={() => handleOpenEdit(fc)}
-                    className="text-[9px] sm:text-[10px] font-bold text-sky-700 hover:underline flex items-center gap-0.5 sm:gap-1 cursor-pointer shrink-0"
+                    className="text-[8.5px] sm:text-[10px] font-bold text-sky-700 hover:underline flex items-center gap-0.5 sm:gap-1 cursor-pointer shrink-0"
                   >
                     <Edit2 className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                     Edit
@@ -322,14 +322,14 @@ export default function AdminBranchFranchisesPage({
                 </div>
 
                 {/* User ID */}
-                <div className="flex items-center justify-between bg-white px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg border border-slate-200 text-[11px] sm:text-xs">
-                  <span className="font-mono text-slate-800 font-bold truncate max-w-[120px] sm:max-w-[170px]">
+                <div className="flex items-center justify-between bg-white px-1.5 py-1 sm:px-2.5 sm:py-1.5 rounded-lg border border-slate-200 text-[10px] sm:text-xs">
+                  <span className="font-mono text-slate-800 font-bold truncate">
                     {fc.userId}
                   </span>
                   <button
                     type="button"
                     onClick={() => handleCopy(fc.userId, 'User ID')}
-                    className="text-slate-400 hover:text-slate-700 p-0.5 cursor-pointer shrink-0"
+                    className="text-slate-400 hover:text-slate-700 p-0.5 ml-1 cursor-pointer shrink-0"
                     title="Copy User ID"
                   >
                     <Copy className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
@@ -337,11 +337,11 @@ export default function AdminBranchFranchisesPage({
                 </div>
 
                 {/* Password */}
-                <div className="flex items-center justify-between bg-white px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg border border-slate-200 text-[11px] sm:text-xs">
+                <div className="flex items-center justify-between bg-white px-1.5 py-1 sm:px-2.5 sm:py-1.5 rounded-lg border border-slate-200 text-[10px] sm:text-xs">
                   <span className="font-mono text-slate-800 font-bold truncate">
-                    {visiblePasswords[fc.id] ? fc.password : '••••••••••'}
+                    {visiblePasswords[fc.id] ? fc.password : '••••••••'}
                   </span>
-                  <div className="flex items-center gap-1 text-slate-400 shrink-0">
+                  <div className="flex items-center gap-0.5 sm:gap-1 text-slate-400 ml-1 shrink-0">
                     <button
                       type="button"
                       onClick={() => togglePasswordVisibility(fc.id)}
@@ -364,22 +364,23 @@ export default function AdminBranchFranchisesPage({
             </div>
 
             {/* Bottom Actions */}
-            <div className="space-y-1.5 sm:space-y-2 pt-2 border-t border-slate-100">
+            <div className="space-y-1 sm:space-y-2 pt-1.5 sm:pt-2 border-t border-slate-100">
               {/* PRIMARY: Go to Franchise Dashboard Button */}
               <button
                 type="button"
                 onClick={() => handleGoToFranchiseDashboard(fc)}
-                className="w-full py-1.5 sm:py-2.5 px-2 sm:px-4 bg-[#0c234b] hover:bg-[#163e7c] active:scale-98 text-white font-black text-[11px] sm:text-xs rounded-lg sm:rounded-xl shadow-sm transition flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer group-hover:bg-[#123068]"
+                className="w-full py-1.5 sm:py-2.5 px-1.5 sm:px-4 bg-[#0c234b] hover:bg-[#163e7c] active:scale-98 text-white font-black text-[10.5px] sm:text-xs rounded-lg sm:rounded-xl shadow-sm transition flex items-center justify-center gap-1 sm:gap-2 cursor-pointer group-hover:bg-[#123068]"
               >
-                <span className="truncate">Go to Franchise Dashboard</span>
-                <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400 group-hover:translate-x-1 transition-transform shrink-0" />
+                <span className="sm:hidden">Go to Dashboard</span>
+                <span className="hidden sm:inline">Go to Franchise Dashboard</span>
+                <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4 text-amber-400 group-hover:translate-x-1 transition-transform shrink-0" />
               </button>
 
               {/* SECONDARY: Customize Certificate Branding for this specific Franchise */}
               <button
                 type="button"
                 onClick={() => setBrandingModalFranchise(fc)}
-                className="w-full py-1.5 sm:py-2 px-2 sm:px-3 bg-amber-50 hover:bg-amber-100/80 border border-amber-300 text-amber-950 font-bold text-[10px] sm:text-xs rounded-lg sm:rounded-xl transition flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer"
+                className="w-full py-1.5 sm:py-2 px-1.5 sm:px-3 bg-amber-50 hover:bg-amber-100/80 border border-amber-300 text-amber-950 font-bold text-[9.5px] sm:text-xs rounded-lg sm:rounded-xl transition flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer"
               >
                 <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-600 shrink-0" />
                 <span className="truncate">Certificate Branding</span>
@@ -408,19 +409,19 @@ export default function AdminBranchFranchisesPage({
 
       {/* ADD / EDIT FRANCHISE MODAL */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
-          <div className="bg-white rounded-2xl max-w-xl w-full p-5 sm:p-6 shadow-2xl relative my-auto max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-2.5 sm:p-5 overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-xl w-full p-3.5 sm:p-6 shadow-2xl relative my-auto max-h-[92vh] overflow-y-auto">
             
-            <div className="flex items-center justify-between pb-3 border-b border-slate-200 mb-4">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-500 flex items-center justify-center">
-                  <Building className="w-5 h-5" />
+            <div className="flex items-center justify-between pb-2.5 sm:pb-3 border-b border-slate-200 mb-3 sm:mb-4">
+              <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-amber-500/20 text-amber-500 flex items-center justify-center shrink-0">
+                  <Building className="w-4 h-4 sm:w-5 sm:h-5" />
                 </div>
-                <div>
-                  <h3 className="text-base font-black text-slate-950">
+                <div className="min-w-0">
+                  <h3 className="text-sm sm:text-base font-black text-slate-950 truncate">
                     {editingFranchise ? 'Edit Franchise Centre' : 'Add New Franchise Centre'}
                   </h3>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-[10px] sm:text-xs text-slate-500 truncate">
                     Set franchise credentials and affiliated centre details
                   </p>
                 </div>
@@ -428,18 +429,18 @@ export default function AdminBranchFranchisesPage({
               <button
                 type="button"
                 onClick={() => setShowAddModal(false)}
-                className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 transition cursor-pointer"
+                className="p-1 sm:p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 transition cursor-pointer shrink-0"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveFranchise} className="space-y-4 text-xs">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <form onSubmit={handleSaveFranchise} className="space-y-3 sm:space-y-4 text-xs">
+              <div className="grid grid-cols-2 gap-2 sm:gap-3">
                 
                 {/* Franchise Name */}
-                <div className="sm:col-span-2">
-                  <label className="block text-slate-700 font-bold mb-1">
+                <div className="col-span-2">
+                  <label className="block text-slate-700 font-bold mb-0.5 sm:mb-1 text-[11px] sm:text-xs">
                     Franchise / Centre Name *
                   </label>
                   <input
@@ -448,13 +449,13 @@ export default function AdminBranchFranchisesPage({
                     value={franchiseForm.name}
                     onChange={(e) => setFranchiseForm({ ...franchiseForm, name: e.target.value })}
                     placeholder="e.g. Tenkasi City Franchise"
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl font-bold focus:bg-white focus:border-sky-500 outline-none"
+                    className="w-full px-2.5 py-1.5 sm:px-3 sm:py-2 bg-slate-50 border border-slate-300 rounded-xl font-bold focus:bg-white focus:border-sky-500 outline-none text-xs"
                   />
                 </div>
 
                 {/* City */}
-                <div>
-                  <label className="block text-slate-700 font-bold mb-1">
+                <div className="col-span-1">
+                  <label className="block text-slate-700 font-bold mb-0.5 sm:mb-1 text-[11px] sm:text-xs truncate">
                     City / Town *
                   </label>
                   <input
@@ -463,27 +464,13 @@ export default function AdminBranchFranchisesPage({
                     value={franchiseForm.city}
                     onChange={(e) => setFranchiseForm({ ...franchiseForm, city: e.target.value })}
                     placeholder="e.g. Tenkasi"
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl font-semibold focus:bg-white focus:border-sky-500 outline-none"
-                  />
-                </div>
-
-                {/* Coordinator Name */}
-                <div>
-                  <label className="block text-slate-700 font-bold mb-1">
-                    Coordinator / In-charge Name
-                  </label>
-                  <input
-                    type="text"
-                    value={franchiseForm.coordinator}
-                    onChange={(e) => setFranchiseForm({ ...franchiseForm, coordinator: e.target.value })}
-                    placeholder="e.g. Mrs. Priya Soundarajan"
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl font-semibold focus:bg-white focus:border-sky-500 outline-none"
+                    className="w-full px-2.5 py-1.5 sm:px-3 sm:py-2 bg-slate-50 border border-slate-300 rounded-xl font-semibold focus:bg-white focus:border-sky-500 outline-none text-xs"
                   />
                 </div>
 
                 {/* Phone */}
-                <div>
-                  <label className="block text-slate-700 font-bold mb-1">
+                <div className="col-span-1">
+                  <label className="block text-slate-700 font-bold mb-0.5 sm:mb-1 text-[11px] sm:text-xs truncate">
                     Phone / Mobile
                   </label>
                   <input
@@ -491,13 +478,27 @@ export default function AdminBranchFranchisesPage({
                     value={franchiseForm.phone}
                     onChange={(e) => setFranchiseForm({ ...franchiseForm, phone: e.target.value })}
                     placeholder="e.g. 9865219131"
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl font-semibold focus:bg-white focus:border-sky-500 outline-none"
+                    className="w-full px-2.5 py-1.5 sm:px-3 sm:py-2 bg-slate-50 border border-slate-300 rounded-xl font-semibold focus:bg-white focus:border-sky-500 outline-none text-xs"
+                  />
+                </div>
+
+                {/* Coordinator Name */}
+                <div className="col-span-2">
+                  <label className="block text-slate-700 font-bold mb-0.5 sm:mb-1 text-[11px] sm:text-xs truncate">
+                    Coordinator / In-charge Name
+                  </label>
+                  <input
+                    type="text"
+                    value={franchiseForm.coordinator}
+                    onChange={(e) => setFranchiseForm({ ...franchiseForm, coordinator: e.target.value })}
+                    placeholder="e.g. Mrs. Priya Soundarajan"
+                    className="w-full px-2.5 py-1.5 sm:px-3 sm:py-2 bg-slate-50 border border-slate-300 rounded-xl font-semibold focus:bg-white focus:border-sky-500 outline-none text-xs"
                   />
                 </div>
 
                 {/* Full Address */}
-                <div className="sm:col-span-2">
-                  <label className="block text-slate-700 font-bold mb-1">
+                <div className="col-span-2">
+                  <label className="block text-slate-700 font-bold mb-0.5 sm:mb-1 text-[11px] sm:text-xs">
                     Centre Address / Premises
                   </label>
                   <input
@@ -505,21 +506,21 @@ export default function AdminBranchFranchisesPage({
                     value={franchiseForm.address}
                     onChange={(e) => setFranchiseForm({ ...franchiseForm, address: e.target.value })}
                     placeholder="e.g. 12, Main Bazaar Road, Tenkasi"
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl font-semibold focus:bg-white focus:border-sky-500 outline-none"
+                    className="w-full px-2.5 py-1.5 sm:px-3 sm:py-2 bg-slate-50 border border-slate-300 rounded-xl font-semibold focus:bg-white focus:border-sky-500 outline-none text-xs"
                   />
                 </div>
 
                 {/* Credentials Divider */}
-                <div className="sm:col-span-2 pt-2 border-t border-slate-200">
-                  <h4 className="font-bold text-slate-900 text-xs flex items-center gap-1.5 mb-2">
-                    <KeyRound className="w-3.5 h-3.5 text-amber-500" />
+                <div className="col-span-2 pt-1.5 sm:pt-2 border-t border-slate-200">
+                  <h4 className="font-bold text-slate-900 text-[11px] sm:text-xs flex items-center gap-1.5 mb-1.5 sm:mb-2">
+                    <KeyRound className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-500" />
                     Franchise Login Credentials
                   </h4>
                 </div>
 
                 {/* Login User ID */}
-                <div>
-                  <label className="block text-slate-700 font-bold mb-1">
+                <div className="col-span-1">
+                  <label className="block text-slate-700 font-bold mb-0.5 sm:mb-1 text-[11px] sm:text-xs truncate">
                     Login User ID *
                   </label>
                   <input
@@ -528,13 +529,13 @@ export default function AdminBranchFranchisesPage({
                     value={franchiseForm.userId}
                     onChange={(e) => setFranchiseForm({ ...franchiseForm, userId: e.target.value.toLowerCase().trim() })}
                     placeholder="e.g. franchise.tenkasi"
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl font-mono font-bold focus:bg-white focus:border-sky-500 outline-none lowercase"
+                    className="w-full px-2.5 py-1.5 sm:px-3 sm:py-2 bg-slate-50 border border-slate-300 rounded-xl font-mono font-bold focus:bg-white focus:border-sky-500 outline-none lowercase text-xs"
                   />
                 </div>
 
                 {/* Password */}
-                <div>
-                  <label className="block text-slate-700 font-bold mb-1">
+                <div className="col-span-1">
+                  <label className="block text-slate-700 font-bold mb-0.5 sm:mb-1 text-[11px] sm:text-xs truncate">
                     Login Password *
                   </label>
                   <input
@@ -543,27 +544,27 @@ export default function AdminBranchFranchisesPage({
                     value={franchiseForm.password}
                     onChange={(e) => setFranchiseForm({ ...franchiseForm, password: e.target.value })}
                     placeholder="e.g. franchise123"
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl font-mono font-bold focus:bg-white focus:border-sky-500 outline-none"
+                    className="w-full px-2.5 py-1.5 sm:px-3 sm:py-2 bg-slate-50 border border-slate-300 rounded-xl font-mono font-bold focus:bg-white focus:border-sky-500 outline-none text-xs"
                   />
                 </div>
 
               </div>
 
               {/* Modal Actions */}
-              <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-slate-200">
+              <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:justify-end sm:gap-2.5 pt-3 sm:pt-4 border-t border-slate-200">
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="px-4 py-2 border border-slate-300 text-slate-700 rounded-xl font-bold hover:bg-slate-50 transition cursor-pointer"
+                  className="w-full sm:w-auto px-4 py-2 border border-slate-300 text-slate-700 rounded-xl font-bold hover:bg-slate-50 transition cursor-pointer flex items-center justify-center text-xs"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl font-black transition cursor-pointer flex items-center gap-1.5"
+                  className="w-full sm:w-auto px-5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl font-black transition cursor-pointer flex items-center justify-center gap-1.5 text-xs shadow-sm"
                 >
-                  <Save className="w-4 h-4" />
-                  <span>{editingFranchise ? 'Update Franchise' : 'Save Franchise'}</span>
+                  <Save className="w-3.5 h-3.5" />
+                  <span>{editingFranchise ? 'Update' : 'Save'}</span>
                 </button>
               </div>
 

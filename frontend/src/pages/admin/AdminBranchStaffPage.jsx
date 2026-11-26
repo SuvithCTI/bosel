@@ -299,7 +299,7 @@ export default function AdminBranchStaffPage({
       </div>
 
       {/* Staff Grid Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4">
         {filteredStaff.map((staff) => {
           const passKey = `staff_pass_${staff.id || staff.userId}`;
           const isPassVisible = !!visiblePasswords[passKey];
@@ -307,34 +307,34 @@ export default function AdminBranchStaffPage({
           return (
             <div
               key={staff.id || staff.userId}
-              className="bg-white p-3 sm:p-4.5 rounded-xl sm:rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col justify-between gap-2.5 sm:gap-3 relative"
+              className="bg-white p-2.5 sm:p-4.5 rounded-xl sm:rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col justify-between gap-2 sm:gap-3 relative"
             >
               {/* Top Header */}
-              <div className="flex items-start justify-between gap-1.5 sm:gap-2">
-                <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-[#0c234b] to-[#1e3a8a] text-amber-400 font-black text-xs sm:text-sm flex items-center justify-center shrink-0 shadow-xs">
+              <div className="flex items-start justify-between gap-1 sm:gap-2">
+                <div className="flex items-start sm:items-center gap-1.5 sm:gap-2.5 min-w-0">
+                  <div className="w-7 h-7 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-[#0c234b] to-[#1e3a8a] text-amber-400 font-black text-[10px] sm:text-sm flex items-center justify-center shrink-0 shadow-xs mt-0.5 sm:mt-0">
                     {staff.name?.slice(0, 2).toUpperCase() || 'ST'}
                   </div>
                   <div className="min-w-0">
-                    <h3 className="text-xs sm:text-sm font-black text-slate-950 truncate leading-snug">
+                    <h3 className="text-xs sm:text-sm font-black text-slate-950 leading-tight sm:leading-snug line-clamp-1 sm:line-clamp-2" title={staff.name}>
                       {staff.name}
                     </h3>
-                    <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
-                      <span className="text-[10px] sm:text-[11px] font-bold text-sky-700 block truncate">
+                    <div className="flex items-center gap-1 sm:gap-1.5 flex-wrap mt-0.5">
+                      <span className="text-[9px] sm:text-[11px] font-bold text-sky-700 block truncate max-w-[80px] sm:max-w-none">
                         {staff.designation || 'Academic Staff'}
                       </span>
                       {staff.affiliationType === 'Franchise' || staff.institution?.includes('Franchise') ? (
-                        <span className="inline-flex items-center gap-0.5 px-1 py-0.5 sm:px-1.5 rounded bg-indigo-50 border border-indigo-200 text-indigo-700 text-[8px] sm:text-[9px] font-black uppercase">
+                        <span className="inline-flex items-center gap-0.5 px-1 py-0.2 sm:px-1.5 sm:py-0.5 rounded bg-indigo-50 border border-indigo-200 text-indigo-700 text-[7.5px] sm:text-[9px] font-black uppercase">
                           <Building className="w-2.5 h-2.5" />
                           <span className="truncate">Franchise</span>
                         </span>
                       ) : staff.affiliationType === 'School' || staff.institution?.includes('School') || staff.institution?.includes('Matric') ? (
-                        <span className="inline-flex items-center gap-0.5 px-1 py-0.5 sm:px-1.5 rounded bg-emerald-50 border border-emerald-200 text-emerald-800 text-[8px] sm:text-[9px] font-black uppercase">
+                        <span className="inline-flex items-center gap-0.5 px-1 py-0.2 sm:px-1.5 sm:py-0.5 rounded bg-emerald-50 border border-emerald-200 text-emerald-800 text-[7.5px] sm:text-[9px] font-black uppercase">
                           <School className="w-2.5 h-2.5" />
                           <span className="truncate">School</span>
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-0.5 px-1 py-0.5 sm:px-1.5 rounded bg-sky-50 border border-sky-200 text-sky-800 text-[8px] sm:text-[9px] font-black uppercase">
+                        <span className="inline-flex items-center gap-0.5 px-1 py-0.2 sm:px-1.5 sm:py-0.5 rounded bg-sky-50 border border-sky-200 text-sky-800 text-[7.5px] sm:text-[9px] font-black uppercase">
                           <span className="truncate">Branch</span>
                         </span>
                       )}
@@ -349,7 +349,7 @@ export default function AdminBranchStaffPage({
                     className="p-1 sm:p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"
                     title="Edit Staff Credentials"
                   >
-                    <Edit3 className="w-3.5 h-3.5" />
+                    <Edit3 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                   </button>
                   <button
                     type="button"
@@ -357,56 +357,56 @@ export default function AdminBranchStaffPage({
                     className="p-1 sm:p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
                     title="Delete Staff Account"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <Trash2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                   </button>
                 </div>
               </div>
 
               {/* Contact Info */}
-              <div className="flex flex-wrap items-center gap-x-2 sm:gap-x-4 gap-y-1 text-[10px] sm:text-[11px] text-slate-500 font-medium pt-0.5 border-t border-slate-100">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-x-3 gap-y-0.5 text-[9px] sm:text-[11px] text-slate-500 font-medium pt-1 border-t border-slate-100">
                 {staff.phone && (
                   <span className="flex items-center gap-1 truncate">
-                    <Phone className="w-3 h-3 text-slate-400 shrink-0" />
+                    <Phone className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-slate-400 shrink-0" />
                     <span className="truncate">{staff.phone}</span>
                   </span>
                 )}
                 {staff.email && (
-                  <span className="flex items-center gap-1 truncate max-w-[120px] sm:max-w-[200px]">
-                    <Mail className="w-3 h-3 text-slate-400 shrink-0" />
+                  <span className="flex items-center gap-1 truncate max-w-full sm:max-w-[200px]">
+                    <Mail className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-slate-400 shrink-0" />
                     <span className="truncate">{staff.email}</span>
                   </span>
                 )}
               </div>
 
               {/* Credentials Box */}
-              <div className="bg-slate-50/80 border border-slate-200/90 rounded-xl p-2 sm:p-3 space-y-1.5 sm:space-y-2">
+              <div className="bg-slate-50/80 border border-slate-200/90 rounded-lg sm:rounded-xl p-1.5 sm:p-3 space-y-1 sm:space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-slate-500 flex items-center gap-1 truncate">
+                  <span className="text-[8.5px] sm:text-[10px] font-black uppercase tracking-wider text-slate-500 flex items-center gap-0.5 sm:gap-1 truncate">
                     <KeyRound className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-amber-500 shrink-0" />
                     <span className="truncate">Credentials</span>
                   </span>
-                  <span className="text-[8px] sm:text-[9px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">
+                  <span className="text-[7.5px] sm:text-[9px] font-bold text-emerald-700 bg-emerald-100 px-1 py-0.2 sm:px-1.5 sm:py-0.5 rounded">
                     Active
                   </span>
                 </div>
 
                 {/* User ID */}
                 <div className="space-y-0.5">
-                  <span className="text-[9px] sm:text-[10px] font-bold text-slate-400">User ID / Username</span>
-                  <div className="flex items-center justify-between bg-white px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg border border-slate-200 text-[11px] sm:text-xs">
+                  <span className="text-[8.5px] sm:text-[10px] font-bold text-slate-400 block">User ID / Username</span>
+                  <div className="flex items-center justify-between bg-white px-1.5 py-1 sm:px-2.5 sm:py-1.5 rounded-lg border border-slate-200 text-[10px] sm:text-xs">
                     <code className="font-mono font-bold text-slate-900 truncate">
                       {staff.userId}
                     </code>
                     <button
                       type="button"
                       onClick={() => copyToClipboard(staff.userId, `uid_${staff.userId}`)}
-                      className="text-slate-400 hover:text-slate-700 p-0.5 ml-1.5 cursor-pointer shrink-0"
+                      className="text-slate-400 hover:text-slate-700 p-0.5 ml-1 cursor-pointer shrink-0"
                       title="Copy User ID"
                     >
                       {copiedKey === `uid_${staff.userId}` ? (
-                        <Check className="w-3.5 h-3.5 text-emerald-600" />
+                        <Check className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-emerald-600" />
                       ) : (
-                        <Copy className="w-3.5 h-3.5" />
+                        <Copy className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                       )}
                     </button>
                   </div>
@@ -414,12 +414,12 @@ export default function AdminBranchStaffPage({
 
                 {/* Password */}
                 <div className="space-y-0.5">
-                  <span className="text-[9px] sm:text-[10px] font-bold text-slate-400">Password</span>
-                  <div className="flex items-center justify-between bg-white px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg border border-slate-200 text-[11px] sm:text-xs">
+                  <span className="text-[8.5px] sm:text-[10px] font-bold text-slate-400 block">Password</span>
+                  <div className="flex items-center justify-between bg-white px-1.5 py-1 sm:px-2.5 sm:py-1.5 rounded-lg border border-slate-200 text-[10px] sm:text-xs">
                     <span className="font-mono font-bold text-slate-900 truncate">
-                      {isPassVisible ? staff.password : '••••••••••••'}
+                      {isPassVisible ? staff.password : '••••••••'}
                     </span>
-                    <div className="flex items-center gap-1 ml-1.5 shrink-0">
+                    <div className="flex items-center gap-0.5 sm:gap-1 ml-1 shrink-0">
                       <button
                         type="button"
                         onClick={() => togglePasswordVisibility(passKey)}
@@ -427,9 +427,9 @@ export default function AdminBranchStaffPage({
                         title={isPassVisible ? 'Hide Password' : 'Show Password'}
                       >
                         {isPassVisible ? (
-                          <EyeOff className="w-3.5 h-3.5" />
+                          <EyeOff className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                         ) : (
-                          <Eye className="w-3.5 h-3.5" />
+                          <Eye className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                         )}
                       </button>
                       <button
@@ -439,9 +439,9 @@ export default function AdminBranchStaffPage({
                         title="Copy Password"
                       >
                         {copiedKey === `pass_${staff.userId}` ? (
-                          <Check className="w-3.5 h-3.5 text-emerald-600" />
+                          <Check className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-emerald-600" />
                         ) : (
-                          <Copy className="w-3.5 h-3.5" />
+                          <Copy className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                         )}
                       </button>
                     </div>
@@ -453,12 +453,13 @@ export default function AdminBranchStaffPage({
               <button
                 type="button"
                 onClick={() => handleSwitchToStaffPortal(staff)}
-                className="w-full py-1.5 sm:py-2 px-2 sm:px-3 rounded-xl bg-[#0c234b] hover:bg-[#163e7c] text-white text-[11px] sm:text-xs font-black flex items-center justify-center gap-1.5 sm:gap-2 shadow-xs hover:shadow-md transition cursor-pointer group"
+                className="w-full py-1.5 sm:py-2 px-1.5 sm:px-3 rounded-lg sm:rounded-xl bg-[#0c234b] hover:bg-[#163e7c] text-white text-[10.5px] sm:text-xs font-black flex items-center justify-center gap-1 sm:gap-2 shadow-xs hover:shadow-md transition cursor-pointer group"
                 title={`Open Staff Portal as ${staff.name}`}
               >
-                <UserCheck className="w-3.5 h-3.5 text-amber-400 group-hover:scale-110 transition-transform shrink-0" />
-                <span className="truncate">Go to Staff Portal</span>
-                <ArrowRight className="w-3.5 h-3.5 text-amber-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
+                <UserCheck className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-400 group-hover:scale-110 transition-transform shrink-0" />
+                <span className="sm:hidden">Staff Portal</span>
+                <span className="hidden sm:inline">Go to Staff Portal</span>
+                <ArrowRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
               </button>
             </div>
           );
@@ -489,19 +490,19 @@ export default function AdminBranchStaffPage({
           MODAL: CREATE / EDIT STAFF MEMBER & CREDENTIALS
           ========================================================================= */}
       {showModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-2.5 sm:p-4 overflow-y-auto">
+          <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-150 my-auto max-h-[92vh] flex flex-col">
             {/* Modal Header */}
-            <div className="bg-[#0c234b] text-white p-4.5 flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-white/10 text-amber-400 flex items-center justify-center">
+            <div className="bg-[#0c234b] text-white p-3.5 sm:p-4.5 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+                <div className="w-8 h-8 rounded-lg bg-white/10 text-amber-400 flex items-center justify-center shrink-0">
                   <UserPlus className="w-4 h-4" />
                 </div>
-                <div>
-                  <h3 className="text-sm font-black">
+                <div className="min-w-0">
+                  <h3 className="text-sm font-black truncate">
                     {editingStaffId ? 'Edit Staff Credentials' : 'Create Staff Login Credentials'}
                   </h3>
-                  <p className="text-[11px] text-slate-300">
+                  <p className="text-[10px] sm:text-[11px] text-slate-300 truncate">
                     Assigned to {activeBranch}
                   </p>
                 </div>
@@ -509,14 +510,14 @@ export default function AdminBranchStaffPage({
               <button
                 type="button"
                 onClick={() => setShowModal(false)}
-                className="text-white/70 hover:text-white p-1 rounded-lg hover:bg-white/10"
+                className="text-white/70 hover:text-white p-1 rounded-lg hover:bg-white/10 shrink-0"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* Modal Body / Form */}
-            <form onSubmit={handleSubmitForm} className="p-5 space-y-3.5 text-xs">
+            <form onSubmit={handleSubmitForm} className="p-3.5 sm:p-5 space-y-2.5 sm:space-y-3.5 text-xs overflow-y-auto">
               {formError && (
                 <div className="p-2.5 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs font-bold">
                   {formError}
@@ -525,7 +526,7 @@ export default function AdminBranchStaffPage({
 
               {/* Staff Full Name */}
               <div>
-                <label className="font-bold text-slate-700 block mb-1">
+                <label className="font-bold text-slate-700 block mb-0.5 sm:mb-1 text-[11px] sm:text-xs">
                   Staff Full Name *
                 </label>
                 <input
@@ -534,63 +535,63 @@ export default function AdminBranchStaffPage({
                   placeholder="e.g. R. Kaviya, M. Sivakumar"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0c234b]/20 focus:border-[#0c234b]"
+                  className="w-full px-2.5 py-1.5 sm:px-3 sm:py-2 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0c234b]/20 focus:border-[#0c234b] text-xs"
                 />
               </div>
 
-              {/* User ID / Login Username */}
-              <div>
-                <label className="font-bold text-slate-700 block mb-1">
-                  Staff User ID / Username *
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. staff.tenkasi.kaviya"
-                    value={formData.userId}
-                    onChange={(e) => setFormData({ ...formData, userId: e.target.value })}
-                    className="w-full font-mono text-xs font-bold pl-3 pr-8 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0c234b]/20 focus:border-[#0c234b]"
-                  />
-                  <Lock className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2" />
-                </div>
-                <p className="text-[10px] text-slate-400 mt-0.5">Staff uses this User ID on the Login screen.</p>
-              </div>
-
-              {/* Password */}
-              <div>
-                <label className="font-bold text-slate-700 block mb-1">
-                  Staff Login Password *
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    required
-                    placeholder="Enter or generate password"
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    className="w-full font-mono text-xs font-bold pl-3 pr-8 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0c234b]/20 focus:border-[#0c234b]"
-                  />
-                  <KeyRound className="w-3.5 h-3.5 text-amber-500 absolute right-3 top-1/2 -translate-y-1/2" />
-                </div>
-              </div>
-
-              {/* Phone & Email Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* User ID & Password in 2-column mobile grid */}
+              <div className="grid grid-cols-2 gap-2 sm:gap-3">
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">
+                  <label className="font-bold text-slate-700 block mb-0.5 sm:mb-1 text-[11px] sm:text-xs truncate">
+                    Staff User ID *
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. staff.tenkasi"
+                      value={formData.userId}
+                      onChange={(e) => setFormData({ ...formData, userId: e.target.value })}
+                      className="w-full font-mono text-[11px] sm:text-xs font-bold pl-2.5 pr-6 sm:pr-8 py-1.5 sm:py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0c234b]/20 focus:border-[#0c234b]"
+                    />
+                    <Lock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-slate-400 absolute right-2 sm:right-3 top-1/2 -translate-y-1/2" />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="font-bold text-slate-700 block mb-0.5 sm:mb-1 text-[11px] sm:text-xs truncate">
+                    Login Password *
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      required
+                      placeholder="Enter password"
+                      value={formData.password}
+                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      className="w-full font-mono text-[11px] sm:text-xs font-bold pl-2.5 pr-6 sm:pr-8 py-1.5 sm:py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0c234b]/20 focus:border-[#0c234b]"
+                    />
+                    <KeyRound className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-500 absolute right-2 sm:right-3 top-1/2 -translate-y-1/2" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Phone & Email Grid (2-column on mobile) */}
+              <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                <div>
+                  <label className="font-bold text-slate-700 block mb-0.5 sm:mb-1 text-[11px] sm:text-xs truncate">
                     Contact Phone
                   </label>
                   <input
                     type="tel"
-                    placeholder="10-digit mobile number"
+                    placeholder="Mobile number"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0c234b]/20 focus:border-[#0c234b]"
+                    className="w-full px-2.5 py-1.5 sm:px-3 sm:py-2 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0c234b]/20 focus:border-[#0c234b] text-xs"
                   />
                 </div>
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">
+                  <label className="font-bold text-slate-700 block mb-0.5 sm:mb-1 text-[11px] sm:text-xs truncate">
                     Email Address
                   </label>
                   <input
@@ -598,23 +599,23 @@ export default function AdminBranchStaffPage({
                     placeholder="staff@bsel.org"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0c234b]/20 focus:border-[#0c234b]"
+                    className="w-full px-2.5 py-1.5 sm:px-3 sm:py-2 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0c234b]/20 focus:border-[#0c234b] text-xs"
                   />
                 </div>
               </div>
 
               {/* Branch Tag (Locked) */}
-              <div className="bg-sky-50 border border-sky-200 p-2.5 rounded-xl flex items-center justify-between">
-                <span className="text-[11px] font-bold text-sky-900 flex items-center gap-1.5">
-                  <Building className="w-3.5 h-3.5 text-sky-700" />
-                  <span>Assigned Branch:</span>
+              <div className="bg-sky-50 border border-sky-200 p-2 sm:p-2.5 rounded-xl flex items-center justify-between">
+                <span className="text-[10px] sm:text-[11px] font-bold text-sky-900 flex items-center gap-1 sm:gap-1.5 truncate">
+                  <Building className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-sky-700 shrink-0" />
+                  <span className="truncate">Assigned Branch:</span>
                 </span>
-                <span className="text-xs font-black text-[#0c234b]">{activeBranch}</span>
+                <span className="text-[11px] sm:text-xs font-black text-[#0c234b] shrink-0">{activeBranch}</span>
               </div>
 
               {/* Assigned Unit / Category */}
               <div>
-                <label className="font-bold text-slate-700 block mb-1">
+                <label className="font-bold text-slate-700 block mb-0.5 sm:mb-1 text-[11px] sm:text-xs truncate">
                   Assigned Unit / Department
                 </label>
                 <select
@@ -630,7 +631,7 @@ export default function AdminBranchStaffPage({
                       assignedUnit: unitName
                     });
                   }}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0c234b]/20 focus:border-[#0c234b]"
+                  className="w-full px-2.5 py-1.5 sm:px-3 sm:py-2 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0c234b]/20 focus:border-[#0c234b] text-xs"
                 >
                   <option value="Branch">Branch Staff — {activeBranch}</option>
                   <option value="Franchise">Franchise Staff — Tenkasi City Franchise</option>
@@ -639,19 +640,19 @@ export default function AdminBranchStaffPage({
               </div>
 
               {/* Modal Footer Actions */}
-              <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
+              <div className="pt-2.5 sm:pt-3 grid grid-cols-2 gap-2 sm:flex sm:items-center sm:justify-end sm:gap-2 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 font-bold transition cursor-pointer"
+                  className="w-full sm:w-auto px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 font-bold transition cursor-pointer flex items-center justify-center text-xs"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-[#0c234b] hover:bg-[#163e7c] text-white font-black shadow-sm transition flex items-center gap-1.5 cursor-pointer"
+                  className="w-full sm:w-auto px-5 py-2 rounded-xl bg-[#0c234b] hover:bg-[#163e7c] text-white font-black shadow-sm transition flex items-center justify-center gap-1.5 cursor-pointer text-xs"
                 >
-                  <Check className="w-4 h-4 text-amber-400" />
+                  <Check className="w-3.5 h-3.5 text-amber-400" />
                   <span>{editingStaffId ? 'Save Changes' : 'Create Staff Login'}</span>
                 </button>
               </div>

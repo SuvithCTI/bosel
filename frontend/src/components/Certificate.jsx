@@ -458,6 +458,8 @@ export default function Certificate({
 
   student = null,
 
+  disablePrintStyle = false,
+
 }) {
 
   const isEditable = !readOnly && showControls;
@@ -1150,7 +1152,8 @@ export default function Certificate({
       )}
 
       {/* ===== Print Styles for Clean A4 Landscape Isolation ===== */}
-      <style>{`
+      {!disablePrintStyle && (
+        <style>{`
         @media print {
           @page {
             size: A4 landscape;
@@ -1199,7 +1202,8 @@ export default function Certificate({
             display: block !important;
           }
         }
-      `}</style>
+        `}</style>
+      )}
 
       {/* ===== Certificate (vector, print-ready) ===== */}
 

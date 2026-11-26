@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import OfficialMarksheetView, { getRemark } from '../components/OfficialMarksheetView';
+import OfficialMarksheetView, { getRemark, formatMarksheetLevel } from '../components/OfficialMarksheetView';
 import { exportPdfFromElement } from '../utils/pdfExport';
 import { resolveBranchDetails } from '../utils/branchAuthStorage';
 import { getGrade } from '../utils/marksheetStorage';
@@ -226,6 +226,8 @@ export default function MarksheetVerificationPage({ setActivePage }) {
       const motto = params.get('motto');
       const score = params.get('score');
       const marks = params.get('marks');
+      const exams = params.get('exams');
+      const asms = params.get('asms');
       const vid = params.get('vid');
       const sec = params.get('sec');
       const photo = params.get('photo');
@@ -237,8 +239,8 @@ export default function MarksheetVerificationPage({ setActivePage }) {
           certificateNo: certNo || 'BSEL/PS/L1/0001',
           studentName: name || 'BOB',
           courseName: course || 'ADOBE PHOTOSHOP',
-          level: level || 'Level 1',
-          grade: grade || 'A+',
+          level: formatMarksheetLevel(level || 'Level 1'),
+          grade: grade || 'D',
           registrationNo: reg || 'PS26-001',
           centreName: centre || resolvedBranch.centreName,
           centreAddress: addr || resolvedBranch.centreAddress || 'Tenkasi, Tamil Nadu',
@@ -250,6 +252,8 @@ export default function MarksheetVerificationPage({ setActivePage }) {
           schoolMotto: motto || '',
           score: score || '',
           marks: marks || '',
+          exams: exams || '',
+          asms: asms || '',
           paperType: paper || null,
           vid: vid || '',
           sec: sec || '',
@@ -258,13 +262,13 @@ export default function MarksheetVerificationPage({ setActivePage }) {
       }
     }
 
-    // Default student matching uploaded reference
+    // Default student matching uploaded reference (default 0's if unentered)
     return {
       certificateNo: 'BSEL/PS/L1/0001',
       studentName: 'BOB',
       courseName: 'ADOBE PHOTOSHOP',
       level: 'Level 1',
-      grade: 'A+',
+      grade: 'D',
       registrationNo: 'PS26-001',
       centreName: 'Tenkasi',
       centreAddress: 'Dubai',
@@ -274,8 +278,10 @@ export default function MarksheetVerificationPage({ setActivePage }) {
       schoolName: 'JCJSKS DJDKD',
       schoolSubtitle: 'VISION FOUNDATION BDN',
       schoolMotto: 'EDUCATION • EMPOWERMENT • EXCELLENCE',
-      score: '459 / 500 (92%)',
-      marks: '92,90,95,91,91',
+      score: '0 / 500 (0%)',
+      marks: '0,0,0,0,0',
+      exams: '0,0,0,0,0',
+      asms: '0,0,0,0,0',
       paperType: null,
       vid: 'VER-2026-85-0001',
       sec: '850001-00C5-WSOE',
@@ -366,12 +372,12 @@ export default function MarksheetVerificationPage({ setActivePage }) {
   const parentName = resolveParentName(studentName, registrationNo, currentStudent.parentName);
   const dob = currentStudent.dob || '2011-01-01';
   const displayCourse = currentStudent.courseName || 'ADOBE PHOTOSHOP';
-  const level = currentStudent.level || 'Level 1';
+  const level = formatMarksheetLevel(currentStudent.level || 'Level 1');
   const duration = currentStudent.duration || '6 Months';
   const schoolCentre = currentStudent.centreName || 'Tenkasi';
   const address = currentStudent.centreAddress || 'Dubai';
 
-  // Parse marks & performance
+  // Parse marks & performance (default 0's if unentered)
   const parsedMarksList = useMemo(() => {
     if (currentStudent.marks) {
       return String(currentStudent.marks)
@@ -379,16 +385,32 @@ export default function MarksheetVerificationPage({ setActivePage }) {
         .map((m) => Number(m.trim()))
         .filter((n) => Number.isFinite(n));
     }
-    return [92, 90, 95, 91, 91];
+    return [0, 0, 0, 0, 0];
   }, [currentStudent.marks]);
 
   const totalScoreObtained = parsedMarksList.reduce((a, b) => a + b, 0);
   const totalMaxMarks = parsedMarksList.length * 100 || 500;
-  const calculatedPercent = Math.round((totalScoreObtained / totalMaxMarks) * 100);
+  const calculatedPercent = totalMaxMarks > 0 ? Math.round((totalScoreObtained / totalMaxMarks) * 100) : 0;
 
-  const displayScore = currentStudent.score || `${totalScoreObtained} / ${totalMaxMarks} (${calculatedPercent}%)`;
-  const finalGrade = currentStudent.grade || getGrade(calculatedPercent);
-  const remarkText = getRemark(String(calculatedPercent));
+  // Extract percentage from score string (e.g. '152 / 500 (30%)') or calculated percentage
+  const effectivePercentage = useMemo(() => {
+    if (currentStudent.score) {
+      const pctMatch = String(currentStudent.score).match(/(\d+(?:\.\d+)?)%/);
+      if (pctMatch) return Math.round(parseFloat(pctMatch[1]));
+      const slashMatch = String(currentStudent.score).match(/(\d+)\s*\/\s*(\d+)/);
+      if (slashMatch && Number(slashMatch[2]) > 0) {
+        return Math.round((Number(slashMatch[1]) / Number(slashMatch[2])) * 100);
+      }
+    }
+    return calculatedPercent;
+  }, [currentStudent.score, calculatedPercent]);
+
+  const isPass = effectivePercentage >= 40;
+  const resultText = isPass ? 'PASS' : 'FAIL';
+
+  const displayScore = currentStudent.score || `${totalScoreObtained} / ${totalMaxMarks} (${effectivePercentage}%)`;
+  const finalGrade = currentStudent.grade || (effectivePercentage > 0 ? getGrade(effectivePercentage) : 'D');
+  const remarkText = getRemark(String(effectivePercentage));
 
   const { vid: verificationId, sec: securityCode } = resolveVerificationCodes(
     studentName,
@@ -438,6 +460,14 @@ export default function MarksheetVerificationPage({ setActivePage }) {
       photoUrl: photoSrc,
       avatar: photoSrc,
       showMarks: true,
+      marks: currentStudent.marks || parsedMarksList.join(','),
+      exams: currentStudent.exams || '',
+      asms: currentStudent.asms || '',
+      score: displayScore,
+      totalMarks: totalScoreObtained,
+      totalMax: totalMaxMarks,
+      percentage: String(effectivePercentage),
+      grade: finalGrade,
     };
   }, [
     studentName,
@@ -454,6 +484,15 @@ export default function MarksheetVerificationPage({ setActivePage }) {
     currentStudent.schoolSubtitle,
     currentStudent.schoolMotto,
     currentStudent.paperType,
+    currentStudent.marks,
+    currentStudent.exams,
+    currentStudent.asms,
+    parsedMarksList,
+    displayScore,
+    totalScoreObtained,
+    totalMaxMarks,
+    effectivePercentage,
+    finalGrade,
     photoSrc,
   ]);
 
@@ -657,7 +696,9 @@ export default function MarksheetVerificationPage({ setActivePage }) {
 
               <div className="bg-[#0b1532] border border-[#182852] rounded-xl p-2.5 text-center">
                 <div className="text-slate-400 font-medium text-[10px]">Result</div>
-                <div className="text-emerald-400 font-extrabold text-sm mt-0.5">PASS</div>
+                <div className={`${isPass ? 'text-emerald-400' : 'text-rose-400'} font-extrabold text-sm mt-0.5`}>
+                  {resultText}
+                </div>
               </div>
             </div>
 

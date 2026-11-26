@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useMemo } from 'react';
 import {
   ArrowLeft,
   Download,
@@ -27,6 +27,21 @@ import QRCode from 'qrcode';
 import { buildVerificationUrl, getStudentVerificationMeta } from './Certificate';
 import MarksheetTemplate from './MarksheetTemplate';
 
+// Formats level so only 'Level 1', 'Level 2', etc. is displayed, stripping full level names
+export const formatMarksheetLevel = (lvl) => {
+  if (!lvl) return 'Level 1';
+  const str = String(lvl).trim();
+  const numMatch = str.match(/\b(?:level\s*)?(\d+)\b/i) || str.match(/(\d+)/);
+  if (numMatch) {
+    return `Level ${numMatch[1]}`;
+  }
+  const romanMatch = str.match(/\b(?:level\s*)?(I{1,3}|IV|V|VI{1,3}|IX|X)\b/i);
+  if (romanMatch) {
+    return `Level ${romanMatch[1].toUpperCase()}`;
+  }
+  return str.split(/[-–:(]/)[0].trim() || 'Level 1';
+};
+
 export const buildMarksheetVerificationUrl = (data = {}, forceLocal = false) => {
   let origin = 'https://besellearning.org';
   if (typeof window !== 'undefined') {
@@ -49,7 +64,7 @@ export const buildMarksheetVerificationUrl = (data = {}, forceLocal = false) => 
   if (data.certificateNo) p.set('cert', data.certificateNo);
   if (data.studentName) p.set('name', data.studentName);
   if (data.courseName) p.set('course', data.courseName);
-  if (data.level) p.set('level', data.level);
+  if (data.level) p.set('level', formatMarksheetLevel(data.level));
   if (data.grade) p.set('grade', data.grade);
   if (data.score) p.set('score', data.score);
   if (data.dob) p.set('dob', data.dob);
@@ -64,6 +79,8 @@ export const buildMarksheetVerificationUrl = (data = {}, forceLocal = false) => 
   if (data.sec) p.set('sec', data.sec);
   if (data.photoKey) p.set('photo', data.photoKey);
   if (data.marks) p.set('marks', data.marks);
+  if (data.exams) p.set('exams', data.exams);
+  if (data.asms) p.set('asms', data.asms);
   if (data.paperType) p.set('paper', data.paperType);
 
   return `${origin}/verify-marksheet?${p.toString()}`;
@@ -110,7 +127,8 @@ export const getRemark = (pct) => {
 // COURSE SUBJECT MODULES
 // ============================================================
 
-const DEMO_MARKS = [96, 98, 94, 97, 95];
+// Default modules without demo marks (0 for unentered marks)
+const DEFAULT_ZERO_MARKS = [0, 0, 0, 0, 0];
 
 const COURSE_RULES = [
   [['html'], [
@@ -313,10 +331,10 @@ export const getCourseSubjectModules = (courseName = '') => {
     id: i + 1,
     name,
     max: EXAM_MAX,                          // Max Marks column shows 60
-    assessment: ASSESSMENT_MAX,             // 40
-    exam: DEMO_MARKS[i] - ASSESSMENT_MAX,   // obtained out of 60
-    marks: DEMO_MARKS[i],                   // total out of 100
-    pct: `${DEMO_MARKS[i]}%`,
+    assessment: 0,                          // Default 0 when not entered
+    exam: 0,                                // Default 0 when not entered
+    marks: 0,                               // Default 0 when not entered
+    pct: '0%',                              // Default 0% when not entered
   }));
 };
 
@@ -328,9 +346,9 @@ export const getCourseSubjectModules = (courseName = '') => {
 const firstText = (...values) =>
   values.find((v) => typeof v === 'string' && v.trim()) || '';
 
-// Rounds any number to a whole number; returns '-' for empty values
+// Rounds any number to a whole number; returns '0' for empty/unentered marks
 const fmt2 = (v) => {
-  if (v === null || v === undefined || v === '') return '-';
+  if (v === null || v === undefined || v === '') return '0';
   const n = Number(v);
   return Number.isFinite(n) ? String(Math.round(n)) : String(v);
 };
@@ -441,6 +459,97 @@ function BselWatermark() {
   );
 }
 
+// Converts an image URL into a PNG data URL that the PDF renderer can always draw.
+// Decoding happens in the browser, so the server's Content-Type header and the
+// file format (JPEG, PNG, WebP, AVIF, GIF) no longer matter.
+const urlToDataUrl = async (url) => {
+  if (!url || url.startsWith('data:')) return url;
+
+  const loadImage = (src, useCors) =>
+    new Promise((resolve, reject) => {
+      const el = new Image();
+      if (useCors) el.crossOrigin = 'anonymous';
+      el.onload = () => resolve(el);
+      el.onerror = () => reject(new Error('Image load failed'));
+      el.src = src;
+    });
+
+  // Redraws the decoded image onto a canvas and exports it as PNG
+  const redrawAsPng = (img) => {
+    const maxSide = 1200;
+    const w = img.naturalWidth || img.width;
+    const h = img.naturalHeight || img.height;
+    if (!w || !h) throw new Error('Image has no size');
+
+    const scale = Math.min(1, maxSide / Math.max(w, h));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(w * scale));
+    canvas.height = Math.max(1, Math.round(h * scale));
+
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL('image/png');
+  };
+
+  // Attempt 1: fetch the bytes, then decode them from a same-origin blob URL
+  try {
+    const res = await fetch(url, { mode: 'cors', cache: 'no-cache' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const blob = await res.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    try {
+      const img = await loadImage(objectUrl, false);
+      return redrawAsPng(img);
+    } finally {
+      URL.revokeObjectURL(objectUrl);
+    }
+  } catch (fetchErr) {
+    console.warn('Fetch route failed for', url, fetchErr.message);
+  }
+
+  // Attempt 2: load through an <img> with crossOrigin, then draw to canvas
+  try {
+    const img = await loadImage(url, true);
+    return redrawAsPng(img); // throws a SecurityError if the server blocks CORS
+  } catch (imgErr) {
+    console.error('Could not inline image for PDF:', url, imgErr.message);
+    return url;
+  }
+};
+
+// Swaps every <image> href inside the sheet for a data URL.
+// Returns a function that restores the original attributes.
+const inlineSheetImages = async (root) => {
+  const XLINK = 'http://www.w3.org/1999/xlink';
+  const images = Array.from(root.querySelectorAll('image'));
+
+  const originals = images.map((el) => ({
+    el,
+    href: el.getAttribute('href'),
+    xlink: el.getAttributeNS(XLINK, 'href'),
+  }));
+
+  await Promise.all(
+    originals.map(async ({ el, href, xlink }) => {
+      const source = href || xlink;
+      if (!source) return;
+      const dataUrl = await urlToDataUrl(source);
+      el.setAttribute('href', dataUrl);
+      el.setAttributeNS(XLINK, 'xlink:href', dataUrl);
+    })
+  );
+
+  return () => {
+    originals.forEach(({ el, href, xlink }) => {
+      if (href === null) el.removeAttribute('href');
+      else el.setAttribute('href', href);
+      if (xlink === null || xlink === '') el.removeAttributeNS(XLINK, 'href');
+      else el.setAttributeNS(XLINK, 'xlink:href', xlink);
+    });
+  };
+};
+
 // ============================================================
 // OFFICIAL MARKSHEET COMPONENT
 // ============================================================
@@ -453,9 +562,10 @@ export default function OfficialMarksheetView({
   hideMarks = false,
   paperType = null,
   hideDownloadAndPrint = false,
+  disablePrintStyle = false,
 }) {
   const sessionUser = getActiveSession();
-  const isStaff = sessionUser?.role === 'Staff' || hideDownloadAndPrint;
+  const isStaff = false; // Never block download or print for users or staff
   const sheetRef = useRef(null);
   const fileInputRef = useRef(null);
 
@@ -607,17 +717,91 @@ export default function OfficialMarksheetView({
 
   const savedSheet = getSavedMarksheet(student);
 
-  // Marks show only when the final result is complete (or when explicitly asked for)
-  const showMarks = !hideMarks && (showMarksFlag || Boolean(savedSheet?.complete) || Boolean(student?.showMarks));
+  // Marksheet mark details always show unless hideMarks is explicitly true
+  const showMarks = !hideMarks;
 
-  const subjects = savedSheet?.subjects?.length
-    ? savedSheet.subjects
-    : student?.subjects?.length
-      ? student.subjects
-      : getCourseSubjectModules(courseName);
+  const defaultModules = useMemo(() => getCourseSubjectModules(courseName), [courseName]);
+
+  const parsedStudentMarks = useMemo(() => {
+    if (student?.marks) {
+      if (Array.isArray(student.marks)) return student.marks.map(Number);
+      const parts = String(student.marks)
+        .split(',')
+        .map((m) => Number(m.trim()))
+        .filter((n) => Number.isFinite(n));
+      if (parts.length > 0) return parts;
+    }
+    return null;
+  }, [student?.marks]);
+
+  const hasSavedMarks = Boolean(
+    savedSheet &&
+    Array.isArray(savedSheet.subjects) &&
+    savedSheet.subjects.length > 0 &&
+    savedSheet.subjects.some((s) => s.marks !== null && s.marks !== undefined && s.marks !== '')
+  );
+
+  const subjects = useMemo(() => {
+    if (hasSavedMarks) {
+      return savedSheet.subjects.map((s, i) => {
+        const fallbackName = defaultModules[i]?.name || `Subject ${i + 1}`;
+        const examVal = s.exam !== null && s.exam !== undefined && s.exam !== '' ? Number(s.exam) : 0;
+        const asmVal = s.assessment !== null && s.assessment !== undefined && s.assessment !== '' ? Number(s.assessment) : 0;
+        const totalVal = s.marks !== null && s.marks !== undefined && s.marks !== '' ? Number(s.marks) : (examVal + asmVal);
+        return {
+          id: s.id || i + 1,
+          name: s.name || fallbackName,
+          max: EXAM_MAX,
+          assessment: asmVal,
+          exam: examVal,
+          marks: totalVal,
+          pct: `${totalVal}%`,
+        };
+      });
+    }
+
+    if (student?.subjects?.length) {
+      return student.subjects.map((s, i) => {
+        const fallbackName = defaultModules[i]?.name || `Subject ${i + 1}`;
+        const examVal = s.exam !== null && s.exam !== undefined && s.exam !== '' ? Number(s.exam) : 0;
+        const asmVal = s.assessment !== null && s.assessment !== undefined && s.assessment !== '' ? Number(s.assessment) : 0;
+        const totalVal = s.marks !== null && s.marks !== undefined && s.marks !== '' ? Number(s.marks) : (examVal + asmVal);
+        return {
+          id: s.id || i + 1,
+          name: s.name || fallbackName,
+          max: EXAM_MAX,
+          assessment: asmVal,
+          exam: examVal,
+          marks: totalVal,
+          pct: `${totalVal}%`,
+        };
+      });
+    }
+
+    if (parsedStudentMarks && parsedStudentMarks.length > 0) {
+      const rawExams = student?.exams ? String(student.exams).split(',').map((v) => Number(v.trim())) : null;
+      const rawAsms = student?.asms ? String(student.asms).split(',').map((v) => Number(v.trim())) : null;
+
+      return defaultModules.map((sub, i) => {
+        const totalM = parsedStudentMarks[i] !== undefined ? parsedStudentMarks[i] : 0;
+        const asmV = rawAsms && Number.isFinite(rawAsms[i]) ? rawAsms[i] : (totalM > 0 ? Math.min(Math.round(totalM * 0.4), 40) : 0);
+        const exV = rawExams && Number.isFinite(rawExams[i]) ? rawExams[i] : Math.max(0, totalM - asmV);
+        return {
+          ...sub,
+          assessment: asmV,
+          exam: exV,
+          marks: totalM,
+          pct: `${totalM}%`,
+        };
+      });
+    }
+
+    // No entered marks: return subjects with 0 for all mark details
+    return defaultModules;
+  }, [hasSavedMarks, savedSheet, student?.subjects, student?.exams, student?.asms, parsedStudentMarks, defaultModules]);
 
   // Total maximum = number of subjects × 100 (each subject is 40 assessment + 60 exam)
-  const totalMax = subjects.length * SUBJECT_MAX;
+  const totalMax = subjects.length * SUBJECT_MAX || TOTAL_MAX;
 
   // Total obtained = sum of each subject's total (assessment + exam)
   const totalMarks = subjects.reduce(
@@ -625,14 +809,18 @@ export default function OfficialMarksheetView({
     0
   );
 
-  const totalObtained = totalMarks;
+  const totalObtained = student?.totalMarks !== undefined && student?.totalMarks !== null && Number.isFinite(Number(student.totalMarks))
+    ? Number(student.totalMarks)
+    : totalMarks;
 
   // Whole-number percentage
-  const percentage = totalMax
-    ? String(Math.round((totalMarks / totalMax) * 100))
-    : '0';
+  const percentage = student?.percentage !== undefined && student?.percentage !== null && student?.percentage !== ''
+    ? String(Math.round(Number(student.percentage)))
+    : totalMax
+      ? String(Math.round((totalObtained / totalMax) * 100))
+      : '0';
 
-  const overallGrade = getGrade(Number(percentage));
+  const overallGrade = Number(percentage) > 0 ? getGrade(Number(percentage)) : (student?.grade || 'D');
 
   const remarkText = getRemark(percentage);
 
@@ -642,9 +830,10 @@ export default function OfficialMarksheetView({
     'AB27-001';
 
   const coursePrefix = getCoursePrefix(courseName);
-  const level = student.level || student.courseLevel || 'Level 1';
+  const rawLevel = student.level || student.courseLevel || 'Level 1';
+  const displayLevel = formatMarksheetLevel(rawLevel);
 
-  const cleanLevel = String(level).replace(/\D/g, '') || '1';
+  const cleanLevel = String(displayLevel).replace(/\D/g, '') || '1';
   const regDigits = String(regNo).replace(/\D/g, '');
 
   const seqDigits = regDigits
@@ -685,7 +874,27 @@ export default function OfficialMarksheetView({
     student.district ||
     'Tenkasi, Tamil Nadu';
 
-  const photoUrl = uploadedPhoto || getStudentPhotoUrl(student);
+  // Photo source: same priority the certificate uses, so both documents show the same photo.
+  // 1) photo uploaded in this session, 2) photo stored on the student record,
+  // 3) photo cached in localStorage for this registration number, 4) the generic resolver.
+  const resolvePhotoUrl = () => {
+    if (uploadedPhoto) return uploadedPhoto;
+
+    const direct = student?.photo_url || student?.photoUrl || student?.studentPhoto || student?.photo;
+    if (direct) return direct;
+
+    if (typeof window !== 'undefined') {
+      try {
+        const reg = String(regNo || '').trim();
+        const cached = reg ? localStorage.getItem(`bsel_photo_${reg}`) : null;
+        if (cached) return cached;
+      } catch {}
+    }
+
+    return getStudentPhotoUrl(student);
+  };
+
+  const photoUrl = resolvePhotoUrl();
 
   // QR Code Verification URL generation for marksheet (same standard as Certificate)
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState('');
@@ -702,16 +911,22 @@ export default function OfficialMarksheetView({
       photoUrl
     );
 
-    const scoreString = showMarks ? `${totalObtained} / ${totalMax} (${percentage}%)` : '';
+    const scoreString = `${totalObtained} / ${totalMax} (${percentage}%)`;
     const serializedMarks = Array.isArray(subjects) && subjects.length
       ? subjects.map((s) => Number(s.marks) || 0).join(',')
-      : '';
+      : '0,0,0,0,0';
+    const serializedExams = Array.isArray(subjects) && subjects.length
+      ? subjects.map((s) => Number(s.exam) || 0).join(',')
+      : '0,0,0,0,0';
+    const serializedAsms = Array.isArray(subjects) && subjects.length
+      ? subjects.map((s) => Number(s.assessment) || 0).join(',')
+      : '0,0,0,0,0';
 
     const url = buildMarksheetVerificationUrl({
       certificateNo: certNo,
       studentName,
       courseName,
-      level,
+      level: displayLevel,
       grade: overallGrade,
       registrationNo: regNo,
       centreName: school,
@@ -724,6 +939,8 @@ export default function OfficialMarksheetView({
       duration,
       score: scoreString,
       marks: serializedMarks,
+      exams: serializedExams,
+      asms: serializedAsms,
       paperType,
       vid: meta.vid,
       sec: meta.sec,
@@ -759,7 +976,7 @@ export default function OfficialMarksheetView({
     certNo,
     student,
     courseName,
-    level,
+    displayLevel,
     overallGrade,
     photoUrl,
     school,
@@ -768,6 +985,9 @@ export default function OfficialMarksheetView({
     customSchoolSubtitle,
     customSchoolMotto,
     parentName,
+    dob,
+    duration,
+    paperType,
     totalObtained,
     totalMax,
     percentage,
@@ -802,7 +1022,6 @@ export default function OfficialMarksheetView({
   // ----------------------------------------------------------
 
   const handlePrint = () => {
-    if (isStaff) return;
     window.print();
   };
 
@@ -828,15 +1047,17 @@ export default function OfficialMarksheetView({
   };
 
   const handleDownloadPdf = async () => {
-    if (isStaff) return;
     if (!sheetRef.current || isGeneratingPdf) return;
 
     setIsGeneratingPdf(true);
+    let restoreImages = null;
 
     try {
       const safeName = studentName.replace(/[^a-zA-Z0-9]/g, '_');
-
       const filename = `BSEL_Marksheet_${regNo}_${safeName}.pdf`;
+
+      // Make logos, seal, signature, and photo renderable in the PDF
+      restoreImages = await inlineSheetImages(sheetRef.current);
 
       await exportPdfFromElement(sheetRef.current, {
         filename,
@@ -849,6 +1070,7 @@ export default function OfficialMarksheetView({
       console.error('PDF Generation failed:', err);
       alert('Unable to generate PDF. Please try again.');
     } finally {
+      if (restoreImages) restoreImages();
       setIsGeneratingPdf(false);
     }
   };
@@ -892,7 +1114,7 @@ export default function OfficialMarksheetView({
       }}
     >
 
-      {/* Vector template (zIndex 1 inside the template); draws the header text from the customised values */}
+      {/* Vector template: draws borders, watermark, headers, student details, QR, photo, subjects, marks, summary & signatures */}
       <MarksheetTemplate
         remark={showMarks ? remarkText : null}
         rightHeading={{
@@ -901,78 +1123,71 @@ export default function OfficialMarksheetView({
           tagline: customSchoolMotto,
         }}
         qrCodeDataUrl={qrCodeDataUrl}
+        studentData={{
+          registrationNo: regNo,
+          certificateNo: certNo,
+          studentName,
+          parentName,
+          dob,
+          displayCourse,
+          courseName: displayCourse,
+          level: displayLevel,
+          duration,
+          school,
+          address,
+        }}
+        subjects={subjects}
+        summary={{
+          totalMax,
+          totalObtained,
+          percentage,
+          overallGrade,
+        }}
+        photoUrl={photoUrl}
+        schoolLogo={customSchoolLogo}
+        directorSign={customDirectorSign}
+        paperType={paperType}
+        issueDate={issueDate}
+        showMarks={showMarks}
       />
 
-      {/* Full-page BSEL watermark (zIndex 0, under the template) */}
-      <BselWatermark />
+      {/* Interactive controls & click hitboxes (print-hidden & ignored by PDF export) */}
 
-      {/* PAPER TYPE BOX (A / B / C / D / E) */}
-      {paperType && (
-        <div
-          className="absolute flex flex-col items-center justify-center border-2 border-[#0b2a55] bg-amber-300 rounded-sm shadow-sm"
-          style={{
-            left: '84.5%',
-            top: '13.2%',
-            width: '8.8%',
-            height: '4.6%',
-            zIndex: 1,
-          }}
-          title="Paper Type"
-        >
-          <span
-            className="text-[7px] font-black uppercase text-[#0b2a55] leading-none"
-            style={{ fontFamily: 'Arial, sans-serif' }}
-          >
-            Type
-          </span>
-          <span
-            className="text-[14px] font-black text-[#0b2a55] leading-none mt-0.5"
-            style={{ fontFamily: "'Times New Roman', Times, serif" }}
-          >
-            {paperType}
-          </span>
-        </div>
-      )}
-
-      {/* 0. TOP-RIGHT HEADER CLICK AREA (text is drawn by the template) */}
+      {/* Top-right header click area to customize School info */}
       <div
         onClick={() => !standalone && setIsFormModalOpen(true)}
-        className={`absolute select-none ${
+        className={`absolute select-none print:hidden ${
           standalone ? '' : 'cursor-pointer hover:ring-1 hover:ring-amber-400/50 rounded-md transition'
         }`}
+        data-html2canvas-ignore="true"
         style={{
           top: '2.7%',
           left: '55.4%',
           right: '13.5%',
           height: '9.1%',
-          zIndex: 1,
+          zIndex: 2,
         }}
         title={standalone ? '' : 'Click to customize School Name, Logo & Principal Signature'}
       />
 
-      {/* School Logo Container */}
+      {/* School Logo click / placeholder area */}
       <div
         onClick={() => !standalone && setIsFormModalOpen(true)}
-        className={`absolute flex items-center justify-center select-none rounded-md overflow-hidden ${
+        className={`absolute flex items-center justify-center select-none rounded-md overflow-hidden print:hidden ${
           standalone ? '' : 'cursor-pointer hover:ring-1 hover:ring-amber-400/50 transition'
         }`}
+        data-html2canvas-ignore="true"
         style={{
           top: '4.3%',
           right: '5.2%',
           width: '8.2%',
           height: '6.2%',
-          zIndex: 1,
+          zIndex: 2,
         }}
         title={standalone ? '' : 'Click to upload/change School Logo'}
       >
-        {customSchoolLogo ? (
-          <img
-            src={customSchoolLogo}
-            alt={customSchoolName || 'School Logo'}
-            className="w-full h-full object-contain drop-shadow-sm"
-          />
-        ) : !standalone ? (
-          <div className="w-full h-full border border-dashed border-[#0b2a55]/30 hover:border-amber-500/80 bg-white/40 flex flex-col items-center justify-center p-0.5 text-center transition group/slot print:hidden">
+        {!customSchoolLogo && !standalone ? (
+          <div className="w-full h-full border border-dashed border-[#0b2a55]/30 hover:border-amber-500/80 bg-white/40 flex flex-col items-center justify-center p-0.5 text-center transition group/slot">
             <ImageIcon className="w-3.5 h-3.5 text-[#0b2a55]/60 group-hover/slot:text-amber-500 mb-0.5" />
             <span className="text-[5.5px] font-bold text-[#0b2a55] uppercase leading-tight font-sans">
               Logo
@@ -981,39 +1196,7 @@ export default function OfficialMarksheetView({
         ) : null}
       </div>
 
-      {/* 1. STUDENT & COURSE DETAILS */}
-      {[
-        { value: regNo, top: 17.72, cls: '' },
-        { value: certNo, top: 20.31, cls: '' },
-        { value: studentName, top: 22.9, cls: 'uppercase' },
-        { value: parentName, top: 25.49, cls: 'capitalize' },
-        { value: dob, top: 28.08, cls: '' },
-        { value: displayCourse, top: 30.66, cls: 'uppercase' },
-        { value: level, top: 33.25, cls: 'capitalize' },
-        { value: duration, top: 35.84, cls: 'capitalize' },
-        { value: school, top: 38.43, cls: 'capitalize' },
-        { value: address, top: 41.02, cls: 'capitalize' },
-      ].map((row, i) => (
-        <div
-          key={i}
-          className={`absolute font-bold text-black -translate-y-1/2 truncate ${row.cls}`}
-          style={{
-            left: '29.8%',
-            top: `${row.top}%`,
-            maxWidth: '28.5%',
-            fontFamily: "'Times New Roman', Times, serif",
-            fontSize: '2.07cqw',
-            lineHeight: 1,
-            color: '#000000',
-            textRendering: 'geometricPrecision',
-            zIndex: 1,
-          }}
-        >
-          {row.value}
-        </div>
-      ))}
-
-      {/* QR CODE CLICKABLE OVERLAY (JUST LEFT TO THE PHOTO) */}
+      {/* QR Code click hitbox (links to verification page) */}
       {qrCodeDataUrl && (
         <div
           onClick={(e) => {
@@ -1024,7 +1207,7 @@ export default function OfficialMarksheetView({
                   certificateNo: certNo,
                   studentName,
                   courseName,
-                  level,
+                  level: displayLevel,
                   grade: overallGrade,
                   registrationNo: regNo,
                   centreName: school,
@@ -1035,10 +1218,16 @@ export default function OfficialMarksheetView({
                   parentName,
                   dob,
                   duration,
-                  score: showMarks ? `${totalObtained} / ${totalMax} (${percentage}%)` : '',
+                  score: `${totalObtained} / ${totalMax} (${percentage}%)`,
                   marks: Array.isArray(subjects) && subjects.length
                     ? subjects.map((s) => Number(s.marks) || 0).join(',')
-                    : '',
+                    : '0,0,0,0,0',
+                  exams: Array.isArray(subjects) && subjects.length
+                    ? subjects.map((s) => Number(s.exam) || 0).join(',')
+                    : '0,0,0,0,0',
+                  asms: Array.isArray(subjects) && subjects.length
+                    ? subjects.map((s) => Number(s.assessment) || 0).join(',')
+                    : '0,0,0,0,0',
                   paperType,
                   photoKey: uploadedPhoto || student?.photo || student?.photoUrl || student?.avatar || '',
                 },
@@ -1047,7 +1236,8 @@ export default function OfficialMarksheetView({
               window.open(targetUrl || verificationUrl, '_blank');
             }
           }}
-          className="absolute cursor-pointer pointer-events-auto rounded-sm group hover:ring-2 hover:ring-amber-400/60 transition"
+          className="absolute cursor-pointer pointer-events-auto rounded-sm group hover:ring-2 hover:ring-amber-400/60 transition print:hidden"
+          data-html2canvas-ignore="true"
           style={{
             left: `${(428 / 724) * 100}%`,
             top: `${(228 / 1024) * 100}%`,
@@ -1059,112 +1249,30 @@ export default function OfficialMarksheetView({
         />
       )}
 
-      {/* STUDENT PHOTO */}
+      {/* Student Photo upload hitbox */}
       <div
         onClick={() => fileInputRef.current?.click()}
         className="
           absolute
           overflow-hidden
-          bg-white
           flex
           items-center
           justify-center
           cursor-pointer
           pointer-events-auto
           group
-          shadow-2xs
+          print:hidden
         "
+        data-html2canvas-ignore="true"
         style={{
-          left: '77.0%',
-          top: '22.9%',
-          width: '14.2%',
-          height: '11.5%',
-          zIndex: 1,
+          left: `${(551 / 724) * 100}%`,
+          top: `${(228 / 1024) * 100}%`,
+          width: `${(113 / 724) * 100}%`,
+          height: `${(130 / 1024) * 100}%`,
+          zIndex: 2,
         }}
         title="Click to upload/change photo"
       >
-        {photoUrl ? (
-          <img
-            src={photoUrl}
-            alt={studentName}
-            className="w-full h-full object-cover object-top"
-          />
-        ) : (
-          <div className="
-            w-full
-            h-full
-            flex
-            flex-col
-            items-center
-            justify-center
-            bg-gradient-to-b
-            from-[#faf6ec]
-            to-[#f2e9d2]
-            p-1
-            select-none
-            text-center
-          ">
-            <svg
-              viewBox="0 0 100 100"
-              className="w-7 h-7 text-[#c59b27] drop-shadow-2xs"
-            >
-              <circle
-                cx="50"
-                cy="50"
-                r="44"
-                fill="none"
-                stroke="#c59b27"
-                strokeWidth="2.5"
-                strokeDasharray="4 2"
-              />
-              <circle
-                cx="50"
-                cy="50"
-                r="39"
-                fill="none"
-                stroke="#081d3d"
-                strokeWidth="1.2"
-              />
-              <circle cx="50" cy="50" r="34" fill="#081d3d" />
-              <path
-                d="M50 24 L53.5 35 L65 35 L55.8 41.8 L59.3 52.8 L50 46 L40.7 52.8 L44.2 41.8 L35 35 L46.5 35 Z"
-                fill="#c59b27"
-              />
-              <path
-                d="M42 58 Q50 63 58 58"
-                stroke="#c59b27"
-                strokeWidth="2"
-                fill="none"
-              />
-            </svg>
-
-            <span className="
-              text-[6px]
-              font-black
-              uppercase
-              tracking-[0.14em]
-              text-[#081d3d]
-              mt-0.5
-              font-serif
-              leading-none
-            ">
-              B★SEL SEAL
-            </span>
-
-            <span className="
-              text-[5px]
-              font-bold
-              uppercase
-              tracking-wider
-              text-[#967228]
-              mt-0.5
-              leading-none
-            ">
-              OFFICIAL
-            </span>
-          </div>
-        )}
-
         <div className="
           absolute
           inset-0
@@ -1201,197 +1309,36 @@ export default function OfficialMarksheetView({
         onChange={handlePhotoUpload}
       />
 
-      {/* SUBJECT MARKS TABLE (hidden until the final result is complete) */}
-      {showMarks &&
-        subjects.slice(0, 5).map((sub, idx) => {
-          const topY = tableRowPositions[idx];
-
-          return (
-            <React.Fragment key={sub.id || idx}>
-              <div
-                className="absolute font-bold text-[#081d3d] text-[9.5px] sm:text-[11.5px] truncate -translate-y-1/2"
-                style={{
-                  left: '13.0%',
-                  top: topY,
-                  maxWidth: '47.5%',
-                  fontFamily: "'Times New Roman', Times, serif",
-                  lineHeight: 1,
-                  zIndex: 1,
-                }}
-              >
-                {sub.name}
-              </div>
-
-              {/* Max Marks (exam out of 60) */}
-              <div
-                className="absolute font-bold text-[#081d3d] text-[10px] sm:text-[12.5px] -translate-x-1/2 -translate-y-1/2 text-center"
-                style={{
-                  left: '65.40%',
-                  top: topY,
-                  fontFamily: "'Times New Roman', Times, serif",
-                  lineHeight: 1,
-                  zIndex: 1,
-                }}
-              >
-                {fmt2(EXAM_MAX)}
-              </div>
-
-              {/* Assessment (out of 40) */}
-              <div
-                className="absolute font-bold text-[#081d3d] text-[10px] sm:text-[12.5px] -translate-x-1/2 -translate-y-1/2 text-center"
-                style={{
-                  left: '73.82%',
-                  top: topY,
-                  fontFamily: "'Times New Roman', Times, serif",
-                  lineHeight: 1,
-                  zIndex: 1,
-                }}
-              >
-                {fmt2(sub.assessment)}
-              </div>
-
-              {/* Marks obtained (exam out of 60) */}
-              <div
-                className="absolute font-black text-[#081d3d] text-[10.5px] sm:text-[13px] -translate-x-1/2 -translate-y-1/2 text-center"
-                style={{
-                  left: '82.25%',
-                  top: topY,
-                  fontFamily: "'Times New Roman', Times, serif",
-                  lineHeight: 1,
-                  zIndex: 1,
-                }}
-              >
-                {fmt2(sub.exam)}
-              </div>
-
-              {/* Percentage (total out of 100) */}
-              <div
-                className="absolute font-bold text-[#081d3d] text-[10px] sm:text-[12.5px] -translate-x-1/2 -translate-y-1/2 text-center"
-                style={{
-                  left: '90.68%',
-                  top: topY,
-                  fontFamily: "'Times New Roman', Times, serif",
-                  lineHeight: 1,
-                  zIndex: 1,
-                }}
-              >
-                {sub.marks !== null && sub.marks !== undefined ? `${fmt2(sub.marks)}%` : '-'}
-              </div>
-            </React.Fragment>
-          );
-        })}
-
-      {/* SUMMARY SECTION */}
-      {showMarks && (
-        <>
-          <div
-            className="absolute font-black text-[#081d3d] text-xs sm:text-base -translate-x-1/2 -translate-y-1/2 text-center"
-            style={{
-              left: '18.51%',
-              top: '79.54%',
-              fontFamily: "'Times New Roman', Times, serif",
-              lineHeight: 1,
-              zIndex: 1,
-            }}
-          >
-            {fmt2(totalMax)}
-          </div>
-
-          <div
-            className="absolute font-black text-[#081d3d] text-xs sm:text-base -translate-x-1/2 -translate-y-1/2 text-center"
-            style={{
-              left: '39.43%',
-              top: '79.54%',
-              fontFamily: "'Times New Roman', Times, serif",
-              lineHeight: 1,
-              zIndex: 1,
-            }}
-          >
-            {fmt2(totalObtained)}
-          </div>
-
-          <div
-            className="absolute font-black text-[#081d3d] text-xs sm:text-base -translate-x-1/2 -translate-y-1/2 text-center"
-            style={{
-              left: '60.36%',
-              top: '79.54%',
-              fontFamily: "'Times New Roman', Times, serif",
-              lineHeight: 1,
-              zIndex: 1,
-            }}
-          >
-            {percentage}%
-          </div>
-
-          <div
-            className="absolute font-black text-[#b45309] text-sm sm:text-xl -translate-x-1/2 -translate-y-1/2 text-center"
-            style={{
-              left: '83.29%',
-              top: '79.54%',
-              fontFamily: "'Times New Roman', Times, serif",
-              lineHeight: 1,
-              zIndex: 1,
-            }}
-          >
-            {overallGrade}
-          </div>
-        </>
-      )}
-
-      {/* DATE OF ISSUE */}
-      {showMarks && (
-        <div
-          className="absolute font-bold text-[#081d3d] text-[10px] sm:text-[12.5px] -translate-x-1/2 -translate-y-1/2 text-center whitespace-nowrap"
-          style={{
-            left: '83.43%',
-            top: '85.55%',
-            fontFamily: "'Times New Roman', Times, serif",
-            lineHeight: 1,
-            zIndex: 1,
-          }}
-        >
-          {issueDate}
-        </div>
-      )}
-
-      {/* PRINCIPAL SIGNATURE */}
+      {/* Principal Signature click hitbox / remove button */}
       <div
         onClick={() => !standalone && setIsFormModalOpen(true)}
-        className={`absolute flex items-end justify-center select-none ${
+        className={`absolute flex items-end justify-center select-none print:hidden ${
           standalone ? '' : 'cursor-pointer group/sign hover:ring-1 hover:ring-amber-400/50 rounded transition'
         }`}
+        data-html2canvas-ignore="true"
         style={{
           top: '94.0%',
           left: '18.44%',
           width: '16.0%',
           height: '5.5%',
           transform: 'translate(-50%, -100%)',
-          zIndex: 1,
+          zIndex: 2,
         }}
         title={standalone ? '' : 'Click to open form & manage Principal signature'}
       >
-        {customDirectorSign ? (
-          <div className="relative h-full w-full flex items-end justify-center">
-            <img
-              src={customDirectorSign}
-              alt="Center Director / Principal Signature"
-              className="max-h-full max-w-full object-contain drop-shadow-2xs"
-            />
-            {!standalone && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleRemoveDirectorSign();
-                }}
-                className="absolute -top-1.5 -right-1.5 bg-red-600 hover:bg-red-700 text-white rounded-full p-0.5 opacity-0 group-hover/sign:opacity-100 transition shadow-sm print:hidden"
-                title="Remove Signature"
-              >
-                <X className="w-3 h-3" />
-              </button>
-            )}
-          </div>
-        ) : !standalone ? (
+        {customDirectorSign && !standalone ? (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleRemoveDirectorSign();
+            }}
+            className="absolute -top-1.5 -right-1.5 bg-red-600 hover:bg-red-700 text-white rounded-full p-0.5 opacity-0 group-hover/sign:opacity-100 transition shadow-sm print:hidden"
+            title="Remove Signature"
+          >
+            <X className="w-3 h-3" />
+          </button>
+        ) : !customDirectorSign && !standalone ? (
           <div className="w-full h-full border border-dashed border-[#081d3d]/30 hover:border-amber-500/80 bg-white/40 flex items-center justify-center gap-1 px-1 transition print:hidden">
             <PenTool className="w-2.5 h-2.5 text-[#081d3d]/45 shrink-0" />
             <span className="text-[6.5px] font-bold text-[#081d3d]/60 uppercase leading-none">
@@ -1433,7 +1380,8 @@ export default function OfficialMarksheetView({
       sm:p-4
     ">
 
-      <style>{`
+      {!disablePrintStyle && (
+        <style>{`
         @media print {
           @page {
             size: A4 portrait;
@@ -1454,18 +1402,10 @@ export default function OfficialMarksheetView({
             visibility: hidden !important;
           }
 
-          ${isStaff ? `
-          #printable-marksheet-sheet,
-          #printable-marksheet-sheet * {
-            visibility: hidden !important;
-            display: none !important;
-          }
-          ` : `
           #printable-marksheet-sheet,
           #printable-marksheet-sheet * {
             visibility: visible !important;
           }
-          `}
 
           #printable-marksheet-sheet {
             position: absolute !important;
@@ -1488,7 +1428,10 @@ export default function OfficialMarksheetView({
             display: none !important;
           }
         }
+        `}</style>
+      )}
 
+      <style>{`
         @media (max-width: 640px) {
           .marksheet-toolbar {
             border-radius: 10px;
@@ -1596,7 +1539,7 @@ export default function OfficialMarksheetView({
           w-full
           sm:w-auto
         ">
-          {!isStaff ? (
+          {!hideDownloadAndPrint && (
             <>
               <button
                 type="button"
@@ -1701,10 +1644,6 @@ export default function OfficialMarksheetView({
                 <span>Print</span>
               </button>
             </>
-          ) : (
-            <div className="px-3 py-1.5 bg-amber-400/15 border border-amber-400/30 rounded-lg text-[10px] sm:text-xs font-bold text-amber-200">
-              Staff Evaluation View
-            </div>
           )}
         </div>
       </div>

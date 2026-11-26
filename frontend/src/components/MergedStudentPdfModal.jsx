@@ -1,17 +1,22 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { ArrowLeft, Download, Printer, Loader2, CheckCircle2, AlertCircle, FileDown, Users } from 'lucide-react';
+import { ArrowLeft, Download, Printer, Loader2, CheckCircle2, AlertCircle, FileDown, Users, FileText, Award } from 'lucide-react';
 import Certificate from './Certificate';
 import OfficialMarksheetView from './OfficialMarksheetView';
-import { exportMergedLandscapeAndPortraitPdf, triggerDirectPdfDownload } from '../utils/pdfExport';
+import {
+  exportMergedLandscapeAndPortraitPdf,
+  exportPdfFromElement,
+  triggerDirectPdfDownload,
+  svgElementToCanvas
+} from '../utils/pdfExport';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas-pro';
 
 /**
  * MergedStudentPdfModal
  *
- * Supports single student or batch student Certificate & Marksheet merge.
- * Previews the selected student's Landscape Certificate (Page 1) and
- * Portrait Marksheet (Page 2) in normal DOM flow, with instant multi-page PDF download.
+ * Supports single student or batch student Certificate & Marksheet merge,
+ * individual marksheet download/print, and individual certificate download/print.
+ * Renders all candidates deterministically in DOM for zero-delay multi-page export.
  */
 export default function MergedStudentPdfModal({
   data,
@@ -23,26 +28,40 @@ export default function MergedStudentPdfModal({
   const students = rawList.filter(Boolean);
 
   const [activeIndex, setActiveIndex] = useState(0);
+  const [viewFilter, setViewFilter] = useState(
+    data?.initialView || (data?.downloadMode === 'marksheet' ? 'marksheet' : data?.downloadMode === 'certificate' ? 'certificate' : 'all')
+  );
   const [isGenerating, setIsGenerating] = useState(false);
   const [downloadSuccess, setDownloadSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
   const [currentStep, setCurrentStep] = useState('Preparing templates...');
   const [progressText, setProgressText] = useState('');
 
-  const certContainerRef = useRef(null);
-  const marksheetContainerRef = useRef(null);
-
   const currentStudentPackage = students[activeIndex] || students[0];
 
-  // Download current previewed student's 2-page PDF
-  const handleDownloadSingle = async (pkg = currentStudentPackage) => {
+  // Helper to get DOM elements for a student index
+  const getStudentElements = (idx) => {
+    const certWrap = document.getElementById(`cert-student-${idx}`);
+    const msWrap = document.getElementById(`marksheet-student-${idx}`);
+
+    const certEl = certWrap?.querySelector('#printable-certificate') || certWrap;
+    const certSvg = certWrap?.querySelector('#printable-certificate-svg') || certWrap?.querySelector('svg');
+    const msEl = msWrap?.querySelector('#printable-marksheet-sheet') || msWrap;
+
+    return { certWrap, certEl, certSvg, msEl };
+  };
+
+  // Download a single student's PDF (merged, marksheet only, or certificate only)
+  const handleDownloadSingle = async (pkg = currentStudentPackage, mode = 'merged') => {
     if (!pkg) return;
     setIsGenerating(true);
     setErrorMessage(null);
     setDownloadSuccess(false);
 
     try {
+      const idx = students.indexOf(pkg) >= 0 ? students.indexOf(pkg) : activeIndex;
       setCurrentStep(`Preparing ${pkg.student?.studentName || 'Student'}...`);
+
       if (document.fonts?.ready) {
         try {
           await document.fonts.ready;
@@ -51,30 +70,50 @@ export default function MergedStudentPdfModal({
         }
       }
 
-      await new Promise(resolve => setTimeout(resolve, 350));
+      await new Promise(resolve => setTimeout(resolve, 300));
 
-      const certEl = certContainerRef.current?.querySelector('#printable-certificate') || certContainerRef.current;
-      const msEl = marksheetContainerRef.current?.querySelector('#printable-marksheet-sheet') || marksheetContainerRef.current;
+      const { certEl, msEl } = getStudentElements(idx);
 
-      if (!certEl || !msEl) {
-        throw new Error('Could not locate Certificate or Marksheet canvas container in DOM.');
+      if (mode === 'certificate') {
+        if (!certEl) throw new Error('Could not locate Certificate container in DOM.');
+        setCurrentStep(`Rendering Certificate for ${pkg.student?.studentName}...`);
+        await exportPdfFromElement(certEl, {
+          orientation: 'landscape',
+          filename: `BSEL_Certificate_${pkg.student?.studentName || 'Student'}.pdf`,
+          scale: 2.5
+        });
+        if (showToast) showToast(`Downloaded Certificate for ${pkg.student?.studentName || 'Student'}!`);
+      } else if (mode === 'marksheet') {
+        if (!msEl) throw new Error('Could not locate Marksheet container in DOM.');
+        setCurrentStep(`Rendering Marksheet for ${pkg.student?.studentName}...`);
+        await exportPdfFromElement(msEl, {
+          orientation: 'portrait',
+          filename: `BSEL_Marksheet_${pkg.student?.studentName || 'Student'}.pdf`,
+          scale: 2.5
+        });
+        if (showToast) showToast(`Downloaded Marksheet for ${pkg.student?.studentName || 'Student'}!`);
+      } else {
+        if (!certEl || !msEl) {
+          throw new Error('Both Certificate and Marksheet must be present in DOM.');
+        }
+
+        setCurrentStep(`Rendering Certificate & Marksheet for ${pkg.student?.studentName}...`);
+
+        await exportMergedLandscapeAndPortraitPdf({
+          page1Element: certEl,
+          page2Element: msEl,
+          filename: pkg.filename || `BSEL_Merged_Certificate_Marksheet_${pkg.student?.studentName || 'Student'}.pdf`,
+          page1Scale: 2.5,
+          page2Scale: 2.5
+        });
+
+        if (showToast) {
+          showToast(`Downloaded merged PDF for ${pkg.student?.studentName || 'Student'}!`);
+        }
       }
-
-      setCurrentStep(`Rendering Certificate & Marksheet for ${pkg.student?.studentName}...`);
-
-      await exportMergedLandscapeAndPortraitPdf({
-        page1Element: certEl,
-        page2Element: msEl,
-        filename: pkg.filename || `BSEL_Merged_Certificate_Marksheet_${pkg.student?.studentName || 'Student'}.pdf`,
-        page1Scale: 2,
-        page2Scale: 2
-      });
 
       setDownloadSuccess(true);
       setCurrentStep('Download complete!');
-      if (showToast) {
-        showToast(`Downloaded merged PDF for ${pkg.student?.studentName || 'Student'}!`);
-      }
     } catch (err) {
       console.error('Single PDF Export Failed:', err);
       setErrorMessage(err.message || 'Error generating PDF.');
@@ -87,15 +126,27 @@ export default function MergedStudentPdfModal({
   };
 
   // Download all selected students in a single master combined PDF
-  const handleDownloadCombinedMasterPdf = async () => {
+  // mode: 'merged' (both) | 'marksheet' (only marksheets) | 'certificate' (only certificates)
+  const handleDownloadCombinedMasterPdf = async (mode = 'merged') => {
     if (isGenerating || students.length === 0) return;
     setIsGenerating(true);
     setErrorMessage(null);
     setDownloadSuccess(false);
 
     try {
+      if (document.fonts?.ready) {
+        try {
+          await document.fonts.ready;
+        } catch {
+          // ignore font warning
+        }
+      }
+
+      await new Promise(resolve => setTimeout(resolve, 350));
+
+      const isInitialLandscape = mode === 'certificate' || mode === 'merged';
       const pdf = new jsPDF({
-        orientation: 'landscape',
+        orientation: isInitialLandscape ? 'landscape' : 'portrait',
         unit: 'mm',
         format: 'a4',
         compress: true
@@ -103,106 +154,157 @@ export default function MergedStudentPdfModal({
 
       for (let i = 0; i < students.length; i++) {
         const pkg = students[i];
-        setActiveIndex(i);
-        setCurrentStep(`Adding candidate ${i + 1} of ${students.length}: ${pkg.student?.studentName}...`);
+        setCurrentStep(`Processing ${i + 1}/${students.length}: ${pkg.student?.studentName}...`);
         setProgressText(`${i + 1}/${students.length}`);
 
-        await new Promise(resolve => setTimeout(resolve, 500));
-
-        const certEl = certContainerRef.current?.querySelector('#printable-certificate') || certContainerRef.current;
-        const msEl = marksheetContainerRef.current?.querySelector('#printable-marksheet-sheet') || marksheetContainerRef.current;
-
-        if (!certEl || !msEl) {
-          throw new Error(`Could not locate canvas elements for ${pkg.student?.studentName}`);
-        }
+        const { certEl, certSvg, msEl } = getStudentElements(i);
 
         // 1. Capture Certificate (Landscape)
-        const certCanvas = await html2canvas(certEl, {
-          scale: 2,
-          useCORS: true,
-          allowTaint: false,
-          logging: false,
-          scrollX: 0,
-          scrollY: 0,
-          windowWidth: 1050,
-          backgroundColor: '#fcfbf7'
-        });
+        if (mode === 'merged' || mode === 'certificate') {
+          if (!certEl && !certSvg) {
+            throw new Error(`Could not locate Certificate element for ${pkg.student?.studentName}`);
+          }
 
-        let certImgData;
-        let certFmt = 'JPEG';
-        try {
-          certImgData = certCanvas.toDataURL('image/jpeg', 0.95);
-        } catch {
-          certImgData = certCanvas.toDataURL('image/png');
-          certFmt = 'PNG';
+          let certCanvas = null;
+          if (certSvg) {
+            try {
+              certCanvas = await svgElementToCanvas(certSvg, 2.5);
+            } catch (e) {
+              console.warn('svgElementToCanvas fallback to html2canvas', e);
+            }
+          }
+
+          if (!certCanvas && certEl) {
+            certCanvas = await html2canvas(certEl, {
+              scale: 2.5,
+              useCORS: true,
+              allowTaint: false,
+              logging: false,
+              scrollX: 0,
+              scrollY: 0,
+              windowWidth: 1050,
+              backgroundColor: '#ffffff',
+              onclone: (_doc, el) => {
+                const cert = el.id === 'printable-certificate' ? el : el.querySelector?.('#printable-certificate');
+                if (cert) {
+                  cert.style.width = '1024px';
+                  cert.style.maxWidth = '1024px';
+                  cert.style.margin = '0 auto';
+                }
+              }
+            });
+          }
+
+          let certImgData;
+          let certFmt = 'JPEG';
+          try {
+            certImgData = certCanvas.toDataURL('image/jpeg', 0.98);
+          } catch {
+            certImgData = certCanvas.toDataURL('image/png');
+            certFmt = 'PNG';
+          }
+
+          // Add Certificate page (Landscape)
+          if (i > 0) {
+            pdf.addPage('a4', 'landscape');
+          }
+          const p1W = pdf.internal.pageSize.getWidth();
+          const p1H = pdf.internal.pageSize.getHeight();
+          const cAspect = certCanvas.width / certCanvas.height;
+          let cw = p1W;
+          let ch = p1W / cAspect;
+          if (ch > p1H) {
+            ch = p1H;
+            cw = p1H * cAspect;
+          }
+          pdf.addImage(certImgData, certFmt, (p1W - cw) / 2, (p1H - ch) / 2, cw, ch, undefined, 'FAST');
         }
 
         // 2. Capture Marksheet (Portrait)
-        const msCanvas = await html2canvas(msEl, {
-          scale: 2,
-          useCORS: true,
-          allowTaint: false,
-          logging: false,
-          scrollX: 0,
-          scrollY: 0,
-          windowWidth: 750,
-          backgroundColor: '#ffffff'
-        });
+        if (mode === 'merged' || mode === 'marksheet') {
+          if (!msEl) {
+            throw new Error(`Could not locate Marksheet element for ${pkg.student?.studentName}`);
+          }
 
-        let msImgData;
-        let msFmt = 'JPEG';
-        try {
-          msImgData = msCanvas.toDataURL('image/jpeg', 0.95);
-        } catch {
-          msImgData = msCanvas.toDataURL('image/png');
-          msFmt = 'PNG';
-        }
+          const msCanvas = await html2canvas(msEl, {
+            scale: 2.5,
+            useCORS: true,
+            allowTaint: false,
+            logging: false,
+            scrollX: 0,
+            scrollY: 0,
+            windowWidth: 1024,
+            backgroundColor: '#ffffff',
+            onclone: (_doc, el) => {
+              const ms = el.id === 'printable-marksheet-sheet' ? el : el.querySelector?.('#printable-marksheet-sheet');
+              if (ms) {
+                ms.style.width = '724px';
+                ms.style.maxWidth = '724px';
+                ms.style.aspectRatio = '724 / 1024';
+                ms.style.margin = '0 auto';
+              }
+            }
+          });
 
-        // Add Certificate page (Landscape)
-        if (i > 0) {
-          pdf.addPage('a4', 'landscape');
-        }
-        const p1W = pdf.internal.pageSize.getWidth();
-        const p1H = pdf.internal.pageSize.getHeight();
-        const cAspect = certCanvas.width / certCanvas.height;
-        let cw = p1W;
-        let ch = p1W / cAspect;
-        if (ch > p1H) {
-          ch = p1H;
-          cw = p1H * cAspect;
-        }
-        pdf.addImage(certImgData, certFmt, (p1W - cw) / 2, (p1H - ch) / 2, cw, ch, undefined, 'FAST');
+          let msImgData;
+          let msFmt = 'JPEG';
+          try {
+            msImgData = msCanvas.toDataURL('image/jpeg', 0.98);
+          } catch {
+            msImgData = msCanvas.toDataURL('image/png');
+            msFmt = 'PNG';
+          }
 
-        // Add Marksheet page (Portrait)
-        pdf.addPage('a4', 'portrait');
-        const p2W = pdf.internal.pageSize.getWidth();
-        const p2H = pdf.internal.pageSize.getHeight();
-        const msMargin = 6;
-        const availW = p2W - msMargin * 2;
-        const availH = p2H - msMargin * 2;
-        const mAspect = msCanvas.width / msCanvas.height;
-        let mw = availW;
-        let mh = availW / mAspect;
-        if (mh > availH) {
-          mh = availH;
-          mw = availH * mAspect;
+          // Add Marksheet page (Portrait)
+          if (mode === 'marksheet') {
+            if (i > 0) {
+              pdf.addPage('a4', 'portrait');
+            }
+          } else {
+            // mode === 'merged'
+            pdf.addPage('a4', 'portrait');
+          }
+
+          const p2W = pdf.internal.pageSize.getWidth();
+          const p2H = pdf.internal.pageSize.getHeight();
+          const msMargin = 0;
+          const availW = p2W - msMargin * 2;
+          const availH = p2H - msMargin * 2;
+          const mAspect = msCanvas.width / msCanvas.height;
+          let mw = availW;
+          let mh = availW / mAspect;
+          if (mh > availH) {
+            mh = availH;
+            mw = availH * mAspect;
+          }
+          pdf.addImage(msImgData, msFmt, msMargin + (availW - mw) / 2, msMargin + (availH - mh) / 2, mw, mh, undefined, 'FAST');
         }
-        pdf.addImage(msImgData, msFmt, msMargin + (availW - mw) / 2, msMargin + (availH - mh) / 2, mw, mh, undefined, 'FAST');
       }
 
-      const masterFilename = `BSEL_Combined_Student_Records_${students.length}_Students.pdf`;
+      const masterFilename = mode === 'certificate'
+        ? `BSEL_Certificates_${students.length}_Candidates.pdf`
+        : mode === 'marksheet'
+        ? `BSEL_Marksheets_${students.length}_Candidates.pdf`
+        : `BSEL_Combined_Student_Records_${students.length}_Students.pdf`;
+
       triggerDirectPdfDownload(pdf, masterFilename);
 
       setDownloadSuccess(true);
-      setCurrentStep('Combined PDF downloaded!');
+      setCurrentStep('Download complete!');
       if (showToast) {
-        showToast(`Downloaded combined master PDF with ${students.length * 2} pages!`);
+        showToast(
+          mode === 'certificate'
+            ? `Downloaded certificates PDF for ${students.length} candidates!`
+            : mode === 'marksheet'
+            ? `Downloaded marksheets PDF for ${students.length} candidates!`
+            : `Downloaded combined master PDF with ${students.length * 2} pages!`
+        );
       }
     } catch (err) {
       console.error('Master PDF generation failed:', err);
-      setErrorMessage(err.message || 'Error generating master combined PDF.');
+      setErrorMessage(err.message || 'Error generating PDF.');
       if (showToast) {
-        showToast('Combined PDF error: ' + (err.message || 'Error'));
+        showToast('PDF error: ' + (err.message || 'Error'));
       }
     } finally {
       setIsGenerating(false);
@@ -210,19 +312,30 @@ export default function MergedStudentPdfModal({
     }
   };
 
-  // If autoDownload is requested (e.g. from 'Download merged PDF'), trigger download after templates mount
+  // If autoDownload is requested, trigger download after templates mount
   useEffect(() => {
     if (data?.autoDownload) {
+      const mode = data?.downloadMode || 'merged';
       const timer = setTimeout(() => {
         if (students.length === 1) {
-          handleDownloadSingle(students[0]);
+          handleDownloadSingle(students[0], mode);
         } else {
-          handleDownloadCombinedMasterPdf();
+          handleDownloadCombinedMasterPdf(mode);
         }
-      }, 650);
+      }, 500);
       return () => clearTimeout(timer);
     }
-  }, [data?.autoDownload]);
+  }, [data?.autoDownload, data?.downloadMode]);
+
+  // If autoPrint is requested, trigger print after templates mount
+  useEffect(() => {
+    if (data?.autoPrint) {
+      const timer = setTimeout(() => {
+        window.print();
+      }, 700);
+      return () => clearTimeout(timer);
+    }
+  }, [data?.autoPrint]);
 
   const handlePrint = () => {
     window.print();
@@ -235,12 +348,30 @@ export default function MergedStudentPdfModal({
       {/* Print Stylesheet */}
       <style>{`
         @media print {
+          @page {
+            size: ${viewFilter === 'certificate' ? 'A4 landscape' : 'A4 portrait'};
+            margin: 0;
+          }
+
+          html,
+          body {
+            margin: 0 !important;
+            padding: 0 !important;
+            background: #ffffff !important;
+            overflow: visible !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+
           body * {
             visibility: hidden !important;
           }
-          #merged-print-container, #merged-print-container * {
+
+          #merged-print-container,
+          #merged-print-container * {
             visibility: visible !important;
           }
+
           #merged-print-container {
             position: absolute !important;
             left: 0 !important;
@@ -252,10 +383,76 @@ export default function MergedStudentPdfModal({
             border: none !important;
             background: white !important;
           }
-          .page-break {
-            page-break-before: always !important;
-            break-before: page !important;
+
+          .merged-student-wrapper {
+            margin: 0 !important;
+            padding: 0 !important;
           }
+
+          .merged-cert-page {
+            page-break-after: always !important;
+            break-after: page !important;
+            width: 100vw !important;
+            min-height: 100vh !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            background: white !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            box-shadow: none !important;
+            border: none !important;
+          }
+
+          .merged-cert-page #printable-certificate {
+            position: relative !important;
+            top: auto !important;
+            left: auto !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            height: auto !important;
+            max-height: 98vh !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            margin: 0 auto !important;
+          }
+
+          .merged-cert-page svg {
+            width: 100% !important;
+            height: auto !important;
+            max-height: 98vh !important;
+            object-fit: contain !important;
+          }
+
+          .merged-marksheet-page {
+            page-break-after: always !important;
+            break-after: page !important;
+            width: 100vw !important;
+            min-height: 100vh !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            background: white !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            box-shadow: none !important;
+            border: none !important;
+          }
+
+          .merged-marksheet-page #printable-marksheet-sheet {
+            position: relative !important;
+            top: auto !important;
+            left: auto !important;
+            width: 100% !important;
+            max-width: 724px !important;
+            aspect-ratio: 724 / 1024 !important;
+            margin: 0 auto !important;
+          }
+
+          ${viewFilter === 'certificate' ? '.merged-marksheet-page { display: none !important; }' : ''}
+          ${viewFilter === 'marksheet' ? '.merged-cert-page { display: none !important; }' : ''}
+
           .no-print {
             display: none !important;
           }
@@ -278,7 +475,7 @@ export default function MergedStudentPdfModal({
             <div className="text-xs font-semibold text-slate-200 truncate">
               {students.length === 1 ? (
                 <>
-                  Merged PDF: <strong className="text-amber-400">{currentStudentPackage.student?.studentName}</strong> • <span className="text-sky-300 font-bold uppercase">{currentStudentPackage.student?.program || 'Abacus'}</span>
+                  Student: <strong className="text-amber-400">{currentStudentPackage.student?.studentName}</strong> • <span className="text-sky-300 font-bold uppercase">{currentStudentPackage.student?.program || currentStudentPackage.student?.courseName || 'Abacus'}</span>
                 </>
               ) : (
                 <div className="flex items-center gap-2">
@@ -295,6 +492,37 @@ export default function MergedStudentPdfModal({
           </div>
 
           <div className="flex items-center justify-end gap-2 flex-wrap">
+            {/* View Mode Toggle */}
+            <div className="flex items-center gap-1 bg-white/10 p-0.5 rounded-lg text-xs">
+              <button
+                type="button"
+                onClick={() => setViewFilter('all')}
+                className={`px-2 py-1 rounded-md text-[11px] font-bold transition cursor-pointer ${
+                  viewFilter === 'all' ? 'bg-amber-400 text-slate-950 shadow-xs' : 'text-slate-300 hover:text-white'
+                }`}
+              >
+                Both
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewFilter('certificate')}
+                className={`px-2 py-1 rounded-md text-[11px] font-bold transition cursor-pointer ${
+                  viewFilter === 'certificate' ? 'bg-amber-400 text-slate-950 shadow-xs' : 'text-slate-300 hover:text-white'
+                }`}
+              >
+                Certificate
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewFilter('marksheet')}
+                className={`px-2 py-1 rounded-md text-[11px] font-bold transition cursor-pointer ${
+                  viewFilter === 'marksheet' ? 'bg-amber-400 text-slate-950 shadow-xs' : 'text-slate-300 hover:text-white'
+                }`}
+              >
+                Marksheet
+              </button>
+            </div>
+
             {/* Status indicator */}
             {isGenerating ? (
               <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/20 text-amber-300 border border-amber-400/30 rounded-lg text-xs font-bold">
@@ -308,37 +536,51 @@ export default function MergedStudentPdfModal({
               </div>
             ) : null}
 
-            {/* Single Merged Download Button */}
+            {/* Download Merged PDF */}
             <button
               type="button"
-              onClick={students.length === 1 ? () => handleDownloadSingle(currentStudentPackage) : handleDownloadCombinedMasterPdf}
+              onClick={students.length === 1 ? () => handleDownloadSingle(currentStudentPackage, 'merged') : () => handleDownloadCombinedMasterPdf('merged')}
               disabled={isGenerating}
-              className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-black rounded-lg text-xs transition flex items-center gap-1.5 shadow-md cursor-pointer disabled:opacity-50"
-              title={students.length === 1 ? "Download Certificate & Marksheet as a single merged PDF file" : "Merge all selected candidates into a single combined multi-page PDF"}
+              className="px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-black rounded-lg text-xs transition flex items-center gap-1.5 shadow-md cursor-pointer disabled:opacity-50"
+              title="Download Certificate & Marksheet merged in 1 PDF"
             >
-              {isGenerating ? (
-                <>
-                  <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-200" />
-                  <span>{progressText ? `Generating (${progressText})...` : 'Generating PDF...'}</span>
-                </>
-              ) : (
-                <>
-                  <Download className="w-3.5 h-3.5 text-emerald-200" />
-                  <span>
-                    {students.length === 1 ? 'Download Merged PDF' : `Download Merged PDF (${students.length} Candidates)`}
-                  </span>
-                </>
-              )}
+              <Download className="w-3.5 h-3.5 text-emerald-200" />
+              <span>{students.length === 1 ? 'Download Merged PDF' : `Download Merged (${students.length})`}</span>
+            </button>
+
+            {/* Download Marksheet(s) Separately */}
+            <button
+              type="button"
+              onClick={students.length === 1 ? () => handleDownloadSingle(currentStudentPackage, 'marksheet') : () => handleDownloadCombinedMasterPdf('marksheet')}
+              disabled={isGenerating}
+              className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 active:scale-95 text-slate-950 font-black rounded-lg text-xs transition flex items-center gap-1.5 shadow-md cursor-pointer disabled:opacity-50"
+              title="Download official marksheet(s) separately"
+            >
+              <FileText className="w-3.5 h-3.5 text-slate-950" />
+              <span>{students.length === 1 ? 'Marksheet PDF' : `Marksheet (${students.length})`}</span>
+            </button>
+
+            {/* Download Certificate(s) Separately */}
+            <button
+              type="button"
+              onClick={students.length === 1 ? () => handleDownloadSingle(currentStudentPackage, 'certificate') : () => handleDownloadCombinedMasterPdf('certificate')}
+              disabled={isGenerating}
+              className="px-3 py-1.5 bg-sky-600 hover:bg-sky-700 active:scale-95 text-white font-black rounded-lg text-xs transition flex items-center gap-1.5 shadow-md cursor-pointer disabled:opacity-50"
+              title="Download official certificate(s) separately"
+            >
+              <Award className="w-3.5 h-3.5 text-amber-200" />
+              <span>{students.length === 1 ? 'Certificate PDF' : `Certificate (${students.length})`}</span>
             </button>
 
             {/* Print Button */}
             <button
               type="button"
               onClick={handlePrint}
-              className="px-3 py-2 bg-[#163e7c] hover:bg-[#1f54a6] text-white rounded-lg text-xs font-black transition flex items-center gap-1.5 border border-white/20 cursor-pointer"
+              className="px-3 py-1.5 bg-[#163e7c] hover:bg-[#1f54a6] text-white rounded-lg text-xs font-black transition flex items-center gap-1.5 border border-white/20 cursor-pointer"
+              title="Print active view"
             >
               <Printer className="w-3.5 h-3.5" />
-              <span>Print</span>
+              <span>Print {viewFilter === 'all' ? 'Merged' : (viewFilter === 'marksheet' ? 'Marksheet' : 'Certificate')}</span>
             </button>
           </div>
         </div>
@@ -349,7 +591,7 @@ export default function MergedStudentPdfModal({
             <span className="text-[11px] font-bold text-amber-300 shrink-0">Switch Preview:</span>
             {students.map((pkg, idx) => (
               <button
-                key={pkg.student?.userId || idx}
+                key={pkg.student?.userId || pkg.student?.id || idx}
                 type="button"
                 onClick={() => setActiveIndex(idx)}
                 className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition shrink-0 cursor-pointer flex items-center gap-1 ${
@@ -369,46 +611,78 @@ export default function MergedStudentPdfModal({
       {errorMessage && (
         <div className="no-print w-full max-w-[1020px] mb-3 p-3 bg-rose-500/20 border border-rose-500/50 rounded-xl text-rose-200 text-xs font-bold flex items-center gap-2">
           <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
-          <span>Error generating PDF: {errorMessage}. You can click "Download Merged PDF" above to retry.</span>
+          <span>Error generating PDF: {errorMessage}. You can click above to retry.</span>
         </div>
       )}
 
       {/* 
-        Scrollable Document Preview Canvas 
-        Both documents are rendered live in normal in-flow DOM.
+        Scrollable Document Container
+        All candidate templates are rendered in DOM:
+        - Only active candidate is displayed on screen
+        - In print mode, all candidates are printed in sequential pages
+        - Can be reliably captured by html2canvas / svgElementToCanvas
       */}
-      <div id="merged-print-container" className="w-full max-w-[1020px] space-y-6 pb-12">
-        {/* Page 1 Card: Landscape Certificate */}
-        <div className="bg-slate-900/40 p-3 sm:p-5 rounded-2xl border border-amber-400/30 shadow-2xl">
-          <div className="no-print flex items-center justify-between mb-2 text-xs font-black text-amber-300 uppercase tracking-wider">
-            <span className="flex items-center gap-1.5">
-              <FileDown className="w-4 h-4" />
-              <span>Page 1: Official Board Certificate (Landscape A4)</span>
-            </span>
-            <span className="text-slate-400 text-[11px] font-medium lowercase">297 × 210 mm • {currentStudentPackage.student?.studentName}</span>
-          </div>
+      <div id="merged-print-container" className="w-full max-w-[1020px] pb-12">
+        {students.map((pkg, idx) => {
+          const isScreenActive = idx === activeIndex;
 
-          <div ref={certContainerRef} className="w-full flex justify-center overflow-x-auto">
-            <Certificate {...currentStudentPackage.certData} showControls={false} />
-          </div>
-        </div>
+          return (
+            <div
+              key={pkg.student?.userId || pkg.student?.id || idx}
+              className={`merged-student-wrapper ${isScreenActive ? 'block space-y-6' : 'hidden print:block space-y-6'}`}
+            >
+              {/* Page 1 Card: Landscape Certificate */}
+              <div
+                className={`merged-cert-page bg-slate-900/40 p-3 sm:p-5 rounded-2xl border border-amber-400/30 shadow-2xl ${
+                  viewFilter !== 'all' && viewFilter !== 'certificate' ? 'hidden' : ''
+                }`}
+              >
+                <div className="no-print flex items-center justify-between mb-2 text-xs font-black text-amber-300 uppercase tracking-wider">
+                  <span className="flex items-center gap-1.5">
+                    <FileDown className="w-4 h-4" />
+                    <span>Page 1: Official Board Certificate (Landscape A4)</span>
+                  </span>
+                  <span className="text-slate-400 text-[11px] font-medium lowercase">
+                    297 × 210 mm • {pkg.student?.studentName}
+                  </span>
+                </div>
 
-        {/* Page 2 Card: Portrait Marksheet */}
-        <div className="bg-slate-900/40 p-3 sm:p-5 rounded-2xl border border-sky-400/30 shadow-2xl page-break">
-          <div className="no-print flex items-center justify-between mb-2 text-xs font-black text-sky-300 uppercase tracking-wider">
-            <span className="flex items-center gap-1.5">
-              <FileDown className="w-4 h-4" />
-              <span>Page 2: Official Marksheet & Grade Card (Portrait A4)</span>
-            </span>
-            <span className="text-slate-400 text-[11px] font-medium lowercase">210 × 297 mm • {currentStudentPackage.student?.studentName}</span>
-          </div>
+                <div id={`cert-student-${idx}`} className="w-full flex justify-center overflow-x-auto">
+                  <Certificate {...pkg.certData} showControls={false} disablePrintStyle={true} />
+                </div>
+              </div>
 
-          <div ref={marksheetContainerRef} className="w-full flex justify-center overflow-x-auto">
-            <div className="w-full max-w-[724px]">
-              <OfficialMarksheetView student={currentStudentPackage.marksheetData} standalone={true} defaultShowMarks={true} />
+              {/* Page 2 Card: Portrait Marksheet */}
+              <div
+                className={`merged-marksheet-page bg-slate-900/40 p-3 sm:p-5 rounded-2xl border border-sky-400/30 shadow-2xl ${
+                  viewFilter !== 'all' && viewFilter !== 'marksheet' ? 'hidden' : ''
+                }`}
+              >
+                <div className="no-print flex items-center justify-between mb-2 text-xs font-black text-sky-300 uppercase tracking-wider">
+                  <span className="flex items-center gap-1.5">
+                    <FileDown className="w-4 h-4" />
+                    <span>Page 2: Official Marksheet & Grade Card (Portrait A4)</span>
+                  </span>
+                  <span className="text-slate-400 text-[11px] font-medium lowercase">
+                    210 × 297 mm • {pkg.student?.studentName}
+                  </span>
+                </div>
+
+                <div id={`marksheet-student-${idx}`} className="w-full flex justify-center overflow-x-auto">
+                  <div className="w-full max-w-[724px]">
+                    <OfficialMarksheetView
+                      student={pkg.marksheetData}
+                      standalone={true}
+                      defaultShowMarks={true}
+                      hideDownloadAndPrint={true}
+                      disablePrintStyle={true}
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
+          );
+        })}
       </div>
     </div>
   );

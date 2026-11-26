@@ -185,18 +185,16 @@ export default function BranchStudentMarksheetPage({
 
     if (!student) return;
 
-    const incompleteSubject = subjects.find(
-      (subject) =>
-        marks[subject.id] === '' || marks[subject.id] === undefined
-    );
-
-    if (incompleteSubject) {
-      setError(`Please enter marks for ${incompleteSubject.name}.`);
-      return;
-    }
+    // Any unentered marks default to 0
+    const safeMarks = { ...marks };
+    subjects.forEach((subject) => {
+      if (safeMarks[subject.id] === '' || safeMarks[subject.id] === undefined || safeMarks[subject.id] === null) {
+        safeMarks[subject.id] = 0;
+      }
+    });
 
     const invalidSubject = subjects.find((subject) => {
-      const value = Number(marks[subject.id]);
+      const value = Number(safeMarks[subject.id]);
       return !Number.isFinite(value) || value < 0 || value > subject.max;
     });
 
