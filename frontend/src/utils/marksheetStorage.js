@@ -4,14 +4,50 @@ export const normalize = (value) => String(value || '').trim().toLowerCase();
 
 export const readMarksheets = () => {
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    const raw = localStorage.getItem(STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : {};
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
   } catch {
     return {};
   }
 };
 
 export const writeMarksheets = (data) => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  const safeData = data && typeof data === 'object' && !Array.isArray(data) ? data : {};
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(safeData));
+  } catch (err) {
+    console.warn('writeMarksheets quota exceeded, performing storage cleanup:', err);
+    try {
+      // 1. Remove obsolete or redundant photo keys to free space
+      if (typeof localStorage !== 'undefined') {
+        const toRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && (k.startsWith('bsel_photo_') || k.startsWith('bsel_temp_'))) {
+            toRemove.push(k);
+          }
+        }
+        toRemove.forEach((k) => {
+          try {
+            localStorage.removeItem(k);
+          } catch {
+            // ignore
+          }
+        });
+      }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(safeData));
+    } catch {
+      try {
+        // 2. Fallback: keep only the most recent 50 marksheets
+        const entries = Object.entries(safeData);
+        const trimmed = Object.fromEntries(entries.slice(-50));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(trimmed));
+      } catch (fallbackErr) {
+        console.error('writeMarksheets emergency fallback failed:', fallbackErr);
+      }
+    }
+  }
 };
 
 export const getStudentCourse = (student) =>

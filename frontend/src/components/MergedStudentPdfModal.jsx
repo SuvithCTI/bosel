@@ -48,7 +48,7 @@ export default function MergedStudentPdfModal({
     const certSvg = certWrap?.querySelector('#printable-certificate-svg') || certWrap?.querySelector('svg');
     const msEl = msWrap?.querySelector('#printable-marksheet-sheet') || msWrap;
 
-    return { certWrap, certEl, certSvg, msWrap, msEl };
+    return { certWrap, certEl, certSvg, msEl };
   };
 
   // Download a single student's PDF (merged, marksheet only, or certificate only)

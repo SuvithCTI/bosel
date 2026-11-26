@@ -32,6 +32,7 @@ import {
   getSavedMarksheet,
   readMarksheets,
   writeMarksheets,
+  saveStudentMarksheet,
 } from '../../utils/marksheetStorage';
 import { getRegisteredUsers } from '../../utils/authStorage';
 import { isStudentUser } from '../../utils/studentValidator';
@@ -115,9 +116,10 @@ const writeStage = (branch, key) => {
   }
 };
 
-// Keep the stored snapshot small: drop photo data
+// Keep the stored snapshot small: drop all bulky image and avatar data
 const snapshotStudent = (st) => {
-  const { photoUrl, photo, imageUrl, ...rest } = st || {};
+  if (!st) return {};
+  const { photoUrl, photo, imageUrl, studentPhoto, avatar, photoKey, ...rest } = st;
   return rest;
 };
 
@@ -952,18 +954,25 @@ export default function BranchStudentMarksheetPage({
     const stage = getStage(activeStage);
     const max = stageMax(stage);
 
-    const missing = subjects.find((meta) => {
-      const value = stageValue(entries[meta.id] || emptyEntry(), stage);
-      return value === '' || value === undefined || value === null;
+    // Any empty or blank subject marks default to 0 instead of blocking the save
+    const sanitizedEntries = { ...entries };
+    subjects.forEach((meta) => {
+      const current = sanitizedEntries[meta.id] ? { ...sanitizedEntries[meta.id] } : emptyEntry();
+      const val = stageValue(current, stage);
+      if (val === '' || val === undefined || val === null) {
+        if (stage.type === 'exam') {
+          current.exam = '0';
+        } else {
+          const revs = [...(current.revisions || Array(REVISION_COUNT).fill('0'))];
+          revs[stage.index] = '0';
+          current.revisions = revs;
+        }
+      }
+      sanitizedEntries[meta.id] = current;
     });
 
-    if (missing) {
-      setError(`Please enter ${stage.label} marks for ${missing.name}.`);
-      return;
-    }
-
     const invalid = subjects.find((meta) => {
-      const n = Number(stageValue(entries[meta.id], stage));
+      const n = Number(stageValue(sanitizedEntries[meta.id], stage));
       return !Number.isFinite(n) || n < 0 || n > max;
     });
 
@@ -976,14 +985,17 @@ export default function BranchStudentMarksheetPage({
     const baseEntries = entriesFromSaved(savedData, subjects);
     const merged = {};
     subjects.forEach((meta) => {
-      const base = baseEntries[meta.id];
-      const current = entries[meta.id] || emptyEntry();
+      const base = baseEntries[meta.id] || emptyEntry();
+      const current = sanitizedEntries[meta.id] || emptyEntry();
+      const currentVal = stageValue(current, stage);
+      const safeVal = currentVal === '' || currentVal === undefined || currentVal === null ? '0' : currentVal;
+
       merged[meta.id] =
         stage.type === 'exam'
-          ? { revisions: base.revisions, exam: current.exam }
+          ? { revisions: base.revisions, exam: safeVal }
           : {
               revisions: base.revisions.map((v, i) =>
-                i === stage.index ? current.revisions[i] : v
+                i === stage.index ? safeVal : v
               ),
               exam: base.exam,
             };
@@ -1020,16 +1032,48 @@ export default function BranchStudentMarksheetPage({
       allMarksheets[key] = marksheet;
       writeMarksheets(allMarksheets);
 
+      // Store secondary keys & dispatch update events
+      saveStudentMarksheet(student, marksheet);
+
+      // Sync marks directly to student profile in registered users
+      try {
+        const users = getRegisteredUsers();
+        const userIdx = users.findIndex(
+          (u) =>
+            (u.userId && u.userId === student.userId) ||
+            (u.registerNumber && (u.registerNumber === (student.registerNumber || student.registrationNo)))
+        );
+        if (userIdx >= 0) {
+          const serializedMarks = newResults.map((r) => r.marks ?? 0).join(',');
+          const serializedExams = newResults.map((r) => r.exam ?? 0).join(',');
+          const serializedAsms = newResults.map((r) => r.assessment ?? 0).join(',');
+          users[userIdx] = {
+            ...users[userIdx],
+            marks: serializedMarks,
+            exams: serializedExams,
+            asms: serializedAsms,
+            totalMarks: marksTotal,
+            percentage: pct !== null ? String(pct) : '0',
+            grade: pct !== null ? getGrade(pct) : (users[userIdx].grade || 'D'),
+            subjects: newResults,
+          };
+          localStorage.setItem('bsel_registered_users', JSON.stringify(users));
+        }
+      } catch (userErr) {
+        console.warn('Could not update user record with marks:', userErr);
+      }
+
       setSavedData(marksheet);
       setEntries(entriesFromSaved(marksheet, subjects));
       setIsEditing(false);
 
       setSessionRecords((prev) => {
+        const prevArray = Array.isArray(prev) ? prev : [];
         const record = { key, student: snapshotStudent(student), saved: marksheet };
-        const exists = prev.some((r) => r.key === key);
+        const exists = prevArray.some((r) => r.key === key);
         return exists
-          ? prev.map((r) => (r.key === key ? record : r))
-          : [...prev, record];
+          ? prevArray.map((r) => (r.key === key ? record : r))
+          : [...prevArray, record];
       });
 
       setSuccess(
