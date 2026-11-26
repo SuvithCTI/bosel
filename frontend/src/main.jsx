@@ -5,8 +5,8 @@ import App from './App.jsx';
 import { purgeStudentLocalStorage } from './utils/authStorage';
 
 // Automatic one-time purge of all local storage data
-const STORAGE_PURGE_KEY = 'bsel_storage_purged_v5';
-const STUDENT_PURGE_KEY = 'bsel_students_localstorage_purged_v3';
+const STORAGE_PURGE_KEY = 'bsel_storage_purged_v7';
+const STUDENT_PURGE_KEY = 'bsel_students_localstorage_purged_v4';
 try {
   if (typeof window !== 'undefined') {
     window.clearAllBselData = () => {

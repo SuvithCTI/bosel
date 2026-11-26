@@ -49,12 +49,10 @@ export const DEFAULT_STUDENT_ENQUIRIES = [];
 export const getStoredStudentEnquiries = () => {
   if (typeof window === 'undefined') return DEFAULT_STUDENT_ENQUIRIES;
   try {
-    const raw = localStorage.getItem('bsel_student_enquiries');
-    let parsed = raw ? JSON.parse(raw) : [];
-    if (!Array.isArray(parsed)) parsed = [];
-    parsed = parsed.filter(isStudentUser);
+    // Remove local storage of student enquiries
+    localStorage.removeItem('bsel_student_enquiries');
 
-    // Also get all registered students from official student registration
+    // Get registered genuine students from registration registry
     const registeredUsers = getRegisteredUsers().filter(isStudentUser);
 
     // Map registered users to enquiry structure with 100% full detail fidelity
@@ -123,25 +121,18 @@ export const getStoredStudentEnquiries = () => {
       };
     });
 
-    // Merge registered enquiries on top so registered users ALWAYS take precedence
-    const regIds = new Set(registeredEnquiries.map(r => (r.userId || r.id).toLowerCase()));
-    const nonDuplicatedParsed = parsed.filter(p => !regIds.has((p.userId || p.id || '').toLowerCase()));
-    const combined = [...registeredEnquiries, ...nonDuplicatedParsed];
-
-    return combined.length > 0 ? combined : DEFAULT_STUDENT_ENQUIRIES;
+    return registeredEnquiries.length > 0 ? registeredEnquiries : DEFAULT_STUDENT_ENQUIRIES;
   } catch {
     return DEFAULT_STUDENT_ENQUIRIES;
   }
 };
 
-export const saveStoredStudentEnquiries = (list) => {
+export const saveStoredStudentEnquiries = () => {
   if (typeof window === 'undefined') return;
   try {
-    localStorage.setItem('bsel_student_enquiries', JSON.stringify(list));
+    localStorage.removeItem('bsel_student_enquiries');
     window.dispatchEvent(new Event('bsel_enquiries_updated'));
-  } catch (err) {
-    console.error('Failed to save student enquiries:', err);
-  }
+  } catch (_) {}
 };
 
 // Resolve a student's photo (uploaded photo first, then stored fallbacks)
