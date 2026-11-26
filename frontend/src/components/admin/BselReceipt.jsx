@@ -471,6 +471,7 @@ const BselReceipt = ({
   receipts,
   onClose,
   showActions = true,
+  showPrint = true,
   width = 1000, // on-screen preview max width in px
   logoSrc = "/bsel_logo.png", // same file Logo.jsx uses (public/bsel_logo.png)
 }) => {
@@ -505,14 +506,16 @@ const BselReceipt = ({
           </div>
 
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => printReceiptSheets(items, logoSrc)}
-              className="flex items-center gap-2 rounded-lg bg-[#081d3d] px-4 py-2 text-xs font-bold text-white transition hover:bg-[#172b4d]"
-            >
-              <Printer size={15} />
-              Print (3 per A4)
-            </button>
+            {showPrint && (
+              <button
+                type="button"
+                onClick={() => printReceiptSheets(items, logoSrc)}
+                className="flex items-center gap-2 rounded-lg bg-[#081d3d] px-4 py-2 text-xs font-bold text-white transition hover:bg-[#172b4d]"
+              >
+                <Printer size={15} />
+                Print (3 per A4)
+              </button>
+            )}
 
             {onClose && (
               <button

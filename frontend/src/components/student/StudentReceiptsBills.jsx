@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { CheckCircle2, Clock3, Printer, Receipt, RefreshCw } from 'lucide-react';
+import { CheckCircle2, Clock3, Receipt, RefreshCw } from 'lucide-react';
 import api from '../../services/api';
 import { getStoredPayments } from '../../data/paymentsData';
 import StudentReceiptView from '../StudentReceiptView';
@@ -460,10 +460,10 @@ export default function StudentReceiptsBills({ student }) {
                       <button
                         type="button"
                         onClick={() => setSelectedReceipt(receiptData)}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-bold text-blue-900 transition hover:bg-blue-100"
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-bold text-blue-900 transition hover:bg-blue-100 cursor-pointer"
                       >
-                        <Printer className="h-3.5 w-3.5" />
-                        View / Print Receipt
+                        <Receipt className="h-3.5 w-3.5" />
+                        View Receipt
                       </button>
                     ) : (
                       <button
@@ -474,9 +474,9 @@ export default function StudentReceiptsBills({ student }) {
                             paymentAcknowledgement: true,
                           })
                         }
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-900 transition hover:bg-amber-100"
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-900 transition hover:bg-amber-100 cursor-pointer"
                       >
-                        <Printer className="h-3.5 w-3.5" />
+                        <Receipt className="h-3.5 w-3.5" />
                         View Acknowledgement
                       </button>
                     )}
@@ -495,6 +495,7 @@ export default function StudentReceiptsBills({ student }) {
             acknowledgement
             onClose={() => setSelectedReceipt(null)}
             backLabel="Back to Receipts / Bills"
+            showPrint={false}
           />
         ) : (
           <div className="fixed inset-0 z-[10000] overflow-y-auto bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6">
@@ -503,6 +504,7 @@ export default function StudentReceiptsBills({ student }) {
                 receipt={selectedReceipt}
                 onClose={() => setSelectedReceipt(null)}
                 width={1120}
+                showPrint={false}
               />
             </div>
           </div>
