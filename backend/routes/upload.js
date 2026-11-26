@@ -1,6 +1,12 @@
 import express from 'express';
 import multer from 'multer';
-import { uploadToS3, isCloudStorageReady } from '../config/s3.js';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { uploadToS3, getS3FileStream, isCloudStorageReady } from '../config/s3.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const router = express.Router();
 
@@ -53,6 +59,86 @@ router.post('/', upload.single('file'), async (req, res) => {
   } catch (err) {
     console.error('[Upload Route Error]:', err);
     res.status(500).json({ success: false, message: err.message || 'Error uploading file.' });
+  }
+});
+
+/**
+ * GET /api/upload/file/*key and GET /api/upload/view
+ * Streams/proxies any uploaded file from Amazon S3 (or local storage fallback)
+ * Ensures 100% reliable image display across all browsers and devices.
+ */
+router.get('/file/*key', async (req, res) => {
+  try {
+    const rawParam = req.params.key || req.params[0] || req.query.key;
+    if (!rawParam) {
+      return res.status(400).send('Missing file key');
+    }
+
+    const rawKey = Array.isArray(rawParam) ? rawParam.join('/') : String(rawParam);
+    const key = rawKey
+      .replace(/^https?:\/\/[^/]+\.s3\.[^/]+\.amazonaws\.com\//i, '')
+      .replace(/^\/+/, '');
+
+    // 1. Try S3 if configured
+    if (isCloudStorageReady()) {
+      try {
+        const stream = await getS3FileStream(key);
+        if (stream && stream.Body) {
+          if (stream.ContentType) res.setHeader('Content-Type', stream.ContentType);
+          if (stream.ContentLength) res.setHeader('Content-Length', stream.ContentLength);
+          res.setHeader('Cache-Control', 'public, max-age=86400');
+          res.setHeader('Access-Control-Allow-Origin', '*');
+          return stream.Body.pipe(res);
+        }
+      } catch (s3Err) {
+        // Fall through to local fallback
+      }
+    }
+
+    // 2. Try local fallback storage
+    const localPath = path.join(__dirname, '..', 'uploads', path.basename(key));
+    if (fs.existsSync(localPath)) {
+      return res.sendFile(localPath);
+    }
+
+    return res.status(404).send('File not found');
+  } catch (err) {
+    console.error('[File Proxy Error]:', err.message);
+    res.status(500).send('Error serving file');
+  }
+});
+
+router.get('/view', async (req, res) => {
+  try {
+    const rawKey = req.query.url || req.query.key;
+    if (!rawKey) {
+      return res.status(400).send('Missing url or key query parameter');
+    }
+    const key = rawKey
+      .replace(/^https?:\/\/[^/]+\.s3\.[^/]+\.amazonaws\.com\//i, '')
+      .replace(/^\/+/, '');
+
+    if (isCloudStorageReady()) {
+      try {
+        const stream = await getS3FileStream(key);
+        if (stream && stream.Body) {
+          if (stream.ContentType) res.setHeader('Content-Type', stream.ContentType);
+          if (stream.ContentLength) res.setHeader('Content-Length', stream.ContentLength);
+          res.setHeader('Cache-Control', 'public, max-age=86400');
+          res.setHeader('Access-Control-Allow-Origin', '*');
+          return stream.Body.pipe(res);
+        }
+      } catch (e) {}
+    }
+
+    const localPath = path.join(__dirname, '..', 'uploads', path.basename(key));
+    if (fs.existsSync(localPath)) {
+      return res.sendFile(localPath);
+    }
+
+    return res.status(404).send('File not found');
+  } catch (err) {
+    res.status(500).send('Error');
   }
 });
 

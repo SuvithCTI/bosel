@@ -18,6 +18,8 @@ CREATE TABLE IF NOT EXISTS users (
   branch_code VARCHAR(50),
   address TEXT,
   role VARCHAR(50) DEFAULT 'Student',
+  photo_url TEXT,
+  student_photo TEXT,
   register_number VARCHAR(100),
   registration_no VARCHAR(100),
   enrolment_date VARCHAR(50),

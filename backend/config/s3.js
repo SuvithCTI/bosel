@@ -114,12 +114,22 @@ export async function getPresignedDownloadUrl(key, expiresIn = 3600) {
   }
 }
 
+export async function getS3FileStream(key) {
+  if (!isS3Configured || !s3Client) return null;
+  const command = new GetObjectCommand({
+    Bucket: bucketName,
+    Key: key
+  });
+  return await s3Client.send(command);
+}
+
 export function isCloudStorageReady() {
   return isS3Configured && Boolean(s3Client);
 }
 
 export default {
   uploadToS3,
+  getS3FileStream,
   getPresignedDownloadUrl,
   isCloudStorageReady,
   bucketName,

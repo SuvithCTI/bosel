@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { getStudentPhotoUrl } from '../utils/studentDataHelpers';
+import { getStudentPhotoUrl, SAMPLE_STUDENT_PHOTOS } from '../utils/studentDataHelpers';
 
 export default function StudentAvatar({
   student,
@@ -8,8 +8,11 @@ export default function StudentAvatar({
   onClick,
   title
 }) {
-  const [imgError, setImgError] = useState(false);
-  const photoUrl = getStudentPhotoUrl(student, index);
+  const [triedFallback, setTriedFallback] = useState(false);
+  const samplePhoto = SAMPLE_STUDENT_PHOTOS[Math.abs(index) % SAMPLE_STUDENT_PHOTOS.length];
+  const customPhoto = getStudentPhotoUrl(student, index);
+  const photoUrl = triedFallback ? samplePhoto : (customPhoto || samplePhoto);
+
   const name = (student?.studentName || student?.name || 'Student').trim();
   const initials = name
     .split(' ')
@@ -35,12 +38,16 @@ export default function StudentAvatar({
       className={`relative ${className} rounded-lg overflow-hidden border shadow-2xs shrink-0 select-none cursor-pointer hover:border-sky-500 hover:scale-105 transition flex items-center justify-center ${colorClass}`}
       title={title || `View Admission Form for ${name}`}
     >
-      {photoUrl && !imgError ? (
+      {photoUrl ? (
         <img
           src={photoUrl}
           alt=""
           className="w-full h-full object-cover object-top"
-          onError={() => setImgError(true)}
+          onError={() => {
+            if (!triedFallback) {
+              setTriedFallback(true);
+            }
+          }}
           loading="lazy"
         />
       ) : (

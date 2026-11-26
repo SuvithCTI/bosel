@@ -238,6 +238,32 @@ router.post('/', async (req, res) => {
 });
 
 /**
+ * GET /api/students/:id
+ * Fetches single student record by id, userId, or register_number
+ */
+router.get('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (db.isDbConnected()) {
+      let result;
+      if (/^\d+$/.test(id)) {
+        result = await db.query('SELECT * FROM students WHERE id = $1', [parseInt(id, 10)]);
+      } else {
+        result = await db.query('SELECT * FROM students WHERE LOWER(user_id) = LOWER($1) OR LOWER(register_number) = LOWER($1)', [id]);
+      }
+      if (result.rows.length === 0) {
+        return res.status(404).json({ success: false, message: 'Student not found.' });
+      }
+      return res.json({ success: true, student: result.rows[0] });
+    }
+    return res.status(404).json({ success: false, message: 'Database not connected.' });
+  } catch (error) {
+    console.error('[Students GET ID Error]:', error);
+    res.status(500).json({ success: false, message: error.message || 'Error fetching student.' });
+  }
+});
+
+/**
  * PUT /api/students/:id
  * Updates an existing student record in Neon PostgreSQL and uploads new photo to Amazon S3
  */

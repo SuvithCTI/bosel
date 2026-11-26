@@ -138,10 +138,17 @@ export const SAMPLE_STUDENT_PHOTOS = [
 ];
 
 export const getStudentPhotoUrl = (student, index = 0) => {
-  if (!student) return SAMPLE_STUDENT_PHOTOS[Math.abs(index) % SAMPLE_STUDENT_PHOTOS.length];
-  const url = student.photo_url || student.photoUrl || student.studentPhoto || student.photo;
-  if (url && typeof url === 'string' && url.trim().length > 0) return url.trim();
-  return SAMPLE_STUDENT_PHOTOS[Math.abs(index) % SAMPLE_STUDENT_PHOTOS.length];
+  const samplePhoto = SAMPLE_STUDENT_PHOTOS[Math.abs(index) % SAMPLE_STUDENT_PHOTOS.length];
+  if (!student) return samplePhoto;
+  let url = student.photo_url || student.photoUrl || student.studentPhoto || student.photo;
+  if (url && typeof url === 'string' && url.trim().length > 0) {
+    let clean = url.trim();
+    if (clean.includes('suvith-bsel-storage')) {
+      clean = clean.replace(/suvith-bsel-storage/g, 'bsel-mindsparc');
+    }
+    return clean;
+  }
+  return samplePhoto;
 };
 
 export const getStudentRegisterNumber = (student) => {

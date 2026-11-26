@@ -1,7 +1,35 @@
 import pg from 'pg';
+import dns from 'dns';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+
+// Robust DNS resolution fallback (handles mobile hotspot & strict router DNS blocks)
+try {
+  dns.setServers(['8.8.8.8', '1.1.1.1']);
+  const originalLookup = dns.lookup;
+  dns.lookup = function (hostname, options, callback) {
+    if (typeof options === 'function') {
+      callback = options;
+      options = {};
+    }
+    originalLookup(hostname, options, (err, address, family) => {
+      if (err) {
+        dns.resolve4(hostname, (rErr, addresses) => {
+          if (!rErr && addresses && addresses.length > 0) {
+            if (options && options.all) {
+              return callback(null, [{ address: addresses[0], family: 4 }]);
+            }
+            return callback(null, addresses[0], 4);
+          }
+          return callback(err);
+        });
+      } else {
+        return callback(null, address, family);
+      }
+    });
+  };
+} catch (_) {}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
