@@ -705,17 +705,16 @@ export default function OfficialMarksheetView({
     saveStudentCustomSignature(scopeKey, null);
   };
 
-  if (!student) return null;
-
   // ----------------------------------------------------------
   // STUDENT DATA
   // ----------------------------------------------------------
 
-  const courseName = student.program || student.courseName || 'ABACUS SPEED ARITHMETIC';
+  const s = student || {};
+  const courseName = s.program || s.courseName || 'ABACUS SPEED ARITHMETIC';
   // Character limit 10 for Course display on the marksheet (e.g. 'ABACUS SPE')
   const displayCourse = String(courseName).slice(0, 10).toUpperCase();
 
-  const savedSheet = getSavedMarksheet(student);
+  const savedSheet = student ? getSavedMarksheet(student) : null;
 
   // Marksheet mark details always show unless hideMarks is explicitly true
   const showMarks = !hideMarks;
@@ -825,12 +824,12 @@ export default function OfficialMarksheetView({
   const remarkText = getRemark(percentage);
 
   const regNo =
-    getStudentRegisterNumber(student) ||
-    student.registrationNo ||
+    getStudentRegisterNumber(s) ||
+    s.registrationNo ||
     'AB27-001';
 
   const coursePrefix = getCoursePrefix(courseName);
-  const rawLevel = student.level || student.courseLevel || 'Level 1';
+  const rawLevel = s.level || s.courseLevel || 'Level 1';
   const displayLevel = formatMarksheetLevel(rawLevel);
 
   const cleanLevel = String(displayLevel).replace(/\D/g, '') || '1';
@@ -840,7 +839,7 @@ export default function OfficialMarksheetView({
     ? String(parseInt(regDigits.slice(-3), 10) || 1).padStart(4, '0')
     : '0001';
 
-  let certNo = student.certificateNo;
+  let certNo = s.certificateNo;
 
   if (
     !certNo ||
@@ -856,22 +855,22 @@ export default function OfficialMarksheetView({
     certNo = `BSEL/${coursePrefix}/L${cleanLevel}/${seqDigits}`;
   }
 
-  const studentName = student.studentName || 'Candidate Name';
-  const parentName = student.parentName || student.fatherName || 'Guardian';
-  const dob = student.dob || student.dateOfBirth || '2016-05-28';
-  const duration = student.duration || student.courseDuration || '6 Months';
+  const studentName = s.studentName || 'Candidate Name';
+  const parentName = s.parentName || s.fatherName || 'Guardian';
+  const dob = s.dob || s.dateOfBirth || '2016-05-28';
+  const duration = s.duration || s.courseDuration || '6 Months';
 
   const school =
-    student.branch ||
-    student.school ||
-    student.centreName ||
-    student.institution ||
+    s.branch ||
+    s.school ||
+    s.centreName ||
+    s.institution ||
     'Tenkasi Branch';
 
   const address =
-    student.address ||
-    student.centreAddress ||
-    student.district ||
+    s.address ||
+    s.centreAddress ||
+    s.district ||
     'Tenkasi, Tamil Nadu';
 
   // Photo source: same priority the certificate uses, so both documents show the same photo.
@@ -1012,8 +1011,8 @@ export default function OfficialMarksheetView({
   };
 
   const issueDate = formatIssueDate(
-    student.enrolmentDate ||
-    student.issueDate ||
+    s.enrolmentDate ||
+    s.issueDate ||
     '05-10-2026'
   );
 
@@ -1354,6 +1353,8 @@ export default function OfficialMarksheetView({
   // ==========================================================
   // STANDALONE VIEW
   // ==========================================================
+
+  if (!student) return null;
 
   if (standalone) {
     return sheetCanvas;

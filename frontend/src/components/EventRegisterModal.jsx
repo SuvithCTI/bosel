@@ -170,8 +170,6 @@ export default function EventRegisterModal({
     }
   }, [currentStep]);
 
-  if (!event || !event.eventName) return null;
-
   const updateForm = (field, value) => {
     setFormData((prev) => ({
       ...prev,
@@ -387,6 +385,8 @@ export default function EventRegisterModal({
     }
     if (onClose) onClose();
   };
+
+  if (!event || !event.eventName) return null;
 
   return (
     <>
