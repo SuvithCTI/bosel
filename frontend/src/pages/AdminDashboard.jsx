@@ -1851,21 +1851,14 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                   <button
                     type="button"
                     onClick={() => handleTabSelect('contact_enquiries')}
-                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-black transition cursor-pointer text-left ${
+                    className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-black transition cursor-pointer text-left ${
                       activeTab === 'contact_enquiries'
                         ? 'bg-[#0c234b] text-white shadow-sm ring-1 ring-amber-400/40'
                         : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950'
                     }`}
                   >
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <MessageSquare className={`w-4 h-4 shrink-0 ${activeTab === 'contact_enquiries' ? 'text-amber-400' : 'text-slate-500'}`} />
-                      <span className="truncate">Contact Enquiries</span>
-                    </div>
-                    {contactEnquiriesList.filter((e) => e.status === 'New').length > 0 && (
-                      <span className="px-1.5 py-0.5 text-[10px] font-black rounded-full bg-amber-400 text-slate-950 shrink-0">
-                        {contactEnquiriesList.filter((e) => e.status === 'New').length}
-                      </span>
-                    )}
+                    <MessageSquare className={`w-4 h-4 shrink-0 ${activeTab === 'contact_enquiries' ? 'text-amber-400' : 'text-slate-500'}`} />
+                    <span className="truncate">Contact Enquiries</span>
                   </button>
 
                   <button

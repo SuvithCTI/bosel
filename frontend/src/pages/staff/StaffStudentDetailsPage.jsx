@@ -46,194 +46,16 @@ import {
 import CompactSelect from '../../components/CompactSelect';
 import { ACADEMIC_STAGES, getAcademicStageFromAge } from '../../utils/academicStages';
 
-// Initial default enquiries matching the official portal screenshot
-export const DEFAULT_STUDENT_ENQUIRIES = [
-  {
-    id: 'ENQ-001',
-    userId: 'BSEL-9898989898',
-    admissionNo: 'HW27-003',
-    registerNumber: 'HW27-003',
-    branchName: 'Tenkasi Branch',
-    branch: 'Tenkasi Branch',
-    institution: 'Tenkasi Branch',
-    studentName: 'shanju',
-    name: 'shanju',
-    parentName: 'R. Shanmugam',
-    courseName: 'Handwriting',
-    program: 'Handwriting',
-    grade: 'Level 1',
-    level: 'Level 1',
-    mobile: '9898989898',
-    phone: '9898989898',
-    email: 'shanju@example.com',
-    submitted: '2026-10-09 19:09:11',
-    status: 'Pending',
-    feeStatus: 'Paid',
-    gender: 'Female',
-    dob: '2016-04-12',
-    address: '14, Temple Street, Tenkasi - 627811'
-  },
-  {
-    id: 'ENQ-002',
-    userId: 'BSEL-9897987645',
-    admissionNo: 'AB27-002',
-    registerNumber: 'AB27-002',
-    branchName: 'Tirunelveli Branch',
-    branch: 'Tirunelveli Branch',
-    institution: 'Tirunelveli Branch',
-    studentName: 'sankar',
-    name: 'sankar',
-    parentName: 'K. Sankaralingam',
-    courseName: 'Abacus',
-    program: 'Abacus',
-    grade: 'Level 1',
-    level: 'Level 1',
-    mobile: '9897987645',
-    phone: '9897987645',
-    email: 'sankar@example.com',
-    submitted: '2026-10-05 21:26:10',
-    status: 'Pending',
-    feeStatus: 'Paid',
-    gender: 'Male',
-    dob: '2015-08-20',
-    address: '22, Main Road, Tirunelveli Junction - 627001'
-  },
-  {
-    id: 'ENQ-003',
-    userId: 'BSEL-9865219131',
-    admissionNo: 'AB27-001',
-    registerNumber: 'AB27-001',
-    branchName: 'Tenkasi Branch',
-    branch: 'Tenkasi Branch',
-    institution: 'Tenkasi Branch',
-    studentName: 'sivaji',
-    name: 'sivaji',
-    parentName: 'M. Sivaji Pandian',
-    courseName: 'Abacus',
-    program: 'Abacus',
-    grade: 'Level 1',
-    level: 'Level 1',
-    mobile: '8248600345',
-    phone: '8248600345',
-    email: 'sivaji@example.com',
-    submitted: '2026-10-05 17:48:08',
-    status: 'Pending',
-    feeStatus: 'Paid',
-    gender: 'Male',
-    dob: '2014-11-15',
-    address: 'Second Street, Surandai, Keelasurandai, Tenkasi - 627859'
-  },
-  {
-    id: 'ENQ-004',
-    userId: 'BSEL-9442188771',
-    admissionNo: 'ADM-2026-004',
-    registerNumber: 'ADM-2026-004',
-    branchName: 'Tirunelveli Branch',
-    branch: 'Tirunelveli Branch',
-    institution: 'Tirunelveli Branch',
-    studentName: 'Kavya Maran',
-    name: 'Kavya Maran',
-    parentName: 'S. Maran',
-    courseName: 'Phonics',
-    program: 'Phonics',
-    grade: 'Level 1',
-    level: 'Level 1',
-    mobile: '9442188771',
-    phone: '9442188771',
-    email: 'kavya@example.com',
-    submitted: '2026-10-03 14:15:22',
-    status: 'Approved',
-    feeStatus: 'Paid',
-    gender: 'Female',
-    dob: '2017-02-18',
-    address: '5B, Green Valley, Palayamkottai, Tirunelveli - 627002'
-  },
-  {
-    id: 'ENQ-005',
-    userId: 'BSEL-9840123456',
-    admissionNo: 'DN27-005',
-    registerNumber: 'DN27-005',
-    branchName: 'Tenkasi Branch',
-    branch: 'Tenkasi Branch',
-    institution: 'Tenkasi Branch',
-    studentName: 'Arjun Subramanian',
-    name: 'Arjun Subramanian',
-    parentName: 'V. Subramanian',
-    courseName: 'Bharatanatyam',
-    program: 'Bharatanatyam',
-    grade: 'Level 2',
-    level: 'Level 2',
-    mobile: '9840123456',
-    phone: '9840123456',
-    email: 'arjun@example.com',
-    submitted: '2026-10-01 11:30:45',
-    status: 'Approved',
-    feeStatus: 'Paid',
-    gender: 'Male',
-    dob: '2013-06-25',
-    address: '42, North Car Street, Tenkasi - 627811'
-  },
-  {
-    id: 'ENQ-006',
-    userId: 'BSEL-9865219131',
-    admissionNo: 'TK27-006',
-    registerNumber: 'TK27-006',
-    branchName: 'Tenkasi Branch',
-    branch: 'Tenkasi Branch',
-    institution: 'Tenkasi Branch',
-    studentName: 'Sivakumar S',
-    name: 'Sivakumar S',
-    parentName: 'M. Sankar',
-    courseName: 'Abacus',
-    program: 'Abacus',
-    grade: 'Level 1',
-    level: 'Level 1',
-    mobile: '9865219131',
-    phone: '9865219131',
-    email: 'sivakumar@example.com',
-    submitted: '2026-10-10 10:20:15',
-    status: 'Approved',
-    feeStatus: 'Paid',
-    gender: 'Male',
-    dob: '2015-05-14',
-    address: 'Second Street, Surandai, Keelasurandai, Tenkasi - 627859'
-  },
-  {
-    id: 'ENQ-007',
-    userId: 'BSEL-9443188776',
-    admissionNo: 'TK27-007',
-    registerNumber: 'TK27-007',
-    branchName: 'Tirunelveli Branch',
-    branch: 'Tirunelveli Branch',
-    institution: 'Tirunelveli Branch',
-    studentName: 'Priya Dharshini',
-    name: 'Priya Dharshini',
-    parentName: 'R. Ramakrishnan',
-    courseName: 'Handwriting',
-    program: 'Handwriting',
-    grade: 'Level 2',
-    level: 'Level 2',
-    mobile: '9443188776',
-    phone: '9443188776',
-    email: 'priya.tirunelveli@gmail.com',
-    submitted: '2026-10-11 14:45:00',
-    status: 'Pending',
-    feeStatus: 'Paid',
-    gender: 'Female',
-    dob: '2016-09-22',
-    address: '42, South Bazaar, Tirunelveli - 627001'
-  }
-];
+// Initial default enquiries (empty - real student records created through portal)
+export const DEFAULT_STUDENT_ENQUIRIES = [];
 
 export const getStoredStudentEnquiries = () => {
   if (typeof window === 'undefined') return DEFAULT_STUDENT_ENQUIRIES;
   try {
-    const raw = localStorage.getItem('bsel_student_enquiries');
-    let parsed = raw ? JSON.parse(raw) : [];
-    if (!Array.isArray(parsed)) parsed = [];
-    parsed = parsed.filter(isStudentUser);
+    // Remove local storage of student enquiries
+    localStorage.removeItem('bsel_student_enquiries');
 
-    // Also get all registered students from official student registration
+    // Get registered genuine students from registration registry
     const registeredUsers = getRegisteredUsers().filter(isStudentUser);
 
     // Map registered users to enquiry structure with 100% full detail fidelity
@@ -301,25 +123,18 @@ export const getStoredStudentEnquiries = () => {
       };
     });
 
-    // Merge registered enquiries on top so registered users ALWAYS take precedence
-    const regIds = new Set(registeredEnquiries.map(r => (r.userId || r.id).toLowerCase()));
-    const nonDuplicatedParsed = parsed.filter(p => !regIds.has((p.userId || p.id || '').toLowerCase()));
-    const combined = [...registeredEnquiries, ...nonDuplicatedParsed];
-
-    return combined.length > 0 ? combined : DEFAULT_STUDENT_ENQUIRIES;
+    return registeredEnquiries.length > 0 ? registeredEnquiries : DEFAULT_STUDENT_ENQUIRIES;
   } catch {
     return DEFAULT_STUDENT_ENQUIRIES;
   }
 };
 
-export const saveStoredStudentEnquiries = (list) => {
+export const saveStoredStudentEnquiries = () => {
   if (typeof window === 'undefined') return;
   try {
-    localStorage.setItem('bsel_student_enquiries', JSON.stringify(list));
+    localStorage.removeItem('bsel_student_enquiries');
     window.dispatchEvent(new Event('bsel_enquiries_updated'));
-  } catch (err) {
-    console.error('Failed to save student enquiries:', err);
-  }
+  } catch (_) {}
 };
 
 // Resolve a student's photo (uploaded photo first, then stored fallbacks)

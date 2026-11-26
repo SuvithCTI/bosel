@@ -177,14 +177,24 @@ export const exportPdfFromElement = async (element, options = {}, maybeOpts = {}
     }
   }
 
-  // 1. Check if the element IS or strictly contains the official Certificate SVG
+  // 1. Check if the element IS or strictly contains the official Certificate or Marksheet SVG
   let canvas = null;
-  const certSvg = element.id === 'printable-certificate-svg'
+  const isSvg = element.tagName?.toLowerCase() === 'svg';
+  const certSvg = (isSvg && element.id === 'printable-certificate-svg')
     ? element
     : element.querySelector?.('#printable-certificate-svg');
+  const msSvg = (isSvg && element.id === 'printable-marksheet-svg')
+    ? element
+    : element.querySelector?.('#printable-marksheet-svg');
 
-  if (certSvg) {
-    canvas = await svgElementToCanvas(certSvg, scale);
+  const svgToRender = certSvg || msSvg || (isSvg ? element : null);
+
+  if (svgToRender) {
+    try {
+      canvas = await svgElementToCanvas(svgToRender, scale);
+    } catch (e) {
+      console.warn('svgElementToCanvas fallback to html2canvas', e);
+    }
   }
 
   // 2. High-fidelity html2canvas rasterization (preserves desktop alignment even when generated on mobile)
@@ -215,7 +225,11 @@ export const exportPdfFromElement = async (element, options = {}, maybeOpts = {}
         if (ms) {
           ms.style.width = '724px';
           ms.style.maxWidth = '724px';
+          ms.style.height = '1024px';
+          ms.style.minHeight = '1024px';
+          ms.style.maxHeight = '1024px';
           ms.style.aspectRatio = '724 / 1024';
+          ms.style.overflow = 'visible';
           ms.style.margin = '0 auto';
         }
 
@@ -366,25 +380,45 @@ export const exportMergedLandscapeAndPortraitPdf = async ({
   }
 
   // 2. Capture Page 2 (Portrait Marksheet)
-  const p2Canvas = await html2canvas(page2Element, {
-    scale: page2Scale,
-    useCORS: true,
-    allowTaint: false,
-    logging: false,
-    scrollX: 0,
-    scrollY: 0,
-    windowWidth: 1024,
-    backgroundColor: '#ffffff',
-    onclone: (_clonedDoc, clonedEl) => {
-      const ms = clonedEl.id === 'printable-marksheet-sheet' ? clonedEl : clonedEl.querySelector?.('#printable-marksheet-sheet');
-      if (ms) {
-        ms.style.width = '724px';
-        ms.style.maxWidth = '724px';
-        ms.style.aspectRatio = '724 / 1024';
-        ms.style.margin = '0 auto';
-      }
+  const msSvg = page2Element.id === 'printable-marksheet-svg'
+    || page2Element.tagName?.toLowerCase() === 'svg'
+    ? page2Element
+    : page2Element.querySelector?.('#printable-marksheet-svg') || page2Element.querySelector?.('svg');
+
+  let p2Canvas = null;
+  if (msSvg) {
+    try {
+      p2Canvas = await svgElementToCanvas(msSvg, page2Scale || 2.5);
+    } catch (e) {
+      console.warn('svgElementToCanvas marksheet fallback to html2canvas', e);
     }
-  });
+  }
+
+  if (!p2Canvas) {
+    p2Canvas = await html2canvas(page2Element, {
+      scale: page2Scale,
+      useCORS: true,
+      allowTaint: false,
+      logging: false,
+      scrollX: 0,
+      scrollY: 0,
+      windowWidth: 1024,
+      backgroundColor: '#ffffff',
+      onclone: (_clonedDoc, clonedEl) => {
+        const ms = clonedEl.id === 'printable-marksheet-sheet' ? clonedEl : clonedEl.querySelector?.('#printable-marksheet-sheet');
+        if (ms) {
+          ms.style.width = '724px';
+          ms.style.maxWidth = '724px';
+          ms.style.height = '1024px';
+          ms.style.minHeight = '1024px';
+          ms.style.maxHeight = '1024px';
+          ms.style.aspectRatio = '724 / 1024';
+          ms.style.overflow = 'visible';
+          ms.style.margin = '0 auto';
+        }
+      }
+    });
+  }
 
   let p2ImgData;
   let p2Format = 'JPEG';

@@ -128,6 +128,38 @@ const fitRightMottoSize = (text) => {
   return Math.max(5.5, Math.round((RIGHT_HEADER_MAX_WIDTH / (measureAt100px(str) / 100 + str.length * 0.0035)) * 10) / 10);
 };
 
+// Calculates appropriate font size and bounding width for student detail values
+// to prevent any overlap with the QR code box (which begins at x=428).
+const getValMetrics = (val, rowIndex) => {
+  if (!val) return { fontSize: 15, textLength: undefined, lengthAdjust: undefined };
+  const str = String(val).trim();
+  const len = str.length;
+  // Rows 2..6 (Student Name, Parent, DOB, Course, Level) are adjacent to the QR code box (x=428).
+  // Available width from x=215 to x=428 is 213px. Safe max width with clean margin is 206px.
+  // Rows 0,1,7,8,9 have more horizontal room, up to 340px before right boundaries.
+  const isNextToQr = rowIndex >= 2 && rowIndex <= 6;
+  const maxW = isNextToQr ? 206 : 340;
+
+  let fontSize = 15;
+  if (len > 34) {
+    fontSize = isNextToQr ? 12 : 13;
+  } else if (len > 24) {
+    fontSize = isNextToQr ? 13 : 14;
+  } else if (len > 18) {
+    fontSize = isNextToQr ? 14 : 15;
+  }
+
+  // Check if text would exceed maxW at this font size in Times New Roman Bold
+  const approxWidth = len * (fontSize * 0.58);
+  const needsFit = isNextToQr ? (approxWidth > maxW || len > 22) : (approxWidth > maxW);
+
+  return {
+    fontSize,
+    textLength: needsFit ? maxW : undefined,
+    lengthAdjust: needsFit ? 'spacingAndGlyphs' : undefined,
+  };
+};
+
 // Gold diamond on the gold rule at a corner
 const CornerDiamond = ({ x, y }) => {
   const d = 7;
@@ -248,23 +280,33 @@ export default function MarksheetTemplate({
   const EMBLEM_X = 724 / 2 - EMBLEM_SIZE / 2;
   const EMBLEM_Y = 1024 / 2 - EMBLEM_SIZE / 2;
 
+  const formatTitleCase = (str) => {
+    if (!str) return '';
+    return String(str)
+      .trim()
+      .split(/\s+/)
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(' ');
+  };
+
   const studentValues = studentData
     ? [
         studentData.registrationNo || '',
         studentData.certificateNo || '',
         (studentData.studentName || '').toUpperCase(),
-        studentData.parentName || '',
+        formatTitleCase(studentData.parentName || ''),
         studentData.dob || '',
-        (studentData.displayCourse || studentData.courseName || '').slice(0, 10).toUpperCase(),
+        (studentData.displayCourse || studentData.courseName || '').toUpperCase(),
         studentData.level || '',
         studentData.duration || '',
-        studentData.school || studentData.centreName || '',
-        studentData.address || studentData.centreAddress || '',
+        formatTitleCase(studentData.school || studentData.centreName || ''),
+        formatTitleCase(studentData.address || studentData.centreAddress || ''),
       ]
     : null;
 
   return (
     <svg
+      id="printable-marksheet-svg"
       viewBox="0 0 724 1024"
       preserveAspectRatio="xMidYMid meet"
       className="absolute inset-0 w-full h-full"
@@ -412,6 +454,7 @@ export default function MarksheetTemplate({
       {/* Centre: government / institutional seal, perfectly centered at PAGE_CENTER_X (362) */}
       <image
         href={centerSeal}
+        xlinkHref={centerSeal}
         x={PAGE_CENTER_X - 45}
         y="25"
         width="90"
@@ -430,7 +473,7 @@ export default function MarksheetTemplate({
         letterSpacing="1.8"
         fill={NAVY}
       >
-        {String(heading.title || '').slice(0, 12).toUpperCase()}
+        {String(heading.title || '').toUpperCase()}
       </text>
       <text
         x={RIGHT_HEADER_CENTER_X}
@@ -442,7 +485,7 @@ export default function MarksheetTemplate({
         letterSpacing="1.2"
         fill={NAVY}
       >
-        {String(heading.subtitle || '').slice(0, 22).toUpperCase()}
+        {String(heading.subtitle || '').toUpperCase()}
       </text>
       {/* Right block tagline: same fixed size and spacing as the left block's third line */}
       <text
@@ -455,7 +498,7 @@ export default function MarksheetTemplate({
         letterSpacing="0.35"
         fill={NAVY}
       >
-        {String(heading.tagline || '').slice(0, 30).toUpperCase()}
+        {String(heading.tagline || '').toUpperCase()}
       </text>
 
       {/* School logo */}
@@ -511,25 +554,30 @@ export default function MarksheetTemplate({
         const cy = 181.4 + i * 26.2;
         const longLabel = label.length >= 19;
         const val = studentValues ? studentValues[i] : null;
+        const vm = getValMetrics(val, i);
         return (
-          <g key={label} fontFamily={SERIF} fontWeight="bold" fontSize="16" fill={NAVY}>
+          <g key={label} fontFamily={SERIF} fontWeight="bold" fontSize="15" fill={NAVY}>
             <text
               x="57"
-              y={cy + 5}
-              textLength={longLabel ? 136 : undefined}
+              y={cy}
+              dominantBaseline="middle"
+              textLength={longLabel ? 134 : undefined}
               lengthAdjust="spacingAndGlyphs"
             >
               {label}
             </text>
-            <text x="200" y={cy + 5}>:</text>
+            <text x="202" y={cy} dominantBaseline="middle">:</text>
             {val && (
               <text
-                x="215"
-                y={cy + 5}
+                x="214"
+                y={cy}
+                dominantBaseline="middle"
                 fill="#000000"
                 fontFamily={SERIF}
                 fontWeight="bold"
-                fontSize="15"
+                fontSize={vm.fontSize}
+                textLength={vm.textLength}
+                lengthAdjust={vm.lengthAdjust}
               >
                 {val}
               </text>
@@ -828,6 +876,7 @@ export default function MarksheetTemplate({
       {/* Footer row 1: three logos, bottom-aligned on y = 966 */}
       <image
         href={msmeLogo}
+        xlinkHref={msmeLogo}
         x="262"
         y="924"
         width="60"
@@ -836,6 +885,7 @@ export default function MarksheetTemplate({
       />
       <image
         href={iafLogo}
+        xlinkHref={iafLogo}
         x="336"
         y="924"
         width="62"
@@ -844,6 +894,7 @@ export default function MarksheetTemplate({
       />
       <image
         href={isoLogo}
+        xlinkHref={isoLogo}
         x="412"
         y="924"
         width="46"
@@ -884,6 +935,7 @@ export default function MarksheetTemplate({
       {/* Authorized signature image: wider, centred over the label */}
       <image
         href={signImage}
+        xlinkHref={signImage}
         x="495"
         y="880"
         width="230"

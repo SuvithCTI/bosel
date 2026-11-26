@@ -3,6 +3,86 @@ import { verifyBranchLogin, resolveBranchDetails, cleanBranchName } from './bran
 import { getStoredStaff } from './staffStorage';
 import { findFranchiseCredentials } from './franchiseStorage';
 import { findSchoolCredentials } from './schoolStorage';
+import { isStudentUser } from './studentValidator';
+
+// Purge all student data alone from local storage
+export const purgeStudentLocalStorage = () => {
+  try {
+    if (typeof window === 'undefined') return;
+
+    // 1. Remove all students from bsel_registered_users while keeping all admins, branch heads, staff, schools, franchises
+    const rawReg = localStorage.getItem('bsel_registered_users');
+    if (rawReg) {
+      try {
+        const parsed = JSON.parse(rawReg);
+        if (Array.isArray(parsed)) {
+          const nonStudents = parsed.filter(u => !isStudentUser(u));
+          localStorage.setItem('bsel_registered_users', JSON.stringify(nonStudents));
+        }
+      } catch (_) {}
+    } else {
+      localStorage.setItem('bsel_registered_users', JSON.stringify(DEFAULT_USERS));
+    }
+
+    // 2. Clear student enquiries
+    localStorage.removeItem('bsel_student_enquiries');
+    localStorage.setItem('bsel_student_enquiries', JSON.stringify([]));
+
+    // 3. Clear student marksheets, marks, and certificate caches
+    localStorage.removeItem('bsel_student_marksheets');
+    localStorage.removeItem('bsel_all_marks');
+    localStorage.removeItem('bsel_registered_student');
+    localStorage.removeItem('bsel_student_results');
+
+    // 4. Clean student photos, fees, exams, questions, and answers
+    const toRemove = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (
+        k &&
+        (k.startsWith('bsel_photo_') ||
+         k.startsWith('bsel_student_fees_') ||
+         k.startsWith('bsel_exam_') ||
+         k.startsWith('bsel_question_') ||
+         k.startsWith('bsel_answers_') ||
+         k.startsWith('bsel_score_'))
+      ) {
+        toRemove.push(k);
+      }
+    }
+    toRemove.forEach(k => {
+      try { localStorage.removeItem(k); } catch (_) {}
+    });
+
+    // 5. Clear active session if logged in as a student
+    const activeRaw = sessionStorage.getItem('bsel_active_session') || localStorage.getItem('bsel_active_session');
+    if (activeRaw) {
+      try {
+        const s = JSON.parse(activeRaw);
+        if (isStudentUser(s)) {
+          sessionStorage.removeItem('bsel_active_session');
+          localStorage.removeItem('bsel_active_session');
+        }
+      } catch (_) {}
+    }
+
+    window.dispatchEvent(new Event('bsel_users_updated'));
+    window.dispatchEvent(new Event('bsel_enquiries_updated'));
+    window.dispatchEvent(new StorageEvent('storage', { key: 'bsel_registered_users' }));
+  } catch (e) {
+    console.warn('Student data purge notice:', e);
+  }
+};
+
+const STUDENTS_PURGED_FLAG = 'bsel_students_data_purged_v3';
+try {
+  if (typeof window !== 'undefined' && !localStorage.getItem(STUDENTS_PURGED_FLAG)) {
+    purgeStudentLocalStorage();
+    localStorage.setItem(STUDENTS_PURGED_FLAG, 'true');
+  }
+} catch (e) {
+  console.warn('Student data purge notice:', e);
+}
 
 const DEFAULT_USERS = [
   {
@@ -136,199 +216,6 @@ const DEFAULT_USERS = [
     enrolmentDate: '01 Jan 2026',
     events: [],
     results: []
-  },
-  {
-    id: 'demo-stu-1326',
-    userId: '1326',
-    password: '1326',
-    name: 'Demo 1326',
-    studentName: 'Demo 1326',
-    fullName: 'Demo 1326',
-    parentName: 'R. Demo Guardian',
-    fatherName: 'R. Demo Guardian',
-    email: 'demo1326@bsel.org',
-    phone: '9865211326',
-    mobile: '9865211326',
-    grade: 'Level 1',
-    level: 'Level 1',
-    courseLevel: 'Level 1',
-    program: 'Abacus Speed Math',
-    courseName: 'Abacus Speed Math',
-    institution: 'Tenkasi Branch',
-    branch: 'Tenkasi Branch',
-    studyCenter: 'Tenkasi Branch',
-    registerNumber: 'DEMO-1326',
-    registrationNo: 'DEMO-1326',
-    admissionNo: 'DEMO-1326',
-    feeAmount: '₹1000',
-    feePaymentType: 'Approved',
-    feeStatus: 'Approved',
-    enrolmentDate: '01 Nov 2026',
-    date: '01 Nov 2026',
-    role: 'Student',
-    gender: 'Male',
-    dob: '2016-01-01',
-    dateOfBirth: '2016-01-01',
-    address: 'Tenkasi, Tamil Nadu',
-    results: []
-  },
-  {
-    id: 'demo-stu-sivaji-001',
-    userId: 'BSEL-8248600345',
-    password: '8248600345',
-    name: 'Sivaji',
-    studentName: 'Sivaji',
-    parentName: 'M. Sivaji Pandian',
-    fatherName: 'M. Sivaji Pandian',
-    email: 'sivaji@example.com',
-    phone: '8248600345',
-    mobile: '8248600345',
-    grade: 'Level 1',
-    level: 'Level 1',
-    courseLevel: 'Level 1',
-    program: 'Abacus',
-    courseName: 'Abacus',
-    institution: 'Tenkasi Branch',
-    branch: 'Tenkasi Branch',
-    studyCenter: 'Tenkasi Branch',
-    registerNumber: 'AB27-001',
-    registrationNo: 'AB27-001',
-    admissionNo: 'AB27-001',
-    feeAmount: '₹450',
-    feePaymentType: 'Approved',
-    feeStatus: 'Approved',
-    enrolmentDate: '05 Oct 2026',
-    date: '05 Oct 2026',
-    role: 'Student',
-    gender: 'Male',
-    dob: '2016-05-28',
-    dateOfBirth: '2016-05-28',
-    address: 'Second Street, Surandai, Keelasurandai, Tenkasi - 627859',
-    results: [
-      {
-        subject: 'Mental Arithmetic & Speed Calculations',
-        marks: 98,
-        maxMarks: 100,
-        result: 'Pass',
-        grade: 'A+'
-      }
-    ]
-  },
-  {
-    id: 'demo-stu-kavya-002',
-    userId: 'BSEL-9442188771',
-    password: '9442188771',
-    name: 'Kavya Maran',
-    studentName: 'Kavya Maran',
-    parentName: 'S. Maran',
-    fatherName: 'S. Maran',
-    email: 'kavya@example.com',
-    phone: '9442188771',
-    mobile: '9442188771',
-    grade: 'Level 1',
-    level: 'Level 1',
-    courseLevel: 'Level 1',
-    program: 'Phonics',
-    courseName: 'Phonics',
-    institution: 'Tirunelveli Branch',
-    branch: 'Tirunelveli Branch',
-    studyCenter: 'Tirunelveli Branch',
-    registerNumber: 'ADM-2026-004',
-    registrationNo: 'ADM-2026-004',
-    admissionNo: 'ADM-2026-004',
-    feeAmount: '₹450',
-    feePaymentType: 'Approved',
-    feeStatus: 'Approved',
-    enrolmentDate: '15 Oct 2026',
-    date: '15 Oct 2026',
-    role: 'Student',
-    gender: 'Female',
-    dob: '2015-08-12',
-    dateOfBirth: '2015-08-12',
-    address: '45, Main Road, Palayamkottai, Tirunelveli - 627002',
-    results: [
-      {
-        subject: 'Phonics & Speech Sounds',
-        marks: 92,
-        maxMarks: 100,
-        result: 'Pass',
-        grade: 'A+'
-      }
-    ]
-  },
-  {
-    id: 'demo-stu-fc-101',
-    userId: 'BSEL-9865219101',
-    password: '9865219101',
-    name: 'M. Rahul',
-    studentName: 'M. Rahul',
-    parentName: 'S. Murugan',
-    fatherName: 'S. Murugan',
-    email: 'rahul.fc@bsel.org',
-    phone: '98652 19101',
-    mobile: '9865219101',
-    grade: 'Class 7',
-    program: 'Abacus Speed Arithmetic',
-    courseName: 'Abacus Speed Arithmetic',
-    courseLevel: 'Level 1',
-    level: 'Level 1',
-    institution: 'Tenkasi City Franchise',
-    franchiseId: 'fc-tsi-101',
-    branch: 'Tenkasi Branch',
-    admissionCategory: 'franchise',
-    registerNumber: 'AB26-001',
-    registrationNo: 'AB26-001',
-    feeAmount: '₹450',
-    feePaymentType: 'Pay Later',
-    feeStatus: 'Pending',
-    enrolmentDate: '10 Feb 2026',
-    role: 'Student',
-    results: [
-      {
-        subject: 'Mental Arithmetic & Speed Calculations',
-        marks: 96,
-        maxMarks: 100,
-        result: 'Pass',
-        grade: 'A+'
-      }
-    ]
-  },
-  {
-    id: 'demo-stu-sch-101',
-    userId: 'BSEL-9443188201',
-    password: '9443188201',
-    name: 'A. Sneha',
-    studentName: 'A. Sneha',
-    parentName: 'K. Anandhan',
-    fatherName: 'K. Anandhan',
-    email: 'sneha.sch@bsel.org',
-    phone: '94431 88201',
-    mobile: '9443188201',
-    grade: 'Class 8',
-    program: 'Computer Office Automation',
-    courseName: 'Computer Office Automation',
-    courseLevel: 'Level 1',
-    level: 'Level 1',
-    institution: "St. Joseph's Matric Higher Secondary School",
-    schoolId: 'sch-tsi-101',
-    branch: 'Tenkasi Branch',
-    admissionCategory: 'school',
-    registerNumber: 'CS26-001',
-    registrationNo: 'CS26-001',
-    feeAmount: '₹450',
-    feePaymentType: 'Pay Later',
-    feeStatus: 'Pending',
-    enrolmentDate: '12 Feb 2026',
-    role: 'Student',
-    results: [
-      {
-        subject: 'Office Automation & Document Architecture',
-        marks: 94,
-        maxMarks: 100,
-        result: 'Pass',
-        grade: 'A+'
-      }
-    ]
   },
   // Tirunelveli Schools Admins
   {
@@ -482,6 +369,12 @@ export const getRegisteredUsers = () => {
         users = parsed;
       }
     }
+
+    // Ensure initial student purge has taken effect
+    if (typeof window !== 'undefined' && !localStorage.getItem(STUDENTS_PURGED_FLAG)) {
+      users = users.filter(u => !isStudentUser(u));
+    }
+
     // Always ensure Super Admin and Default Branch Heads are present in the list
     let modified = false;
     DEFAULT_USERS.forEach(defUser => {

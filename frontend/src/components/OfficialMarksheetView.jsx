@@ -711,8 +711,7 @@ export default function OfficialMarksheetView({
 
   const s = student || {};
   const courseName = s.program || s.courseName || 'ABACUS SPEED ARITHMETIC';
-  // Character limit 10 for Course display on the marksheet (e.g. 'ABACUS SPE')
-  const displayCourse = String(courseName).slice(0, 10).toUpperCase();
+  const displayCourse = String(courseName).toUpperCase();
 
   const savedSheet = student ? getSavedMarksheet(student) : null;
 
@@ -812,12 +811,13 @@ export default function OfficialMarksheetView({
     ? Number(student.totalMarks)
     : totalMarks;
 
-  // Whole-number percentage
-  const percentage = student?.percentage !== undefined && student?.percentage !== null && student?.percentage !== ''
-    ? String(Math.round(Number(student.percentage)))
-    : totalMax
-      ? String(Math.round((totalObtained / totalMax) * 100))
-      : '0';
+  // Whole-number percentage (accurate calculation capped at 100%)
+  const computedPct = totalMax > 0 ? Math.min(100, Math.round((totalObtained / totalMax) * 100)) : 0;
+  const percentage = (totalObtained > 0 && totalMax > 0)
+    ? String(computedPct)
+    : (student?.percentage !== undefined && student?.percentage !== null && student?.percentage !== ''
+      ? String(Math.min(100, Math.round(Number(student.percentage))))
+      : (totalMax ? String(Math.min(100, Math.round((totalObtained / totalMax) * 100))) : '0'));
 
   const overallGrade = Number(percentage) > 0 ? getGrade(Number(percentage)) : (student?.grade || 'D');
 
@@ -1737,16 +1737,16 @@ export default function OfficialMarksheetView({
 
               <div className="flex flex-col gap-1">
                 <label className="text-[11px] font-semibold text-slate-300 flex justify-between">
-                  <span>Line 3: Motto / Tagline <span className="text-amber-400 font-bold">(Max 30)</span></span>
-                  <span className="text-amber-400 font-bold">{customSchoolMotto.length}/30</span>
+                  <span>Line 3: Motto / Tagline <span className="text-amber-400 font-bold">(Max 45)</span></span>
+                  <span className="text-amber-400 font-bold">{customSchoolMotto.length}/45</span>
                 </label>
                 <input
                   type="text"
                   value={customSchoolMotto}
-                  maxLength={30}
+                  maxLength={45}
                   placeholder="e.g. EDUCATION · EMPOWERMENT · EXCELLENCE"
                   onChange={(e) => {
-                    const v = e.target.value.slice(0, 30);
+                    const v = e.target.value.slice(0, 45);
                     setCustomSchoolMotto(v);
                     handleSaveSchoolDetails(customSchoolName, customSchoolSubtitle, v, customSchoolLogo);
                   }}
