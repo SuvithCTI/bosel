@@ -1,4 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { ArrowLeft, Download, Printer, Loader2, CheckCircle2, AlertCircle, FileDown, Users, FileText, Award } from 'lucide-react';
 import Certificate from './Certificate';
 import OfficialMarksheetView from './OfficialMarksheetView';
@@ -31,6 +32,7 @@ export default function MergedStudentPdfModal({
   const [viewFilter, setViewFilter] = useState(
     data?.initialView || (data?.downloadMode === 'marksheet' ? 'marksheet' : data?.downloadMode === 'certificate' ? 'certificate' : 'all')
   );
+  const [printTarget, setPrintTarget] = useState('current'); // 'current' (active candidate 1 page) | 'all'
   const [isGenerating, setIsGenerating] = useState(false);
   const [downloadSuccess, setDownloadSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
@@ -346,27 +348,39 @@ export default function MergedStudentPdfModal({
   // If autoPrint is requested, trigger print after templates mount
   useEffect(() => {
     if (data?.autoPrint) {
+      setPrintTarget(students.length === 1 ? 'current' : 'all');
       const timer = setTimeout(() => {
         window.print();
       }, 700);
       return () => clearTimeout(timer);
     }
-  }, [data?.autoPrint]);
+  }, [data?.autoPrint, students.length]);
 
-  const handlePrint = () => {
-    window.print();
+  const handlePrint = (target = 'current') => {
+    setPrintTarget(target);
+    setTimeout(() => {
+      window.print();
+    }, 120);
   };
 
   if (!students.length || !currentStudentPackage) return null;
 
-  return (
-    <div className="fixed inset-0 z-[200] overflow-y-auto bg-slate-950/85 backdrop-blur-xs flex flex-col items-center justify-start py-4 px-2 sm:px-4">
+  const modalContent = (
+    <div
+      id="merged-student-modal-portal"
+      className="fixed inset-0 z-[200] overflow-y-auto bg-slate-950/85 backdrop-blur-xs flex flex-col items-center justify-start py-4 px-2 sm:px-4"
+    >
       {/* Print Stylesheet */}
       <style>{`
         @media print {
           @page {
             size: ${viewFilter === 'certificate' ? 'A4 landscape' : 'A4 portrait'};
             margin: 0;
+          }
+
+          /* Completely isolate modal: hide background application */
+          #root {
+            display: none !important;
           }
 
           html,
@@ -381,35 +395,39 @@ export default function MergedStudentPdfModal({
             print-color-adjust: exact !important;
           }
 
-          body * {
-            visibility: hidden !important;
-          }
-
-          #merged-print-container,
-          #merged-print-container * {
-            visibility: visible !important;
+          #merged-student-modal-portal {
+            position: static !important;
+            display: block !important;
+            background: #ffffff !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            width: 100% !important;
+            height: auto !important;
+            overflow: visible !important;
           }
 
           #merged-print-container {
-            position: absolute !important;
-            left: 0 !important;
-            top: 0 !important;
+            position: static !important;
+            display: block !important;
             width: 100% !important;
+            max-width: none !important;
             margin: 0 !important;
             padding: 0 !important;
             box-shadow: none !important;
             border: none !important;
-            background: white !important;
+            background: #ffffff !important;
           }
 
-          .merged-student-wrapper {
+          .merged-student-wrapper.print-hide {
+            display: none !important;
+          }
+
+          .merged-student-wrapper.print-show {
+            display: block !important;
             margin: 0 !important;
             padding: 0 !important;
-            display: block !important;
-            position: relative !important;
-            left: auto !important;
-            top: auto !important;
-            opacity: 1 !important;
+            width: 100% !important;
+            background: white !important;
           }
 
           .merged-cert-page {
@@ -419,75 +437,83 @@ export default function MergedStudentPdfModal({
             break-after: page !important;
             page-break-inside: avoid !important;
             break-inside: avoid !important;
-            display: block !important;
-            width: 100% !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: ${viewFilter === 'certificate' ? '297mm' : '210mm'} !important;
+            height: ${viewFilter === 'certificate' ? '210mm' : '297mm'} !important;
             max-width: ${viewFilter === 'certificate' ? '297mm' : '210mm'} !important;
-            height: auto !important;
-            max-height: ${viewFilter === 'certificate' ? '210mm' : '150mm'} !important;
-            display: block !important;
-            background: white !important;
-            padding: 4mm 0 !important;
+            max-height: ${viewFilter === 'certificate' ? '210mm' : '297mm'} !important;
+            box-sizing: border-box !important;
+            background: #ffffff !important;
+            padding: 0 !important;
             margin: 0 auto !important;
+            overflow: hidden !important;
             box-shadow: none !important;
             border: none !important;
-            box-sizing: border-box !important;
           }
 
           .merged-cert-page #printable-certificate {
             position: relative !important;
             top: auto !important;
             left: auto !important;
-            width: 100% !important;
-            max-width: ${viewFilter === 'certificate' ? '285mm' : '195mm'} !important;
-            height: auto !important;
-            max-height: ${viewFilter === 'certificate' ? '196mm' : '138mm'} !important;
+            width: ${viewFilter === 'certificate' ? '280mm' : '195mm'} !important;
+            max-width: ${viewFilter === 'certificate' ? '280mm' : '195mm'} !important;
+            height: ${viewFilter === 'certificate' ? '198mm' : '138mm'} !important;
+            max-height: ${viewFilter === 'certificate' ? '198mm' : '138mm'} !important;
             display: block !important;
             margin: 0 auto !important;
             box-sizing: border-box !important;
+            box-shadow: none !important;
+            border: none !important;
           }
 
           .merged-cert-page svg {
             width: 100% !important;
-            height: auto !important;
-            max-height: ${viewFilter === 'certificate' ? '196mm' : '138mm'} !important;
+            height: 100% !important;
+            max-height: 100% !important;
             object-fit: contain !important;
             display: block !important;
-            margin: 0 auto !important;
           }
 
           .merged-marksheet-page {
-            page-break-before: ${viewFilter === 'marksheet' ? 'auto' : 'always'} !important;
-            break-before: ${viewFilter === 'marksheet' ? 'auto' : 'page'} !important;
-            page-break-after: always !important;
-            break-after: page !important;
+            page-break-before: auto !important;
+            break-before: auto !important;
+            page-break-after: ${printTarget === 'all' ? 'always' : 'avoid'} !important;
+            break-after: ${printTarget === 'all' ? 'page' : 'avoid'} !important;
             page-break-inside: avoid !important;
             break-inside: avoid !important;
-            display: block !important;
-            width: 100% !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 210mm !important;
+            height: 297mm !important;
             max-width: 210mm !important;
-            height: auto !important;
             max-height: 297mm !important;
-            background: white !important;
-            padding: 4mm 0 !important;
+            box-sizing: border-box !important;
+            background: #ffffff !important;
+            padding: 0 !important;
             margin: 0 auto !important;
+            overflow: hidden !important;
             box-shadow: none !important;
             border: none !important;
-            box-sizing: border-box !important;
           }
 
           .merged-marksheet-page #printable-marksheet-sheet {
             position: relative !important;
             top: auto !important;
             left: auto !important;
-            width: 182mm !important;
-            max-width: 182mm !important;
-            height: 257mm !important;
-            max-height: 257mm !important;
+            width: 184mm !important;
+            max-width: 184mm !important;
+            height: 260mm !important;
+            max-height: 260mm !important;
             aspect-ratio: 724 / 1024 !important;
             margin: 0 auto !important;
             overflow: visible !important;
             box-sizing: border-box !important;
             display: block !important;
+            box-shadow: none !important;
+            border: none !important;
           }
 
           .merged-marksheet-page #printable-marksheet-sheet svg {
@@ -623,13 +649,26 @@ export default function MergedStudentPdfModal({
             {/* Print Button */}
             <button
               type="button"
-              onClick={handlePrint}
-              className="px-3 py-1.5 bg-[#163e7c] hover:bg-[#1f54a6] text-white rounded-lg text-xs font-black transition flex items-center gap-1.5 border border-white/20 cursor-pointer"
-              title="Print active view"
+              onClick={() => handlePrint('current')}
+              className="px-3 py-1.5 bg-[#163e7c] hover:bg-[#1f54a6] text-white rounded-lg text-xs font-black transition flex items-center gap-1.5 border border-white/20 cursor-pointer shadow-sm"
+              title="Print active student on 1 page"
             >
               <Printer className="w-3.5 h-3.5" />
               <span>Print {viewFilter === 'all' ? 'Merged' : (viewFilter === 'marksheet' ? 'Marksheet' : 'Certificate')}</span>
             </button>
+
+            {/* Print All Button (when multiple selected) */}
+            {students.length > 1 && (
+              <button
+                type="button"
+                onClick={() => handlePrint('all')}
+                className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-amber-300 rounded-lg text-xs font-bold transition flex items-center gap-1.5 border border-amber-400/30 cursor-pointer shadow-sm"
+                title={`Print all ${students.length} candidates (1 page each)`}
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span>Print All ({students.length})</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -673,11 +712,14 @@ export default function MergedStudentPdfModal({
       <div id="merged-print-container" className="w-full max-w-[1020px] pb-12">
         {students.map((pkg, idx) => {
           const isScreenActive = idx === activeIndex;
+          const isPrintVisible = printTarget === 'all' || isScreenActive;
 
           return (
             <div
               key={pkg.student?.userId || pkg.student?.id || idx}
-              className={`merged-student-wrapper ${isScreenActive ? 'block space-y-6' : 'space-y-6'}`}
+              className={`merged-student-wrapper ${isScreenActive ? 'block space-y-6' : 'space-y-6'} ${
+                isPrintVisible ? 'print-show' : 'print-hide'
+              }`}
               style={
                 isScreenActive
                   ? {}
@@ -745,4 +787,8 @@ export default function MergedStudentPdfModal({
       </div>
     </div>
   );
+
+  return typeof document !== 'undefined'
+    ? createPortal(modalContent, document.body)
+    : modalContent;
 }
