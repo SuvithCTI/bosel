@@ -5,21 +5,27 @@ import { findFranchiseCredentials } from './franchiseStorage';
 import { findSchoolCredentials } from './schoolStorage';
 import { isStudentUser } from './studentValidator';
 
-// One-time purge of all student data alone from local storage
-const STUDENTS_PURGED_FLAG = 'bsel_students_data_purged_v2';
-try {
-  if (typeof window !== 'undefined' && !localStorage.getItem(STUDENTS_PURGED_FLAG)) {
+// Purge all student data alone from local storage
+export const purgeStudentLocalStorage = () => {
+  try {
+    if (typeof window === 'undefined') return;
+
     // 1. Remove all students from bsel_registered_users while keeping all admins, branch heads, staff, schools, franchises
     const rawReg = localStorage.getItem('bsel_registered_users');
     if (rawReg) {
-      const parsed = JSON.parse(rawReg);
-      if (Array.isArray(parsed)) {
-        const nonStudents = parsed.filter(u => !isStudentUser(u));
-        localStorage.setItem('bsel_registered_users', JSON.stringify(nonStudents));
-      }
+      try {
+        const parsed = JSON.parse(rawReg);
+        if (Array.isArray(parsed)) {
+          const nonStudents = parsed.filter(u => !isStudentUser(u));
+          localStorage.setItem('bsel_registered_users', JSON.stringify(nonStudents));
+        }
+      } catch (_) {}
+    } else {
+      localStorage.setItem('bsel_registered_users', JSON.stringify(DEFAULT_USERS));
     }
 
     // 2. Clear student enquiries
+    localStorage.removeItem('bsel_student_enquiries');
     localStorage.setItem('bsel_student_enquiries', JSON.stringify([]));
 
     // 3. Clear student marksheets, marks, and certificate caches
@@ -28,17 +34,51 @@ try {
     localStorage.removeItem('bsel_registered_student');
     localStorage.removeItem('bsel_student_results');
 
-    // 4. Clean student photos and fees
-    for (let i = localStorage.length - 1; i >= 0; i--) {
+    // 4. Clean student photos, fees, exams, questions, and answers
+    const toRemove = [];
+    for (let i = 0; i < localStorage.length; i++) {
       const k = localStorage.key(i);
-      if (k && (k.startsWith('bsel_photo_') || k.startsWith('bsel_student_fees_') || k.startsWith('bsel_exam_'))) {
-        localStorage.removeItem(k);
+      if (
+        k &&
+        (k.startsWith('bsel_photo_') ||
+         k.startsWith('bsel_student_fees_') ||
+         k.startsWith('bsel_exam_') ||
+         k.startsWith('bsel_question_') ||
+         k.startsWith('bsel_answers_') ||
+         k.startsWith('bsel_score_'))
+      ) {
+        toRemove.push(k);
       }
     }
+    toRemove.forEach(k => {
+      try { localStorage.removeItem(k); } catch (_) {}
+    });
 
-    localStorage.setItem(STUDENTS_PURGED_FLAG, 'true');
+    // 5. Clear active session if logged in as a student
+    const activeRaw = sessionStorage.getItem('bsel_active_session') || localStorage.getItem('bsel_active_session');
+    if (activeRaw) {
+      try {
+        const s = JSON.parse(activeRaw);
+        if (isStudentUser(s)) {
+          sessionStorage.removeItem('bsel_active_session');
+          localStorage.removeItem('bsel_active_session');
+        }
+      } catch (_) {}
+    }
+
     window.dispatchEvent(new Event('bsel_users_updated'));
     window.dispatchEvent(new Event('bsel_enquiries_updated'));
+    window.dispatchEvent(new StorageEvent('storage', { key: 'bsel_registered_users' }));
+  } catch (e) {
+    console.warn('Student data purge notice:', e);
+  }
+};
+
+const STUDENTS_PURGED_FLAG = 'bsel_students_data_purged_v3';
+try {
+  if (typeof window !== 'undefined' && !localStorage.getItem(STUDENTS_PURGED_FLAG)) {
+    purgeStudentLocalStorage();
+    localStorage.setItem(STUDENTS_PURGED_FLAG, 'true');
   }
 } catch (e) {
   console.warn('Student data purge notice:', e);

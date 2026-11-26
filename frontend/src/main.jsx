@@ -2,14 +2,22 @@ import React, { StrictMode, Component } from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';
 import App from './App.jsx';
+import { purgeStudentLocalStorage } from './utils/authStorage';
 
 // Automatic one-time purge of all local storage data
 const STORAGE_PURGE_KEY = 'bsel_storage_purged_v5';
+const STUDENT_PURGE_KEY = 'bsel_students_localstorage_purged_v3';
 try {
   if (typeof window !== 'undefined') {
     window.clearAllBselData = () => {
       localStorage.clear();
       console.info('[BSEL] All localStorage cleared.');
+      window.location.reload();
+    };
+
+    window.purgeStudentData = () => {
+      purgeStudentLocalStorage();
+      console.info('[BSEL] Student data purged from localStorage.');
       window.location.reload();
     };
 
@@ -20,6 +28,13 @@ try {
       localStorage.clear();
       localStorage.setItem(STORAGE_PURGE_KEY, 'true');
       console.info('[BSEL] All local storage data has been cleared.');
+    }
+
+    // Always ensure student data purge is executed for this version
+    if (!localStorage.getItem(STUDENT_PURGE_KEY)) {
+      purgeStudentLocalStorage();
+      localStorage.setItem(STUDENT_PURGE_KEY, 'true');
+      console.info('[BSEL] Student data alone removed from localStorage.');
     }
   }
 } catch (e) {
