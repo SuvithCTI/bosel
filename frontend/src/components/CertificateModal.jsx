@@ -136,9 +136,11 @@ export default function CertificateModal({
     };
     window.addEventListener('bsel_marksheets_updated', handleMarksUpdate);
     window.addEventListener('bsel_users_updated', handleMarksUpdate);
+    window.addEventListener('storage', handleMarksUpdate);
     return () => {
       window.removeEventListener('bsel_marksheets_updated', handleMarksUpdate);
       window.removeEventListener('bsel_users_updated', handleMarksUpdate);
+      window.removeEventListener('storage', handleMarksUpdate);
     };
   }, [certData, initialData]);
 

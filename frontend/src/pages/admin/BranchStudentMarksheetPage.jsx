@@ -1035,18 +1035,47 @@ export default function BranchStudentMarksheetPage({
       // Store secondary keys & dispatch update events
       saveStudentMarksheet(student, marksheet);
 
+      const computedGrade = pct !== null ? getGrade(pct) : 'D';
+
       // Sync marks directly to student profile in registered users
       try {
         const users = getRegisteredUsers();
         const userIdx = users.findIndex(
           (u) =>
-            (u.userId && u.userId === student.userId) ||
-            (u.registerNumber && (u.registerNumber === (student.registerNumber || student.registrationNo)))
+            (student.userId && u.userId === student.userId) ||
+            (student.registerNumber && (u.registerNumber === student.registerNumber || u.registrationNo === student.registerNumber)) ||
+            (student.registrationNo && (u.registerNumber === student.registrationNo || u.registrationNo === student.registrationNo)) ||
+            (student.admissionNo && (u.admissionNo === student.admissionNo || u.registerNumber === student.admissionNo)) ||
+            (student.studentName && u.studentName && u.studentName.toLowerCase() === student.studentName.toLowerCase())
         );
         if (userIdx >= 0) {
           const serializedMarks = newResults.map((r) => r.marks ?? 0).join(',');
           const serializedExams = newResults.map((r) => r.exam ?? 0).join(',');
           const serializedAsms = newResults.map((r) => r.assessment ?? 0).join(',');
+          const updatedResults = Array.isArray(users[userIdx].results) && users[userIdx].results.length > 0
+            ? users[userIdx].results.map((r, i) =>
+                i === 0
+                  ? {
+                      ...r,
+                      rank: computedGrade,
+                      grade: computedGrade,
+                      marks: marksTotal,
+                      totalMarks: maxTotal,
+                      percentage: pct,
+                    }
+                  : r
+              )
+            : [
+                {
+                  examName: 'Final Exam',
+                  rank: computedGrade,
+                  grade: computedGrade,
+                  marks: marksTotal,
+                  totalMarks: maxTotal,
+                  percentage: pct,
+                },
+              ];
+
           users[userIdx] = {
             ...users[userIdx],
             marks: serializedMarks,
@@ -1054,13 +1083,51 @@ export default function BranchStudentMarksheetPage({
             asms: serializedAsms,
             totalMarks: marksTotal,
             percentage: pct !== null ? String(pct) : '0',
-            grade: pct !== null ? getGrade(pct) : (users[userIdx].grade || 'D'),
+            grade: computedGrade,
+            results: updatedResults,
             subjects: newResults,
           };
           localStorage.setItem('bsel_registered_users', JSON.stringify(users));
         }
       } catch (userErr) {
         console.warn('Could not update user record with marks:', userErr);
+      }
+
+      // Sync to student enquiries if student was admitted via enquiry
+      try {
+        const rawEnq = typeof window !== 'undefined' ? localStorage.getItem('bsel_student_enquiries') : null;
+        if (rawEnq) {
+          const enqs = JSON.parse(rawEnq);
+          let modified = false;
+          const updatedEnqs = enqs.map((e) => {
+            const match =
+              (student.userId && e.userId === student.userId) ||
+              (student.registerNumber && (e.registerNumber === student.registerNumber || e.registrationNo === student.registerNumber)) ||
+              (student.registrationNo && (e.registrationNo === student.registrationNo || e.registerNumber === student.registrationNo)) ||
+              (student.admissionNo && (e.admissionNo === student.admissionNo || e.registerNumber === student.admissionNo)) ||
+              (student.studentName && e.studentName && e.studentName.toLowerCase() === student.studentName.toLowerCase());
+            if (match) {
+              modified = true;
+              return {
+                ...e,
+                grade: computedGrade,
+                totalMarks: marksTotal,
+                percentage: pct !== null ? String(pct) : '0',
+              };
+            }
+            return e;
+          });
+          if (modified) {
+            localStorage.setItem('bsel_student_enquiries', JSON.stringify(updatedEnqs));
+          }
+        }
+      } catch {}
+
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('bsel_marksheets_updated'));
+        window.dispatchEvent(new Event('bsel_users_updated'));
+        window.dispatchEvent(new StorageEvent('storage', { key: 'bsel_student_marksheets' }));
+        window.dispatchEvent(new StorageEvent('storage', { key: 'bsel_registered_users' }));
       }
 
       setSavedData(marksheet);

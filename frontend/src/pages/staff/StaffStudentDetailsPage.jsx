@@ -35,11 +35,13 @@ import StudentQuestionPaperView from '../../components/StudentQuestionPaperView'
 import { getCoursePrefix, getRegisteredUsers, getActiveSession } from '../../utils/authStorage';
 import { isStudentUser } from '../../utils/studentValidator';
 import { getCourseSubjectModules } from '../../components/OfficialMarksheetView';
+import { getSavedMarksheet, getGrade } from '../../utils/marksheetStorage';
 import {
   getStudentPhotoUrl,
   getStudentRegisterNumber,
   getStudentScopeKey,
-  readStudentUploadedQuestions
+  readStudentUploadedQuestions,
+  resolveStudentGrade,
 } from '../../utils/studentDataHelpers';
 import CompactSelect from '../../components/CompactSelect';
 import { ACADEMIC_STAGES, getAcademicStageFromAge } from '../../utils/academicStages';
@@ -1147,12 +1149,15 @@ export default function StaffStudentDetailsPage({
         } catch (_) {}
       }
 
+      const savedSheet = getSavedMarksheet(item);
+      const resolvedGrade = resolveStudentGrade(item) || (savedSheet?.overallGrade) || item.results?.[0]?.rank || '';
+
       const certData = {
         studentName: item.studentName || item.name || 'Candidate Name',
         courseName: courseName,
         programPrefix: 'MINDSPARC',
         level: activeLvl,
-        grade: item.results?.[0]?.rank || 'A',
+        grade: resolvedGrade,
         duration: item.duration || '6 Months',
         registrationNo: regNo,
         certificateNo: certNo,
@@ -1162,6 +1167,7 @@ export default function StaffStudentDetailsPage({
         issueDate: item.submitted ? item.submitted.split(' ')[0] : '05-10-2026',
         certificateType: 'COMPLETION',
         studentPhoto: photo,
+        student: item,
         schoolName: fcBranding?.schoolName || item.schoolName,
         schoolSubtitle: fcBranding?.subtitle || item.schoolSubtitle,
         schoolMotto: fcBranding?.motto || item.schoolMotto,
@@ -1169,10 +1175,13 @@ export default function StaffStudentDetailsPage({
         directorSignature: fcBranding?.signature || fcBranding?.directorSignature || item.directorSignature
       };
 
-      const subjects = getCourseSubjectModules(courseName);
-      const totalMax = subjects.reduce((sum, s) => sum + (s.max || 100), 0);
-      const totalMarks = subjects.reduce((sum, s) => sum + (s.marks || 95), 0);
-      const percentage = ((totalMarks / totalMax) * 100).toFixed(1);
+      const subjects = savedSheet?.subjects?.length ? savedSheet.subjects : getCourseSubjectModules(courseName);
+      const totalMax = savedSheet?.totalMaximum || subjects.reduce((sum, s) => sum + (s.max || 100), 0);
+      const totalMarks = savedSheet?.totalMarks !== undefined ? savedSheet.totalMarks : subjects.reduce((sum, s) => sum + (s.marks || 0), 0);
+      const percentage = savedSheet?.percentage !== null && savedSheet?.percentage !== undefined
+        ? String(savedSheet.percentage)
+        : (totalMax > 0 ? ((totalMarks / totalMax) * 100).toFixed(1) : '0');
+      const overallGrade = savedSheet?.overallGrade || (totalMarks > 0 ? getGrade(Number(percentage) || 0) : 'D');
 
       const marksheetData = {
         ...item,
@@ -1191,8 +1200,8 @@ export default function StaffStudentDetailsPage({
         totalMax,
         totalMarks,
         percentage,
-        resultText: percentage >= 85 ? 'FIRST CLASS WITH DISTINCTION' : 'FIRST CLASS',
-        overallGrade: percentage >= 90 ? 'O (Outstanding)' : percentage >= 80 ? 'A+ (Excellent)' : 'A (Very Good)',
+        resultText: Number(percentage) >= 40 ? 'PASS' : 'FAIL',
+        overallGrade,
         marksheetNo: `BSEL/MS/2026/${String(item.userId || item.id || '').replace(/\D/g, '').slice(-4) || '1042'}`,
         issueDate: item.submitted ? item.submitted.split(' ')[0] : '05-10-2026',
         schoolName: fcBranding?.schoolName || item.schoolName,

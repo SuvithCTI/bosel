@@ -129,6 +129,7 @@ export default function CertificatePage() {
             issueDate={certData.issueDate}
             certificateType={certData.certificateType}
             studentPhoto={certData.studentPhoto}
+            student={certData}
             onPhotoUpload={handleUpdatePhoto}
             showControls={true}
           />

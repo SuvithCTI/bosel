@@ -5,6 +5,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 import Certificate from '../../components/Certificate';
+import { resolveStudentGrade } from '../../utils/studentDataHelpers';
 
 export default function AdminCertificatesPage({
   certData = {},
@@ -21,7 +22,7 @@ export default function AdminCertificatesPage({
     courseName: certData?.courseName || 'Course Name',
     programPrefix: certData?.programPrefix || 'MINDSPARC',
     level: certData?.level || 'Level 1',
-    grade: certData?.grade || 'A',
+    grade: resolveStudentGrade(certData?.student || certData, certData?.grade) || certData?.grade || '',
     duration: certData?.duration || '6 Months',
     registrationNo: certData?.registrationNo || 'REG-001',
     certificateNo: certData?.certificateNo || 'BSEL/CERT/001',
@@ -30,7 +31,8 @@ export default function AdminCertificatesPage({
     centreAddress: certData?.centreAddress || 'Main Campus',
     issueDate: certData?.issueDate || '01-01-2026',
     certificateType: certData?.certificateType || 'COMPLETION',
-    studentPhoto: certData?.studentPhoto || null
+    studentPhoto: certData?.studentPhoto || null,
+    student: certData?.student || certData
   };
 
   return (
@@ -165,6 +167,7 @@ export default function AdminCertificatesPage({
           issueDate={safeCert.issueDate}
           certificateType={safeCert.certificateType}
           studentPhoto={safeCert.studentPhoto}
+          student={safeCert.student}
           showControls={true}
         />
       </div>

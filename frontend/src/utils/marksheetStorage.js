@@ -51,11 +51,11 @@ export const writeMarksheets = (data) => {
 };
 
 export const getStudentCourse = (student) =>
-  student?.program || student?.courseName || '';
+  student?.program || student?.courseName || student?.course || '';
 
 // One marksheet per student + enrolled course
 export const getStudentKey = (student) =>
-  `${normalize(student?.userId || student?.admissionNo || student?.registerNumber)}__${normalize(getStudentCourse(student))}`;
+  `${normalize(student?.userId || student?.admissionNo || student?.registerNumber || student?.registrationNo || student?.id || student?.studentId)}__${normalize(getStudentCourse(student))}`;
 
 // Every identifier a student object might carry
 const getStudentIds = (student) =>
@@ -87,13 +87,48 @@ export const getSavedMarksheet = (student) => {
 
   const all = readMarksheets();
 
-  // 1. exact key
+  if (typeof student === 'string') {
+    const sNorm = normalize(student);
+    if (all[sNorm] && Array.isArray(all[sNorm].subjects)) return all[sNorm];
+    return (
+      Object.values(all).find((entry) => {
+        if (!entry || !Array.isArray(entry.subjects)) return false;
+        const entryIds = [
+          entry.studentId,
+          entry.registerNumber,
+          entry.registrationNo,
+          entry.admissionNo,
+          entry.userId,
+          entry.id,
+          entry.phone,
+          entry.mobile,
+        ]
+          .map(normalize)
+          .filter(Boolean);
+        const nameMatch =
+          normalize(entry.studentName) === sNorm || normalize(entry.name) === sNorm;
+        return entryIds.includes(sNorm) || nameMatch;
+      }) || null
+    );
+  }
+
+  // 1. exact primary key
   const direct = all[getStudentKey(student)];
   if (direct && Array.isArray(direct.subjects)) return direct;
 
-  // 2. fallback: match by any id (userId / register number / admission number / phone) + course
+  // 1b. direct id checks in stored map
   const ids = getStudentIds(student);
   const course = normalize(getStudentCourse(student));
+  for (const id of ids) {
+    if (course && all[`${id}__${course}`] && Array.isArray(all[`${id}__${course}`].subjects)) {
+      return all[`${id}__${course}`];
+    }
+    if (all[id] && Array.isArray(all[id].subjects)) {
+      return all[id];
+    }
+  }
+
+  // 2. fallback: match by any id (userId / register number / admission number / phone) + course
   const studentName = normalize(student?.studentName || student?.name);
 
   const found = Object.values(all).find((entry) => {
@@ -135,18 +170,29 @@ export const saveStudentMarksheet = (student, marksheet) => {
     all[primaryKey] = marksheet;
 
     // Also store secondary keys for faster direct lookup
-    if (student?.admissionNo) {
-      all[`${normalize(student.admissionNo)}__${normalize(getStudentCourse(student))}`] = marksheet;
-    }
-    if (student?.registerNumber) {
-      all[`${normalize(student.registerNumber)}__${normalize(getStudentCourse(student))}`] = marksheet;
-    }
+    const course = normalize(getStudentCourse(student));
+    const ids = [
+      student?.userId,
+      student?.admissionNo,
+      student?.registerNumber,
+      student?.registrationNo,
+      student?.id,
+      student?.studentId,
+    ]
+      .map(normalize)
+      .filter(Boolean);
+
+    ids.forEach((id) => {
+      if (course) all[`${id}__${course}`] = marksheet;
+      all[id] = marksheet;
+    });
 
     writeMarksheets(all);
 
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new Event('bsel_marksheets_updated'));
       window.dispatchEvent(new Event('bsel_users_updated'));
+      window.dispatchEvent(new StorageEvent('storage', { key: 'bsel_student_marksheets' }));
     }
     return true;
   } catch (err) {

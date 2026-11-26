@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Certificate, { formatSimpleGrade } from '../components/Certificate';
 import { exportPdfFromElement } from '../utils/pdfExport';
 import { resolveBranchDetails } from '../utils/branchAuthStorage';
+import { getSavedMarksheet, getGrade } from '../utils/marksheetStorage';
 import {
   CheckCircle2,
   Download,
@@ -181,25 +182,63 @@ const resolveParentName = (name = '', reg = '', parentParam = null) => {
   return 'S. Ramanathan';
 };
 
-// Helper for Scores & Grades (clean simple grade: A, A+, B, B+ strictly from marksheet)
-const resolveScoreAndGrade = (name = '', gradeParam = '', scoreParam = '') => {
+// Helper for Scores & Grades (clean simple grade: A, A+, B, B+, C, D strictly from marksheet)
+const resolveScoreAndGrade = (name = '', reg = '', course = '', gradeParam = '', scoreParam = '') => {
   const cleanGrade = formatSimpleGrade(gradeParam);
+
+  // Check saved marksheet from storage
+  let savedSheet = null;
+  if (typeof window !== 'undefined') {
+    try {
+      savedSheet = getSavedMarksheet({
+        studentName: name,
+        registrationNo: reg,
+        registerNumber: reg,
+        userId: reg,
+        courseName: course
+      });
+    } catch {}
+  }
+
+  if (savedSheet) {
+    const total = savedSheet.totalMarks ?? 0;
+    const max = savedSheet.totalMaximum || (Array.isArray(savedSheet.subjects) ? savedSheet.subjects.length * 100 : 500);
+    const pct = savedSheet.percentage !== null && savedSheet.percentage !== undefined
+      ? savedSheet.percentage
+      : (max > 0 ? Math.round((total / max) * 100) : 0);
+    const sheetScore = `${total} / ${max} (${pct}%)`;
+    const sheetGrade = savedSheet.overallGrade || getGrade(Number(pct) || 0);
+    const effScore = scoreParam || sheetScore;
+    const effGrade = formatSimpleGrade(sheetGrade) || cleanGrade;
+    const effPct = Number(pct);
+    return { score: effScore, grade: effGrade, percentage: effPct };
+  }
 
   const sLow = String(name || '').toLowerCase();
   if (sLow.includes('alwin')) {
-    return { score: scoreParam || '459 / 500 (91.8%)', grade: cleanGrade || 'A+' };
+    return { score: scoreParam || '459 / 500 (91.8%)', grade: cleanGrade || 'A+', percentage: 91.8 };
   }
   if (sLow.includes('priya')) {
-    return { score: scoreParam || '482 / 500 (96.4%)', grade: cleanGrade || 'A+' };
+    return { score: scoreParam || '482 / 500 (96.4%)', grade: cleanGrade || 'A+', percentage: 96.4 };
   }
   if (sLow.includes('hema')) {
-    return { score: scoreParam || '468 / 500 (93.6%)', grade: cleanGrade || 'A' };
+    return { score: scoreParam || '468 / 500 (93.6%)', grade: cleanGrade || 'A', percentage: 93.6 };
   }
   if (sLow.includes('bob')) {
-    return { score: scoreParam || '', grade: cleanGrade || '' };
+    return { score: scoreParam || '', grade: cleanGrade || '', percentage: 0 };
   }
 
-  return { score: scoreParam || (cleanGrade ? '459 / 500 (91.8%)' : ''), grade: cleanGrade || '' };
+  let parsedPct = null;
+  if (scoreParam) {
+    const pctMatch = String(scoreParam).match(/(\d+(?:\.\d+)?)%/);
+    if (pctMatch) parsedPct = parseFloat(pctMatch[1]);
+  }
+
+  return {
+    score: scoreParam || (cleanGrade ? '459 / 500 (91.8%)' : ''),
+    grade: cleanGrade || '',
+    percentage: parsedPct !== null ? parsedPct : (cleanGrade === 'D' ? 30 : 85),
+  };
 };
 
 // Helper for Verification ID & Security Code
@@ -393,7 +432,16 @@ export default function CertificateVerificationPage({ setActivePage }) {
   const studentName = (currentStudent.studentName || 'Candidate Name').toUpperCase();
   const registrationNo = (currentStudent.registrationNo || currentStudent.certificateNo || 'BSEL-2026-8942').toUpperCase();
   const parentName = resolveParentName(studentName, registrationNo, currentStudent.parentName);
-  const { score: totalScore, grade: finalGrade } = resolveScoreAndGrade(studentName, currentStudent.grade, currentStudent.score);
+  const displayCourse = currentStudent.courseName || 'Advanced Abacus & Mental Arithmetic';
+  const { score: totalScore, grade: finalGrade, percentage: scorePercentage } = resolveScoreAndGrade(
+    studentName,
+    registrationNo,
+    displayCourse,
+    currentStudent.grade,
+    currentStudent.score
+  );
+  const isPass = scorePercentage !== null && scorePercentage !== undefined ? scorePercentage >= 40 : true;
+  const resultText = isPass ? 'PASS' : 'FAIL';
   const { vid: verificationId, sec: securityCode } = resolveVerificationCodes(
     studentName,
     registrationNo,
@@ -408,8 +456,6 @@ export default function CertificateVerificationPage({ setActivePage }) {
     currentStudent.photoKey || currentStudent.photo,
     networkPhoto
   );
-
-  const displayCourse = currentStudent.courseName || 'Advanced Abacus & Mental Arithmetic';
   const displaySchoolCenter = (() => {
     const sName = (currentStudent.schoolName || '').trim();
     const cName = (currentStudent.centreName || '').trim();
@@ -567,16 +613,25 @@ export default function CertificateVerificationPage({ setActivePage }) {
               <div className="text-white font-semibold mt-0.5">{displaySchoolCenter}</div>
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
-              <div className="bg-[#0b1532] border border-[#182852] rounded-xl p-2.5">
+            <div className={`grid ${totalScore ? 'grid-cols-3' : 'grid-cols-2'} gap-2`}>
+              <div className="bg-[#0b1532] border border-[#182852] rounded-xl p-2.5 text-center">
                 <div className="text-slate-400 font-medium text-[10.5px]">Total Score:</div>
-                <div className="text-white font-bold font-mono mt-0.5">{totalScore}</div>
+                <div className="text-white font-bold font-mono text-sm mt-0.5">{totalScore || 'N/A'}</div>
               </div>
 
-              <div className="bg-[#0b1532] border border-[#182852] rounded-xl p-2.5">
+              <div className="bg-[#0b1532] border border-[#182852] rounded-xl p-2.5 text-center">
                 <div className="text-slate-400 font-medium text-[10.5px]">Final Grade:</div>
-                <div className="text-[#f5d061] font-bold uppercase mt-0.5">{finalGrade}</div>
+                <div className="text-[#f5d061] font-black text-sm uppercase mt-0.5">{finalGrade || 'N/A'}</div>
               </div>
+
+              {totalScore && (
+                <div className="bg-[#0b1532] border border-[#182852] rounded-xl p-2.5 text-center">
+                  <div className="text-slate-400 font-medium text-[10.5px]">Result:</div>
+                  <div className={`${isPass ? 'text-emerald-400' : 'text-rose-400'} font-black text-sm mt-0.5`}>
+                    {resultText}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-2 pt-0.5">
@@ -637,6 +692,12 @@ export default function CertificateVerificationPage({ setActivePage }) {
               issueDate={currentStudent.issueDate}
               duration={currentStudent.duration}
               studentPhoto={photoSrc}
+              student={{
+                studentName,
+                registrationNo,
+                courseName: currentStudent.courseName,
+                grade: finalGrade,
+              }}
               schoolName={currentStudent.schoolName}
               schoolSubtitle={currentStudent.schoolSubtitle}
               schoolMotto={currentStudent.schoolMotto}

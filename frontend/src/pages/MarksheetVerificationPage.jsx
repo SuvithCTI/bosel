@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import OfficialMarksheetView, { getRemark, formatMarksheetLevel } from '../components/OfficialMarksheetView';
 import { exportPdfFromElement } from '../utils/pdfExport';
 import { resolveBranchDetails } from '../utils/branchAuthStorage';
-import { getGrade } from '../utils/marksheetStorage';
+import { getGrade, getSavedMarksheet } from '../utils/marksheetStorage';
 import {
   CheckCircle2,
   Download,
@@ -377,8 +377,28 @@ export default function MarksheetVerificationPage({ setActivePage }) {
   const schoolCentre = currentStudent.centreName || 'Tenkasi';
   const address = currentStudent.centreAddress || 'Dubai';
 
+  // Check if live marksheet data is stored for this student
+  const savedSheet = useMemo(() => {
+    if (typeof window === 'undefined') return null;
+    try {
+      return getSavedMarksheet({
+        studentName,
+        registrationNo,
+        registerNumber: registrationNo,
+        admissionNo: registrationNo,
+        userId: registrationNo,
+        courseName: displayCourse,
+      });
+    } catch {
+      return null;
+    }
+  }, [studentName, registrationNo, displayCourse]);
+
   // Parse marks & performance (default 0's if unentered)
   const parsedMarksList = useMemo(() => {
+    if (savedSheet && Array.isArray(savedSheet.subjects) && savedSheet.subjects.length > 0) {
+      return savedSheet.subjects.map((s) => Number(s.marks) || 0);
+    }
     if (currentStudent.marks) {
       return String(currentStudent.marks)
         .split(',')
@@ -386,14 +406,20 @@ export default function MarksheetVerificationPage({ setActivePage }) {
         .filter((n) => Number.isFinite(n));
     }
     return [0, 0, 0, 0, 0];
-  }, [currentStudent.marks]);
+  }, [savedSheet, currentStudent.marks]);
 
-  const totalScoreObtained = parsedMarksList.reduce((a, b) => a + b, 0);
-  const totalMaxMarks = parsedMarksList.length * 100 || 500;
+  const totalScoreObtained = savedSheet?.totalMarks !== undefined
+    ? Number(savedSheet.totalMarks)
+    : parsedMarksList.reduce((a, b) => a + b, 0);
+  const totalMaxMarks = savedSheet?.totalMaximum || (parsedMarksList.length * 100 || 500);
   const calculatedPercent = totalMaxMarks > 0 ? Math.round((totalScoreObtained / totalMaxMarks) * 100) : 0;
 
   // Extract percentage from score string (e.g. '152 / 500 (30%)') or calculated percentage
   const effectivePercentage = useMemo(() => {
+    if (savedSheet && savedSheet.percentage !== null && savedSheet.percentage !== undefined && savedSheet.percentage !== '') {
+      const p = Number(savedSheet.percentage);
+      if (!isNaN(p)) return Math.round(p);
+    }
     if (currentStudent.score) {
       const pctMatch = String(currentStudent.score).match(/(\d+(?:\.\d+)?)%/);
       if (pctMatch) return Math.round(parseFloat(pctMatch[1]));
@@ -403,13 +429,15 @@ export default function MarksheetVerificationPage({ setActivePage }) {
       }
     }
     return calculatedPercent;
-  }, [currentStudent.score, calculatedPercent]);
+  }, [savedSheet, currentStudent.score, calculatedPercent]);
 
   const isPass = effectivePercentage >= 40;
   const resultText = isPass ? 'PASS' : 'FAIL';
 
-  const displayScore = currentStudent.score || `${totalScoreObtained} / ${totalMaxMarks} (${effectivePercentage}%)`;
-  const finalGrade = currentStudent.grade || (effectivePercentage > 0 ? getGrade(effectivePercentage) : 'D');
+  const displayScore = savedSheet
+    ? `${totalScoreObtained} / ${totalMaxMarks} (${effectivePercentage}%)`
+    : (currentStudent.score || `${totalScoreObtained} / ${totalMaxMarks} (${effectivePercentage}%)`);
+  const finalGrade = savedSheet?.overallGrade || currentStudent.grade || (effectivePercentage > 0 ? getGrade(effectivePercentage) : 'D');
   const remarkText = getRemark(String(effectivePercentage));
 
   const { vid: verificationId, sec: securityCode } = resolveVerificationCodes(

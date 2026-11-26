@@ -36,16 +36,21 @@ export const cleanGrade = (val) => {
  * If marks have not been updated or the student is only admitted, returns null (no grade).
  */
 export const resolveStudentGrade = (student, explicitGrade = '') => {
-  if (student) {
+  let studentObj = student;
+  if (typeof student === 'string') {
+    studentObj = { userId: student, registerNumber: student, registrationNo: student, studentName: student };
+  }
+
+  if (studentObj) {
     try {
-      const savedSheet = getSavedMarksheet(student);
+      const savedSheet = getSavedMarksheet(studentObj);
       if (savedSheet) {
         if (savedSheet.overallGrade && isValidGrade(savedSheet.overallGrade)) {
           return cleanGrade(savedSheet.overallGrade);
         }
         if (savedSheet.percentage !== undefined && savedSheet.percentage !== null && savedSheet.percentage !== '') {
           const pct = Number(savedSheet.percentage);
-          if (!isNaN(pct) && pct > 0) {
+          if (!isNaN(pct)) {
             return getGrade(pct);
           }
         }
@@ -62,9 +67,43 @@ export const resolveStudentGrade = (student, explicitGrade = '') => {
       }
     } catch {}
 
+    // Check registered users for updated user grade
+    if (typeof window !== 'undefined') {
+      try {
+        const rawUsers = localStorage.getItem('bsel_registered_users');
+        if (rawUsers) {
+          const users = JSON.parse(rawUsers);
+          const sIds = [
+            studentObj.userId,
+            studentObj.registerNumber,
+            studentObj.registrationNo,
+            studentObj.admissionNo,
+            studentObj.id,
+          ].map((s) => String(s || '').trim().toLowerCase()).filter(Boolean);
+          const sName = String(studentObj.studentName || studentObj.name || '').trim().toLowerCase();
+          const matchedUser = users.find((u) => {
+            if (!u) return false;
+            const uIds = [u.userId, u.registerNumber, u.registrationNo, u.admissionNo, u.id].map((s) => String(s || '').trim().toLowerCase()).filter(Boolean);
+            const idMatch = sIds.some((id) => uIds.includes(id));
+            const nameMatch = sName && (String(u.studentName || u.name || '').trim().toLowerCase() === sName);
+            return idMatch || nameMatch;
+          });
+          if (matchedUser) {
+            if (matchedUser.percentage !== undefined && matchedUser.percentage !== null && matchedUser.percentage !== '') {
+              const p = Number(matchedUser.percentage);
+              if (!isNaN(p)) return getGrade(p);
+            }
+            if (matchedUser.grade && isValidGrade(matchedUser.grade)) {
+              return cleanGrade(matchedUser.grade);
+            }
+          }
+        }
+      } catch {}
+    }
+
     // Check student's own results array if present
-    if (Array.isArray(student.results) && student.results.length > 0) {
-      const res = student.results[0];
+    if (Array.isArray(studentObj.results) && studentObj.results.length > 0) {
+      const res = studentObj.results[0];
       const g = res.grade || res.rank;
       if (g && isValidGrade(g)) {
         return cleanGrade(g);
@@ -72,8 +111,12 @@ export const resolveStudentGrade = (student, explicitGrade = '') => {
     }
 
     // Check student.marksheet or student.marksheetGrade
-    if (student.marksheet?.overallGrade && isValidGrade(student.marksheet.overallGrade)) {
-      return cleanGrade(student.marksheet.overallGrade);
+    if (studentObj.marksheet?.overallGrade && isValidGrade(studentObj.marksheet.overallGrade)) {
+      return cleanGrade(studentObj.marksheet.overallGrade);
+    }
+
+    if (studentObj.grade && isValidGrade(studentObj.grade)) {
+      return cleanGrade(studentObj.grade);
     }
   }
 

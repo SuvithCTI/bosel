@@ -7,6 +7,7 @@ import { exportPdfFromElement } from '../utils/pdfExport';
 
 import { getCoursePrefix } from '../utils/authStorage';
 import { resolveBranchDetails } from '../utils/branchAuthStorage';
+import { getSavedMarksheet, getGrade } from '../utils/marksheetStorage';
 import {
   getStudentScopeKey,
   readStudentCustomHeader,
@@ -138,24 +139,49 @@ export const getStudentVerificationMeta = (studentName = '', registrationNo = ''
     else parent = 'S. RAMANATHAN';
   }
 
-  // Score & Final Grade (strictly clean grades: A, A+, B, B+ from student marksheet)
-  const resolvedMarksheetGrade = resolveStudentGrade(student, rawGrade);
-  let gradeText = resolvedMarksheetGrade || '';
-  let score = resolvedMarksheetGrade ? '459 / 500 (91.8%)' : '';
+  const effectiveStudent = student || {
+    studentName,
+    name: studentName,
+    registrationNo,
+    registerNumber: registrationNo,
+    admissionNo: registrationNo,
+    userId: registrationNo,
+    certificateNo,
+  };
 
-  const sLow = String(studentName || '').toLowerCase();
-  if (sLow.includes('alwin')) {
-    score = '459 / 500 (91.8%)';
-    gradeText = resolvedMarksheetGrade || 'A+';
-  } else if (sLow.includes('priya')) {
-    score = '482 / 500 (96.4%)';
-    gradeText = resolvedMarksheetGrade || 'A+';
-  } else if (sLow.includes('hema')) {
-    score = '468 / 500 (93.6%)';
-    gradeText = resolvedMarksheetGrade || 'A';
-  } else if (sLow.includes('bob')) {
-    score = '';
-    gradeText = resolvedMarksheetGrade || '';
+  // Score & Final Grade (strictly clean grades: A, A+, B, B+, C, D from student marksheet)
+  let savedSheet = null;
+  try {
+    savedSheet = getSavedMarksheet(effectiveStudent);
+  } catch {}
+
+  const resolvedMarksheetGrade = resolveStudentGrade(effectiveStudent, rawGrade);
+  let gradeText = resolvedMarksheetGrade || '';
+  let score = '';
+
+  if (savedSheet) {
+    const total = savedSheet.totalMarks ?? 0;
+    const max = savedSheet.totalMaximum || (Array.isArray(savedSheet.subjects) ? savedSheet.subjects.length * 100 : 500);
+    const pct = savedSheet.percentage !== null && savedSheet.percentage !== undefined
+      ? savedSheet.percentage
+      : (max > 0 ? Math.round((total / max) * 100) : 0);
+    score = `${total} / ${max} (${pct}%)`;
+    gradeText = savedSheet.overallGrade || getGrade(Number(pct) || 0);
+  } else if (resolvedMarksheetGrade) {
+    const sLow = String(studentName || '').toLowerCase();
+    if (sLow.includes('alwin')) {
+      score = '459 / 500 (91.8%)';
+      gradeText = resolvedMarksheetGrade || 'A+';
+    } else if (sLow.includes('priya')) {
+      score = '482 / 500 (96.4%)';
+      gradeText = resolvedMarksheetGrade || 'A+';
+    } else if (sLow.includes('hema')) {
+      score = '468 / 500 (93.6%)';
+      gradeText = resolvedMarksheetGrade || 'A';
+    } else {
+      score = '';
+      gradeText = resolvedMarksheetGrade;
+    }
   }
 
   // Photo Key (Strict 1-to-1 matching with certificate display)
@@ -605,15 +631,31 @@ export default function Certificate({
     const handleMarksUpdate = () => setMarksheetGradeVersion((v) => v + 1);
     window.addEventListener('bsel_marksheets_updated', handleMarksUpdate);
     window.addEventListener('bsel_users_updated', handleMarksUpdate);
+    window.addEventListener('storage', handleMarksUpdate);
     return () => {
       window.removeEventListener('bsel_marksheets_updated', handleMarksUpdate);
       window.removeEventListener('bsel_users_updated', handleMarksUpdate);
+      window.removeEventListener('storage', handleMarksUpdate);
     };
   }, []);
 
+  const effectiveStudent = React.useMemo(() => {
+    return student || {
+      studentName,
+      name: studentName,
+      registrationNo,
+      registerNumber: registrationNo,
+      admissionNo: registrationNo,
+      userId: registrationNo,
+      certificateNo: displayCertNo,
+      courseName,
+      program: courseName,
+    };
+  }, [student, studentName, registrationNo, displayCertNo, courseName]);
+
   const displayGrade = React.useMemo(() => {
-    return resolveStudentGrade(student, grade);
-  }, [student, grade, marksheetGradeVersion]);
+    return resolveStudentGrade(effectiveStudent, grade);
+  }, [effectiveStudent, grade, marksheetGradeVersion]);
 
   // Resolve consistent student photo
   const displayPhoto = React.useMemo(() => {
@@ -654,7 +696,14 @@ export default function Certificate({
 
   useEffect(() => {
     let isMounted = true;
-    const meta = getStudentVerificationMeta(studentName, registrationNo, displayCertNo, student, displayGrade, displayPhoto);
+    const meta = getStudentVerificationMeta(
+      studentName,
+      registrationNo,
+      displayCertNo,
+      student || effectiveStudent,
+      displayGrade,
+      displayPhoto
+    );
 
     // Sync student photo for local and cross-device QR scanning
     const activePhoto = displayPhoto || meta.resolvedPhoto;
@@ -741,6 +790,8 @@ export default function Certificate({
     headerSubtitle,
     headerMotto,
     student,
+    effectiveStudent,
+    marksheetGradeVersion,
   ]);
 
   const courseDisplay = formatCourseTitle(courseName || 'Abacus');
@@ -1580,7 +1631,14 @@ export default function Certificate({
             onClick={(e) => {
               e.stopPropagation();
               if (typeof window !== 'undefined') {
-                const meta = getStudentVerificationMeta(studentName, registrationNo, displayCertNo, student, displayGrade, displayPhoto);
+                const meta = getStudentVerificationMeta(
+                  studentName,
+                  registrationNo,
+                  displayCertNo,
+                  student || effectiveStudent,
+                  displayGrade,
+                  displayPhoto
+                );
                 const targetUrl = buildVerificationUrl({
                   certificateNo: displayCertNo,
                   studentName,
