@@ -27,7 +27,6 @@ import {
 } from 'lucide-react';
 import html2canvas from 'html2canvas-pro';
 import { jsPDF } from 'jspdf';
-import { PDFDocument } from 'pdf-lib';
 import { exportPdfFromElement, triggerDirectPdfDownload } from '../utils/pdfExport';
 import {
   getStudentRegisterNumber,
@@ -431,7 +430,8 @@ export default function StudentQuestionPaperView({ student, onClose }) {
 
       const page1Bytes = dataUrlToUint8Array(page1DataUrl) || (await fetch(page1DataUrl).then((r) => r.arrayBuffer()));
 
-      // 2. Initialize PDFDocument from pdf-lib
+      // 2. Initialize PDFDocument from pdf-lib (dynamic import for reliable loading and code-splitting)
+      const { PDFDocument } = await import('pdf-lib');
       const mergedDoc = await PDFDocument.create();
 
       // Standard A4 dimensions in PDF points: 595.28 x 841.89
