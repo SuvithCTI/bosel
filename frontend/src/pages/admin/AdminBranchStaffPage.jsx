@@ -95,7 +95,7 @@ export default function AdminBranchStaffPage({
       phone: '9865219131',
       email: '',
       affiliationType: 'Branch',
-      assignedUnit: activeBranch
+      assignedUnit: `Branch Staff — ${activeBranch}`
     });
     setFormError('');
     setShowModal(true);
@@ -104,7 +104,6 @@ export default function AdminBranchStaffPage({
   // Open modal for editing existing staff
   const handleOpenEditModal = (staff) => {
     setEditingStaffId(staff.id);
-    const aff = staff.affiliationType || (staff.institution?.includes('Franchise') ? 'Franchise' : (staff.institution?.includes('School') || staff.institution?.includes('Matric') ? 'School' : 'Branch'));
     setFormData({
       name: staff.name || '',
       designation: staff.designation || 'Academic Staff',
@@ -112,8 +111,8 @@ export default function AdminBranchStaffPage({
       password: staff.password || '',
       phone: staff.phone || '',
       email: staff.email || '',
-      affiliationType: aff,
-      assignedUnit: staff.assignedUnit || staff.institution || activeBranch
+      affiliationType: 'Branch',
+      assignedUnit: `Branch Staff — ${activeBranch}`
     });
     setFormError('');
     setShowModal(true);
@@ -161,7 +160,7 @@ export default function AdminBranchStaffPage({
       return;
     }
 
-    const assignedUnit = formData.assignedUnit || (formData.affiliationType === 'Franchise' ? 'Tenkasi City Franchise' : (formData.affiliationType === 'School' ? "St. Joseph's Matric Higher Secondary School" : activeBranch));
+    const unitTitle = `Branch Staff — ${activeBranch}`;
     const payload = {
       id: editingStaffId || undefined,
       name: formData.name.trim(),
@@ -172,9 +171,9 @@ export default function AdminBranchStaffPage({
       email: (formData.email.trim() || `${formData.userId.trim().toLowerCase()}@bsel.org`).toLowerCase(),
       branch: activeBranch,
       branchCode: 'BSEL-BR-101',
-      assignedUnit: assignedUnit,
-      affiliationType: formData.affiliationType || 'Branch',
-      institution: assignedUnit,
+      assignedUnit: unitTitle,
+      affiliationType: 'Branch',
+      institution: activeBranch,
       status: 'Active'
     };
 
@@ -335,7 +334,7 @@ export default function AdminBranchStaffPage({
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-0.5 px-1 py-0.2 sm:px-1.5 sm:py-0.5 rounded bg-sky-50 border border-sky-200 text-sky-800 text-[7.5px] sm:text-[9px] font-black uppercase">
-                          <span className="truncate">Branch</span>
+                          <span className="truncate">Branch Staff</span>
                         </span>
                       )}
                     </div>
@@ -613,30 +612,19 @@ export default function AdminBranchStaffPage({
                 <span className="text-[11px] sm:text-xs font-black text-[#0c234b] shrink-0">{activeBranch}</span>
               </div>
 
-              {/* Assigned Unit / Category */}
+              {/* Assigned Unit / Department (Locked to Active Branch) */}
               <div>
-                <label className="font-bold text-slate-700 block mb-0.5 sm:mb-1 text-[11px] sm:text-xs truncate">
-                  Assigned Unit / Department
+                <label className="font-bold text-slate-700 block mb-0.5 sm:mb-1 text-[11px] sm:text-xs truncate flex items-center justify-between">
+                  <span>Assigned Unit / Department</span>
+                  <span className="text-[10px] font-semibold text-slate-400 flex items-center gap-1">
+                    <Lock className="w-3 h-3 text-slate-400" />
+                    Locked to Branch
+                  </span>
                 </label>
-                <select
-                  value={formData.affiliationType || 'Branch'}
-                  onChange={(e) => {
-                    const aff = e.target.value;
-                    let unitName = activeBranch;
-                    if (aff === 'Franchise') unitName = 'Tenkasi City Franchise';
-                    if (aff === 'School') unitName = "St. Joseph's Matric Higher Secondary School";
-                    setFormData({
-                      ...formData,
-                      affiliationType: aff,
-                      assignedUnit: unitName
-                    });
-                  }}
-                  className="w-full px-2.5 py-1.5 sm:px-3 sm:py-2 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0c234b]/20 focus:border-[#0c234b] text-xs"
-                >
-                  <option value="Branch">Branch Staff — {activeBranch}</option>
-                  <option value="Franchise">Franchise Staff — Tenkasi City Franchise</option>
-                  <option value="School">School Staff — St. Joseph's Matric Higher Secondary School</option>
-                </select>
+                <div className="w-full px-2.5 py-1.5 sm:px-3 sm:py-2 bg-slate-100 border border-slate-200 rounded-xl font-bold text-slate-700 text-xs flex items-center justify-between cursor-not-allowed select-none">
+                  <span className="truncate">Branch Staff — {activeBranch}</span>
+                  <Lock className="w-3.5 h-3.5 text-slate-400 shrink-0 ml-2" />
+                </div>
               </div>
 
               {/* Modal Footer Actions */}

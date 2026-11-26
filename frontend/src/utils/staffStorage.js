@@ -103,16 +103,38 @@ export const DEFAULT_STAFF_MEMBERS = [
     grade: 'Academic Staff',
     program: 'Abacus & Vedic Mathematics',
     institution: 'B★SEL Tirunelveli Branch',
-    assignedUnit: 'Tirunelveli Branch',
+    assignedUnit: 'Branch Staff — Tirunelveli Branch',
     affiliationType: 'Branch',
     address: 'Tirunelveli, Tamil Nadu',
     createdAt: '2026-01-20'
+  },
+  {
+    id: 'staff-cbe-101',
+    userId: 'staff.coimbatore',
+    password: 'staff123',
+    name: 'S. Shanmugam',
+    studentName: 'S. Shanmugam',
+    role: 'Staff',
+    designation: 'Senior Academic Instructor',
+    branch: 'BSEL Coimbatore Branch',
+    branchCode: 'BSEL-BR-103',
+    email: 'shanmugam.cbe@bsel.org',
+    phone: '9865219134',
+    status: 'Active',
+    grade: 'Academic Staff',
+    program: 'Abacus & Vedic Mathematics',
+    institution: 'B★SEL Coimbatore Branch',
+    assignedUnit: 'Branch Staff — BSEL Coimbatore Branch',
+    affiliationType: 'Branch',
+    address: 'Coimbatore, Tamil Nadu',
+    createdAt: '2026-01-22'
   }
 ];
 
 const normalizeBranch = (branchName = '') => {
   return String(branchName || '')
     .toLowerCase()
+    .replace(/^b[★*]?sel\s*/gi, '')
     .replace(/\s*(regional\s*)?branch\s*/gi, '')
     .trim();
 };
@@ -258,6 +280,8 @@ export const saveStaffMember = (staffData) => {
       grade: staffData.designation || 'Academic Staff',
       program: staffData.program || 'Student Operations & Evaluation',
       institution: staffData.institution || `B★SEL ${staffData.branch || 'Branch'}`,
+      assignedUnit: staffData.assignedUnit || `Branch Staff — ${staffData.branch || 'Branch'}`,
+      affiliationType: staffData.affiliationType || 'Branch',
       address: staffData.address || `${staffData.branch || 'Tenkasi'}, Tamil Nadu`,
       createdAt: staffData.createdAt || new Date().toISOString().split('T')[0]
     };
