@@ -1039,6 +1039,126 @@ export const registerStudentAccount = async (formData) => {
   };
 };
 
+/**
+ * Automatically synchronizes all student admission records from Neon PostgreSQL DB into localStorage.
+ * Ensures cross-device and cross-dashboard consistency.
+ */
+export const syncStudentsFromDb = async () => {
+  if (typeof window === 'undefined') return getRegisteredUsers();
+  try {
+    const res = await fetch('/api/students');
+    if (!res.ok) return getRegisteredUsers();
+    const data = await res.json();
+    if (data && Array.isArray(data.students)) {
+      const currentUsers = getRegisteredUsers();
+      const remoteMapped = data.students.map((s) => {
+        const userId = s.user_id || '';
+        const existing = currentUsers.find((u) => (u.userId || '').toLowerCase() === userId.toLowerCase());
+        const regParent = s.parent_name || existing?.parentName || existing?.fatherName || '';
+        const photo = s.photo_url || existing?.studentPhoto || existing?.photoUrl || null;
+        const regNo = s.register_number || existing?.registerNumber || existing?.registrationNo || '';
+        return {
+          ...(existing || {}),
+          userId,
+          accountUserId: userId.replace(/-COURSE-\d+$/i, ''),
+          admissionOnly: /-COURSE-\d+$/i.test(userId),
+          studentName: s.student_name || existing?.studentName || '',
+          name: s.student_name || existing?.name || '',
+          parentName: regParent,
+          fatherName: regParent,
+          email: s.email || existing?.email || '',
+          phone: s.phone || existing?.phone || '',
+          alternatePhone: s.alternate_phone || existing?.alternatePhone || '',
+          alternativePhone: s.alternate_phone || existing?.alternativePhone || existing?.alternatePhone || '',
+          grade: s.grade || existing?.grade || existing?.courseLevel || '',
+          courseLevel: s.grade || existing?.courseLevel || existing?.level || existing?.grade || '',
+          level: s.grade || existing?.level || existing?.courseLevel || existing?.grade || '',
+          program: s.program || s.course_name || existing?.program || '',
+          courseName: s.course_name || existing?.courseName || '',
+          course: s.course_name || existing?.course || '',
+          courseDuration: existing?.courseDuration || existing?.duration || '6 Months',
+          duration: existing?.duration || existing?.courseDuration || '6 Months',
+          selectedCourses: (s.selected_courses && s.selected_courses.length > 0) ? s.selected_courses : (existing?.selectedCourses || []),
+          courses: (s.selected_courses && s.selected_courses.length > 0) ? s.selected_courses : (existing?.courses || []),
+          branch: s.branch || existing?.branch || '',
+          institution: s.institution || s.branch || existing?.institution || '',
+          studyCenter: s.institution || s.branch || existing?.studyCenter || '',
+          address: s.address || existing?.address || '',
+          village: s.village || existing?.village || '',
+          city: s.city || existing?.city || '',
+          district: s.district || existing?.district || '',
+          pincode: s.pincode || existing?.pincode || '',
+          pinCode: s.pincode || existing?.pinCode || existing?.pincode || '',
+          studentPhoto: photo,
+          photoUrl: photo,
+          photo_url: photo,
+          photo: photo,
+          registerNumber: regNo,
+          registrationNo: regNo,
+          registerNumbers: existing?.registerNumbers || (regNo ? regNo.split(',').map((n) => n.trim()) : []),
+          role: 'Student',
+          date: s.enrolment_date || existing?.date || existing?.enrolmentDate || '',
+          enrolmentDate: s.enrolment_date || existing?.enrolmentDate || existing?.date || '',
+          dob: s.dob || existing?.dob || existing?.dateOfBirth || '',
+          dateOfBirth: s.dob || existing?.dateOfBirth || existing?.dob || '',
+          age: s.age || existing?.age || '',
+          gender: s.gender || existing?.gender || 'Male',
+          studentClass: s.student_class || existing?.studentClass || '',
+          studentStage: s.student_stage || existing?.studentStage || '',
+          aadharNumber: s.aadhar_number || existing?.aadharNumber || existing?.aadhaar || '',
+          aadhaarNumber: s.aadhar_number || existing?.aadhaarNumber || existing?.aadharNumber || '',
+          aadhaar: s.aadhar_number || existing?.aadhaar || '',
+          feePaymentType: s.fee_payment_type || existing?.feePaymentType || 'Pay Now',
+          feeAmount: s.fee_amount || existing?.feeAmount || '₹450',
+          paymentMode: s.payment_mode || existing?.paymentMode || 'UPI / QR Code',
+          receiptRefNo: s.receipt_ref_no || existing?.receiptRefNo || '',
+          paymentScreenshot: s.payment_screenshot || existing?.paymentScreenshot || null,
+          status: s.status || existing?.status || 'Confirmed'
+        };
+      });
+
+      const remoteMap = new Map(remoteMapped.map((s) => [s.userId.toLowerCase(), s]));
+      const merged = currentUsers.map((u) => {
+        const remote = remoteMap.get((u.userId || '').toLowerCase());
+        return remote ? { ...u, ...remote } : u;
+      });
+      remoteMapped.forEach((s) => {
+        if (!merged.some((u) => (u.userId || '').toLowerCase() === s.userId.toLowerCase())) {
+          merged.unshift(s);
+        }
+        const photo = s.studentPhoto || s.photoUrl || s.photo_url;
+        if (photo && typeof window !== 'undefined') {
+          try {
+            if (s.registerNumber) localStorage.setItem(`bsel_photo_${s.registerNumber}`, photo);
+            const cleanR = (s.registerNumber || '').replace(/[^a-zA-Z0-9]/g, '');
+            if (cleanR) localStorage.setItem(`bsel_photo_${cleanR}`, photo);
+            if (s.userId) localStorage.setItem(`bsel_photo_${s.userId}`, photo);
+            if (s.phone) localStorage.setItem(`bsel_photo_${s.phone}`, photo);
+            if (s.studentName) localStorage.setItem(`bsel_photo_${s.studentName.toLowerCase().trim()}`, photo);
+          } catch {}
+        }
+      });
+
+      try {
+        localStorage.setItem('bsel_registered_users', JSON.stringify(merged));
+      } catch (storageErr) {
+        console.warn('[syncStudentsFromDb] Storage quota exceeded:', storageErr);
+      }
+      window.dispatchEvent(new Event('bsel_users_updated'));
+      window.dispatchEvent(new Event('bsel_enquiries_updated'));
+      return merged;
+    }
+  } catch (err) {
+    console.debug('[syncStudentsFromDb error]:', err);
+  }
+  return getRegisteredUsers();
+};
+
+// Automatic startup background sync
+if (typeof window !== 'undefined') {
+  syncStudentsFromDb().catch(() => {});
+}
+
 export const validateLogin = (enteredUserId, enteredPassword) => {
   if (!enteredUserId || !enteredPassword) {
     return {

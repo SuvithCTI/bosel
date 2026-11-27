@@ -184,11 +184,37 @@ CREATE TABLE IF NOT EXISTS certificates (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- 10. MARKSHEETS
+CREATE TABLE IF NOT EXISTS marksheets (
+  id SERIAL PRIMARY KEY,
+  student_key VARCHAR(255) UNIQUE NOT NULL,
+  student_id VARCHAR(100),
+  register_number VARCHAR(100),
+  registration_no VARCHAR(100),
+  admission_no VARCHAR(100),
+  student_name VARCHAR(150),
+  branch VARCHAR(150),
+  course VARCHAR(200),
+  grade VARCHAR(100),
+  subjects JSONB DEFAULT '[]'::jsonb,
+  total_marks NUMERIC,
+  total_maximum NUMERIC DEFAULT 500,
+  percentage VARCHAR(50),
+  overall_grade VARCHAR(50),
+  status VARCHAR(100),
+  last_stage VARCHAR(50),
+  complete BOOLEAN DEFAULT FALSE,
+  data JSONB DEFAULT '{}'::jsonb,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_users_user_id ON users(user_id);
 CREATE INDEX IF NOT EXISTS idx_students_user_id ON students(user_id);
 CREATE INDEX IF NOT EXISTS idx_students_branch ON students(branch);
 CREATE INDEX IF NOT EXISTS idx_payments_receipt_no ON payments(receipt_no);
 CREATE INDEX IF NOT EXISTS idx_payments_student_id ON payments(student_id);
+CREATE INDEX IF NOT EXISTS idx_marksheets_student_key ON marksheets(student_key);
 
 

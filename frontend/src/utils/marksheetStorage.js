@@ -189,7 +189,37 @@ export const saveStudentMarksheet = (student, marksheet) => {
 
     writeMarksheets(all);
 
+    // Asynchronously sync to Neon DB
     if (typeof window !== 'undefined') {
+      const dbPayload = {
+        studentKey: primaryKey,
+        studentId: student?.userId || student?.id || student?.admissionNo || marksheet?.studentId,
+        registerNumber: marksheet?.registerNumber || student?.registerNumber || student?.registrationNo || student?.admissionNo,
+        registrationNo: marksheet?.registrationNo || student?.registrationNo || student?.registerNumber,
+        admissionNo: marksheet?.admissionNo || student?.admissionNo,
+        studentName: marksheet?.studentName || student?.studentName || student?.name,
+        branch: marksheet?.branch || student?.branch,
+        course: marksheet?.course || getStudentCourse(student),
+        grade: marksheet?.grade || student?.grade,
+        subjects: marksheet?.subjects || [],
+        totalMarks: marksheet?.totalMarks,
+        totalMaximum: marksheet?.totalMaximum || 500,
+        percentage: marksheet?.percentage,
+        overallGrade: marksheet?.overallGrade,
+        status: marksheet?.status || 'Complete',
+        lastStage: marksheet?.lastStage || 'exam',
+        complete: Boolean(marksheet?.complete),
+        data: marksheet
+      };
+
+      fetch('/api/marksheets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dbPayload)
+      }).catch((apiErr) => {
+        console.warn('[Neon DB] Marksheet background sync warning:', apiErr.message);
+      });
+
       window.dispatchEvent(new Event('bsel_marksheets_updated'));
       window.dispatchEvent(new Event('bsel_users_updated'));
       window.dispatchEvent(new StorageEvent('storage', { key: 'bsel_student_marksheets' }));
@@ -200,3 +230,30 @@ export const saveStudentMarksheet = (student, marksheet) => {
     return false;
   }
 };
+
+/**
+ * Sync marksheets from Neon DB into localStorage cache
+ */
+export const syncMarksheetsFromDb = async () => {
+  if (typeof window === 'undefined') return {};
+  try {
+    const res = await fetch('/api/marksheets');
+    if (!res.ok) return readMarksheets();
+    const json = await res.json();
+    if (json.success && json.marksheets && typeof json.marksheets === 'object') {
+      const local = readMarksheets();
+      const merged = { ...local, ...json.marksheets };
+      writeMarksheets(merged);
+      window.dispatchEvent(new Event('bsel_marksheets_updated'));
+      return merged;
+    }
+  } catch (err) {
+    console.warn('[Neon DB] Unable to fetch remote marksheets:', err.message);
+  }
+  return readMarksheets();
+};
+
+// Automatically initiate sync on frontend initialization
+if (typeof window !== 'undefined') {
+  syncMarksheetsFromDb().catch(() => {});
+}

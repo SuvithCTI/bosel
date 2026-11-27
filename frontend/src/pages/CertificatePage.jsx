@@ -41,7 +41,9 @@ export default function CertificatePage() {
             centreAddress: branch.centreAddress,
             issueDate: parsed.issueDate || '05-10-2026',
             certificateType: parsed.certificateType || 'COMPLETION',
-            studentPhoto: parsed.studentPhoto || null
+            studentPhoto: parsed.studentPhoto || parsed.photoUrl || parsed.photo_url || parsed.photo || null,
+            photoUrl: parsed.photoUrl || parsed.studentPhoto || parsed.photo_url || parsed.photo || null,
+            photo_url: parsed.photo_url || parsed.photoUrl || parsed.studentPhoto || parsed.photo || null
           };
         }
       } catch {

@@ -15,6 +15,7 @@ import {
   readStudentCustomSignature,
   saveStudentCustomSignature,
   SAMPLE_STUDENT_PHOTOS,
+  getStudentPhotoUrl,
   resolveStudentGrade,
 } from '../utils/studentDataHelpers';
 
@@ -660,9 +661,18 @@ export default function Certificate({
   // Resolve consistent student photo
   const displayPhoto = React.useMemo(() => {
     if (studentPhoto) return studentPhoto;
-    if (student?.photo_url || student?.photoUrl || student?.studentPhoto || student?.photo) {
-      return student.photo_url || student.photoUrl || student.studentPhoto || student.photo;
+    if (student?.photo_url || student?.photoUrl || student?.studentPhoto || student?.photo || student?.avatar || student?.imageUrl || student?.image) {
+      return student.photo_url || student.photoUrl || student.studentPhoto || student.photo || student.avatar || student.imageUrl || student.image;
     }
+    const resolvedFromDb = getStudentPhotoUrl(student || {
+      studentName,
+      name: studentName,
+      registrationNo,
+      registerNumber: registrationNo,
+      admissionNo: registrationNo
+    });
+    if (resolvedFromDb) return resolvedFromDb;
+
     const sLow = String(studentName || '').toLowerCase();
     if (sLow.includes('alwin')) return SAMPLE_STUDENT_PHOTOS[0];
     if (sLow.includes('priya')) return SAMPLE_STUDENT_PHOTOS[1];
@@ -1591,6 +1601,7 @@ export default function Certificate({
                 width="102"
                 height="116"
                 preserveAspectRatio="xMidYMid slice"
+                crossOrigin="anonymous"
               />
             )}
 

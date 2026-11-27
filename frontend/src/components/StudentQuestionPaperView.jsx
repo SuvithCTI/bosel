@@ -101,11 +101,11 @@ export const DEFAULT_ABACUS_SUMS = [
 ];
 
 export const DEFAULT_SUBJECT_MODULES = [
-  { id: 1, name: 'Abacus Operations', max: 100, assessment: 100, marks: 96, pct: '96%' },
-  { id: 2, name: 'Mental Arithmetic', max: 100, assessment: 100, marks: 98, pct: '98%' },
-  { id: 3, name: 'Abacus Calculation', max: 100, assessment: 100, marks: 94, pct: '94%' },
-  { id: 4, name: 'Rapid Calculation', max: 100, assessment: 100, marks: 97, pct: '97%' },
-  { id: 5, name: 'Numerical Proficiency', max: 100, assessment: 100, marks: 95, pct: '95%' }
+  { id: 1, name: 'Abacus Operations', max: 60, assessment: null, marks: null, pct: '-' },
+  { id: 2, name: 'Mental Arithmetic', max: 60, assessment: null, marks: null, pct: '-' },
+  { id: 3, name: 'Abacus Calculation', max: 60, assessment: null, marks: null, pct: '-' },
+  { id: 4, name: 'Rapid Calculation', max: 60, assessment: null, marks: null, pct: '-' },
+  { id: 5, name: 'Numerical Proficiency', max: 60, assessment: null, marks: null, pct: '-' }
 ];
 
 // Stable pick per student (same student always gets the same type)

@@ -116,8 +116,9 @@ export const getStoredStudentEnquiries = () => {
         aadharNumber: u.aadharNumber || u.aadhaarNumber || u.aadhaar || '',
         aadhaarNumber: u.aadhaarNumber || u.aadharNumber || u.aadhaar || '',
         aadhaar: u.aadharNumber || u.aadhaarNumber || u.aadhaar || '',
-        studentPhoto: u.studentPhoto || u.photoUrl || null,
-        photoUrl: u.photoUrl || u.studentPhoto || null,
+        studentPhoto: u.studentPhoto || u.photoUrl || u.photo_url || u.photo || null,
+        photoUrl: u.photoUrl || u.studentPhoto || u.photo_url || u.photo || null,
+        photo_url: u.photo_url || u.photoUrl || u.studentPhoto || u.photo || null,
         results: u.results || [],
         events: u.events || []
       };
@@ -139,7 +140,7 @@ export const saveStoredStudentEnquiries = () => {
 
 // Resolve a student's photo (uploaded photo first, then stored fallbacks)
 const getStudentPhotoSrc = (item) => {
-  return item.studentPhoto || item.photoUrl || getStudentPhotoUrl(item) || null;
+  return item?.studentPhoto || item?.photoUrl || item?.photo_url || item?.photo || getStudentPhotoUrl(item) || null;
 };
 
 const getInitials = (name = '') => {
@@ -873,14 +874,20 @@ export default function AdminBranchStudentDetailsPage({
         ? item.certificateNo
         : `BSEL/${coursePrefix}/L${cleanLevel}/${seqDigits}`;
 
-      const photo = item.studentPhoto || item.photoUrl || getStudentPhotoUrl(item, index) || null;
+      const photo = item.studentPhoto || item.photoUrl || item.photo_url || item.photo || getStudentPhotoUrl(item, index) || null;
 
       const safeStudent = (item.studentName || item.name || 'Student').trim().replace(/[^a-zA-Z0-9]/g, '_');
       const safeRegNo = (regNo || 'REG').trim().replace(/[^a-zA-Z0-9]/g, '_');
       const filename = `BSEL_Merged_Certificate_Marksheet_${safeStudent}_${safeRegNo}.pdf`;
 
       const savedSheet = getSavedMarksheet(item);
-      const resolvedGrade = resolveStudentGrade(item) || (savedSheet?.overallGrade) || item.results?.[0]?.rank || '';
+      const hasSavedMarks = Boolean(
+        savedSheet &&
+        Array.isArray(savedSheet.subjects) &&
+        savedSheet.subjects.length > 0 &&
+        savedSheet.subjects.some((s) => s.marks !== null && s.marks !== undefined && s.marks !== '')
+      );
+      const resolvedGrade = resolveStudentGrade(item) || (hasSavedMarks ? savedSheet?.overallGrade : '') || item.results?.[0]?.rank || '';
 
       const certData = {
         studentName: item.studentName || item.name || 'Candidate Name',
@@ -900,13 +907,13 @@ export default function AdminBranchStudentDetailsPage({
         student: item,
       };
 
-      const subjects = savedSheet?.subjects?.length ? savedSheet.subjects : getCourseSubjectModules(courseName);
-      const totalMax = savedSheet?.totalMaximum || subjects.reduce((sum, s) => sum + (s.max || 100), 0);
-      const totalMarks = savedSheet?.totalMarks !== undefined ? savedSheet.totalMarks : subjects.reduce((sum, s) => sum + (s.marks || 0), 0);
-      const percentage = savedSheet?.percentage !== null && savedSheet?.percentage !== undefined
+      const subjects = hasSavedMarks && savedSheet?.subjects?.length ? savedSheet.subjects : getCourseSubjectModules(courseName);
+      const totalMax = 500;
+      const totalMarks = hasSavedMarks ? (savedSheet?.totalMarks !== undefined ? savedSheet.totalMarks : subjects.reduce((sum, s) => sum + (s.marks || 0), 0)) : null;
+      const percentage = hasSavedMarks && savedSheet?.percentage !== null && savedSheet?.percentage !== undefined
         ? String(savedSheet.percentage)
-        : (totalMax > 0 ? ((totalMarks / totalMax) * 100).toFixed(1) : '0');
-      const overallGrade = savedSheet?.overallGrade || (totalMarks > 0 ? getGrade(Number(percentage) || 0) : 'D');
+        : (hasSavedMarks && totalMarks !== null ? Math.round((totalMarks / totalMax) * 100) : null);
+      const overallGrade = hasSavedMarks ? (savedSheet?.overallGrade || (totalMarks > 0 ? getGrade(Number(percentage) || 0) : 'D')) : '-';
 
       const marksheetData = {
         ...item,
@@ -924,8 +931,9 @@ export default function AdminBranchStudentDetailsPage({
         subjects,
         totalMax,
         totalMarks,
-        percentage,
-        resultText: Number(percentage) >= 40 ? 'PASS' : 'FAIL',
+        percentage: percentage !== null ? String(percentage) : null,
+        hasSavedMarks,
+        resultText: hasSavedMarks ? (Number(percentage) >= 40 ? 'PASS' : 'FAIL') : 'PENDING',
         overallGrade,
         marksheetNo: `BSEL/MS/2026/${String(item.userId || item.id || '').replace(/\D/g, '').slice(-4) || '1042'}`,
         issueDate: item.submitted ? item.submitted.split(' ')[0] : '05-10-2026'

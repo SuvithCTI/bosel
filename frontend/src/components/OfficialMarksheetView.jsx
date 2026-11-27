@@ -732,96 +732,120 @@ export default function OfficialMarksheetView({
     return null;
   }, [student?.marks]);
 
-  const hasSavedMarks = Boolean(
-    savedSheet &&
-    Array.isArray(savedSheet.subjects) &&
-    savedSheet.subjects.length > 0 &&
-    savedSheet.subjects.some((s) => s.marks !== null && s.marks !== undefined && s.marks !== '')
-  );
+  const hasSavedMarks = useMemo(() => {
+    if (savedSheet && Array.isArray(savedSheet.subjects) && savedSheet.subjects.length > 0) {
+      if (savedSheet.subjects.some((s) => s.marks !== null && s.marks !== undefined && s.marks !== '')) {
+        return true;
+      }
+    }
+    if (student?.hasSavedMarks !== undefined) {
+      return Boolean(student.hasSavedMarks);
+    }
+    if (student?.subjects && Array.isArray(student.subjects) && student.subjects.length > 0) {
+      if (student.subjects.some((s) => s.hasEnteredMarks || (s.marks !== null && s.marks !== undefined && s.marks !== '' && Number(s.marks) > 0))) {
+        return true;
+      }
+    }
+    if (Array.isArray(student?.results) && student.results.length > 0) {
+      const r = student.results[0];
+      if (r && (r.marks || r.percentage || r.grade)) return true;
+    }
+    return false;
+  }, [savedSheet, student]);
 
   const subjects = useMemo(() => {
     if (hasSavedMarks) {
-      return savedSheet.subjects.map((s, i) => {
-        const fallbackName = defaultModules[i]?.name || `Subject ${i + 1}`;
-        const examVal = s.exam !== null && s.exam !== undefined && s.exam !== '' ? Number(s.exam) : 0;
-        const asmVal = s.assessment !== null && s.assessment !== undefined && s.assessment !== '' ? Number(s.assessment) : 0;
-        const totalVal = s.marks !== null && s.marks !== undefined && s.marks !== '' ? Number(s.marks) : (examVal + asmVal);
-        return {
-          id: s.id || i + 1,
-          name: s.name || fallbackName,
-          max: EXAM_MAX,
-          assessment: asmVal,
-          exam: examVal,
-          marks: totalVal,
-          pct: `${totalVal}%`,
-        };
-      });
+      if (savedSheet && Array.isArray(savedSheet.subjects) && savedSheet.subjects.length > 0) {
+        return savedSheet.subjects.map((s, i) => {
+          const fallbackName = defaultModules[i]?.name || `Subject ${i + 1}`;
+          const examVal = s.exam !== null && s.exam !== undefined && s.exam !== '' ? Number(s.exam) : 0;
+          const asmVal = s.assessment !== null && s.assessment !== undefined && s.assessment !== '' ? Number(s.assessment) : 0;
+          const totalVal = s.marks !== null && s.marks !== undefined && s.marks !== '' ? Number(s.marks) : (examVal + asmVal);
+          return {
+            id: s.id || i + 1,
+            name: s.name || fallbackName,
+            max: EXAM_MAX,
+            assessment: asmVal,
+            exam: examVal,
+            marks: totalVal,
+            pct: `${totalVal}%`,
+            hasEnteredMarks: true,
+          };
+        });
+      }
+
+      if (student?.subjects?.length) {
+        return student.subjects.map((s, i) => {
+          const fallbackName = defaultModules[i]?.name || `Subject ${i + 1}`;
+          const examVal = s.exam !== null && s.exam !== undefined && s.exam !== '' ? Number(s.exam) : 0;
+          const asmVal = s.assessment !== null && s.assessment !== undefined && s.assessment !== '' ? Number(s.assessment) : 0;
+          const totalVal = s.marks !== null && s.marks !== undefined && s.marks !== '' ? Number(s.marks) : (examVal + asmVal);
+          return {
+            id: s.id || i + 1,
+            name: s.name || fallbackName,
+            max: EXAM_MAX,
+            assessment: asmVal,
+            exam: examVal,
+            marks: totalVal,
+            pct: `${totalVal}%`,
+            hasEnteredMarks: true,
+          };
+        });
+      }
+
+      if (parsedStudentMarks && parsedStudentMarks.length > 0) {
+        const rawExams = student?.exams ? String(student.exams).split(',').map((v) => Number(v.trim())) : null;
+        const rawAsms = student?.asms ? String(student.asms).split(',').map((v) => Number(v.trim())) : null;
+
+        return defaultModules.map((sub, i) => {
+          const totalM = parsedStudentMarks[i] !== undefined ? parsedStudentMarks[i] : 0;
+          const asmV = rawAsms && Number.isFinite(rawAsms[i]) ? rawAsms[i] : (totalM > 0 ? Math.min(Math.round(totalM * 0.4), 40) : 0);
+          const exV = rawExams && Number.isFinite(rawExams[i]) ? rawExams[i] : Math.max(0, totalM - asmV);
+          return {
+            ...sub,
+            assessment: asmV,
+            exam: exV,
+            marks: totalM,
+            pct: `${totalM}%`,
+            hasEnteredMarks: true,
+          };
+        });
+      }
     }
 
-    if (student?.subjects?.length) {
-      return student.subjects.map((s, i) => {
-        const fallbackName = defaultModules[i]?.name || `Subject ${i + 1}`;
-        const examVal = s.exam !== null && s.exam !== undefined && s.exam !== '' ? Number(s.exam) : 0;
-        const asmVal = s.assessment !== null && s.assessment !== undefined && s.assessment !== '' ? Number(s.assessment) : 0;
-        const totalVal = s.marks !== null && s.marks !== undefined && s.marks !== '' ? Number(s.marks) : (examVal + asmVal);
-        return {
-          id: s.id || i + 1,
-          name: s.name || fallbackName,
-          max: EXAM_MAX,
-          assessment: asmVal,
-          exam: examVal,
-          marks: totalVal,
-          pct: `${totalVal}%`,
-        };
-      });
-    }
-
-    if (parsedStudentMarks && parsedStudentMarks.length > 0) {
-      const rawExams = student?.exams ? String(student.exams).split(',').map((v) => Number(v.trim())) : null;
-      const rawAsms = student?.asms ? String(student.asms).split(',').map((v) => Number(v.trim())) : null;
-
-      return defaultModules.map((sub, i) => {
-        const totalM = parsedStudentMarks[i] !== undefined ? parsedStudentMarks[i] : 0;
-        const asmV = rawAsms && Number.isFinite(rawAsms[i]) ? rawAsms[i] : (totalM > 0 ? Math.min(Math.round(totalM * 0.4), 40) : 0);
-        const exV = rawExams && Number.isFinite(rawExams[i]) ? rawExams[i] : Math.max(0, totalM - asmV);
-        return {
-          ...sub,
-          assessment: asmV,
-          exam: exV,
-          marks: totalM,
-          pct: `${totalM}%`,
-        };
-      });
-    }
-
-    // No entered marks: return subjects with 0 for all mark details
-    return defaultModules;
+    // No entered marks: return subjects with null / unentered values
+    return defaultModules.map((sub, i) => ({
+      ...sub,
+      assessment: null,
+      exam: null,
+      marks: null,
+      pct: '-',
+      hasEnteredMarks: false,
+    }));
   }, [hasSavedMarks, savedSheet, student?.subjects, student?.exams, student?.asms, parsedStudentMarks, defaultModules]);
 
   // Total maximum = number of subjects × 100 (each subject is 40 assessment + 60 exam)
   const totalMax = subjects.length * SUBJECT_MAX || TOTAL_MAX;
 
-  // Total obtained = sum of each subject's total (assessment + exam)
-  const totalMarks = subjects.reduce(
-    (sum, s) => sum + (Number(s.marks) || 0),
-    0
-  );
+  // Total obtained = sum of each subject's total (assessment + exam) only when marks have been entered
+  const totalMarks = hasSavedMarks
+    ? subjects.reduce((sum, s) => sum + (Number(s.marks) || 0), 0)
+    : null;
 
-  const totalObtained = student?.totalMarks !== undefined && student?.totalMarks !== null && Number.isFinite(Number(student.totalMarks))
-    ? Number(student.totalMarks)
-    : totalMarks;
+  const totalObtained = hasSavedMarks
+    ? (student?.totalMarks !== undefined && student?.totalMarks !== null && Number.isFinite(Number(student.totalMarks))
+        ? Number(student.totalMarks)
+        : totalMarks)
+    : null;
 
   // Whole-number percentage (accurate calculation capped at 100%)
-  const computedPct = totalMax > 0 ? Math.min(100, Math.round((totalObtained / totalMax) * 100)) : 0;
-  const percentage = (totalObtained > 0 && totalMax > 0)
-    ? String(computedPct)
-    : (student?.percentage !== undefined && student?.percentage !== null && student?.percentage !== ''
-      ? String(Math.min(100, Math.round(Number(student.percentage))))
-      : (totalMax ? String(Math.min(100, Math.round((totalObtained / totalMax) * 100))) : '0'));
+  const percentage = (hasSavedMarks && totalObtained !== null && totalMax > 0)
+    ? String(Math.min(100, Math.round((totalObtained / totalMax) * 100)))
+    : null;
 
-  const overallGrade = Number(percentage) > 0 ? getGrade(Number(percentage)) : (student?.grade || 'D');
+  const overallGrade = hasSavedMarks && percentage !== null ? getGrade(Number(percentage)) : '-';
 
-  const remarkText = getRemark(percentage);
+  const remarkText = hasSavedMarks && percentage !== null ? getRemark(percentage) : null;
 
   const regNo =
     getStudentRegisterNumber(s) ||
@@ -875,22 +899,38 @@ export default function OfficialMarksheetView({
 
   // Photo source: same priority the certificate uses, so both documents show the same photo.
   // 1) photo uploaded in this session, 2) photo stored on the student record,
-  // 3) photo cached in localStorage for this registration number, 4) the generic resolver.
+  // 3) photo cached in localStorage, 4) the robust student photo resolver.
   const resolvePhotoUrl = () => {
     if (uploadedPhoto) return uploadedPhoto;
 
-    const direct = student?.photo_url || student?.photoUrl || student?.studentPhoto || student?.photo;
+    const direct =
+      student?.photo_url ||
+      student?.photoUrl ||
+      student?.studentPhoto ||
+      student?.photo ||
+      student?.avatar ||
+      student?.imageUrl ||
+      student?.image ||
+      s?.photo_url ||
+      s?.photoUrl ||
+      s?.studentPhoto ||
+      s?.photo;
     if (direct) return direct;
 
     if (typeof window !== 'undefined') {
       try {
         const reg = String(regNo || '').trim();
-        const cached = reg ? localStorage.getItem(`bsel_photo_${reg}`) : null;
+        const cleanReg = reg.replace(/[^a-zA-Z0-9]/g, '');
+        const uId = String(student?.userId || s?.userId || '').trim();
+        const cached =
+          (reg && localStorage.getItem(`bsel_photo_${reg}`)) ||
+          (cleanReg && localStorage.getItem(`bsel_photo_${cleanReg}`)) ||
+          (uId && localStorage.getItem(`bsel_photo_${uId}`));
         if (cached) return cached;
       } catch {}
     }
 
-    return getStudentPhotoUrl(student);
+    return getStudentPhotoUrl(student || s);
   };
 
   const photoUrl = resolvePhotoUrl();
@@ -1115,7 +1155,7 @@ export default function OfficialMarksheetView({
 
       {/* Vector template: draws borders, watermark, headers, student details, QR, photo, subjects, marks, summary & signatures */}
       <MarksheetTemplate
-        remark={showMarks ? remarkText : null}
+        remark={hasSavedMarks && showMarks ? remarkText : null}
         rightHeading={{
           title: customSchoolName,
           subtitle: customSchoolSubtitle,
@@ -1137,10 +1177,11 @@ export default function OfficialMarksheetView({
         }}
         subjects={subjects}
         summary={{
-          totalMax,
-          totalObtained,
-          percentage,
-          overallGrade,
+          totalMax: 500,
+          totalObtained: hasSavedMarks && totalObtained !== null ? totalObtained : '-',
+          percentage: hasSavedMarks && percentage !== null ? percentage : '-',
+          overallGrade: hasSavedMarks && overallGrade !== null && overallGrade !== '-' ? overallGrade : '-',
+          hasSavedMarks,
         }}
         photoUrl={photoUrl}
         schoolLogo={customSchoolLogo}
@@ -1148,6 +1189,7 @@ export default function OfficialMarksheetView({
         paperType={paperType}
         issueDate={issueDate}
         showMarks={showMarks}
+        hasSavedMarks={hasSavedMarks}
       />
 
       {/* Interactive controls & click hitboxes (print-hidden & ignored by PDF export) */}

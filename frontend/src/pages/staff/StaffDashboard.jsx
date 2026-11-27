@@ -29,7 +29,8 @@ import {
   getRegisteredUsers,
   getActiveSession,
   setActiveSession,
-  getCoursePrefix
+  getCoursePrefix,
+  syncStudentsFromDb
 } from '../../utils/authStorage';
 import { getStoredStaff } from '../../utils/staffStorage';
 import { isStudentUser } from '../../utils/studentValidator';
@@ -44,6 +45,7 @@ import {
   resolveBranchDetails,
   resolveStudentGrade
 } from '../../utils/studentDataHelpers';
+import { getSavedMarksheet } from '../../utils/marksheetStorage';
 
 export default function StaffDashboard({
   setActivePage,
@@ -89,14 +91,16 @@ export default function StaffDashboard({
     };
   });
 
+  const ALLOWED_STAFF_TABS = ['staff_overview', 'staff_student_details', 'staff_marksheet'];
+
   const [activeTab, setActiveTab] = useState(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const tabFromUrl = params.get('tab');
-      if (tabFromUrl) return tabFromUrl;
+      if (tabFromUrl && ALLOWED_STAFF_TABS.includes(tabFromUrl)) return tabFromUrl;
 
       const saved = sessionStorage.getItem('bsel_staff_active_tab');
-      if (saved) return saved;
+      if (saved && ALLOWED_STAFF_TABS.includes(saved)) return saved;
     }
     return 'staff_overview';
   });
@@ -242,8 +246,9 @@ export default function StaffDashboard({
     return () => window.removeEventListener('popstate', handlePopState);
   }, [activeTab]);
 
-  // Sync state with local events
+  // Sync state with local events and remote Neon DB
   useEffect(() => {
+    syncStudentsFromDb().catch(() => {});
     const handleUsersUpdate = () => setUsersList(getRegisteredUsers());
     const handleBatchesUpdate = () => setBatchesList(getStoredBatches());
     const handleSchoolsUpdate = () => setSchoolsList(getStoredSchools());
@@ -336,10 +341,17 @@ export default function StaffDashboard({
   const handleOpenMarksheet = (student, index = 0) => {
     const photo = getStudentPhotoUrl(student, index);
     const regNo = getStudentRegisterNumber(student);
+    const saved = getSavedMarksheet(student);
+    const hasSavedMarks = Boolean(
+      saved &&
+      Array.isArray(saved.subjects) &&
+      saved.subjects.length > 0 &&
+      saved.subjects.some((s) => s.marks !== null && s.marks !== undefined && s.marks !== '')
+    );
     const subjects = getMarksheetSubjects(student);
-    const totalMax = subjects.reduce((sum, s) => sum + s.max, 0);
-    const totalMarks = subjects.reduce((sum, s) => sum + s.marks, 0);
-    const percentage = ((totalMarks / totalMax) * 100).toFixed(1);
+    const totalMax = 500;
+    const totalMarks = hasSavedMarks ? subjects.reduce((sum, s) => sum + (Number(s.marks) || 0), 0) : null;
+    const percentage = hasSavedMarks && totalMarks !== null ? Math.round((totalMarks / totalMax) * 100) : null;
 
     const courseName = student.program || student.courseName || 'Abacus';
     const coursePrefix = getCoursePrefix(courseName);
@@ -362,9 +374,10 @@ export default function StaffDashboard({
       subjects,
       totalMax,
       totalMarks,
-      percentage,
-      resultText: percentage >= 85 ? 'FIRST CLASS WITH DISTINCTION' : 'FIRST CLASS',
-      overallGrade: percentage >= 90 ? 'O (Outstanding)' : percentage >= 80 ? 'A+ (Excellent)' : 'A (Very Good)',
+      percentage: percentage !== null ? String(percentage) : null,
+      hasSavedMarks,
+      resultText: hasSavedMarks ? (percentage >= 85 ? 'FIRST CLASS WITH DISTINCTION' : 'FIRST CLASS') : 'PENDING',
+      overallGrade: hasSavedMarks ? (percentage >= 90 ? 'O (Outstanding)' : percentage >= 80 ? 'A+ (Excellent)' : 'A (Very Good)') : '-',
       marksheetNo: `BSEL/MS/2026/${String(student.userId || '').replace(/\D/g, '').slice(-4) || '1042'}`,
       issueDate: student.enrolmentDate || '05-10-2026'
     });
@@ -639,7 +652,7 @@ export default function StaffDashboard({
             RIGHT MAIN CONTENT: TAB PANELS & WORKSPACE
             ========================================================================= */}
         <main className="flex-1 min-w-0 w-full lg:ml-72 xl:ml-80 p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8 space-y-5 bg-slate-100">
-          {activeTab === 'staff_overview' && (
+          {(activeTab === 'staff_overview' || !ALLOWED_STAFF_TABS.includes(activeTab)) && (
             <StaffOverviewPage
               currentStaff={currentStaff}
               activeBranch={activeBranch}

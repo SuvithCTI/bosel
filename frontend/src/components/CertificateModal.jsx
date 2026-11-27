@@ -105,7 +105,15 @@ export default function CertificateModal({
   );
 
   const [studentPhoto, setStudentPhoto] = useState(
-    data.studentPhoto || null
+    data.studentPhoto ||
+    data.photoUrl ||
+    data.photo_url ||
+    data.photo ||
+    data.student?.studentPhoto ||
+    data.student?.photoUrl ||
+    data.student?.photo_url ||
+    data.student?.photo ||
+    null
   );
 
   const [certificateType, setCertificateType] = useState(
@@ -123,7 +131,16 @@ export default function CertificateModal({
     if (d.registrationNo) setRegistrationNo(d.registrationNo);
     if (d.centreName) setCentreName(d.centreName);
     if (d.issueDate) setIssueDate(d.issueDate);
-    if (d.studentPhoto !== undefined) setStudentPhoto(d.studentPhoto);
+    const incomingPhoto =
+      d.studentPhoto ||
+      d.photoUrl ||
+      d.photo_url ||
+      d.photo ||
+      d.student?.studentPhoto ||
+      d.student?.photoUrl ||
+      d.student?.photo_url ||
+      d.student?.photo;
+    if (incomingPhoto !== undefined) setStudentPhoto(incomingPhoto);
     if (d.certificateType) setCertificateType(d.certificateType);
   }, [certData, initialData]);
 
