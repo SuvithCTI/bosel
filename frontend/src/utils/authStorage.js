@@ -1091,6 +1091,8 @@ export const syncStudentsFromDb = async () => {
           pinCode: s.pincode || existing?.pinCode || existing?.pincode || '',
           studentPhoto: photo,
           photoUrl: photo,
+          photo_url: photo,
+          photo: photo,
           registerNumber: regNo,
           registrationNo: regNo,
           registerNumbers: existing?.registerNumbers || (regNo ? regNo.split(',').map((n) => n.trim()) : []),
@@ -1123,6 +1125,17 @@ export const syncStudentsFromDb = async () => {
       remoteMapped.forEach((s) => {
         if (!merged.some((u) => (u.userId || '').toLowerCase() === s.userId.toLowerCase())) {
           merged.unshift(s);
+        }
+        const photo = s.studentPhoto || s.photoUrl || s.photo_url;
+        if (photo && typeof window !== 'undefined') {
+          try {
+            if (s.registerNumber) localStorage.setItem(`bsel_photo_${s.registerNumber}`, photo);
+            const cleanR = (s.registerNumber || '').replace(/[^a-zA-Z0-9]/g, '');
+            if (cleanR) localStorage.setItem(`bsel_photo_${cleanR}`, photo);
+            if (s.userId) localStorage.setItem(`bsel_photo_${s.userId}`, photo);
+            if (s.phone) localStorage.setItem(`bsel_photo_${s.phone}`, photo);
+            if (s.studentName) localStorage.setItem(`bsel_photo_${s.studentName.toLowerCase().trim()}`, photo);
+          } catch {}
         }
       });
 

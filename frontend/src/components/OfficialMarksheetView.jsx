@@ -899,22 +899,38 @@ export default function OfficialMarksheetView({
 
   // Photo source: same priority the certificate uses, so both documents show the same photo.
   // 1) photo uploaded in this session, 2) photo stored on the student record,
-  // 3) photo cached in localStorage for this registration number, 4) the generic resolver.
+  // 3) photo cached in localStorage, 4) the robust student photo resolver.
   const resolvePhotoUrl = () => {
     if (uploadedPhoto) return uploadedPhoto;
 
-    const direct = student?.photo_url || student?.photoUrl || student?.studentPhoto || student?.photo;
+    const direct =
+      student?.photo_url ||
+      student?.photoUrl ||
+      student?.studentPhoto ||
+      student?.photo ||
+      student?.avatar ||
+      student?.imageUrl ||
+      student?.image ||
+      s?.photo_url ||
+      s?.photoUrl ||
+      s?.studentPhoto ||
+      s?.photo;
     if (direct) return direct;
 
     if (typeof window !== 'undefined') {
       try {
         const reg = String(regNo || '').trim();
-        const cached = reg ? localStorage.getItem(`bsel_photo_${reg}`) : null;
+        const cleanReg = reg.replace(/[^a-zA-Z0-9]/g, '');
+        const uId = String(student?.userId || s?.userId || '').trim();
+        const cached =
+          (reg && localStorage.getItem(`bsel_photo_${reg}`)) ||
+          (cleanReg && localStorage.getItem(`bsel_photo_${cleanReg}`)) ||
+          (uId && localStorage.getItem(`bsel_photo_${uId}`));
         if (cached) return cached;
       } catch {}
     }
 
-    return getStudentPhotoUrl(student);
+    return getStudentPhotoUrl(student || s);
   };
 
   const photoUrl = resolvePhotoUrl();

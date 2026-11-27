@@ -116,8 +116,9 @@ export const getStoredStudentEnquiries = () => {
         aadharNumber: u.aadharNumber || u.aadhaarNumber || u.aadhaar || '',
         aadhaarNumber: u.aadhaarNumber || u.aadharNumber || u.aadhaar || '',
         aadhaar: u.aadharNumber || u.aadhaarNumber || u.aadhaar || '',
-        studentPhoto: u.studentPhoto || u.photoUrl || null,
-        photoUrl: u.photoUrl || u.studentPhoto || null,
+        studentPhoto: u.studentPhoto || u.photoUrl || u.photo_url || u.photo || null,
+        photoUrl: u.photoUrl || u.studentPhoto || u.photo_url || u.photo || null,
+        photo_url: u.photo_url || u.photoUrl || u.studentPhoto || u.photo || null,
         results: u.results || [],
         events: u.events || []
       };
@@ -139,7 +140,7 @@ export const saveStoredStudentEnquiries = () => {
 
 // Resolve a student's photo (uploaded photo first, then stored fallbacks)
 const getStudentPhotoSrc = (item) => {
-  return item.studentPhoto || item.photoUrl || getStudentPhotoUrl(item) || null;
+  return item?.studentPhoto || item?.photoUrl || item?.photo_url || item?.photo || getStudentPhotoUrl(item) || null;
 };
 
 const getInitials = (name = '') => {
@@ -535,8 +536,9 @@ export default function StaffStudentDetailsPage({
         district: u.district || '',
         pincode: u.pincode || u.pinCode || '',
         aadharNumber: u.aadharNumber || u.aadhaarNumber || u.aadhaar || '',
-        studentPhoto: u.studentPhoto || u.photoUrl || null,
-        photoUrl: u.photoUrl || u.studentPhoto || null,
+        studentPhoto: u.studentPhoto || u.photoUrl || u.photo_url || u.photo || null,
+        photoUrl: u.photoUrl || u.studentPhoto || u.photo_url || u.photo || null,
+        photo_url: u.photo_url || u.photoUrl || u.studentPhoto || u.photo || null,
         results: u.results || [],
         events: u.events || []
       };
@@ -944,7 +946,7 @@ export default function StaffStudentDetailsPage({
         ? item.certificateNo
         : `BSEL/${coursePrefix}/L${cleanLevel}/${seqDigits}`;
 
-      const photo = item.studentPhoto || item.photoUrl || getStudentPhotoUrl(item, index) || null;
+      const photo = item.studentPhoto || item.photoUrl || item.photo_url || item.photo || getStudentPhotoUrl(item, index) || null;
 
       const safeStudent = (item.studentName || item.name || 'Student').trim().replace(/[^a-zA-Z0-9]/g, '_');
       const safeRegNo = (regNo || 'REG').trim().replace(/[^a-zA-Z0-9]/g, '_');

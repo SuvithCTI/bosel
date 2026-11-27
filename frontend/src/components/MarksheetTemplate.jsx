@@ -632,6 +632,7 @@ export default function MarksheetTemplate({
           width="101"
           height="118"
           preserveAspectRatio="xMidYMid slice"
+          crossOrigin="anonymous"
         />
       ) : (
         <g>

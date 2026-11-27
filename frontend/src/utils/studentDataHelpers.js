@@ -140,14 +140,106 @@ export const SAMPLE_STUDENT_PHOTOS = [
 export const getStudentPhotoUrl = (student, index = 0) => {
   const samplePhoto = SAMPLE_STUDENT_PHOTOS[Math.abs(index) % SAMPLE_STUDENT_PHOTOS.length];
   if (!student) return samplePhoto;
-  let url = student.photo_url || student.photoUrl || student.studentPhoto || student.photo;
-  if (url && typeof url === 'string' && url.trim().length > 0) {
-    let clean = url.trim();
+
+  const sanitizeUrl = (raw) => {
+    if (!raw || typeof raw !== 'string') return null;
+    let clean = raw.trim();
+    if (!clean) return null;
     if (clean.includes('suvith-bsel-storage')) {
       clean = clean.replace(/suvith-bsel-storage/g, 'bsel-mindsparc');
     }
     return clean;
+  };
+
+  // 1. If student is an object, check all direct photo fields first
+  if (typeof student === 'object') {
+    const direct = sanitizeUrl(
+      student.photo_url ||
+      student.photoUrl ||
+      student.studentPhoto ||
+      student.photo ||
+      student.avatar ||
+      student.imageUrl ||
+      student.image
+    );
+    if (direct) return direct;
   }
+
+  // 2. Resolve identifiers to look up stored photo caches and registered users
+  let rawId = '';
+  let studentName = '';
+  let regNo = '';
+
+  if (typeof student === 'string') {
+    rawId = student.trim();
+  } else if (typeof student === 'object') {
+    rawId = String(student.userId || student.id || student.studentId || '').trim();
+    studentName = String(student.studentName || student.name || '').trim();
+    regNo = String(student.registerNumber || student.registrationNo || student.admissionNo || '').trim();
+  }
+
+  const cleanReg = regNo.replace(/[^a-zA-Z0-9]/g, '');
+  const digitsOnly = (regNo || rawId).replace(/\D/g, '');
+  const sNameLow = studentName.toLowerCase();
+  const rawIdLow = rawId.toLowerCase();
+
+  // 3. Check localStorage direct photo caches
+  if (typeof window !== 'undefined') {
+    try {
+      const keysToCheck = [
+        rawId && `bsel_photo_${rawId}`,
+        rawIdLow && `bsel_photo_${rawIdLow}`,
+        regNo && `bsel_photo_${regNo}`,
+        cleanReg && `bsel_photo_${cleanReg}`,
+        digitsOnly && `bsel_photo_${digitsOnly}`,
+        sNameLow && `bsel_photo_${sNameLow}`,
+      ].filter(Boolean);
+
+      for (const k of keysToCheck) {
+        const cached = localStorage.getItem(k);
+        if (cached && (cached.startsWith('http') || cached.startsWith('data:') || cached.startsWith('/'))) {
+          return sanitizeUrl(cached);
+        }
+      }
+
+      // 4. Search in registered users (synced from Neon DB)
+      const rawUsers = localStorage.getItem('bsel_registered_users');
+      if (rawUsers) {
+        const users = JSON.parse(rawUsers);
+        if (Array.isArray(users)) {
+          const matched = users.find((u) => {
+            if (!u) return false;
+            const uId = String(u.userId || '').toLowerCase().trim();
+            const uReg = String(u.registerNumber || u.registrationNo || u.admissionNo || '').toLowerCase().trim();
+            const uCleanReg = uReg.replace(/[^a-zA-Z0-9]/g, '');
+            const uPhone = String(u.phone || '').replace(/\D/g, '');
+            const uName = String(u.studentName || u.name || '').toLowerCase().trim();
+
+            if (rawIdLow && uId === rawIdLow) return true;
+            if (regNo && (uReg === regNo.toLowerCase() || (cleanReg && uCleanReg === cleanReg.toLowerCase()))) return true;
+            if (digitsOnly && digitsOnly.length >= 4 && (uReg.includes(digitsOnly) || uPhone.endsWith(digitsOnly))) return true;
+            if (sNameLow && uName && (uName === sNameLow || uName.includes(sNameLow) || sNameLow.includes(uName))) return true;
+            return false;
+          });
+
+          if (matched) {
+            const uPhoto = sanitizeUrl(
+              matched.photo_url ||
+              matched.photoUrl ||
+              matched.studentPhoto ||
+              matched.photo ||
+              matched.avatar ||
+              matched.imageUrl
+            );
+            if (uPhoto) return uPhoto;
+          }
+        }
+      }
+    } catch {
+      // ignore storage errors
+    }
+  }
+
   return samplePhoto;
 };
 

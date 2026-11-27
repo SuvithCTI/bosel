@@ -37,6 +37,7 @@ import {
 import { getRegisteredUsers } from '../../utils/authStorage';
 import { isStudentUser } from '../../utils/studentValidator';
 import { exportPdfFromElement } from '../../utils/pdfExport';
+import { getStudentPhotoUrl } from '../../utils/studentDataHelpers';
 
 const PLACEHOLDER_ROWS = 3;
 const MIN_SUBJECT_COLS = 5;
@@ -116,11 +117,16 @@ const writeStage = (branch, key) => {
   }
 };
 
-// Keep the stored snapshot small: drop all bulky image and avatar data
+// Preserve compact photo URLs so marksheets & certificates can render student photo
 const snapshotStudent = (st) => {
   if (!st) return {};
-  const { photoUrl, photo, imageUrl, studentPhoto, avatar, photoKey, ...rest } = st;
-  return rest;
+  const photo = st.photo_url || st.photoUrl || st.studentPhoto || st.photo || st.imageUrl || '';
+  const isCompactPhoto = typeof photo === 'string' && (photo.startsWith('http') || photo.length < 50000);
+  const { avatar, photoKey, ...rest } = st;
+  return {
+    ...rest,
+    ...(isCompactPhoto ? { photoUrl: photo, studentPhoto: photo, photo_url: photo } : {})
+  };
 };
 
 // ------------------------------------------------
@@ -1182,8 +1188,37 @@ export default function BranchStudentMarksheetPage({
   // PREVIEW POPUP (single marksheet)
   // ------------------------------------------------
 
-  const resolveStudentFor = (record) =>
-    branchStudents.find((st) => getStudentKey(st) === record.key) || record.student;
+  const resolveStudentFor = (record) => {
+    if (!record) return null;
+    const match =
+      branchStudents.find((st) => getStudentKey(st) === record.key) ||
+      branchStudents.find((st) => {
+        const uId = String(st.userId || '').toLowerCase();
+        const rUId = String(record.student?.userId || '').toLowerCase();
+        const reg = String(st.registerNumber || st.registrationNo || '').toLowerCase();
+        const rReg = String(record.student?.registerNumber || record.student?.registrationNo || '').toLowerCase();
+        return (uId && rUId && uId === rUId) || (reg && rReg && reg === rReg);
+      }) ||
+      record.student;
+
+    const photo =
+      match?.photo_url ||
+      match?.photoUrl ||
+      match?.studentPhoto ||
+      match?.photo ||
+      record.student?.photo_url ||
+      record.student?.photoUrl ||
+      record.student?.studentPhoto ||
+      getStudentPhotoUrl(match || record.student);
+
+    return {
+      ...(record.student || {}),
+      ...(match || {}),
+      photoUrl: photo,
+      studentPhoto: photo,
+      photo_url: photo,
+    };
+  };
 
   const openPreview = (record) => {
     if (!record.saved?.complete) return;
@@ -2274,7 +2309,14 @@ function InfoCard({ label, value }) {
 function StudentPhoto({ student }) {
   const [failed, setFailed] = useState(false);
 
-  const photoUrl = student?.photoUrl || student?.photo || student?.imageUrl || '';
+  const photoUrl =
+    student?.photo_url ||
+    student?.photoUrl ||
+    student?.studentPhoto ||
+    student?.photo ||
+    student?.imageUrl ||
+    getStudentPhotoUrl(student) ||
+    '';
 
   useEffect(() => {
     setFailed(false);
