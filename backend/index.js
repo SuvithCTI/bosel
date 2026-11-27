@@ -17,6 +17,7 @@ import paymentRoutes from './routes/payments.js';
 import schoolRoutes from './routes/schools.js';
 import batchRoutes from './routes/batches.js';
 import certificateRoutes from './routes/certificates.js';
+import marksheetRoutes from './routes/marksheets.js';
 import uploadRoutes from './routes/upload.js';
 
 dotenv.config();
@@ -96,6 +97,7 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/schools', schoolRoutes);
 app.use('/api/batches', batchRoutes);
 app.use('/api/certificates', certificateRoutes);
+app.use('/api/marksheets', marksheetRoutes);
 app.use('/api/upload', uploadRoutes);
 
 // Global Error Handler
