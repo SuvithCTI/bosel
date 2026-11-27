@@ -28,7 +28,8 @@ import Logo from '../../components/Logo';
 import {
   getRegisteredUsers,
   getActiveSession,
-  getCoursePrefix
+  getCoursePrefix,
+  syncStudentsFromDb
 } from '../../utils/authStorage';
 import { isStudentUser } from '../../utils/studentValidator';
 import { getStoredBatches } from '../../data/batchesData';
@@ -304,8 +305,9 @@ export default function FranchiseDashboard({
     return () => window.removeEventListener('popstate', handlePopState);
   }, [activeTab]);
 
-  // Sync state with local events
+  // Sync state with local events and remote Neon DB
   useEffect(() => {
+    syncStudentsFromDb().catch(() => {});
     const handleUsersUpdate = () => setUsersList(getRegisteredUsers());
     const handleBatchesUpdate = () => setBatchesList(getStoredBatches());
     const handleSchoolsUpdate = () => setSchoolsList(getStoredSchools());

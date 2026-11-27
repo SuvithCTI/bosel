@@ -29,7 +29,8 @@ import {
   getRegisteredUsers,
   getActiveSession,
   setActiveSession,
-  getCoursePrefix
+  getCoursePrefix,
+  syncStudentsFromDb
 } from '../../utils/authStorage';
 import { getStoredStaff } from '../../utils/staffStorage';
 import { isStudentUser } from '../../utils/studentValidator';
@@ -245,8 +246,9 @@ export default function StaffDashboard({
     return () => window.removeEventListener('popstate', handlePopState);
   }, [activeTab]);
 
-  // Sync state with local events
+  // Sync state with local events and remote Neon DB
   useEffect(() => {
+    syncStudentsFromDb().catch(() => {});
     const handleUsersUpdate = () => setUsersList(getRegisteredUsers());
     const handleBatchesUpdate = () => setBatchesList(getStoredBatches());
     const handleSchoolsUpdate = () => setSchoolsList(getStoredSchools());
