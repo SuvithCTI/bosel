@@ -219,6 +219,15 @@ export default function AdminBranchStaffPage({
       studentName: staff.name,
       branch: activeBranch
     };
+    sessionStorage.setItem('bsel_staff_active_tab', 'staff_overview');
+    if (typeof window !== 'undefined') {
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.set('page', 'staff');
+        url.searchParams.set('tab', 'staff_overview');
+        window.history.pushState(null, '', url.toString());
+      } catch (_) {}
+    }
     setActiveSession(sessionData);
     if (setActivePage) {
       setActivePage('staff');

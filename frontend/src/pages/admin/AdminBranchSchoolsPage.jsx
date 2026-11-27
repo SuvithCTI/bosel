@@ -204,6 +204,15 @@ export default function AdminBranchSchoolsPage({
       localStorage.setItem('bsel_active_session', JSON.stringify(sessionPayload));
     } catch (_) {}
 
+    sessionStorage.setItem('bsel_franchise_active_tab', 'franchise_overview');
+    if (typeof window !== 'undefined') {
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.set('page', 'franchise_portal');
+        url.searchParams.set('tab', 'franchise_overview');
+        window.history.pushState(null, '', url.toString());
+      } catch (_) {}
+    }
     setActiveSession(sessionPayload);
     showToast(`Opening School Dashboard for ${school.name}...`);
     setActivePage('franchise_portal');

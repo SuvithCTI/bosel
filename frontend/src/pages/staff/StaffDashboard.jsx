@@ -89,14 +89,16 @@ export default function StaffDashboard({
     };
   });
 
+  const ALLOWED_STAFF_TABS = ['staff_overview', 'staff_student_details', 'staff_marksheet'];
+
   const [activeTab, setActiveTab] = useState(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const tabFromUrl = params.get('tab');
-      if (tabFromUrl) return tabFromUrl;
+      if (tabFromUrl && ALLOWED_STAFF_TABS.includes(tabFromUrl)) return tabFromUrl;
 
       const saved = sessionStorage.getItem('bsel_staff_active_tab');
-      if (saved) return saved;
+      if (saved && ALLOWED_STAFF_TABS.includes(saved)) return saved;
     }
     return 'staff_overview';
   });
@@ -639,7 +641,7 @@ export default function StaffDashboard({
             RIGHT MAIN CONTENT: TAB PANELS & WORKSPACE
             ========================================================================= */}
         <main className="flex-1 min-w-0 w-full lg:ml-72 xl:ml-80 p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8 space-y-5 bg-slate-100">
-          {activeTab === 'staff_overview' && (
+          {(activeTab === 'staff_overview' || !ALLOWED_STAFF_TABS.includes(activeTab)) && (
             <StaffOverviewPage
               currentStaff={currentStaff}
               activeBranch={activeBranch}

@@ -143,13 +143,15 @@ export default function FranchiseDashboard({
 
   const currentFranchise = currentEntity;
 
+  const ALLOWED_FRANCHISE_TABS = ['franchise_overview', 'franchise_student_details', 'franchise_marksheet'];
+
   const [activeTab, setActiveTab] = useState(() => {
     if (typeof window !== 'undefined') {
       const urlParams = new URLSearchParams(window.location.search);
       const urlTab = urlParams.get('tab');
-      if (urlTab) return urlTab;
+      if (urlTab && ALLOWED_FRANCHISE_TABS.includes(urlTab)) return urlTab;
       const saved = sessionStorage.getItem('bsel_franchise_active_tab');
-      if (saved && saved !== 'franchise_certificates' && saved !== 'franchise_branding') return saved;
+      if (saved && ALLOWED_FRANCHISE_TABS.includes(saved)) return saved;
     }
     return 'franchise_overview';
   });
@@ -706,7 +708,7 @@ export default function FranchiseDashboard({
         <main className="flex-1 min-w-0 w-full lg:ml-72 xl:ml-80 p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8 space-y-5 bg-slate-100">
           
           {/* TAB 1: FRANCHISE OVERVIEW */}
-          {activeTab === 'franchise_overview' && (
+          {(activeTab === 'franchise_overview' || !ALLOWED_FRANCHISE_TABS.includes(activeTab)) && (
             <div className="space-y-5 animate-in fade-in duration-200">
               
               {/* Franchise Banner */}
