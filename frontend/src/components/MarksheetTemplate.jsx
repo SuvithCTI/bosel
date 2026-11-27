@@ -248,7 +248,14 @@ export default function MarksheetTemplate({
   paperType = null,
   issueDate = null,
   showMarks = true,
+  hasSavedMarks = false,
 }) {
+  const isMarksEntered = Boolean(
+    hasSavedMarks ||
+    summary?.hasSavedMarks ||
+    (subjects && subjects.some((s) => s.hasEnteredMarks || (s.marks !== null && s.marks !== undefined && s.marks !== '' && Number(s.marks) > 0)))
+  );
+
   const colCenters = TABLE_COLS.slice(0, -1).map((x, i) => (x + TABLE_COLS[i + 1]) / 2);
 
   const goldLeft = FRAME_GOLD.x;
@@ -738,9 +745,10 @@ export default function MarksheetTemplate({
 
       {showMarks && subjects && subjects.slice(0, 5).map((sub, i) => {
         const cy = [559, 595, 631, 668, 704][i];
-        const asm = sub.assessment !== null && sub.assessment !== undefined ? Math.round(Number(sub.assessment)) : 0;
-        const exam = sub.exam !== null && sub.exam !== undefined ? Math.round(Number(sub.exam)) : 0;
-        const total = sub.marks !== null && sub.marks !== undefined ? Math.round(Number(sub.marks)) : (asm + exam);
+        const isEntered = isMarksEntered && sub.hasEnteredMarks !== false && sub.marks !== null && sub.marks !== undefined;
+        const asm = isEntered && sub.assessment !== null && sub.assessment !== undefined ? Math.round(Number(sub.assessment)) : '-';
+        const exam = isEntered && sub.exam !== null && sub.exam !== undefined ? Math.round(Number(sub.exam)) : '-';
+        const total = isEntered && sub.marks !== null && sub.marks !== undefined ? `${Math.round(Number(sub.marks))}%` : '-';
         return (
           <g key={sub.id || i} fontFamily={SERIF} fontWeight="bold" fill={NAVY}>
             <text x="94" y={cy + 4} fontSize="12" fill={NAVY}>
@@ -756,7 +764,7 @@ export default function MarksheetTemplate({
               {exam}
             </text>
             <text x="656.5" y={cy + 4} textAnchor="middle" fontSize="12" fill={NAVY}>
-              {`${total}%`}
+              {total}
             </text>
           </g>
         );
@@ -782,8 +790,8 @@ export default function MarksheetTemplate({
       {showMarks && summary && (
         <g fontFamily={SERIF} fontWeight="900" fill={NAVY} textAnchor="middle" dominantBaseline="central">
           <text x="134" y="817" fontSize="15">{summary.totalMax || 500}</text>
-          <text x="286" y="817" fontSize="15">{summary.totalObtained ?? 0}</text>
-          <text x="437" y="817" fontSize="15">{summary.percentage ? `${summary.percentage}%` : '0%'}</text>
+          <text x="286" y="817" fontSize="15">{isMarksEntered && summary.totalObtained !== null && summary.totalObtained !== undefined && summary.totalObtained !== '-' ? summary.totalObtained : '-'}</text>
+          <text x="437" y="817" fontSize="15">{isMarksEntered && summary.percentage && summary.percentage !== '-' ? `${summary.percentage}%` : '-'}</text>
         </g>
       )}
 
@@ -815,7 +823,7 @@ export default function MarksheetTemplate({
           fontSize="22"
           fill="#b45309"
         >
-          {summary.overallGrade || 'D'}
+          {isMarksEntered && summary.overallGrade && summary.overallGrade !== '-' ? summary.overallGrade : '-'}
         </text>
       )}
 
@@ -835,7 +843,7 @@ export default function MarksheetTemplate({
       </text>
       <Star cx={REMARK_STAR.cx} cy={REMARK_STAR.cy} r={REMARK_STAR.r} />
 
-      {remark && (
+      {isMarksEntered && remark && (
         <text
           x={REMARK_TEXT_X}
           y={REMARK_TEXT_Y + 1}

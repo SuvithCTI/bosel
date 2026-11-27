@@ -965,7 +965,13 @@ export default function StaffStudentDetailsPage({
       }
 
       const savedSheet = getSavedMarksheet(item);
-      const resolvedGrade = resolveStudentGrade(item) || (savedSheet?.overallGrade) || item.results?.[0]?.rank || '';
+      const hasSavedMarks = Boolean(
+        savedSheet &&
+        Array.isArray(savedSheet.subjects) &&
+        savedSheet.subjects.length > 0 &&
+        savedSheet.subjects.some((s) => s.marks !== null && s.marks !== undefined && s.marks !== '')
+      );
+      const resolvedGrade = resolveStudentGrade(item) || (hasSavedMarks ? savedSheet?.overallGrade : '') || item.results?.[0]?.rank || '';
 
       const certData = {
         studentName: item.studentName || item.name || 'Candidate Name',
@@ -990,13 +996,13 @@ export default function StaffStudentDetailsPage({
         directorSignature: fcBranding?.signature || fcBranding?.directorSignature || item.directorSignature
       };
 
-      const subjects = savedSheet?.subjects?.length ? savedSheet.subjects : getCourseSubjectModules(courseName);
-      const totalMax = savedSheet?.totalMaximum || subjects.reduce((sum, s) => sum + (s.max || 100), 0);
-      const totalMarks = savedSheet?.totalMarks !== undefined ? savedSheet.totalMarks : subjects.reduce((sum, s) => sum + (s.marks || 0), 0);
-      const percentage = savedSheet?.percentage !== null && savedSheet?.percentage !== undefined
+      const subjects = hasSavedMarks && savedSheet?.subjects?.length ? savedSheet.subjects : getCourseSubjectModules(courseName);
+      const totalMax = 500;
+      const totalMarks = hasSavedMarks ? (savedSheet?.totalMarks !== undefined ? savedSheet.totalMarks : subjects.reduce((sum, s) => sum + (s.marks || 0), 0)) : null;
+      const percentage = hasSavedMarks && savedSheet?.percentage !== null && savedSheet?.percentage !== undefined
         ? String(savedSheet.percentage)
-        : (totalMax > 0 ? ((totalMarks / totalMax) * 100).toFixed(1) : '0');
-      const overallGrade = savedSheet?.overallGrade || (totalMarks > 0 ? getGrade(Number(percentage) || 0) : 'D');
+        : (hasSavedMarks && totalMarks !== null ? Math.round((totalMarks / totalMax) * 100) : null);
+      const overallGrade = hasSavedMarks ? (savedSheet?.overallGrade || (totalMarks > 0 ? getGrade(Number(percentage) || 0) : 'D')) : '-';
 
       const marksheetData = {
         ...item,
@@ -1014,8 +1020,9 @@ export default function StaffStudentDetailsPage({
         subjects,
         totalMax,
         totalMarks,
-        percentage,
-        resultText: Number(percentage) >= 40 ? 'PASS' : 'FAIL',
+        percentage: percentage !== null ? String(percentage) : null,
+        hasSavedMarks,
+        resultText: hasSavedMarks ? (Number(percentage) >= 40 ? 'PASS' : 'FAIL') : 'PENDING',
         overallGrade,
         marksheetNo: `BSEL/MS/2026/${String(item.userId || item.id || '').replace(/\D/g, '').slice(-4) || '1042'}`,
         issueDate: item.submitted ? item.submitted.split(' ')[0] : '05-10-2026',

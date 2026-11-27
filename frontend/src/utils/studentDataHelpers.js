@@ -237,97 +237,140 @@ export const getCourseSubjectTitle = (courseName) => {
 export const getMarksheetSubjects = (student) => {
   const saved = getSavedMarksheet(student);
   if (saved && Array.isArray(saved.subjects) && saved.subjects.length > 0) {
-    return saved.subjects.map((s, index) => ({
-      ...s,
-      id: s.id || index + 1,
-      max: Number(s.max) || 100,
-      assessment: Number(s.assessment ?? s.max) || 100,
-      practical: Number(s.practical ?? s.max) || 100,
-      marks: Number(s.marks) || 0,
-      pct: `${Math.round(((Number(s.marks) || 0) / (Number(s.max) || 100)) * 100)}%`
-    }));
+    const hasAnyEnteredMark = saved.subjects.some(
+      (s) => s.marks !== null && s.marks !== undefined && s.marks !== ''
+    );
+    if (hasAnyEnteredMark) {
+      return saved.subjects.map((s, index) => {
+        const m = Number(s.marks);
+        const maxVal = Number(s.max) || 60;
+        return {
+          ...s,
+          id: s.id || index + 1,
+          max: maxVal,
+          assessment: s.assessment !== null && s.assessment !== undefined && s.assessment !== '' ? Number(s.assessment) : 0,
+          practical: s.practical !== null && s.practical !== undefined && s.practical !== '' ? Number(s.practical) : 0,
+          exam: s.exam !== null && s.exam !== undefined && s.exam !== '' ? Number(s.exam) : 0,
+          marks: Number.isFinite(m) ? m : 0,
+          pct: Number.isFinite(m) ? `${Math.round((m / 100) * 100)}%` : '-',
+          hasEnteredMarks: true
+        };
+      });
+    }
   }
 
+  // Also check student's own results if present
+  if (Array.isArray(student?.results) && student.results.length > 0 && Array.isArray(student.results[0]?.subjects)) {
+    const subList = student.results[0].subjects;
+    const hasAnyEnteredMark = subList.some(
+      (s) => s.marks !== null && s.marks !== undefined && s.marks !== ''
+    );
+    if (hasAnyEnteredMark) {
+      return subList.map((s, index) => {
+        const m = Number(s.marks);
+        return {
+          ...s,
+          id: s.id || index + 1,
+          max: Number(s.max) || 60,
+          assessment: s.assessment !== null && s.assessment !== undefined && s.assessment !== '' ? Number(s.assessment) : 0,
+          practical: s.practical !== null && s.practical !== undefined && s.practical !== '' ? Number(s.practical) : 0,
+          exam: s.exam !== null && s.exam !== undefined && s.exam !== '' ? Number(s.exam) : 0,
+          marks: Number.isFinite(m) ? m : 0,
+          pct: Number.isFinite(m) ? `${Math.round((m / 100) * 100)}%` : '-',
+          hasEnteredMarks: true
+        };
+      });
+    }
+  }
+
+  // NO SAVED MARKS: Default course subjects without auto-assigned mock marks
   const course = (student?.program || student?.courseName || '').toLowerCase();
   
-  if (course.includes('html')) {
+  const getSubjectNames = (c) => {
+    if (c.includes('html')) {
+      return [
+        'HTML5 Semantic Structure & Tags',
+        'Forms, Input Validation & Tables',
+        'Hyperlinks, Layouts & Media Tags',
+        'Responsive Architecture & Web DOM',
+        'Live Web Project & Viva Voce'
+      ];
+    }
+    if (c.includes('css')) {
+      return [
+        'CSS Syntax, Selectors & Cascade',
+        'Box Model, Margins & Padding',
+        'Flexbox & CSS Grid Page Layouts',
+        'Media Queries & Responsive UI',
+        'Web Styling Portfolio & Viva'
+      ];
+    }
+    if (c.includes('art') || c.includes('draw')) {
+      return [
+        'Freehand Sketching & Line Contour',
+        'Colour Theory & Shading Gradients',
+        'Thematic Creative Composition',
+        'Object, Perspective & Still Life',
+        'Art Portfolio & Viva Voce'
+      ];
+    }
+    if (c.includes('python')) {
+      return [
+        'Python Syntax & Data Types',
+        'Control Flow & Conditional Logic',
+        'Functions, Loops & String Handling',
+        'Data Structures & Problem Solving',
+        'Python Code Project & Viva Voce'
+      ];
+    }
+    if (c.includes('comput')) {
+      return [
+        'Computer Architecture & Hardware',
+        'Operating Systems & File Handling',
+        'Internet Security & Cyber Safety',
+        'Keyboarding & Speed Typing Drills',
+        'IT Application Lab & Viva Voce'
+      ];
+    }
+    if (c.includes('office') || c.includes('ms')) {
+      return [
+        'MS Word Document Formatting',
+        'MS Excel Formulas & Data Charts',
+        'MS PowerPoint Slide Design',
+        'Office Automation & Productivity',
+        'Applied Office Project & Viva'
+      ];
+    }
+    if (c.includes('handwrit') || c.includes('calligraph')) {
+      return [
+        'Basic Letter Formation & Slant',
+        'Cursive Flow & Ligature Joins',
+        'Word Spacing & Line Proportions',
+        'Speed Transcription Under Clock',
+        'Spotless Notebook Presentation'
+      ];
+    }
     return [
-      { id: 1, name: 'HTML5 Semantic Structure & Tags', max: 100, assessment: 100, practical: 100, marks: 96, pct: '96%' },
-      { id: 2, name: 'Forms, Input Validation & Tables', max: 100, assessment: 100, practical: 100, marks: 98, pct: '98%' },
-      { id: 3, name: 'Hyperlinks, Layouts & Media Tags', max: 100, assessment: 100, practical: 100, marks: 94, pct: '94%' },
-      { id: 4, name: 'Responsive Architecture & Web DOM', max: 100, assessment: 100, practical: 100, marks: 97, pct: '97%' },
-      { id: 5, name: 'Live Web Project & Viva Voce', max: 100, assessment: 100, practical: 100, marks: 95, pct: '95%' }
+      'Abacus Operations & Bead Technique',
+      'Small Friend & Big Friend Formulas',
+      'Mental Arithmetic & Visual Anzan',
+      'Rapid Multi-Row Calculation Drills',
+      'Speed Arithmetic Accuracy & Viva'
     ];
-  }
+  };
 
-  if (course.includes('css')) {
-    return [
-      { id: 1, name: 'CSS Syntax, Selectors & Cascade', max: 100, assessment: 100, practical: 100, marks: 96, pct: '96%' },
-      { id: 2, name: 'Box Model, Margins & Padding', max: 100, assessment: 100, practical: 100, marks: 98, pct: '98%' },
-      { id: 3, name: 'Flexbox & CSS Grid Page Layouts', max: 100, assessment: 100, practical: 100, marks: 94, pct: '94%' },
-      { id: 4, name: 'Media Queries & Responsive UI', max: 100, assessment: 100, practical: 100, marks: 97, pct: '97%' },
-      { id: 5, name: 'Web Styling Portfolio & Viva', max: 100, assessment: 100, practical: 100, marks: 95, pct: '95%' }
-    ];
-  }
-
-  if (course.includes('art') || course.includes('draw')) {
-    return [
-      { id: 1, name: 'Freehand Sketching & Line Contour', max: 100, assessment: 100, practical: 100, marks: 96, pct: '96%' },
-      { id: 2, name: 'Colour Theory & Shading Gradients', max: 100, assessment: 100, practical: 100, marks: 98, pct: '98%' },
-      { id: 3, name: 'Thematic Creative Composition', max: 100, assessment: 100, practical: 100, marks: 94, pct: '94%' },
-      { id: 4, name: 'Object, Perspective & Still Life', max: 100, assessment: 100, practical: 100, marks: 97, pct: '97%' },
-      { id: 5, name: 'Art Portfolio & Viva Voce', max: 100, assessment: 100, practical: 100, marks: 95, pct: '95%' }
-    ];
-  }
-
-  if (course.includes('python')) {
-    return [
-      { id: 1, name: 'Python Syntax & Data Types', max: 100, assessment: 100, practical: 100, marks: 96, pct: '96%' },
-      { id: 2, name: 'Control Flow & Conditional Logic', max: 100, assessment: 100, practical: 100, marks: 98, pct: '98%' },
-      { id: 3, name: 'Functions, Loops & String Handling', max: 100, assessment: 100, practical: 100, marks: 94, pct: '94%' },
-      { id: 4, name: 'Data Structures & Problem Solving', max: 100, assessment: 100, practical: 100, marks: 97, pct: '97%' },
-      { id: 5, name: 'Python Code Project & Viva Voce', max: 100, assessment: 100, practical: 100, marks: 95, pct: '95%' }
-    ];
-  }
-
-  if (course.includes('comput')) {
-    return [
-      { id: 1, name: 'Computer Architecture & Hardware', max: 100, assessment: 100, practical: 100, marks: 96, pct: '96%' },
-      { id: 2, name: 'Operating Systems & File Handling', max: 100, assessment: 100, practical: 100, marks: 98, pct: '98%' },
-      { id: 3, name: 'Internet Security & Cyber Safety', max: 100, assessment: 100, practical: 100, marks: 94, pct: '94%' },
-      { id: 4, name: 'Keyboarding & Speed Typing Drills', max: 100, assessment: 100, practical: 100, marks: 97, pct: '97%' },
-      { id: 5, name: 'IT Application Lab & Viva Voce', max: 100, assessment: 100, practical: 100, marks: 95, pct: '95%' }
-    ];
-  }
-
-  if (course.includes('office') || course.includes('ms')) {
-    return [
-      { id: 1, name: 'MS Word Document Formatting', max: 100, assessment: 100, practical: 100, marks: 96, pct: '96%' },
-      { id: 2, name: 'MS Excel Formulas & Data Charts', max: 100, assessment: 100, practical: 100, marks: 98, pct: '98%' },
-      { id: 3, name: 'MS PowerPoint Slide Design', max: 100, assessment: 100, practical: 100, marks: 94, pct: '94%' },
-      { id: 4, name: 'Office Automation & Productivity', max: 100, assessment: 100, practical: 100, marks: 97, pct: '97%' },
-      { id: 5, name: 'Applied Office Project & Viva', max: 100, assessment: 100, practical: 100, marks: 95, pct: '95%' }
-    ];
-  }
-
-  if (course.includes('handwrit') || course.includes('calligraph')) {
-    return [
-      { id: 1, name: 'Basic Letter Formation & Slant', max: 100, assessment: 100, practical: 100, marks: 96, pct: '96%' },
-      { id: 2, name: 'Cursive Flow & Ligature Joins', max: 100, assessment: 100, practical: 100, marks: 98, pct: '98%' },
-      { id: 3, name: 'Word Spacing & Line Proportions', max: 100, assessment: 100, practical: 100, marks: 94, pct: '94%' },
-      { id: 4, name: 'Speed Transcription Under Clock', max: 100, assessment: 100, practical: 100, marks: 97, pct: '97%' },
-      { id: 5, name: 'Spotless Notebook Presentation', max: 100, assessment: 100, practical: 100, marks: 95, pct: '95%' }
-    ];
-  }
-
-  // Default: Abacus Speed Arithmetic
-  return [
-    { id: 1, name: 'Abacus Operations & Bead Technique', max: 100, assessment: 100, practical: 100, marks: 96, pct: '96%' },
-    { id: 2, name: 'Small Friend & Big Friend Formulas', max: 100, assessment: 100, practical: 100, marks: 98, pct: '98%' },
-    { id: 3, name: 'Mental Arithmetic & Visual Anzan', max: 100, assessment: 100, practical: 100, marks: 94, pct: '94%' },
-    { id: 4, name: 'Rapid Multi-Row Calculation Drills', max: 100, assessment: 100, practical: 100, marks: 97, pct: '97%' },
-    { id: 5, name: 'Speed Arithmetic Accuracy & Viva', max: 100, assessment: 100, practical: 100, marks: 95, pct: '95%' }
-  ];
+  const names = getSubjectNames(course);
+  return names.map((name, index) => ({
+    id: index + 1,
+    name,
+    max: 60,
+    assessment: null,
+    practical: null,
+    exam: null,
+    marks: null,
+    pct: '-',
+    hasEnteredMarks: false
+  }));
 };
 
 /**

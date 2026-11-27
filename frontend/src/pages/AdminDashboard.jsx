@@ -143,6 +143,7 @@ import {
   resolveBranchDetails,
   resolveStudentGrade
 } from '../utils/studentDataHelpers';
+import { getSavedMarksheet } from '../utils/marksheetStorage';
 
 export {
   SAMPLE_STUDENT_PHOTOS,
@@ -1124,10 +1125,17 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
   const handleOpenMarksheet = (student, index = 0) => {
     const photo = getStudentPhotoUrl(student, index);
     const regNo = getStudentRegisterNumber(student);
+    const saved = getSavedMarksheet(student);
+    const hasSavedMarks = Boolean(
+      saved &&
+      Array.isArray(saved.subjects) &&
+      saved.subjects.length > 0 &&
+      saved.subjects.some((s) => s.marks !== null && s.marks !== undefined && s.marks !== '')
+    );
     const subjects = getMarksheetSubjects(student);
-    const totalMax = subjects.reduce((sum, s) => sum + s.max, 0);
-    const totalMarks = subjects.reduce((sum, s) => sum + s.marks, 0);
-    const percentage = ((totalMarks / totalMax) * 100).toFixed(1);
+    const totalMax = 500;
+    const totalMarks = hasSavedMarks ? subjects.reduce((sum, s) => sum + (Number(s.marks) || 0), 0) : null;
+    const percentage = hasSavedMarks && totalMarks !== null ? Math.round((totalMarks / totalMax) * 100) : null;
 
     const courseName = student.program || student.courseName || 'Abacus';
     const coursePrefix = getCoursePrefix(courseName);
@@ -1150,9 +1158,10 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
       subjects,
       totalMax,
       totalMarks,
-      percentage,
-      resultText: percentage >= 85 ? 'FIRST CLASS WITH DISTINCTION' : 'FIRST CLASS',
-      overallGrade: percentage >= 90 ? 'O (Outstanding)' : percentage >= 80 ? 'A+ (Excellent)' : 'A (Very Good)',
+      percentage: percentage !== null ? String(percentage) : null,
+      hasSavedMarks,
+      resultText: hasSavedMarks ? (percentage >= 85 ? 'FIRST CLASS WITH DISTINCTION' : 'FIRST CLASS') : 'PENDING',
+      overallGrade: hasSavedMarks ? (percentage >= 90 ? 'O (Outstanding)' : percentage >= 80 ? 'A+ (Excellent)' : 'A (Very Good)') : '-',
       marksheetNo: `BSEL/MS/2026/${String(student.userId || '').replace(/\D/g, '').slice(-4) || '1042'}`,
       issueDate: student.enrolmentDate || '05-10-2026'
     });
