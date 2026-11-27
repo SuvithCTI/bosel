@@ -16,7 +16,6 @@ import {
   TrendingUp, 
   MapPin, 
   ArrowRight,
-  ArrowLeft,
   X,
   CreditCard,
   Building,
@@ -39,7 +38,8 @@ import {
   FileDown,
   ClipboardList,
   Globe,
-  MessageSquare
+  MessageSquare,
+  FileCheck
 } from 'lucide-react';
 
 import AdminAchievementsModule from '../components/admin/AdminAchievementsModule';
@@ -61,6 +61,7 @@ import AdminBranchStaffPage from './admin/AdminBranchStaffPage';
 import AdminBranchSchoolsPage from './admin/AdminBranchSchoolsPage';
 import AdminBranchFranchiseProfilePage from './admin/AdminBranchFranchiseProfilePage';
 import AdminBranchFranchisesPage from './admin/AdminBranchFranchisesPage';
+import AdminBranchWorksheetPage from './admin/AdminBranchWorksheetPage';
 import AdminModals from './admin/AdminModals';
 
 import BranchStudentMarksheetPage from './admin/BranchStudentMarksheetPage';
@@ -556,6 +557,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
   const [viewingAdmissionStudent, setViewingAdmissionStudent] = useState(null);
   const [viewingEventRegStudent, setViewingEventRegStudent] = useState(null);
   const [viewingQuestionPaperStudent, setViewingQuestionPaperStudent] = useState(null);
+  const [viewingWorksheetStudent, setViewingWorksheetStudent] = useState(null);
   const [previewCertModalData, setPreviewCertModalData] = useState(null);
 
   const [showAddCourseModal, setShowAddCourseModal] = useState(false);
@@ -579,6 +581,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
     viewingStudentDocumentMerge ||
     viewingEventRegStudent ||
     viewingQuestionPaperStudent ||
+    viewingWorksheetStudent ||
     previewCertModalData ||
     editingStudent || 
     showAddCourseModal || 
@@ -1118,6 +1121,11 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
   const handleOpenQuestionPaperForStudent = (student) => {
     setViewingQuestionPaperStudent(student);
     showToast(`Loaded Examination Question Paper for ${student.studentName || 'Student'}!`);
+  };
+
+  const handleOpenWorksheetForStudent = (student, slot = 1) => {
+    setViewingWorksheetStudent({ student, slot });
+    showToast(`Loaded Practise Worksheet for ${student.studentName || 'Student'}!`);
   };
 
   // 7. Marksheet Handler
@@ -1660,19 +1668,6 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
 
           {/* Controls */}
           <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
-            {/* If user switched to Branch Head from Super Admin, give Return to Super Admin button */}
-            {sessionUser?.role === 'Super Admin' && currentAdminRole === 'Branch Head' && (
-              <button
-                type="button"
-                onClick={() => handleRoleSwitch('Super Admin')}
-                className="text-xs font-bold text-amber-300 border border-amber-400/60 bg-[#0c234b]/40 hover:bg-amber-400/20 active:scale-95 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full transition shadow-sm cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0"
-                title="Return to Central Super Admin Portal"
-              >
-                <ArrowLeft className="w-3.5 h-3.5 text-amber-300" />
-                <span>Super Admin</span>
-              </button>
-            )}
-
             {/* View Live Website Button (Compact icon on mobile, text on sm+) */}
             <button
               onClick={() => setActivePage('home')}
@@ -1775,7 +1770,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                 {currentAdminRole === 'Super Admin' ? 'Executive Desks' : 'Branch Management'}
               </span>
               <span className="text-[10px] font-bold text-slate-400">
-                7 Modules
+                {currentAdminRole === 'Super Admin' ? '9 Modules' : '8 Modules'}
               </span>
             </div>
 
@@ -1955,6 +1950,26 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
                       }`}
                     />
                     <span className="truncate">Student Marksheet</span>
+                  </button>
+
+                  {/* Practise Worksheet */}
+                  <button
+                    type="button"
+                    onClick={() => handleTabSelect('branch_worksheets')}
+                    className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-black transition cursor-pointer text-left ${
+                      activeTab === 'branch_worksheets'
+                        ? 'bg-[#0c234b] text-white shadow-sm ring-1 ring-amber-400/40'
+                        : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950'
+                    }`}
+                  >
+                    <FileCheck
+                      className={`w-4 h-4 shrink-0 ${
+                        activeTab === 'branch_worksheets'
+                          ? 'text-amber-400'
+                          : 'text-slate-500'
+                      }`}
+                    />
+                    <span className="truncate">Practise Worksheet</span>
                   </button>
 
                   <button
@@ -2169,6 +2184,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
               handleOpenCertForStudent={handleOpenCertForStudent}
               handleOpenEventRegForStudent={handleOpenEventRegForStudent}
               handleOpenQuestionPaperForStudent={handleOpenQuestionPaperForStudent}
+              handleOpenWorksheetForStudent={handleOpenWorksheetForStudent}
               setViewingMergedPdfStudent={setViewingMergedPdfStudent}
               showToast={showToast}
               schoolsList={schoolsList}
@@ -2185,6 +2201,15 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
               />
           )}
 
+          {/* BRANCH HEAD: TAB - PRACTISE WORKSHEET */}
+          {currentAdminRole === 'Branch Head' && activeTab === 'branch_worksheets' && (
+            <AdminBranchWorksheetPage
+              activeBranch={activeBranch}
+              branchStudents={branchStudents}
+              showToast={showToast}
+            />
+          )}
+
           {/* BRANCH HEAD: TAB 2 - REGIONAL STUDENTS */}
           {currentAdminRole === 'Branch Head' && activeTab === 'branch_students' && (
             <AdminBranchStudentsPage
@@ -2199,6 +2224,7 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
               handleOpenReceiptForStudent={handleOpenReceiptForStudent}
               handleOpenEventRegForStudent={handleOpenEventRegForStudent}
               handleOpenQuestionPaperForStudent={handleOpenQuestionPaperForStudent}
+              handleOpenWorksheetForStudent={handleOpenWorksheetForStudent}
               setViewingMergedPdfStudent={setViewingMergedPdfStudent}
               setEditingStudent={setEditingStudent}
               handleDeleteStudent={handleDeleteStudent}
@@ -2422,6 +2448,8 @@ export default function AdminDashboard({ setActivePage, onLogout, onOpenCertific
         setViewingEventRegStudent={setViewingEventRegStudent}
         viewingQuestionPaperStudent={viewingQuestionPaperStudent}
         setViewingQuestionPaperStudent={setViewingQuestionPaperStudent}
+        viewingWorksheetStudent={viewingWorksheetStudent}
+        setViewingWorksheetStudent={setViewingWorksheetStudent}
         previewCertModalData={previewCertModalData}
         setPreviewCertModalData={setPreviewCertModalData}
         showAddCourseModal={showAddCourseModal}

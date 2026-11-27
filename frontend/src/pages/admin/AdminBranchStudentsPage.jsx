@@ -25,6 +25,10 @@ import {
   getStudentScopeKey,
   readStudentUploadedQuestions,
 } from '../../utils/studentDataHelpers';
+import {
+  getStudentWorksheets,
+  hasStudentWorksheets,
+} from '../../utils/worksheetStorage';
 
 export default function AdminBranchStudentsPage({
   activeBranch = 'Concern Branch',
@@ -38,6 +42,7 @@ export default function AdminBranchStudentsPage({
   handleOpenReceiptForStudent,
   handleOpenEventRegForStudent,
   handleOpenQuestionPaperForStudent,
+  handleOpenWorksheetForStudent,
   setEditingStudent,
   handleDeleteStudent,
   // Merge as PDF props
@@ -574,22 +579,24 @@ export default function AdminBranchStudentsPage({
                   </th>
                 )}
                 <th className={`py-3 px-4 sticky ${isMergeMode ? 'left-12' : 'left-0'} bg-[#081d3d] z-20 shadow-[2px_0_5px_rgba(0,0,0,0.15)]`}>Student Details</th>
-                {/* Mobile View: Event Reg & Question Paper appear immediately after Student Details */}
+                {/* Mobile View: Event Reg, Question Paper & Worksheet appear immediately after Student Details */}
                 <th className="sm:hidden py-3 px-2 text-center whitespace-nowrap">Event Reg</th>
                 <th className="sm:hidden py-3 px-2 text-center whitespace-nowrap">Question Paper</th>
+                <th className="sm:hidden py-3 px-2 text-center whitespace-nowrap">Worksheet</th>
                 <th className="py-3 px-3">Parent & Contact</th>
                 <th className="py-3 px-3">Category</th>
                 <th className="py-3 px-3">Class</th>
                 <th className="py-3 px-3">Course & Level</th>
-                {/* Desktop View: Event Registration & Question Paper appear at the end */}
+                {/* Desktop View: Event Registration, Question Paper & Worksheet appear at the end */}
                 <th className="hidden sm:table-cell py-3 px-3 text-center whitespace-nowrap">Event Registration</th>
                 <th className="hidden sm:table-cell py-3 px-3 text-center whitespace-nowrap">Question Paper</th>
+                <th className="hidden sm:table-cell py-3 px-3 text-center whitespace-nowrap">Worksheet</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 font-medium">
               {filteredStudents.length === 0 ? (
                 <tr>
-                  <td colSpan={isMergeMode ? 8 : 7} className="py-8 text-center text-slate-500">
+                  <td colSpan={isMergeMode ? 10 : 9} className="py-8 text-center text-slate-500 font-bold">
                     No students currently enrolled matching your criteria under {activeBranch}.
                   </td>
                 </tr>
@@ -715,6 +722,37 @@ export default function AdminBranchStudentsPage({
                         })()}
                       </td>
 
+                      {/* Mobile View: Worksheet Column (Position 4 on mobile) */}
+                      <td className="sm:hidden py-3 px-2 text-center whitespace-nowrap">
+                        {(() => {
+                          const wsSlots = getStudentWorksheets(student);
+                          const uploadedCount = wsSlots.filter((s) => s.file && s.file.url).length;
+                          const hasUploadedWs = uploadedCount > 0;
+                          return (
+                            <div className="flex flex-col items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => handleOpenWorksheetForStudent?.(student)}
+                                className={`px-2.5 py-1.5 font-bold rounded-lg text-xs transition cursor-pointer inline-flex items-center justify-center gap-1 shadow-xs whitespace-nowrap active:scale-95 ${
+                                  hasUploadedWs
+                                    ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-950 border border-emerald-300'
+                                    : 'bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 hover:border-amber-300'
+                                }`}
+                                title="View Practise Worksheet (Page 1: Front Page, Page 2: Worksheet Questions)"
+                              >
+                                <FileCheck className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                                <span>Worksheet</span>
+                              </button>
+                              {hasUploadedWs && (
+                                <span className="inline-flex items-center gap-0.5 text-[9px] font-black text-emerald-700 bg-emerald-100/80 px-1.5 py-0.5 rounded-full">
+                                  <Paperclip className="w-2 h-2" /> {uploadedCount}/4 Files
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })()}
+                      </td>
+
                       {/* Parent & Contact */}
                       <td className="py-3 px-3 whitespace-nowrap">
                         <div className="text-slate-800 font-semibold">{student.parentName || student.fatherName || 'Guardian'}</div>
@@ -811,6 +849,37 @@ export default function AdminBranchStudentsPage({
                               {hasUploadedQ && (
                                 <span className="inline-flex items-center gap-0.5 text-[9.5px] font-black text-emerald-700 bg-emerald-100/80 px-1.5 py-0.5 rounded-full">
                                   <Paperclip className="w-2.5 h-2.5" /> Questions File
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })()}
+                      </td>
+
+                      {/* Desktop View: Worksheet Column */}
+                      <td className="hidden sm:table-cell py-3 px-3 text-center whitespace-nowrap">
+                        {(() => {
+                          const wsSlots = getStudentWorksheets(student);
+                          const uploadedCount = wsSlots.filter((s) => s.file && s.file.url).length;
+                          const hasUploadedWs = uploadedCount > 0;
+                          return (
+                            <div className="flex flex-col items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => handleOpenWorksheetForStudent?.(student)}
+                                className={`px-3 py-1.5 font-bold rounded-lg text-xs transition cursor-pointer inline-flex items-center justify-center gap-1.5 shadow-xs whitespace-nowrap active:scale-95 ${
+                                  hasUploadedWs
+                                    ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-950 border border-emerald-300'
+                                    : 'bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 hover:border-amber-300'
+                                }`}
+                                title="View Practise Worksheet (Page 1: Front Page, Page 2: Worksheet Questions)"
+                              >
+                                <FileCheck className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                                <span>Worksheet</span>
+                              </button>
+                              {hasUploadedWs && (
+                                <span className="inline-flex items-center gap-0.5 text-[9.5px] font-black text-emerald-700 bg-emerald-100/80 px-1.5 py-0.5 rounded-full">
+                                  <Paperclip className="w-2.5 h-2.5" /> {uploadedCount}/4 Files
                                 </span>
                               )}
                             </div>

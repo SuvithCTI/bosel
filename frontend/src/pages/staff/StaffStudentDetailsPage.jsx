@@ -626,16 +626,18 @@ export default function StaffStudentDetailsPage({
   }, [filteredRecords, currentPage, effectiveRowsPerPage, rowsPerPage]);
 
   // Selection handlers
+  const getRecordKey = (r) => r?.id || r?.admissionNo || r?.userId;
+
   const isAllSelected =
-    paginatedRecords.length > 0 &&
-    paginatedRecords.every((r) => selectedIds.includes(r.id || r.admissionNo));
+    filteredRecords.length > 0 &&
+    filteredRecords.every((r) => selectedIds.includes(getRecordKey(r)));
 
   const handleToggleSelectAll = () => {
     if (isAllSelected) {
       setSelectedIds([]);
     } else {
-      const pageIds = paginatedRecords.map((r) => r.id || r.admissionNo);
-      setSelectedIds(Array.from(new Set([...selectedIds, ...pageIds])));
+      const allIds = filteredRecords.map(getRecordKey).filter(Boolean);
+      setSelectedIds(allIds);
     }
   };
 
@@ -1208,21 +1210,21 @@ export default function StaffStudentDetailsPage({
               <>
                 <button
                   type="button"
-                  onClick={() => setIsSelectionMode(true)}
-                  className="px-3.5 py-2 text-xs font-black rounded-xl bg-sky-50 text-sky-700 hover:bg-sky-100 border border-sky-200 transition flex items-center gap-1.5 cursor-pointer"
-                  title="Enable batch selection"
-                >
-                  <CheckSquare className="w-3.5 h-3.5" />
-                  <span>Select Records</span>
-                </button>
-                <button
-                  type="button"
                   onClick={() => setShowAdmissionModal(true)}
                   className="px-3.5 py-2 text-xs font-black rounded-xl bg-gradient-to-r from-emerald-600 via-emerald-700 to-teal-800 hover:from-emerald-700 hover:to-teal-900 active:scale-95 text-white shadow-sm hover:shadow transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
                   title="Open Student Registration Form for School or Academy"
                 >
                   <UserPlus className="w-3.5 h-3.5 text-emerald-200 shrink-0" />
                   <span>Student Registration Form</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsSelectionMode(true)}
+                  className="px-3.5 py-2 text-xs font-black rounded-xl bg-[#081d3d] hover:bg-[#0c2b5b] active:scale-95 text-white transition flex items-center gap-2 cursor-pointer shadow-xs"
+                  title="Click to select specific student records or select all to merge and print"
+                >
+                  <Printer className="w-3.5 h-3.5 text-amber-300 shrink-0" />
+                  <span>Merge</span>
                 </button>
 
                 <span className="text-[11px] font-bold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200 whitespace-nowrap">
@@ -1231,6 +1233,29 @@ export default function StaffStudentDetailsPage({
               </>
             ) : (
               <>
+                <button
+                  type="button"
+                  onClick={handleToggleSelectAll}
+                  className={`px-3.5 py-2 text-xs font-bold rounded-xl border transition flex items-center gap-1.5 cursor-pointer active:scale-95 shadow-2xs ${
+                    isAllSelected
+                      ? 'bg-amber-400 hover:bg-amber-300 text-slate-950 border-amber-400 font-black'
+                      : 'bg-white hover:bg-slate-50 text-slate-800 border-slate-300'
+                  }`}
+                  title="Select or deselect all records"
+                >
+                  <CheckSquare className={`w-3.5 h-3.5 ${isAllSelected ? 'text-slate-950' : 'text-sky-600'}`} />
+                  <span>{isAllSelected ? 'Deselect All' : `Select All (${filteredRecords.length})`}</span>
+                </button>
+                <button
+                  type="button"
+                  disabled={selectedIds.length === 0}
+                  onClick={handleMergePrintCertificates}
+                  className="px-3.5 py-2 text-xs font-black rounded-xl bg-[#081d3d] hover:bg-[#0c2b5b] active:scale-95 text-white transition flex items-center gap-2 cursor-pointer shadow-xs disabled:opacity-40 disabled:cursor-not-allowed"
+                  title="Print merged Certificate + Marksheet for selected students"
+                >
+                  <Printer className="w-3.5 h-3.5 text-amber-300" />
+                  <span>Print Merged {selectedIds.length > 0 ? `(${selectedIds.length})` : ''}</span>
+                </button>
                 {selectedIds.length > 0 && (
                   <>
                     <button
@@ -1249,15 +1274,6 @@ export default function StaffStudentDetailsPage({
                     >
                       <Printer className="w-3.5 h-3.5 text-amber-300" />
                       <span>Print Merged ({selectedIds.length})</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleDownloadMergedPdf}
-                      className="px-3.5 py-2 text-xs font-black rounded-xl bg-sky-600 hover:bg-sky-700 active:scale-95 text-white transition flex items-center gap-2 cursor-pointer shadow-xs"
-                      title="Download merged 2-page PDF for selected students"
-                    >
-                      <Download className="w-3.5 h-3.5 text-white" />
-                      <span>Download PDF ({selectedIds.length})</span>
                     </button>
                     {/* Download Marksheet(s) Separately */}
                     <button

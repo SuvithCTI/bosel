@@ -926,7 +926,7 @@ export default function BranchStudentMarksheetPage({
           onChange={(e) => handleEntryChange(meta.id, stage, e.target.value)}
           placeholder="0"
           maxLength={String(stageMax(stage)).length}
-          className={`${wide ? 'w-full min-w-0' : 'w-16'} px-1.5 py-1 rounded-lg border border-slate-200 text-xs font-bold text-center outline-none focus:ring-2 focus:ring-sky-500`}
+          className={`${wide ? 'w-full min-w-0' : 'w-16'} px-2 py-1 rounded-lg border-2 border-amber-400 bg-amber-50/60 text-xs font-black text-center text-slate-900 outline-none shadow-inner focus:ring-2 focus:ring-amber-500 focus:bg-white transition`}
         />
       );
     }
@@ -935,11 +935,29 @@ export default function BranchStudentMarksheetPage({
     return <span className="text-xs font-black text-slate-900">{dv(value)}</span>;
   };
 
-  const renderGradeBadge = (r) => (
-    <span className="px-1.5 sm:px-2 py-0.5 rounded-lg bg-sky-50 text-sky-800 text-[10px] font-black">
-      {r.marks !== null ? getGrade(r.marks) : '-'}
-    </span>
-  );
+  const renderGradeBadge = (r) => {
+    if (r.marks === null || r.marks === undefined) {
+      return <span className="text-slate-300 font-bold">-</span>;
+    }
+    const grade = getGrade(r.marks);
+    let colorClass = 'bg-slate-100 text-slate-700 border-slate-200';
+    if (grade === 'A+' || grade === 'O' || grade === 'Distinction') {
+      colorClass = 'bg-emerald-50 text-emerald-800 border-emerald-300';
+    } else if (grade === 'A') {
+      colorClass = 'bg-teal-50 text-teal-800 border-teal-300';
+    } else if (grade === 'B+' || grade === 'B') {
+      colorClass = 'bg-sky-50 text-sky-800 border-sky-300';
+    } else if (grade === 'C') {
+      colorClass = 'bg-amber-50 text-amber-900 border-amber-300';
+    } else if (grade === 'D' || grade === 'Fail') {
+      colorClass = 'bg-rose-50 text-rose-800 border-rose-300';
+    }
+    return (
+      <span className={`px-2 py-0.5 rounded-md border text-[10px] font-black tracking-wide inline-block shadow-2xs ${colorClass}`}>
+        {grade}
+      </span>
+    );
+  };
 
   // ------------------------------------------------
   // SAVE MARKS (saves only the selected weekly test)
@@ -1417,10 +1435,13 @@ export default function BranchStudentMarksheetPage({
   const listColCount = LIST_FIXED_COLS + subjectColCount * SUB_COLS;
 
   const thCls =
-    'px-2 sm:px-3 py-1.5 border border-slate-300 text-[10px] uppercase tracking-wider font-black text-slate-500 text-center whitespace-nowrap';
-  const tdCls = 'px-2 sm:px-3 py-1.5 border border-slate-200 text-center';
-  const stageHeadCls = (key) => (activeStage === key ? ' bg-amber-100 text-amber-900' : '');
-  const stageCellCls = (key) => (activeStage === key ? ' bg-amber-50/70' : '');
+    'px-3 py-2.5 border border-slate-700/60 text-[10px] uppercase tracking-wider font-black text-white text-center whitespace-nowrap bg-[#081d3d]';
+  const tdCls = 'px-3 py-2 border border-slate-200 text-center text-xs font-semibold text-slate-800';
+  const stageHeadCls = (key) =>
+    activeStage === key
+      ? ' !bg-amber-400 !text-slate-950 font-black !border-amber-500'
+      : ' bg-[#0c274e] text-white font-bold';
+  const stageCellCls = (key) => (activeStage === key ? ' bg-amber-50 font-black text-slate-950' : '');
 
   const printTableNode = hasList ? (
     <div
@@ -1491,105 +1512,75 @@ export default function BranchStudentMarksheetPage({
     .no-print { display: none !important; }
   }
 `}</style>
-      {/* TOP BAR */}
-      <div className="flex items-center justify-between gap-2 sm:gap-3">
-        <div className="flex items-center gap-2.5 min-w-0">
-          {onBack && (
-            <button
-              type="button"
-              onClick={onBack}
-              className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 text-[#0c234b] text-xs font-black transition flex items-center gap-1 cursor-pointer shrink-0 shadow-xs active:scale-95"
-              title="Go Back"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Back</span>
-            </button>
-          )}
-          <div className="min-w-0">
-            <h1 className="text-sm sm:text-base font-black text-slate-950 leading-tight">
-              {title || 'Student Marksheet'}
-            </h1>
-            <p className="text-[10px] sm:text-[11px] text-slate-500 leading-tight truncate">
-              {subtitle || 'Weekly revision tests and final exam'}
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 bg-sky-50 border border-sky-100 rounded-xl shrink-0">
-          <GraduationCap className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-sky-700" />
-          <span className="text-[10px] sm:text-xs font-bold text-sky-900">
-            {entityName || activeBranch}
-          </span>
-        </div>
-      </div>
-
       {/* ============================================
           ENTRY SECTION
       ============================================ */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm overflow-hidden transition-all">
 
         {/* SEARCH */}
-        <div className="p-2 sm:p-3 border-b border-slate-100">
-          <form onSubmit={handleSearch} className="flex gap-2 w-full max-w-xl mx-auto">
+        <div className="p-3 sm:p-4 bg-gradient-to-r from-slate-50/80 via-white to-slate-50/80 border-b border-slate-200/80">
+          <form onSubmit={handleSearch} className="flex gap-2.5 w-full max-w-xl mx-auto">
             <div className="relative flex-1 min-w-0">
-              <Search className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-400" />
+              <Search className="absolute left-3 sm:left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
               <input
                 type="text"
                 value={searchId}
                 onChange={(e) => setSearchId(e.target.value)}
-                placeholder="Enter Student ID / Register Number"
-                className="w-full pl-8 sm:pl-10 pr-3 sm:pr-4 py-1.5 sm:py-2 rounded-xl border border-slate-200 outline-none text-xs sm:text-sm font-medium focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
+                placeholder="Enter Student ID / Register Number..."
+                className="w-full pl-9 sm:pl-10 pr-3 sm:pr-4 py-2 sm:py-2.5 rounded-xl border border-slate-300 outline-none text-xs sm:text-sm font-semibold text-slate-900 placeholder:text-slate-500 bg-white shadow-2xs focus:ring-2 focus:ring-sky-500/30 focus:border-sky-600 transition"
               />
             </div>
             <button
               type="submit"
-              className="px-3 sm:px-5 py-1.5 sm:py-2 rounded-xl bg-[#0c234b] hover:bg-[#173d70] text-white text-[10px] sm:text-xs font-black flex items-center justify-center gap-1.5 sm:gap-2 transition shrink-0"
+              className="px-4 sm:px-6 py-2 sm:py-2.5 rounded-xl bg-[#081d3d] hover:bg-[#0c2b5b] active:scale-95 text-white text-xs font-black flex items-center justify-center gap-2 transition shrink-0 shadow-xs cursor-pointer"
             >
-              <Search className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <Search className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Search Student</span>
               <span className="sm:hidden">Search</span>
             </button>
           </form>
 
           {error && (
-            <div className="mt-2 max-w-xl mx-auto flex items-start gap-2 p-2 rounded-xl bg-red-50 border border-red-100 text-red-700 text-[10px] sm:text-xs font-bold">
-              <AlertCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+            <div className="mt-2.5 max-w-xl mx-auto flex items-center gap-2 p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold animate-in fade-in duration-150">
+              <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
               <span>{error}</span>
             </div>
           )}
 
           {success && (
-            <div className="mt-2 max-w-xl mx-auto flex items-center gap-2 p-2 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-700 text-[10px] sm:text-xs font-bold">
-              <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+            <div className="mt-2.5 max-w-xl mx-auto flex items-center gap-2 p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold animate-in fade-in duration-150">
+              <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
               <span>{success}</span>
             </div>
           )}
         </div>
 
         {/* STUDENT DETAILS */}
-        <div className="p-2 sm:p-3 border-b border-slate-100 grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+        <div className="p-3.5 sm:p-5 border-b border-slate-200/80 grid grid-cols-1 lg:grid-cols-12 gap-3.5 sm:gap-4 items-center bg-white">
+          <div className="lg:col-span-6 flex items-center gap-3.5 min-w-0">
             <StudentPhoto student={student} />
 
             <div className="min-w-0 flex-1">
-              <h2 className="text-xs sm:text-sm font-black text-slate-950 capitalize truncate">
-                {student ? student.studentName : 'No student selected'}
-              </h2>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="text-sm sm:text-base font-black text-slate-950 capitalize truncate">
+                  {student ? student.studentName : 'No student selected'}
+                </h2>
+                {student?.userId && (
+                  <span className="font-mono text-xs font-bold bg-sky-50 text-sky-800 px-2 py-0.5 rounded-md border border-sky-200 shrink-0">
+                    {student.userId}
+                  </span>
+                )}
+              </div>
 
-              <p className="text-[10px] sm:text-xs text-slate-500 truncate">
-                Student ID:{' '}
-                <strong className="text-sky-800">{student ? student.userId : dash}</strong>
-              </p>
-
-              <div className="flex items-center flex-wrap gap-1.5 sm:gap-2 mt-1 sm:mt-1.5">
+              <div className="flex items-center flex-wrap gap-2 mt-1.5">
                 {savedData && (
                   savedData.complete ? (
-                    <span className="px-1.5 sm:px-2 py-0.5 rounded-lg bg-emerald-50 border border-emerald-100 text-emerald-700 text-[9px] sm:text-[10px] font-black flex items-center gap-1">
-                      <CheckCircle2 className="w-3 h-3" />
+                    <span className="px-2 py-0.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-[10px] font-black flex items-center gap-1 shadow-2xs">
+                      <CheckCircle2 className="w-3 h-3 text-emerald-600" />
                       Result Complete
                     </span>
                   ) : (
-                    <span className="px-1.5 sm:px-2 py-0.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-700 text-[9px] sm:text-[10px] font-black">
+                    <span className="px-2 py-0.5 rounded-lg bg-amber-50 border border-amber-300 text-amber-900 text-[10px] font-black shadow-2xs">
                       {savedData.status || 'Partly Saved'}
                     </span>
                   )
@@ -1599,18 +1590,18 @@ export default function BranchStudentMarksheetPage({
                   type="button"
                   onClick={handleNextStudent}
                   disabled={!student && !searchId}
-                  className="px-2 sm:px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] sm:text-xs font-bold flex items-center gap-1 sm:gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed active:scale-95"
                 >
-                  <RotateCcw className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                  <RotateCcw className="w-3 h-3 text-slate-500" />
                   Next Student
                 </button>
               </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-1.5 sm:gap-2 min-w-0">
+          <div className="lg:col-span-6 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4 gap-2 min-w-0">
             <InfoCard
-              label="Register Number"
+              label="Register No"
               value={
                 student
                   ? student.registerNumber || student.registrationNo || 'Not available'
@@ -1618,11 +1609,11 @@ export default function BranchStudentMarksheetPage({
               }
             />
             <InfoCard
-              label="Enrolled Course"
+              label="Course"
               value={student ? getStudentCourse(student) || 'Not available' : dash}
             />
             <InfoCard
-              label="Grade / Level"
+              label="Level / Grade"
               value={student ? student.grade || 'Not available' : dash}
             />
             <InfoCard label="Branch" value={activeBranch} />
@@ -1630,16 +1621,16 @@ export default function BranchStudentMarksheetPage({
         </div>
 
         {/* MARKS HEADER */}
-        <div className="px-2 sm:px-3 py-2 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-            <div className="w-6 h-6 sm:w-7 sm:h-7 shrink-0 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center">
-              <BookOpen className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+        <div className="px-3 sm:px-5 py-3 border-b border-slate-150/80 bg-gradient-to-r from-slate-50/80 via-white to-amber-50/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 shrink-0 rounded-xl bg-gradient-to-br from-amber-400 to-amber-500 text-slate-950 shadow-sm flex items-center justify-center font-bold">
+              <BookOpen className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
             </div>
             <div className="min-w-0">
-              <h2 className="text-xs sm:text-sm font-black text-slate-950 leading-tight">
+              <h2 className="text-sm sm:text-base font-black text-slate-900 tracking-tight">
                 Subject-wise Marks
               </h2>
-              <p className="text-[9px] sm:text-[11px] text-slate-500 leading-tight truncate">
+              <p className="text-[11px] sm:text-xs text-slate-700 font-semibold truncate">
                 {student
                   ? `${subjects.length} subjects in ${getStudentCourse(student) || 'this course'}`
                   : 'Search a student to load their course subjects'}
@@ -1647,7 +1638,7 @@ export default function BranchStudentMarksheetPage({
             </div>
           </div>
 
-          <div className="flex gap-1.5 sm:gap-2 shrink-0">
+          <div className="flex items-center gap-2 shrink-0">
             <button
               type="button"
               onClick={openPreviewForCurrent}
@@ -1659,10 +1650,10 @@ export default function BranchStudentMarksheetPage({
                     ? 'Save or cancel editing to preview'
                     : 'Preview official marksheet'
               }
-              className="px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-white border border-slate-300 text-[#0c234b] text-[10px] sm:text-xs font-black flex items-center gap-1 sm:gap-1.5 hover:bg-slate-50 transition disabled:opacity-40 disabled:cursor-not-allowed"
+              className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-white border border-slate-300 text-[#0c234b] text-xs font-bold flex items-center gap-1.5 shadow-xs hover:bg-slate-50 hover:border-slate-400 transition-all active:scale-95 disabled:opacity-60 disabled:bg-slate-100 disabled:text-slate-600 disabled:border-slate-300 disabled:cursor-not-allowed"
             >
-              <Eye className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-              Preview
+              <Eye className="w-3.5 h-3.5 text-slate-700" />
+              Preview Marksheet
             </button>
 
             {!isEditing ? (
@@ -1670,14 +1661,14 @@ export default function BranchStudentMarksheetPage({
                 type="button"
                 onClick={handleEditMarks}
                 disabled={!student}
-                className="px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-lg bg-[#0c234b] hover:bg-[#173d70] text-white text-[10px] sm:text-xs font-black flex items-center gap-1 sm:gap-1.5 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                className="px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-gradient-to-r from-[#0c234b] to-[#163e7c] hover:from-[#0a1c3d] hover:to-[#123366] text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all active:scale-95 disabled:opacity-50 disabled:bg-slate-400 disabled:cursor-not-allowed"
               >
-                <Pencil className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                <Pencil className="w-3.5 h-3.5 text-amber-400" />
                 {savedData ? `Enter ${currentStage.short}` : 'Add Marks'}
               </button>
             ) : (
-              <div className="px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-sky-50 border border-sky-100 text-sky-800 text-[10px] sm:text-xs font-bold flex items-center gap-1 sm:gap-1.5">
-                <Pencil className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+              <div className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-sky-50 border border-sky-300 text-sky-900 text-xs font-black flex items-center gap-1.5 shadow-xs">
+                <span className="w-2 h-2 rounded-full bg-sky-600 animate-pulse"></span>
                 Editing {currentStage.short}
               </div>
             )}
@@ -1685,32 +1676,39 @@ export default function BranchStudentMarksheetPage({
         </div>
 
         {/* WEEK / TEST SELECTOR */}
-        <div className="px-2 sm:px-3 py-2 border-b border-slate-100 flex flex-wrap items-center gap-1.5">
-          <span className="text-[10px] font-black uppercase text-slate-500 mr-1">Entering:</span>
-          {STAGES.map((stage) => {
-            const active = stage.key === activeStage;
-            return (
-              <button
-                key={stage.key}
-                type="button"
-                onClick={() => handleStageChange(stage.key)}
-                className={`px-2 py-1 rounded-lg text-[10px] sm:text-xs font-black border transition ${
-                  active
-                    ? 'bg-amber-400 border-amber-500 text-[#0c234b]'
-                    : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
-                }`}
-              >
-                {stage.tab} {stage.type === 'exam' ? `(/${EXAM_MAX})` : `(/${REVISION_MAX})`}
-              </button>
-            );
-          })}
+        <div className="px-3 sm:px-5 py-2.5 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center gap-2">
+          <span className="text-[11px] font-black uppercase tracking-wider text-slate-900 mr-1 flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shadow-2xs"></span> Active Stage:
+          </span>
+          <div className="inline-flex p-1 bg-slate-200 rounded-xl gap-1.5 shadow-2xs">
+            {STAGES.map((stage) => {
+              const active = stage.key === activeStage;
+              return (
+                <button
+                  key={stage.key}
+                  type="button"
+                  onClick={() => handleStageChange(stage.key)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all ${
+                    active
+                      ? 'bg-amber-400 text-slate-950 shadow-sm font-black border border-amber-500 ring-1 ring-amber-500/50'
+                      : 'bg-white text-slate-900 border border-slate-300 hover:text-slate-950 hover:bg-slate-50 font-bold shadow-2xs'
+                  }`}
+                >
+                  <span className="font-black">{stage.tab}</span>
+                  <span className={`ml-1 text-[10px] font-black ${active ? 'text-slate-950 font-black' : 'text-slate-700 font-bold'}`}>
+                    {stage.type === 'exam' ? `(/${EXAM_MAX})` : `(/${REVISION_MAX})`}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* MOBILE: SUBJECT CARDS */}
         <div className="sm:hidden p-2 space-y-2">
           {subjects.length === 0 &&
             Array.from({ length: PLACEHOLDER_ROWS }).map((_, index) => (
-              <div key={`ph-m-${index}`} className="p-2 rounded-xl border border-slate-100 text-slate-300 text-xs font-bold">
+              <div key={`ph-m-${index}`} className="p-2 rounded-xl border border-slate-200 text-slate-600 text-xs font-bold">
                 {index + 1}. {dash}
               </div>
             ))}
@@ -1731,10 +1729,10 @@ export default function BranchStudentMarksheetPage({
                     <div
                       key={stage.key}
                       className={`rounded-lg p-1 ${
-                        activeStage === stage.key ? 'bg-amber-50 border border-amber-200' : 'bg-slate-50'
+                        activeStage === stage.key ? 'bg-amber-50 border border-amber-300 font-black' : 'bg-slate-100 border border-slate-200'
                       }`}
                     >
-                      <span className="block text-[8px] font-bold uppercase text-slate-400 leading-tight">
+                      <span className="block text-[8px] font-black uppercase text-slate-700 leading-tight">
                         {stage.short}
                       </span>
                       {renderStageCell(meta, r, stage, true)}
@@ -1744,19 +1742,19 @@ export default function BranchStudentMarksheetPage({
 
                 <div className="grid grid-cols-4 gap-1.5 mt-2 text-[10px] font-bold">
                   <div>
-                    <span className="block text-[8px] uppercase text-slate-400">Avg /40</span>
-                    <span className="text-slate-900">{dv(r.assessment)}</span>
+                    <span className="block text-[8px] uppercase text-slate-700 font-extrabold">Avg /40</span>
+                    <span className="text-slate-950 font-black">{dv(r.assessment)}</span>
                   </div>
                   <div>
-                    <span className="block text-[8px] uppercase text-slate-400">Exam /60</span>
-                    <span className="text-slate-900">{dv(r.exam)}</span>
+                    <span className="block text-[8px] uppercase text-slate-700 font-extrabold">Exam /60</span>
+                    <span className="text-slate-950 font-black">{dv(r.exam)}</span>
                   </div>
                   <div>
-                    <span className="block text-[8px] uppercase text-slate-400">Total /100</span>
+                    <span className="block text-[8px] uppercase text-slate-600 font-extrabold">Total /100</span>
                     <span className="text-slate-900">{dv(r.marks)}</span>
                   </div>
                   <div>
-                    <span className="block text-[8px] uppercase text-slate-400">%</span>
+                    <span className="block text-[8px] uppercase text-slate-600 font-extrabold">%</span>
                     <span className="text-sky-800">{pctText(r.marks)}</span>
                   </div>
                 </div>
@@ -1771,7 +1769,7 @@ export default function BranchStudentMarksheetPage({
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           <table className="w-full text-left border-collapse min-w-[860px]">
-            <thead className="bg-slate-50">
+            <thead className="bg-[#081d3d] text-white">
               <tr>
                 <th className={thCls}>S.No</th>
                 <th className={`${thCls} text-left`}>Subject</th>
@@ -1791,9 +1789,9 @@ export default function BranchStudentMarksheetPage({
             <tbody>
               {subjects.length === 0 &&
                 Array.from({ length: PLACEHOLDER_ROWS }).map((_, index) => (
-                  <tr key={`placeholder-${index}`} className="text-slate-300">
+                  <tr key={`placeholder-${index}`} className="text-slate-600 font-bold">
                     {Array.from({ length: 11 }).map((__, i) => (
-                      <td key={i} className={tdCls + ' text-xs font-bold'}>
+                      <td key={i} className={tdCls + ' text-xs font-black text-slate-600'}>
                         {i === 0 ? index + 1 : dash}
                       </td>
                     ))}
@@ -1803,9 +1801,9 @@ export default function BranchStudentMarksheetPage({
               {subjects.map((meta, index) => {
                 const r = results[index];
                 return (
-                  <tr key={meta.id} className="hover:bg-slate-50/70">
-                    <td className={`${tdCls} text-xs font-bold text-slate-500`}>{index + 1}</td>
-                    <td className={`${tdCls} text-left text-xs font-bold text-slate-900`}>{meta.name}</td>
+                  <tr key={meta.id} className="hover:bg-amber-50/30">
+                    <td className={`${tdCls} text-xs font-black text-slate-900`}>{index + 1}</td>
+                    <td className={`${tdCls} text-left text-xs font-black text-slate-950`}>{meta.name}</td>
                     {REV_STAGES.map((stage) => (
                       <td key={stage.key} className={`${tdCls}${stageCellCls(stage.key)}`}>
                         {renderStageCell(meta, r, stage)}
@@ -1826,57 +1824,72 @@ export default function BranchStudentMarksheetPage({
         </div>
 
         {/* TOTALS + ACTIONS */}
-        <div className="p-2 sm:p-3 border-t border-slate-100 bg-slate-50/70 flex flex-col lg:flex-row lg:items-center justify-between gap-2">
-          <div className="grid grid-cols-3 gap-1.5 sm:gap-2 flex-1">
-            <div className="bg-white rounded-lg border border-slate-200 px-2 sm:px-3 py-1 sm:py-1.5 min-w-0">
-              <span className="block text-[8px] sm:text-[10px] text-slate-500 font-bold uppercase truncate">
-                Total Marks
-              </span>
-              <div className="text-xs sm:text-sm font-black text-slate-950 leading-tight truncate">
-                {!student
-                  ? dash
-                  : allComplete
-                    ? <>{totalMarks}<span className="text-[10px] sm:text-xs text-slate-400"> / {totalMaximum}</span></>
-                    : <span className="text-[10px] sm:text-xs text-slate-500">{completedSubjects}/{subjects.length} subjects done</span>}
+        <div className="p-3 sm:p-5 border-t border-slate-200 bg-gradient-to-b from-slate-50 to-slate-100/70 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 flex-1">
+            <div className="bg-white rounded-xl border border-slate-200 p-3 sm:p-3.5 shadow-xs relative overflow-hidden flex items-center justify-between">
+              <div>
+                <span className="block text-[10px] text-slate-700 font-black uppercase tracking-wider">
+                  Total Marks
+                </span>
+                <div className="text-base sm:text-lg font-black text-slate-950 mt-0.5">
+                  {!student
+                    ? dash
+                    : allComplete
+                      ? <>{totalMarks} <span className="text-xs text-slate-600 font-bold">/ {totalMaximum}</span></>
+                      : <span className="text-xs text-amber-700 font-bold">{completedSubjects}/{subjects.length} subjects done</span>}
+                </div>
+              </div>
+              <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-700 border border-amber-200 flex items-center justify-center font-bold text-xs shrink-0">
+                ∑
               </div>
             </div>
 
-            <div className="bg-white rounded-lg border border-slate-200 px-2 sm:px-3 py-1 sm:py-1.5 min-w-0">
-              <span className="block text-[8px] sm:text-[10px] text-slate-500 font-bold uppercase truncate">
-                Percentage
-              </span>
-              <div className="text-xs sm:text-sm font-black text-sky-800 leading-tight truncate">
-                {student && allComplete ? pctText(percentage) : dash}
+            <div className="bg-white rounded-xl border border-slate-200 p-3 sm:p-3.5 shadow-xs relative overflow-hidden flex items-center justify-between">
+              <div>
+                <span className="block text-[10px] text-slate-700 font-black uppercase tracking-wider">
+                  Percentage
+                </span>
+                <div className="text-base sm:text-lg font-black text-sky-800 mt-0.5">
+                  {student && allComplete ? pctText(percentage) : dash}
+                </div>
+              </div>
+              <div className="w-8 h-8 rounded-lg bg-sky-50 text-sky-700 border border-sky-200 flex items-center justify-center font-bold text-xs shrink-0">
+                %
               </div>
             </div>
 
-            <div className="bg-white rounded-lg border border-slate-200 px-2 sm:px-3 py-1 sm:py-1.5 min-w-0">
-              <span className="block text-[8px] sm:text-[10px] text-slate-500 font-bold uppercase truncate">
-                Overall Grade
-              </span>
-              <div className="text-xs sm:text-sm font-black text-amber-600 leading-tight">
-                {student && allComplete ? getGrade(percentage) : dash}
+            <div className="bg-white rounded-xl border border-slate-200 p-3 sm:p-3.5 shadow-xs relative overflow-hidden flex items-center justify-between">
+              <div>
+                <span className="block text-[10px] text-slate-700 font-black uppercase tracking-wider">
+                  Overall Grade
+                </span>
+                <div className="text-base sm:text-lg font-black text-amber-700 mt-0.5">
+                  {student && allComplete ? getGrade(percentage) : dash}
+                </div>
+              </div>
+              <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center justify-center font-bold text-xs shrink-0">
+                ★
               </div>
             </div>
           </div>
 
           {isEditing && (
-            <div className="grid grid-cols-2 sm:flex gap-1.5 sm:gap-2 shrink-0">
+            <div className="flex items-center gap-2.5 shrink-0">
               <button
                 type="button"
                 onClick={handleCancelEditing}
-                className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-white border border-slate-200 text-slate-700 text-[10px] sm:text-xs font-black hover:bg-slate-100 flex items-center justify-center gap-1.5 sm:gap-2"
+                className="px-4 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 text-xs font-bold hover:bg-slate-50 hover:border-slate-300 shadow-xs flex items-center justify-center gap-1.5 transition-all active:scale-95"
               >
-                <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                <X className="w-3.5 h-3.5" />
                 Cancel
               </button>
 
               <button
                 type="button"
                 onClick={handleSaveMarks}
-                className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-amber-400 hover:bg-amber-500 text-[#0c234b] text-[10px] sm:text-xs font-black flex items-center justify-center gap-1.5 sm:gap-2"
+                className="px-5 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-950 text-xs font-black shadow-sm flex items-center justify-center gap-2 transition-all active:scale-95"
               >
-                <Save className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                <Save className="w-3.5 h-3.5" />
                 Save {currentStage.short}
               </button>
             </div>
@@ -1888,32 +1901,35 @@ export default function BranchStudentMarksheetPage({
           ENTERED STUDENTS TABLE (persists until Reset)
       ============================================ */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="px-2 sm:px-3 py-2 border-b border-slate-100 flex flex-col lg:flex-row lg:items-center justify-between gap-2">
-          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-            <div className="w-6 h-6 sm:w-7 sm:h-7 shrink-0 rounded-lg bg-sky-100 text-sky-800 flex items-center justify-center">
-              <ClipboardList className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+        <div className="px-3 sm:px-5 py-3.5 border-b border-slate-200/80 bg-gradient-to-r from-slate-50/80 via-white to-sky-50/30 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 shrink-0 rounded-xl bg-gradient-to-br from-sky-400 to-sky-600 text-white shadow-sm flex items-center justify-center">
+              <ClipboardList className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
             </div>
             <div className="min-w-0">
-              <h2 className="text-xs sm:text-sm font-black text-slate-950 leading-tight">
+              <h2 className="text-sm sm:text-base font-black text-slate-900 tracking-tight flex items-center gap-2">
                 Entered Students
+                <span className="text-xs font-extrabold px-2 py-0.5 rounded-full bg-sky-100 text-sky-800">
+                  {sessionRecords.length}
+                </span>
               </h2>
-              <p className="text-[9px] sm:text-[11px] text-slate-500 leading-tight truncate">
-                {sessionRecords.length} student(s) · tap a row to edit · download the table below
+              <p className="text-[11px] sm:text-xs text-slate-700 font-semibold truncate">
+                Tap any row to load/edit marks · Export or print summary table below
               </p>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 sm:gap-2 shrink-0">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 shrink-0">
             <button
               type="button"
               onClick={handleDownloadTablePdf}
               disabled={!hasList || isExportingTable}
-              className="px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-[10px] sm:text-xs font-black flex items-center justify-center gap-1 sm:gap-1.5 transition disabled:opacity-40 disabled:cursor-not-allowed"
+              className="px-3 py-1.5 sm:py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {isExportingTable ? (
-                <Loader2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 animate-spin" />
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
               ) : (
-                <Download className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                <Download className="w-3.5 h-3.5" />
               )}
               {isExportingTable ? 'Working...' : 'Table PDF'}
             </button>
@@ -1922,9 +1938,9 @@ export default function BranchStudentMarksheetPage({
               type="button"
               onClick={handleDownloadTableWord}
               disabled={!hasList}
-              className="px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-[#163e7c] hover:bg-[#1f54a6] text-white text-[10px] sm:text-xs font-black flex items-center justify-center gap-1 sm:gap-1.5 transition disabled:opacity-40 disabled:cursor-not-allowed"
+              className="px-3 py-1.5 sm:py-2 rounded-xl bg-gradient-to-r from-[#0c234b] to-[#163e7c] hover:from-[#0a1c3d] hover:to-[#123366] text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              <FileText className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+              <FileText className="w-3.5 h-3.5 text-sky-300" />
               Table Word
             </button>
 
@@ -1932,18 +1948,18 @@ export default function BranchStudentMarksheetPage({
               type="button"
               onClick={handlePrintTable}
               disabled={!hasList}
-              className="px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-white border border-slate-300 text-[#0c234b] text-[10px] sm:text-xs font-black flex items-center justify-center gap-1 sm:gap-1.5 hover:bg-slate-50 transition disabled:opacity-40 disabled:cursor-not-allowed"
+              className="px-3 py-1.5 sm:py-2 rounded-xl bg-white border border-slate-200 hover:border-slate-300 text-[#0c234b] text-xs font-bold flex items-center justify-center gap-1.5 hover:bg-slate-50 shadow-xs transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              <Printer className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+              <Printer className="w-3.5 h-3.5 text-slate-500" />
               Print Table
             </button>
 
             <button
               type="button"
               onClick={handleReset}
-              className="px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-[10px] sm:text-xs font-black flex items-center justify-center gap-1 sm:gap-1.5 transition"
+              className="px-3 py-1.5 sm:py-2 rounded-xl bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs transition-all active:scale-95"
             >
-              <RotateCcw className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+              <RotateCcw className="w-3.5 h-3.5 text-rose-500" />
               Reset
             </button>
           </div>
@@ -2025,38 +2041,38 @@ export default function BranchStudentMarksheetPage({
 
         {/* DESKTOP / TABLET: TABLE (scrolls sideways; revision columns per subject) */}
         <div
-          className="hidden sm:block overflow-x-auto p-2 no-scrollbar admin-table-container"
+          className="hidden sm:block overflow-x-auto p-3 no-scrollbar admin-table-container"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
-          <table className="w-full text-center min-w-[1100px] border-collapse border border-slate-300">
-            <thead className="bg-[#0b2a55] text-white">
+          <table className="w-full text-center min-w-[1100px] border-collapse border border-slate-200 rounded-xl overflow-hidden shadow-xs">
+            <thead className="bg-[#081d3d] text-white">
               <tr>
-                <th rowSpan={2} className="px-2 py-2 border border-slate-600 text-[10px] font-black uppercase tracking-wider">S.No</th>
-                <th rowSpan={2} className="px-2 py-2 border border-slate-600 text-[10px] font-black uppercase tracking-wider text-left">Student Name</th>
-                <th rowSpan={2} className="px-2 py-2 border border-slate-600 text-[10px] font-black uppercase tracking-wider">Student ID</th>
+                <th rowSpan={2} className="px-2.5 py-2.5 border border-slate-700/60 text-[10px] font-black uppercase tracking-wider">S.No</th>
+                <th rowSpan={2} className="px-3 py-2.5 border border-slate-700/60 text-[10px] font-black uppercase tracking-wider text-left">Student Name</th>
+                <th rowSpan={2} className="px-2.5 py-2.5 border border-slate-700/60 text-[10px] font-black uppercase tracking-wider">Student ID</th>
                 {Array.from({ length: subjectColCount }).map((_, i) => (
                   <th
                     key={i}
                     colSpan={SUB_COLS}
-                    className="px-2 py-2 border border-slate-600 text-[10px] font-black uppercase tracking-wider"
+                    className="px-2.5 py-2.5 border border-slate-700/60 text-[10px] font-black uppercase tracking-wider bg-[#0c274e]"
                     title={sessionRecords.find((r) => r.saved?.subjects?.[i])?.saved.subjects[i].name || ''}
                   >
                     Sub {i + 1}
                   </th>
                 ))}
-                <th rowSpan={2} className="px-2 py-2 border border-slate-600 text-[10px] font-black uppercase tracking-wider">Total</th>
-                <th rowSpan={2} className="px-2 py-2 border border-slate-600 text-[10px] font-black uppercase tracking-wider">%</th>
-                <th rowSpan={2} className="px-2 py-2 border border-slate-600 text-[10px] font-black uppercase tracking-wider">Grade</th>
-                <th rowSpan={2} className="px-2 py-2 border border-slate-600 text-[10px] font-black uppercase tracking-wider">Status</th>
-                <th rowSpan={2} className="px-2 py-2 border border-slate-600 text-[10px] font-black uppercase tracking-wider">Actions</th>
+                <th rowSpan={2} className="px-2.5 py-2.5 border border-slate-700/60 text-[10px] font-black uppercase tracking-wider">Total</th>
+                <th rowSpan={2} className="px-2.5 py-2.5 border border-slate-700/60 text-[10px] font-black uppercase tracking-wider">%</th>
+                <th rowSpan={2} className="px-2.5 py-2.5 border border-slate-700/60 text-[10px] font-black uppercase tracking-wider">Grade</th>
+                <th rowSpan={2} className="px-2.5 py-2.5 border border-slate-700/60 text-[10px] font-black uppercase tracking-wider">Status</th>
+                <th rowSpan={2} className="px-2.5 py-2.5 border border-slate-700/60 text-[10px] font-black uppercase tracking-wider">Actions</th>
               </tr>
               <tr>
                 {Array.from({ length: subjectColCount }).map((_, i) =>
                   SUB_SUB_HEADS.map((h, k) => (
                     <th
                       key={`${i}-${k}`}
-                      className={`px-1.5 py-1.5 border border-slate-600 text-[9px] font-black uppercase tracking-wider ${
-                        k >= 4 ? 'bg-[#163e7c]' : ''
+                      className={`px-1.5 py-1.5 border border-slate-700/60 text-[9px] font-black uppercase tracking-wider ${
+                        k >= 4 ? 'bg-[#1a447e] text-amber-300' : 'bg-[#0f2d59] text-white'
                       }`}
                     >
                       {h}
@@ -2066,12 +2082,12 @@ export default function BranchStudentMarksheetPage({
               </tr>
             </thead>
 
-            <tbody>
+            <tbody className="divide-y divide-slate-100">
               {sessionRecords.length === 0 &&
                 Array.from({ length: PLACEHOLDER_ROWS }).map((_, index) => (
-                  <tr key={`ph-${index}`} className="text-slate-300 text-xs font-bold">
+                  <tr key={`ph-${index}`} className="text-slate-500 text-xs font-bold">
                     {Array.from({ length: listColCount }).map((__, i) => (
-                      <td key={i} className="px-2 py-1.5 border border-slate-200">
+                      <td key={i} className="px-2 py-2 border border-slate-200">
                         {i === 0 ? index + 1 : dash}
                       </td>
                     ))}
@@ -2082,45 +2098,49 @@ export default function BranchStudentMarksheetPage({
                 <tr
                   key={rec.key}
                   onClick={() => handleOpenRecord(rec)}
-                  className="cursor-pointer hover:bg-sky-50/60 text-xs font-bold text-slate-800"
+                  className="cursor-pointer hover:bg-amber-50/40 text-xs font-semibold text-slate-800 transition-colors"
                 >
-                  <td className="px-2 py-1.5 border border-slate-300 text-slate-500">{idx + 1}</td>
-                  <td className="px-2 py-1.5 border border-slate-300 text-left capitalize text-slate-900 max-w-[180px] break-words">
+                  <td className="px-2 py-2 border border-slate-200/80 text-slate-700 font-black">{idx + 1}</td>
+                  <td className="px-3 py-2 border border-slate-200/80 text-left capitalize text-slate-900 font-bold max-w-[180px] break-words">
                     {rec.student.studentName}
                   </td>
-                  <td className="px-2 py-1.5 border border-slate-300">{rec.student.userId}</td>
+                  <td className="px-2 py-2 border border-slate-200/80 font-mono text-slate-600 text-[11px]">{rec.student.userId}</td>
                   {Array.from({ length: subjectColCount }).map((_, i) =>
                     subjectCells(rec.saved, i).map((v, k) => (
                       <td
                         key={`${i}-${k}`}
-                        className={`px-1.5 py-1.5 border border-slate-300 ${
-                          k >= 4 ? 'font-black text-slate-950' : ''
+                        className={`px-1.5 py-2 border border-slate-200/80 ${
+                          k >= 4 ? 'font-black text-slate-950 bg-slate-50/50' : 'text-slate-700'
                         }`}
                       >
                         {dv(v)}
                       </td>
                     ))
                   )}
-                  <td className="px-2 py-1.5 border border-slate-300 font-black whitespace-nowrap">
+                  <td className="px-2 py-2 border border-slate-200/80 font-black text-slate-900 whitespace-nowrap">
                     {totalCell(rec.saved)}
                   </td>
-                  <td className="px-2 py-1.5 border border-slate-300 text-sky-800">{pctCell(rec.saved)}</td>
-                  <td className="px-2 py-1.5 border border-slate-300">
+                  <td className="px-2 py-2 border border-slate-200/80 font-bold text-sky-800">{pctCell(rec.saved)}</td>
+                  <td className="px-2 py-2 border border-slate-200/80">
                     {rec.saved.complete ? (
-                      <span className="px-1.5 py-0.5 rounded-lg bg-emerald-50 text-emerald-700 font-black">
+                      <span className="inline-flex px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black border border-emerald-200 shadow-2xs">
                         {rec.saved.overallGrade}
                       </span>
                     ) : (
-                      '-'
+                      <span className="text-slate-300">-</span>
                     )}
                   </td>
-                  <td className="px-2 py-1.5 border border-slate-300 text-[10px] font-black">
-                    <span className={rec.saved.complete ? 'text-emerald-700' : 'text-amber-700'}>
+                  <td className="px-2 py-2 border border-slate-200/80 text-[10px] font-black">
+                    <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-black border ${
+                      rec.saved.complete
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                        : 'bg-amber-50 text-amber-700 border-amber-200'
+                    }`}>
                       {rec.saved.complete ? 'Complete' : rec.saved.status || 'Pending'}
                     </span>
                   </td>
-                  <td className="px-2 py-1.5 border border-slate-300">
-                    <div className="flex items-center justify-center gap-1">
+                  <td className="px-2 py-2 border border-slate-200/80">
+                    <div className="flex items-center justify-center gap-1.5">
                       <button
                         type="button"
                         disabled={!rec.saved.complete}
@@ -2128,9 +2148,9 @@ export default function BranchStudentMarksheetPage({
                           e.stopPropagation();
                           openPreview(rec);
                         }}
-                        className="px-2 py-1 rounded-lg bg-white border border-slate-300 text-[#0c234b] text-[10px] font-black flex items-center gap-1 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                        className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:border-slate-300 text-[#0c234b] text-[10px] font-bold flex items-center gap-1 hover:bg-slate-50 shadow-2xs transition disabled:opacity-40 disabled:cursor-not-allowed"
                       >
-                        <Eye className="w-3 h-3" />
+                        <Eye className="w-3 h-3 text-slate-400" />
                         Preview
                       </button>
                       <button
@@ -2139,9 +2159,9 @@ export default function BranchStudentMarksheetPage({
                           e.stopPropagation();
                           handleDeleteRecord(rec);
                         }}
-                        className="px-2 py-1 rounded-lg bg-red-50 border border-red-100 text-red-700 text-[10px] font-black flex items-center gap-1 hover:bg-red-100"
+                        className="px-2.5 py-1 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-[10px] font-bold flex items-center gap-1 hover:bg-rose-100 shadow-2xs transition"
                       >
-                        <Trash2 className="w-3 h-3" />
+                        <Trash2 className="w-3 h-3 text-rose-500" />
                         Delete
                       </button>
                     </div>
@@ -2256,11 +2276,11 @@ export default function BranchStudentMarksheetPage({
 
 function InfoCard({ label, value }) {
   return (
-    <div className="px-2 sm:px-2.5 py-1.5 sm:py-2 rounded-lg bg-slate-50 border border-slate-100 min-w-0">
-      <div className="text-[8px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400 leading-tight truncate">
+    <div className="px-2 sm:px-2.5 py-1.5 sm:py-2 rounded-lg bg-slate-50 border border-slate-200 min-w-0 shadow-2xs">
+      <div className="text-[8px] sm:text-[10px] font-black uppercase tracking-wider text-slate-800 leading-tight truncate">
         {label}
       </div>
-      <div className="text-[10px] sm:text-xs font-black text-slate-900 mt-0.5 truncate">
+      <div className="text-[10px] sm:text-xs font-black text-slate-950 mt-0.5 truncate">
         {value}
       </div>
     </div>

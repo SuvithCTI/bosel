@@ -23,6 +23,7 @@ import CertificateModal from '../../components/CertificateModal';
 import StudentAdmissionFormView from '../../components/StudentAdmissionFormView';
 import EventRegisterModal from '../../components/EventRegisterModal';
 import StudentQuestionPaperView from '../../components/StudentQuestionPaperView';
+import StudentWorksheetView from '../../components/StudentWorksheetView';
 import AdmissionModal from '../../components/AdmissionModal';
 import MergedStudentPdfModal from '../../components/MergedStudentPdfModal';
 import StudentDocumentMergeModal from '../../components/StudentDocumentMergeModal';
@@ -69,6 +70,8 @@ export default function AdminModals({
   setViewingEventRegStudent,
   viewingQuestionPaperStudent,
   setViewingQuestionPaperStudent,
+  viewingWorksheetStudent,
+  setViewingWorksheetStudent,
   previewCertModalData,
   setPreviewCertModalData,
   showAddCourseModal,
@@ -281,6 +284,17 @@ export default function AdminModals({
         <StudentQuestionPaperView
           student={viewingQuestionPaperStudent}
           onClose={() => setViewingQuestionPaperStudent(null)}
+        />
+      )}
+
+      {/* =========================================================================
+          MODAL: PRACTISE WORKSHEET & TEST BOOKLET (WITH EXACT FRONT PAGE)
+          ========================================================================= */}
+      {viewingWorksheetStudent && (
+        <StudentWorksheetView
+          student={viewingWorksheetStudent.student || viewingWorksheetStudent}
+          initialSlot={viewingWorksheetStudent.slot || 1}
+          onClose={() => setViewingWorksheetStudent(null)}
         />
       )}
 
